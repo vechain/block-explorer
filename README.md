@@ -7,7 +7,8 @@ This is the frontend for the VeChain Block Explorer.
  - Vite
 
 ## Development
-Ensure you are using a compatible version of Node.js. It is recommended to use nvmm to manage your Node.js versions.
+Ensure you are using a compatible version of Node.js. It is recommended to use nvm to manage your Node.js versions.
+
 ```bash
 nvm use
 ```
