@@ -8,7 +8,10 @@ const NetworkSwitcher: React.FC = () => {
 
   const handleNetworkChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newNetwork = event.target.value
-    switchNetwork(newNetwork)
+    switchNetwork(newNetwork).catch(error => {
+      // TODO: Display an error message to the user
+      console.error(error)
+    })
   }
 
   return (

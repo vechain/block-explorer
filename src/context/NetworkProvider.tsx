@@ -8,12 +8,20 @@ export const NetworkProvider = ({ children }: { children: ReactNode }) => {
   const [selectedNetwork, setSelectedNetwork] = useState(VALID_NETWORKS[0])
   const [thorClient, setThorClient] = useState(ThorClient.at(VALID_NETWORKS[0].url))
 
-  const switchNetwork = (url: string) => {
+  const switchNetwork = async (url: string) => {
     const network = getNetworkByUrl(url)
     if (!network) {
       throw new Error("Invalid network")
     }
-    setThorClient(ThorClient.at(url))
+
+    const client = ThorClient.at(url)
+    const healthy = await client.nodes.isHealthy()
+
+    if (!healthy) {
+      throw new Error("Network is not healthy")
+    }
+
+    setThorClient(client)
     setSelectedNetwork(network)
   }
 

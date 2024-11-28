@@ -4,7 +4,7 @@ import { Network } from "@/constants/network/NetworkConst.ts"
 
 export type NetworkContextType = {
   thorClient: ThorClient
-  switchNetwork: (url: string) => void
+  switchNetwork: (url: string) => Promise<void>
   selectedNetwork: Network
 }
 
