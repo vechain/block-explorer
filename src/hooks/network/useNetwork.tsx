@@ -1,5 +1,5 @@
 import { useContext } from "react"
-import { NetworkContext, NetworkContextType } from "@/context/NetworkContext.tsx"
+import { NetworkContext, NetworkContextType } from "@/providers/NetworkContext.tsx"
 
 export const useNetwork = (): NetworkContextType => {
   const context = useContext(NetworkContext)

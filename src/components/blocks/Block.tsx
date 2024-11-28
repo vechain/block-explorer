@@ -1,13 +1,14 @@
 import { Card, Text } from "@chakra-ui/react"
-import { BlockDetail } from "@vechain/sdk-network"
+import { CompressedBlockDetail } from "@vechain/sdk-network"
 
-export const Block = ({ block }: { block: BlockDetail }) => {
+export const Block = ({ block }: { block: CompressedBlockDetail }) => {
   return (
     <Card.Root>
-      <Card.Header>Block</Card.Header>
+      <Card.Header>{block.id}</Card.Header>
       <Card.Body>
-        <Text>Number: {block.number}</Text>
-        <Text>ID: {block.id}</Text>
+        <Text>No: {block.number.toLocaleString()}</Text>
+        <Text>Timestamp: {new Date(block.timestamp * 1000).toLocaleString()}</Text>
+        <Text>Transactions: {block.transactions.length}</Text>
       </Card.Body>
     </Card.Root>
   )

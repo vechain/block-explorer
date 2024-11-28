@@ -1,7 +1,7 @@
 import "./App.css"
 import { LatestBlocks } from "./components/blocks/LatestBlocks.tsx"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { NetworkProvider } from "@/context/NetworkProvider.tsx"
+import { NetworkProvider } from "@/providers/NetworkProvider.tsx"
 import NetworkSwitcher from "@/components/network/NetworkSwitcher.tsx"
 
 const queryClient = new QueryClient()

@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react"
 import { ThorClient } from "@vechain/sdk-network"
 import { getNetworkByUrl } from "@/utils/network/NetworkUtils.ts"
-import { NetworkContext } from "@/context/NetworkContext.tsx"
+import { NetworkContext } from "@/providers/NetworkContext.tsx"
 import { VALID_NETWORKS } from "@/constants/network/NetworkConst.ts"
 
 export const NetworkProvider = ({ children }: { children: ReactNode }) => {
