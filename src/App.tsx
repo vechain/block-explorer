@@ -1,14 +1,19 @@
 import "./App.css"
 import { LatestBlocks } from "./components/blocks/LatestBlocks.tsx"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { NetworkProvider } from "@/context/NetworkProvider.tsx"
+import NetworkSwitcher from "@/components/network/NetworkSwitcher.tsx"
 
 const queryClient = new QueryClient()
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <LatestBlocks count={5} />
-    </QueryClientProvider>
+    <NetworkProvider>
+      <QueryClientProvider client={queryClient}>
+        <NetworkSwitcher />
+        <LatestBlocks count={5} />
+      </QueryClientProvider>
+    </NetworkProvider>
   )
 }
 

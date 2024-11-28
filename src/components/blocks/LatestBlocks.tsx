@@ -1,5 +1,5 @@
 import { VStack } from "@chakra-ui/react"
-import { useLatestBlocks } from "@/hooks/useLatestBlocks.ts"
+import { useLatestBlocks } from "@/hooks/blocks/useLatestBlocks.ts"
 import { Block } from "@/components/blocks/Block.tsx"
 
 export const LatestBlocks = ({ count }: { count: number }) => {
