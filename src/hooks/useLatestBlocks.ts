@@ -1,5 +1,6 @@
 import { BlockDetail, MAINNET_URL, ThorClient } from "@vechain/sdk-network"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { BEST_BLOCK_KEY, BLOCK_CACHE_KEY, LATEST_BLOCKS_KEY } from "@/constants/QueryKeys.ts"
 
 type UseLatestBlocks = {
   blocks: BlockDetail[]
@@ -11,7 +12,7 @@ export const useLatestBlocks = ({ count }: { count: number }): UseLatestBlocks =
   const queryClient = useQueryClient()
 
   const { data: bestBlock, isLoading: isBestBlockLoading } = useQuery({
-    queryKey: ["bestBlock"],
+    queryKey: [BEST_BLOCK_KEY],
     queryFn: async () => {
       const response = await thorClient.blocks.getBestBlockCompressed()
       return response ? (response as BlockDetail) : null
@@ -20,22 +21,22 @@ export const useLatestBlocks = ({ count }: { count: number }): UseLatestBlocks =
   })
 
   const { data: latestBlocks, isLoading: isPreviousBlocksLoading } = useQuery({
-    queryKey: ["previousBlocks", bestBlock?.number, count],
+    queryKey: [LATEST_BLOCKS_KEY, bestBlock?.number, count],
     queryFn: async () => {
       if (!bestBlock) return []
 
       const blocks: BlockDetail[] = [bestBlock]
-      queryClient.setQueryData(["block", bestBlock.number], bestBlock)
+      queryClient.setQueryData([BLOCK_CACHE_KEY, bestBlock.number], bestBlock)
 
       for (let i = 1; i < count; i++) {
         const blockNumber = bestBlock.number - i
-        const cachedBlock = queryClient.getQueryData<BlockDetail>(["block", blockNumber])
+        const cachedBlock = queryClient.getQueryData<BlockDetail>([BLOCK_CACHE_KEY, blockNumber])
         if (cachedBlock) {
           blocks.push(cachedBlock)
         } else {
           const block = await thorClient.blocks.getBlockCompressed(blockNumber)
           if (block) {
-            queryClient.setQueryData(["block", blockNumber], block as BlockDetail)
+            queryClient.setQueryData([BLOCK_CACHE_KEY, blockNumber], block as BlockDetail)
             blocks.push(block as BlockDetail)
           }
         }
