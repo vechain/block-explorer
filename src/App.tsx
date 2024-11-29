@@ -1,21 +1,19 @@
-import { Card, Text } from "@chakra-ui/react"
 import "./App.css"
-import { HStack } from "@chakra-ui/react"
-import { useLatestBlock } from "./hooks/useLatestBlock"
+import { LatestBlocks } from "./components/blocks/LatestBlocks.tsx"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { NetworkProvider } from "@/providers/NetworkProvider.tsx"
+import NetworkSwitcher from "@/components/network/NetworkSwitcher.tsx"
+
+const queryClient = new QueryClient()
 
 function App() {
-  const block = useLatestBlock()
-
   return (
-    <HStack>
-      <Card.Root>
-        <Card.Header>Latest Block</Card.Header>
-        <Card.Body>
-          <Text>Number: {block?.number}</Text>
-          <Text>ID: {block?.id}</Text>
-        </Card.Body>
-      </Card.Root>
-    </HStack>
+    <NetworkProvider>
+      <QueryClientProvider client={queryClient}>
+        <NetworkSwitcher />
+        <LatestBlocks count={5} />
+      </QueryClientProvider>
+    </NetworkProvider>
   )
 }
 
