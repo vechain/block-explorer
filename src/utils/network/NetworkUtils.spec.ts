@@ -14,4 +14,22 @@ describe("getNetworkByUrl", () => {
     const result = getNetworkByUrl(url)
     expect(result).toBeUndefined()
   })
+
+  it("should be case insensitive", () => {
+    const url = VALID_NETWORKS[0].url.toUpperCase()
+    const result = getNetworkByUrl(url)
+    expect(result).toEqual(VALID_NETWORKS[0])
+  })
+
+  it("should ignore trailing whitespace", () => {
+    const url = VALID_NETWORKS[0].url + " "
+    const result = getNetworkByUrl(url)
+    expect(result).toEqual(VALID_NETWORKS[0])
+  })
+
+  it("should ignore leading whitespace", () => {
+    const url = " " + VALID_NETWORKS[0].url
+    const result = getNetworkByUrl(url)
+    expect(result).toEqual(VALID_NETWORKS[0])
+  })
 })
