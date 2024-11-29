@@ -8,7 +8,7 @@ export const Block = ({ block }: { block: CompressedBlockDetail }) => {
       <Card.Body>
         <Text>No: {block.number.toLocaleString()}</Text>
         <Text>Timestamp: {new Date(block.timestamp * 1000).toLocaleString()}</Text>
-        <Text>Transactions: {block.transactions.length}</Text>
+        <Text>Transactions: {block.transactions?.length ?? 0}</Text>
       </Card.Body>
     </Card.Root>
   )
