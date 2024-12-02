@@ -13,7 +13,7 @@ export function ColorModeProvider(props: ThemeProviderProps) {
   )
 }
 
-export function useColorMode() {
+export const useColorMode = () => {
   const { resolvedTheme, setTheme } = useTheme()
   const toggleColorMode = () => {
     setTheme(resolvedTheme === "light" ? "dark" : "light")
@@ -25,7 +25,7 @@ export function useColorMode() {
   }
 }
 
-export function useColorModeValue<T>(light: T, dark: T) {
+export const useColorModeValue = <T,>(light: T, dark: T) => {
   const { colorMode } = useColorMode()
   return colorMode === "light" ? light : dark
 }
@@ -35,7 +35,7 @@ export function ColorModeIcon() {
   return colorMode === "light" ? <LuSun /> : <LuMoon />
 }
 
-interface ColorModeButtonProps extends Omit<IconButtonProps, "aria-label"> {}
+type ColorModeButtonProps = Omit<IconButtonProps, "aria-label">
 
 export const ColorModeButton = forwardRef<
   HTMLButtonElement,
