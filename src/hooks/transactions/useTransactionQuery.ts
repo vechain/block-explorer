@@ -16,14 +16,17 @@ export const useTransactionQuery = (): UseTransactionQuery => {
     async (txId: string): Promise<TransactionDetailNoRaw | null> => {
       let tx: TransactionDetailNoRaw | null = null
 
-      const cachedTx = queryClient.getQueryData([TRANSACTION_CACHE_KEY, txId])
-      if (cachedTx) return cachedTx as TransactionDetailNoRaw
+      try {
+        const cachedTx = queryClient.getQueryData([TRANSACTION_CACHE_KEY, txId])
+        if (cachedTx) return cachedTx as TransactionDetailNoRaw
 
-      tx = await thorClient.transactions.getTransaction(txId)
-      if (!tx) return null
+        tx = await thorClient.transactions.getTransaction(txId)
+        if (!tx) return null
 
-      queryClient.setQueryData([TRANSACTION_CACHE_KEY, txId], tx)
-
+        queryClient.setQueryData([TRANSACTION_CACHE_KEY, txId], tx)
+      } catch (error) {
+        console.error("Failed to fetch transaction", error)
+      }
       return tx
     },
     [thorClient, queryClient],

@@ -2,6 +2,7 @@
 import { HStack } from "@chakra-ui/react"
 import NetworkSwitcher from "@/components/network/NetworkSwitcher.tsx"
 import { ColorModeButton } from "@/components/ui/ColorMode.tsx"
+import SearchBar from "@/components/search/SearchBar.tsx"
 
 const Navbar = () => {
   return (
@@ -9,6 +10,7 @@ const Navbar = () => {
       <a href="/">Home</a>
       <NetworkSwitcher />
       <ColorModeButton />
+      <SearchBar />
     </HStack>
   )
 }

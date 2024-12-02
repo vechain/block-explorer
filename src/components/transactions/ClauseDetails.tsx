@@ -20,6 +20,10 @@ export const ClauseDetails = ({
     navigate(`/block/${blockId}`)
   }
 
+  const handleAccountClick = (address: string) => {
+    navigate(`/account/${address}`)
+  }
+
   return (
     <Card.Root>
       <Card.Header>Clause</Card.Header>
@@ -31,8 +35,14 @@ export const ClauseDetails = ({
           <Text onClick={() => handleTransactionClick(transaction.id)} style={{ cursor: "pointer" }}>
             Tx: {transaction.id}
           </Text>
-          <Text>Origin: {transaction.origin}</Text>
-          <Text>To: {clause.to}</Text>
+          <Text onClick={() => handleAccountClick(transaction.origin)} style={{ cursor: "pointer" }}>
+            Origin: {transaction.origin}
+          </Text>
+          {clause.to && (
+            <Text onClick={() => handleAccountClick(clause.to!)} style={{ cursor: "pointer" }}>
+              To: {clause.to}
+            </Text>
+          )}
           <Text>Value: {clause.value}</Text>
           <Text>Data: {clause.data}</Text>
         </Card.Body>
