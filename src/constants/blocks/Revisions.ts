@@ -1,1 +1,1 @@
-export const Revisions = ["best", "finalized"]
+export const Revisions = ["best", "justified", "finalized"]
