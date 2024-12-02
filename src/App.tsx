@@ -7,7 +7,7 @@ import TransactionDetailsPage from "@/pages/TransactionDetailsPage.tsx"
 import ClauseDetailsPage from "@/pages/ClauseDetailsPage.tsx"
 import NotFoundPage from "@/pages/NotFoundPage.tsx"
 import AccountPage from "@/pages/AccountPage.tsx"
-import Navbar from "@/components/NavBar.tsx"
+import Navbar from "@/components/navigation/NavBar.tsx"
 
 const queryClient = new QueryClient()
 
