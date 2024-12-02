@@ -1,8 +1,8 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { ExpandedBlockDetail } from "@vechain/sdk-network"
-import { BLOCK_CACHE_KEY, LATEST_BLOCKS_KEY } from "@/constants/QueryKeys.ts"
-import { useNetwork } from "@/hooks/network/useNetwork.tsx"
+import { LATEST_BLOCKS_KEY } from "@/constants/QueryKeys.ts"
 import { useBestBlock } from "@/hooks/blocks/useBestBlock.ts"
+import { useBlockQuery } from "@/hooks/blocks/useBlockQuery.ts"
 
 type UseLatestBlocks = {
   blocks: ExpandedBlockDetail[]
@@ -15,8 +15,7 @@ type UseLatestBlocks = {
  * @returns {UseLatestBlocks} - An array of blocks and the loading state.
  */
 export const useLatestBlocks = ({ count }: { count: number }): UseLatestBlocks => {
-  const { thorClient, selectedNetwork } = useNetwork()
-  const queryClient = useQueryClient()
+  const { getBlock } = useBlockQuery()
 
   const { bestBlock, isBestBlockLoading } = useBestBlock()
 
@@ -26,28 +25,17 @@ export const useLatestBlocks = ({ count }: { count: number }): UseLatestBlocks =
       if (!bestBlock) return []
 
       const blocks: ExpandedBlockDetail[] = [bestBlock]
-      queryClient.setQueryData([BLOCK_CACHE_KEY, selectedNetwork.name, bestBlock.number], bestBlock)
 
       const blockPromises = []
       for (let i = 1; i < count; i++) {
         const blockNumber = bestBlock.number - i
-        const cachedBlock = queryClient.getQueryData<ExpandedBlockDetail>([
-          BLOCK_CACHE_KEY,
-          selectedNetwork.name,
-          blockNumber,
-        ])
 
-        if (cachedBlock) {
-          blocks.push(cachedBlock)
-        } else {
-          blockPromises.push(thorClient.blocks.getBlockExpanded(blockNumber))
-        }
+        blockPromises.push(getBlock(blockNumber))
       }
 
       const fetchedBlocks = await Promise.all(blockPromises)
       fetchedBlocks.forEach(block => {
         if (block) {
-          queryClient.setQueryData([BLOCK_CACHE_KEY, selectedNetwork.name, block.number], block as ExpandedBlockDetail)
           blocks.push(block as ExpandedBlockDetail)
         }
       })

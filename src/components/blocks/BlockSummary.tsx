@@ -1,11 +1,17 @@
 import { Card, Text } from "@chakra-ui/react"
 import { ExpandedBlockDetail } from "@vechain/sdk-network"
+import { useNavigate } from "react-router-dom"
 
-export const Block = ({ block }: { block: ExpandedBlockDetail }) => {
+export const BlockSummary = ({ block }: { block: ExpandedBlockDetail }) => {
+  const navigate = useNavigate()
   const clauseCount = block.transactions?.reduce((count, tx) => count + (tx.clauses?.length ?? 0), 0) ?? 0
 
+  const handleClick = () => {
+    navigate(`/block/${block.id}`)
+  }
+
   return (
-    <Card.Root>
+    <Card.Root onClick={handleClick} style={{ cursor: "pointer" }}>
       <Card.Header>{block.id}</Card.Header>
       <Card.Body>
         <Text>No: {block.number.toLocaleString()}</Text>
