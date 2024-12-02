@@ -2,8 +2,8 @@ import { useParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { ACCOUNT_KEY } from "@/constants/QueryKeys.ts"
 import { useNetwork } from "@/hooks/network/useNetwork.tsx"
-import { Card } from "@chakra-ui/react"
 import { useAccountsQuery } from "@/hooks/accounts/useAccountsQuery.ts"
+import { AccountDetails } from "@/components/accounts/AccountDetails.tsx"
 
 const AccountPage = () => {
   const { address } = useParams<{ address: string }>()
@@ -20,16 +20,9 @@ const AccountPage = () => {
     enabled: !!address,
   })
 
-  if (isLoading) return <div>Loading...</div>
+  if (isLoading || !account) return <div>Loading...</div>
 
-  return (
-    <Card.Root>
-      <Card.Header>Account</Card.Header>
-      <Card.Body>
-        <pre>{JSON.stringify(account, null, 2)}</pre>
-      </Card.Body>
-    </Card.Root>
-  )
+  return <AccountDetails account={account} />
 }
 
 export default AccountPage
