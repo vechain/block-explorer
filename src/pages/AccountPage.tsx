@@ -11,7 +11,7 @@ const AccountPage = () => {
   const { getAccount } = useAccountsQuery()
 
   const { data: account, isLoading: isLoading } = useQuery({
-    queryKey: [ACCOUNT_KEY, selectedNetwork.name],
+    queryKey: [ACCOUNT_KEY, address, selectedNetwork.name],
     queryFn: async () => {
       if (!address) return null
       return getAccount(address)
