@@ -5,7 +5,8 @@ export const AccountDetails = ({ account }: { account: AccountResponse }) => {
   return (
     <Card.Root>
       <Card.Header>
-        {account.details.hasCode ? "Contract" : "Account"}: {account.address.toString()}
+        {account.details.hasCode ? "Contract" : "Account"}: {account.vns ? account.vns : ""}{" "}
+        {account.address.toString()}
       </Card.Header>
       <Card.Body>
         <Text>VET {account.details.vet.toString()}</Text>
