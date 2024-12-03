@@ -16,7 +16,7 @@ const AccountPage = () => {
       if (!address) return null
       return getAccount(address)
     },
-    refetchInterval: 10000, // Poll every 10 seconds
+    refetchInterval: 30000, // Poll every 30 seconds
     enabled: !!address,
   })
 

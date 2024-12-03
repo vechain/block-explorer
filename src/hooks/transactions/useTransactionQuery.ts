@@ -24,8 +24,11 @@ export const useTransactionQuery = (): UseTransactionQuery => {
         if (!tx) return null
 
         queryClient.setQueryData([TRANSACTION_CACHE_KEY, txId], tx)
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
-        console.error("Failed to fetch transaction", error)
+        // No need to log as errors are expected
+        // console.error("Failed to fetch transaction", error)
       }
       return tx
     },

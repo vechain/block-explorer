@@ -35,8 +35,11 @@ export const useBlockQuery = (): UseBlockQuery => {
         // Update the cache with the block (store by both number and id)
         queryClient.setQueryData([BLOCK_CACHE_KEY, selectedNetwork.name, block.number], block)
         queryClient.setQueryData([BLOCK_CACHE_KEY, selectedNetwork.name, block.id], block)
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
-        console.error("Failed to fetch block", error)
+        // No need to log as errors are expected
+        // console.error("Failed to fetch block", error)
       }
       return block
     },

@@ -1,12 +1,18 @@
 import { MAINNET_URL, TESTNET_URL } from "@vechain/sdk-network"
 
 export type Network = {
-  name: string
+  name: NETWORK
   url: string
 }
 
+export enum NETWORK {
+  MAIN = "Mainnet",
+  TEST = "Testnet",
+  SOLO = "Solo",
+}
+
 export const VALID_NETWORKS: Network[] = [
-  { name: "Mainnet", url: MAINNET_URL },
-  { name: "Testnet", url: TESTNET_URL },
-  { name: "Solo", url: "http://localhost:8669" },
+  { name: NETWORK.MAIN, url: MAINNET_URL },
+  { name: NETWORK.TEST, url: TESTNET_URL },
+  { name: NETWORK.SOLO, url: "http://localhost:8669" },
 ]
