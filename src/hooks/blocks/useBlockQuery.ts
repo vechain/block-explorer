@@ -17,24 +17,27 @@ export const useBlockQuery = (): UseBlockQuery => {
     async (revision: string | number): Promise<ExpandedBlockDetail | null> => {
       let block: ExpandedBlockDetail | null = null
 
-      // Determine the type of revision and handle accordingly
-      // If the revision is best, justified or finalised then don't use the cache
-      if (typeof revision === "string" && Revisions.includes(revision.trim().toLowerCase())) {
-        block = await thorClient.blocks.getBlockExpanded(revision)
-      } else {
-        // Check the cache for the block
-        const cachedBlock = queryClient.getQueryData([BLOCK_CACHE_KEY, selectedNetwork.name, revision])
-        if (cachedBlock) return cachedBlock as ExpandedBlockDetail
+      try {
+        // Determine the type of revision and handle accordingly
+        // If the revision is best, justified or finalised then don't use the cache
+        if (typeof revision === "string" && Revisions.includes(revision.trim().toLowerCase())) {
+          block = await thorClient.blocks.getBlockExpanded(revision)
+        } else {
+          // Check the cache for the block
+          const cachedBlock = queryClient.getQueryData([BLOCK_CACHE_KEY, selectedNetwork.name, revision])
+          if (cachedBlock) return cachedBlock as ExpandedBlockDetail
 
-        // Fetch the block from the network
-        block = await thorClient.blocks.getBlockExpanded(revision)
+          // Fetch the block from the network
+          block = await thorClient.blocks.getBlockExpanded(revision)
+        }
+        if (!block) return null
+
+        // Update the cache with the block (store by both number and id)
+        queryClient.setQueryData([BLOCK_CACHE_KEY, selectedNetwork.name, block.number], block)
+        queryClient.setQueryData([BLOCK_CACHE_KEY, selectedNetwork.name, block.id], block)
+      } catch (error) {
+        console.error("Failed to fetch block", error)
       }
-      if (!block) return null
-
-      // Update the cache with the block (store by both number and id)
-      queryClient.setQueryData([BLOCK_CACHE_KEY, selectedNetwork.name, block.number], block)
-      queryClient.setQueryData([BLOCK_CACHE_KEY, selectedNetwork.name, block.id], block)
-
       return block
     },
     [thorClient, queryClient, selectedNetwork],
