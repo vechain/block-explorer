@@ -17,7 +17,7 @@ export const TransactionsPerSecond = ({ numBlocks }: { numBlocks: number }) => {
 
     // Calculate the transactions per second
     return totalTransactions / timeDifference
-  }, [blocks])
+  }, [blocks, numBlocks])
 
   return (
     <Card.Root>

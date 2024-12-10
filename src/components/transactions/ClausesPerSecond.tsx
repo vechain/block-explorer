@@ -19,7 +19,7 @@ export const ClausesPerSecond = ({ numBlocks }: { numBlocks: number }) => {
 
     // Calculate the clauses per second
     return totalClauses / timeDifference
-  }, [blocks])
+  }, [blocks, numBlocks])
 
   return (
     <Card.Root>
