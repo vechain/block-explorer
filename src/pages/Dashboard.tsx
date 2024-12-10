@@ -8,8 +8,8 @@ const Dashboard = () => {
   return (
     <VStack>
       <HStack>
-        <TransactionsPerSecond />
-        <ClausesPerSecond />
+        <TransactionsPerSecond numBlocks={10} />
+        <ClausesPerSecond numBlocks={10} />
         <LastBlock />
       </HStack>
       <LatestBlocks count={5} />
