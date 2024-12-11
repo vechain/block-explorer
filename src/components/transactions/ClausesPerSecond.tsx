@@ -23,9 +23,9 @@ export const ClausesPerSecond = ({ numBlocks }: { numBlocks: number }) => {
 
   return (
     <Card.Root>
-      <Card.Header>Clauses per second</Card.Header>
+      <Card.Header>Clauses</Card.Header>
       <Card.Body>
-        <Text>{clausesPerSec.toLocaleString()}</Text>
+        <Text>{clausesPerSec.toLocaleString()} per second</Text>
         <Card.Description>Last {numBlocks} blocks</Card.Description>
       </Card.Body>
     </Card.Root>

@@ -24,7 +24,7 @@ describe("TransactionsPerSecond", () => {
     )
 
     const transactionsPerSec = (3 + 2) / (100 - 80)
-    expect(screen.getByText(transactionsPerSec.toLocaleString())).toBeInTheDocument()
+    expect(screen.getByText(transactionsPerSec.toLocaleString() + " per second")).toBeInTheDocument()
     expect(screen.getByText("Last 2 blocks")).toBeInTheDocument()
   })
 
@@ -38,7 +38,7 @@ describe("TransactionsPerSecond", () => {
       </ChakraProvider>,
     )
 
-    expect(screen.getByText("0")).toBeInTheDocument()
+    expect(screen.getByText("0 per second")).toBeInTheDocument()
     expect(screen.getByText("Last 3 blocks")).toBeInTheDocument()
   })
 })

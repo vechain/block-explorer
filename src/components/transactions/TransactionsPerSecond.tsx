@@ -21,9 +21,9 @@ export const TransactionsPerSecond = ({ numBlocks }: { numBlocks: number }) => {
 
   return (
     <Card.Root>
-      <Card.Header>Transactions per second</Card.Header>
+      <Card.Header>Transactions</Card.Header>
       <Card.Body>
-        <Text>{transactionsPerSec.toLocaleString()}</Text>
+        <Text>{transactionsPerSec.toLocaleString()} per second</Text>
         <Card.Description>Last {numBlocks} blocks</Card.Description>
       </Card.Body>
     </Card.Root>

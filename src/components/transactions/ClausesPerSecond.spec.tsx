@@ -24,7 +24,7 @@ describe("ClausesPerSecond", () => {
     )
 
     const clausesPerSec = 9 / (100 - 80)
-    expect(screen.getByText(clausesPerSec.toLocaleString())).toBeInTheDocument()
+    expect(screen.getByText(clausesPerSec.toLocaleString() + " per second")).toBeInTheDocument()
     expect(screen.getByText("Last 2 blocks")).toBeInTheDocument()
   })
 
@@ -38,7 +38,7 @@ describe("ClausesPerSecond", () => {
       </ChakraProvider>,
     )
 
-    expect(screen.getByText("0")).toBeInTheDocument()
+    expect(screen.getByText("0 per second")).toBeInTheDocument()
     expect(screen.getByText("Last 3 blocks")).toBeInTheDocument()
   })
 })
