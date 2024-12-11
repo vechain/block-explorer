@@ -11,7 +11,7 @@ const Dashboard = () => {
       <HStack>
         <TransactionsPerSecond numBlocks={10} />
         <ClausesPerSecond numBlocks={10} />
-        <ActionsPerSecond numBlocks={100} />
+        <ActionsPerSecond numBlocks={10} />
         <LastBlock />
       </HStack>
       <LatestBlocks count={5} />

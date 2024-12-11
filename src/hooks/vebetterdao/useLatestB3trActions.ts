@@ -4,16 +4,19 @@ import { useBestBlock } from "@/hooks/blocks/useBestBlock.ts"
 import { RewardDistributedEventSignature } from "@/constants/vebetterdao/EventSignatures.ts"
 
 export const useLatestB3trActions = ({ numBlocks }: { numBlocks: number }) => {
-  const { thorClient } = useNetwork()
+  const { thorClient, selectedNetwork } = useNetwork()
   const { bestBlock } = useBestBlock()
 
   const { data, isLoading } = useQuery({
     queryKey: ["latestB3trActions", bestBlock?.id, numBlocks],
     queryFn: async () => {
+      if (!bestBlock || !selectedNetwork.contracts.X2EarnRewardsPool) {
+        return []
+      }
       return await thorClient.logs.filterRawEventLogs({
         criteriaSet: [
           {
-            address: "0x6Bee7DDab6c99d5B2Af0554EaEA484CE18F52631",
+            address: selectedNetwork.contracts.X2EarnRewardsPool,
             topic0: RewardDistributedEventSignature,
           },
         ],
@@ -24,7 +27,7 @@ export const useLatestB3trActions = ({ numBlocks }: { numBlocks: number }) => {
         order: "desc",
       })
     },
-    enabled: !!bestBlock,
+    enabled: !!bestBlock && !!selectedNetwork.contracts.X2EarnRewardsPool,
   })
 
   return {
