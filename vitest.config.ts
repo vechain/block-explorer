@@ -9,6 +9,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html"],
     },
+    setupFiles: "./test/setup.ts",
   },
   resolve: {
     alias: {
