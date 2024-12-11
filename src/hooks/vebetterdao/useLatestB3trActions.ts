@@ -14,16 +14,17 @@ export const useLatestB3trActions = ({ numBlocks }: { numBlocks: number }) => {
         return []
       }
       return await thorClient.logs.filterRawEventLogs({
+        range: {
+          unit: "block",
+          to: bestBlock.number,
+          from: bestBlock.number - numBlocks,
+        },
         criteriaSet: [
           {
             address: selectedNetwork.contracts.X2EarnRewardsPool,
             topic0: RewardDistributedEventSignature,
           },
         ],
-        options: {
-          offset: 0,
-          limit: numBlocks, // Adjust as needed
-        },
         order: "desc",
       })
     },
