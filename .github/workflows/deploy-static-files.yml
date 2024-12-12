@@ -1,7 +1,7 @@
 name: Deploy static files
 on:
     push:
-        branches: [master]
+        branches: [main]
         paths: ['src/**', '.github/workflows/deploy-static-files.yml']
 permissions:
   id-token: write   # This is required for requesting the JWT
