@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local .terraform directories
+**/.terraform/*
+**/.terragrunt-cache/*
+**/.terragrunt*
+**/.terraform.lock.hcl
