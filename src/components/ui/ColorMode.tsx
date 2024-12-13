@@ -2,10 +2,15 @@
 
 import type { IconButtonProps } from "@chakra-ui/react"
 import { ClientOnly, IconButton, Skeleton } from "@chakra-ui/react"
-import { ThemeProvider, useTheme } from "next-themes"
-import type { ThemeProviderProps } from "next-themes/dist/types"
+import { ThemeProvider as NextThemesProvider,useTheme } from "next-themes";
 import { forwardRef } from "react"
 import { LuMoon, LuSun } from "react-icons/lu"
+
+type ThemeProviderProps = React.ComponentProps<typeof NextThemesProvider>;
+
+export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+}
 
 export function ColorModeProvider(props: ThemeProviderProps) {
   return (
