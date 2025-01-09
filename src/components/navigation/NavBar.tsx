@@ -1,7 +1,8 @@
 import React from "react"
 import { Box, Flex, Button, Text, HStack, Image } from "@chakra-ui/react"
-import { LuDownload, LuGlobe } from "react-icons/lu"
+import { LuDownload } from "react-icons/lu"
 import { ColorModeButton } from "@/components/ui/ColorMode.tsx"
+import NetworkSwitcher from "../network/NetworkSwitcher"
 
 const Navbar: React.FC = () => {
   return (
@@ -23,21 +24,14 @@ const Navbar: React.FC = () => {
         <HStack gap={4}>
           <Box>
             <Button color={"grey.600"} bg={"white"} borderColor={"grey.200"}>
-              <LuDownload />
+              <LuDownload color="black" />
               <Text fontSize="sm" fontWeight="bold">
                 <Text />
                 Download VeWorld
               </Text>
             </Button>
           </Box>
-          <Box>
-            <Button bg={"grey.500"}>
-              <LuGlobe />
-              <Text fontSize="sm" fontWeight="bold">
-                Mainnet
-              </Text>
-            </Button>
-          </Box>
+          <NetworkSwitcher />
           <ColorModeButton />
         </HStack>
       </Flex>

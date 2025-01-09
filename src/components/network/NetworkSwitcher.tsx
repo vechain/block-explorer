@@ -1,6 +1,11 @@
+"use client"
+
 import React, { useState } from "react"
 import { useNetwork } from "@/hooks/network/useNetwork"
 import { VALID_NETWORKS } from "@/constants/network/NetworkConst"
+import { Box, Text } from "@chakra-ui/react"
+import { NativeSelectRoot, NativeSelectField } from "../ui/NativeSelect"
+import { LuGlobe } from "react-icons/lu"
 
 const NetworkSwitcher: React.FC = () => {
   const { switchNetwork, selectedNetwork } = useNetwork()
@@ -16,19 +21,31 @@ const NetworkSwitcher: React.FC = () => {
   }
 
   return (
-    <div>
-      <select id="network-select" value={selectedNetwork?.url || ""} onChange={handleNetworkChange}>
-        <option value="" disabled>
-          --Please choose a network--
-        </option>
-        {VALID_NETWORKS.map(network => (
-          <option key={network.url} value={network.url}>
-            {network.name}
-          </option>
-        ))}
-      </select>
-      {error && <p style={{ color: "red", marginTop: "8px" }}>{error}</p>}
-    </div>
+    <Box width="120px">
+      <NativeSelectRoot icon={<LuGlobe color="white" />} size="md">
+        <NativeSelectField
+          placeholder="--Please choose a network--"
+          value={selectedNetwork?.url || ""}
+          onChange={handleNetworkChange}
+          bg="gray.500"
+          border={"none"}
+          color="white"
+          fontWeight={"600"}
+          _hover={{ bg: "gray.200" }}
+          _focus={{ bg: "gray.200", outline: "none", boxShadow: "outline" }}>
+          {VALID_NETWORKS.map(network => (
+            <option key={network.url} value={network.url}>
+              {network.name}
+            </option>
+          ))}
+        </NativeSelectField>
+      </NativeSelectRoot>
+      {error && (
+        <Text color="red.500" mt="2" fontSize="sm">
+          {error}
+        </Text>
+      )}
+    </Box>
   )
 }
 
