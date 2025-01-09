@@ -7,8 +7,17 @@ export const config = createSystem(defaultConfig, {
         heading: { value: `'Roboto', sans-serif` },
         body: { value: `'Roboto', sans-serif` },
       },
+      colors: {
+        white: {
+          value: "#fff",
+        },
+        grey: {
+          200: { value: "#E7E9EB" },
+          300: { value: "#D2D5D9" },
+          500: { value: "#747C89" },
+          600: { value: "#525860" },
+        },
+      },
     },
   },
 })
-
-
