@@ -8,6 +8,7 @@ import ClauseDetailsPage from "@/pages/ClauseDetailsPage.tsx"
 import NotFoundPage from "@/pages/NotFoundPage.tsx"
 import AccountPage from "@/pages/AccountPage.tsx"
 import Navbar from "@/components/navigation/NavBar.tsx"
+import { Box } from "@chakra-ui/react"
 
 const queryClient = new QueryClient()
 
@@ -16,7 +17,10 @@ const App = () => {
     <NetworkProvider>
       <QueryClientProvider client={queryClient}>
         <Router>
-          <Navbar />
+          <Box bg="linear-gradient(180deg, #525860 0%, #363A3F 100%)" px={6} py={4}>
+            <Navbar />
+          </Box>
+
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/block/:blockId" element={<BlockDetailsPage />} />
