@@ -1,6 +1,8 @@
 import { Box, Input, Text, VStack, Flex, Icon } from "@chakra-ui/react"
 import { InputGroup } from "../ui/InputGroup"
-import { LuArrowBigRight, LuBox, LuPersonStanding, LuSearch } from "react-icons/lu"
+import { LuArrowBigRight, LuBox, LuSearch } from "react-icons/lu"
+import { FaLinode } from "react-icons/fa"
+
 import InsightData from "./InisghtData"
 
 const BlockchainInsightsComponent = () => {
@@ -45,7 +47,7 @@ const BlockchainInsightsComponent = () => {
           <InsightData
             icon={
               <Icon mr={2} size={"md"} color={"grey.400"}>
-                <LuPersonStanding />
+                <FaLinode />
               </Icon>
             }
             label="Validator Nodes"
