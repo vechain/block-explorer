@@ -22,15 +22,12 @@ const Navbar: React.FC = () => {
           </Box>
         </HStack>
         <HStack gap={4}>
-          <Box>
-            <Button color={"grey.600"} bg={"white"} borderColor={"grey.200"}>
-              <LuDownload color="black" />
-              <Text fontSize="sm" fontWeight="bold">
-                <Text />
-                Download VeWorld
-              </Text>
-            </Button>
-          </Box>
+          <Button color={"grey.600"} bg={"white"} borderColor={"grey.200"}>
+            <LuDownload color="black" />
+            <Text fontSize="sm" fontWeight="bold">
+              Download VeWorld
+            </Text>
+          </Button>
           <NetworkSwitcher />
           <ColorModeButton />
         </HStack>
