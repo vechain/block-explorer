@@ -8,7 +8,7 @@ import InsightData from "./InisghtData"
 const BlockchainInsightsComponent = () => {
   return (
     <Flex w="100%" m={4} justifyContent="center">
-      <Flex w="60%" borderRadius="24px" bg="grey.700" gap={6} p={12}>
+      <Flex w="70%" borderRadius="24px" bg="grey.700" gap={6} p={12}>
         <VStack flex={8} justify={"center"}>
           <Text textAlign={"left"} w={"100%"} fontSize="18px" color={"grey.200"} fontWeight={600}>
             Tracking Blockchain Insights and Sustainability Metrics
@@ -25,7 +25,7 @@ const BlockchainInsightsComponent = () => {
             />
           </InputGroup>
         </VStack>
-        <Box flex="3" textAlign="center">
+        <Box flex="4" textAlign="center">
           <InsightData
             icon={
               <Icon mr={1} size={"md"} color={"grey.400"}>
