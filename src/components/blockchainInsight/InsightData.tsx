@@ -37,9 +37,9 @@ const InsightData = ({ icon, label, value, loading }: StatCardProps) => {
           {icon}
           {label}
         </Text>
-        <Text color="grey.300" fontWeight="bold" textAlign="right">
+        <Box textAlign="right" color="grey.300" fontWeight="bold">
           {loading ? <Skeleton height="20px" width="100px" /> : value}
-        </Text>
+        </Box>
       </Flex>
     </Box>
   )
