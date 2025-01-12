@@ -2,16 +2,20 @@ import { Box, Input, Text, VStack, Flex, Icon } from "@chakra-ui/react"
 import { InputGroup } from "../ui/InputGroup"
 import { LuArrowBigRight, LuBox, LuSearch } from "react-icons/lu"
 import { FaLinode } from "react-icons/fa"
-
-import InsightData from "./InisghtData"
+import InsightData from "./InsightData"
+import { useBestBlock } from "@/hooks/blocks/useBestBlock.ts"
+import { useTranslation } from "react-i18next"
 
 const BlockchainInsightsComponent = () => {
+  const { bestBlock, isBestBlockLoading } = useBestBlock()
+  const { t } = useTranslation()
+
   return (
     <Flex w="100%" m={4} justifyContent="center">
-      <Flex w="70%" borderRadius="24px" bg="grey.700" gap={6} p={12}>
+      <Flex w="80%" borderRadius="24px" bg="grey.700" gap={6} p={12}>
         <VStack flex={8} justify={"center"}>
           <Text textAlign={"left"} w={"100%"} fontSize="18px" color={"grey.200"} fontWeight={600}>
-            Tracking Blockchain Insights and Sustainability Metrics
+            {t("tracking_blockchain_insights")}
           </Text>
           <InputGroup w={"100%"} pt={4} startElement={<LuSearch />}>
             <Input
@@ -20,7 +24,7 @@ const BlockchainInsightsComponent = () => {
               borderRadius={"12px"}
               bg={"white"}
               color={"grey.400"}
-              placeholder="Search transactions, blocks, addresses, contracts or VNS domains..."
+              placeholder={t("search_placeholder")}
               _placeholder={{ opacity: 0.7 }}
             />
           </InputGroup>
@@ -32,8 +36,9 @@ const BlockchainInsightsComponent = () => {
                 <LuBox />
               </Icon>
             }
-            label="Block Number"
-            value={"-----"}
+            label={t("block_number")}
+            value={bestBlock?.number.toLocaleString()}
+            loading={isBestBlockLoading}
           />
           <InsightData
             icon={
@@ -41,7 +46,7 @@ const BlockchainInsightsComponent = () => {
                 <LuArrowBigRight />
               </Icon>
             }
-            label="Total Transactions"
+            label={t("total_transactions")}
             value={"-----"}
           />
           <InsightData
@@ -50,7 +55,7 @@ const BlockchainInsightsComponent = () => {
                 <FaLinode />
               </Icon>
             }
-            label="Validator Nodes"
+            label={t("validator_nodes")}
             value={"-----"}
           />
         </Box>
