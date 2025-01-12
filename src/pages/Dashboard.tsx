@@ -8,7 +8,7 @@ import BlockchainInsightsComponent from "@/components/blockchainInsight/Blockcha
 
 const Dashboard = () => {
   return (
-    <Flex w={"100%"} direction="column" align="center">
+    <Flex w={"100%"} direction="column" align="center" mt={-36}>
       <BlockchainInsightsComponent />
       <TransactionsPerSecond numBlocks={10} />
       <ClausesPerSecond numBlocks={10} />

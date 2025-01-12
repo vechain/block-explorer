@@ -17,7 +17,7 @@ const App = () => {
     <NetworkProvider>
       <QueryClientProvider client={queryClient}>
         <Router>
-          <Box bg="linear-gradient(180deg, #525860 0%, #363A3F 100%)" px={6} py={4}>
+          <Box bg="linear-gradient(180deg, #525860 0%, #363A3F 100%)" px={6} height={"252px"} py={4}>
             <Navbar />
           </Box>
 
