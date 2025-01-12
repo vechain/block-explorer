@@ -2,7 +2,7 @@ import { Box, Input, Text, VStack, Flex, Icon } from "@chakra-ui/react"
 import { InputGroup } from "../ui/InputGroup"
 import { LuArrowBigRight, LuBox, LuSearch } from "react-icons/lu"
 import { FaLinode } from "react-icons/fa"
-import InsightData from "./InisghtData"
+import InsightData from "./InsightData"
 import { useBestBlock } from "@/hooks/blocks/useBestBlock.ts"
 import { useTranslation } from "react-i18next"
 
