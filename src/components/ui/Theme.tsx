@@ -4,8 +4,8 @@ export const config = createSystem(defaultConfig, {
   theme: {
     tokens: {
       fonts: {
-        heading: { value: `'Roboto', sans-serif` },
-        body: { value: `'Roboto', sans-serif` },
+        heading: { value: `'Inter', sans-serif` },
+        body: { value: `'Inter', sans-serif` },
       },
       colors: {
         white: {
