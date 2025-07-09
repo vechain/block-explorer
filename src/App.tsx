@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { NetworkProvider } from "@/providers/NetworkProvider.tsx"
+import { NetworkProvider } from "@/providers/NetworkProvider"
+import { ThorClientProvider } from "@/context/ThorClientProvider"
 import Dashboard from "@/pages/Dashboard.tsx"
 import BlockDetailsPage from "@/pages/BlockDetailsPage.tsx"
 import TransactionDetailsPage from "@/pages/TransactionDetailsPage.tsx"
@@ -13,7 +14,6 @@ import { Box } from "@chakra-ui/react"
 import { ChakraProvider } from "@chakra-ui/react"
 import { ColorModeProvider } from "@/components/ui/ColorMode.tsx"
 import { config } from "@/components/ui/Theme.tsx"
-
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 
 export default function App() {
@@ -28,14 +28,16 @@ const queryClient = new QueryClient()
 
 function Providers({ children }: React.PropsWithChildren) {
   return (
-    <NetworkProvider>
-      <QueryClientProvider client={queryClient}>
-        <ChakraProvider value={config}>
-          <ColorModeProvider>{children}</ColorModeProvider>
-        </ChakraProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
-    </NetworkProvider>
+    <ThorClientProvider>
+      <NetworkProvider>
+        <QueryClientProvider client={queryClient}>
+          <ChakraProvider value={config}>
+            <ColorModeProvider>{children}</ColorModeProvider>
+          </ChakraProvider>
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </NetworkProvider>
+    </ThorClientProvider>
   )
 }
 
