@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
-import { useThorClient } from "@/hooks/useThorClient"
 import { getVnsAddress } from "@/actions/getVnsAddress"
+import { useThorClient } from "./useThorClient"
 
 export function useVnsAddress(name: string) {
   const { thorClient, activeNetwork } = useThorClient()

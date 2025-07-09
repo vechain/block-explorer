@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
-import { useThorClient } from "@/hooks/useThorClient"
 import { getB3trRewardDistributedEvents } from "@/actions/getB3trRewardDistributedEvents"
+import { useThorClient } from "./useThorClient"
 import { useBestBlock } from "./useBestBlock"
 
 export function useB3trRewardDistributedEvents({ numBlocks }: { numBlocks: number }) {

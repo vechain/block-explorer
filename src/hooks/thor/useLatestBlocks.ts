@@ -1,7 +1,7 @@
 import { useQueries } from "@tanstack/react-query"
-import { useThorClient } from "@/hooks/useThorClient"
 import { getBlock } from "@/actions/getBlock"
 import { Revision } from "@vechain/sdk-core"
+import { useThorClient } from "./useThorClient"
 import { useBestBlock } from "./useBestBlock"
 
 export function useLatestBlocks({ count }: { count: number }) {

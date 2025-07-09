@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
-import { useThorClient } from "@/hooks/useThorClient"
 import { getBlock } from "@/actions/getBlock"
 import { Revision } from "@vechain/sdk-core"
+import { useThorClient } from "./useThorClient"
 
 export function useBestBlock() {
   const { thorClient } = useThorClient()

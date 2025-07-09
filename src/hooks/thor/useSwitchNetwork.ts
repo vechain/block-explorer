@@ -1,4 +1,4 @@
-import { useThorClient } from "@/hooks/useThorClient"
+import { useThorClient } from "./useThorClient"
 
 export function useSwitchNetwork() {
   const { activeNetwork, switchNetwork } = useThorClient()
