@@ -1,4 +1,4 @@
-import { MAINNET_URL, TESTNET_URL } from "@vechain/sdk-network"
+import { MAINNET_URL, TESTNET_URL, THOR_SOLO_URL } from "@vechain/sdk-network"
 
 export type Network = {
   name: NetworkName
@@ -28,7 +28,7 @@ const testnet: Network = {
 
 const solo: Network = {
   name: NetworkName.SOLO,
-  url: "http://localhost:8669",
+  url: THOR_SOLO_URL,
   contracts: {},
 }
 
