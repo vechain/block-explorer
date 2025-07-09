@@ -14,6 +14,8 @@ import { ChakraProvider } from "@chakra-ui/react"
 import { ColorModeProvider } from "@/components/ui/ColorMode.tsx"
 import { config } from "@/components/ui/Theme.tsx"
 
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
+
 export default function App() {
   return (
     <Providers>
@@ -31,6 +33,7 @@ function Providers({ children }: React.PropsWithChildren) {
         <ChakraProvider value={config}>
           <ColorModeProvider>{children}</ColorModeProvider>
         </ChakraProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </NetworkProvider>
   )
