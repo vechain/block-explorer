@@ -1,9 +1,15 @@
 import { Card, List, ListItem, Text } from "@chakra-ui/react"
-import { ExpandedBlockDetail } from "@vechain/sdk-network"
 import { useNavigate } from "react-router-dom"
 
-export const BlockDetails = ({ block }: { block: ExpandedBlockDetail }) => {
+import { useBlock } from "@/hooks/thor/useBlock"
+import { Revision } from "@vechain/sdk-core"
+
+export function BlockDetails({ revision }: { revision: Revision }) {
+  const { data: block, isLoading } = useBlock(revision)
   const navigate = useNavigate()
+
+  if (isLoading) return <div>Loading...</div>
+  if (!block) return <div>Block not found</div>
 
   const handleTransactionClick = (transactionId: string) => {
     navigate(`/transaction/${transactionId}`)
@@ -25,7 +31,7 @@ export const BlockDetails = ({ block }: { block: ExpandedBlockDetail }) => {
         <Text>Finalised: {block.isFinalized ? "Yes" : "No"}</Text>
 
         <List.Root>
-          {block.transactions?.map(tx => (
+          {block.transactions.map(tx => (
             <ListItem key={tx.id} onClick={() => handleTransactionClick(tx.id)} style={{ cursor: "pointer" }}>
               {tx.id}
             </ListItem>
