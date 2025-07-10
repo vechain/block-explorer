@@ -1,16 +1,16 @@
 import { useNavigate } from "react-router-dom"
 import { Card, Text } from "@chakra-ui/react"
-import { TransactionDetailNoRaw } from "@vechain/sdk-network"
+import { Hex } from "@vechain/sdk-core"
+import { useTransaction } from "@/hooks/thor/useTransaction"
 
-export const ClauseDetails = ({
-  transaction,
-  clauseIndex,
-}: {
-  transaction: TransactionDetailNoRaw
-  clauseIndex: number
-}) => {
+export function ClauseDetails({ transactionId, clauseIndex }: { transactionId: Hex; clauseIndex: number }) {
+  const { data: tx, isLoading } = useTransaction(transactionId)
   const navigate = useNavigate()
-  const clause = transaction.clauses[clauseIndex]
+
+  if (isLoading) return <div>Loading...</div>
+  if (!tx) return <div>Transaction not found</div>
+
+  const clause = tx.clauses[clauseIndex]
 
   const handleTransactionClick = (txId: string) => {
     navigate(`/transaction/${txId}`)
@@ -29,14 +29,14 @@ export const ClauseDetails = ({
       <Card.Header>Clause</Card.Header>
       <Card.Body>
         <Card.Body>
-          <Text onClick={() => handleBlockClick(transaction.meta.blockID)} style={{ cursor: "pointer" }}>
-            Block: {transaction.meta.blockID}
+          <Text onClick={() => handleBlockClick(tx.meta.blockID)} style={{ cursor: "pointer" }}>
+            Block: {tx.meta.blockID}
           </Text>
-          <Text onClick={() => handleTransactionClick(transaction.id)} style={{ cursor: "pointer" }}>
-            Tx: {transaction.id}
+          <Text onClick={() => handleTransactionClick(tx.id)} style={{ cursor: "pointer" }}>
+            Tx: {tx.id}
           </Text>
-          <Text onClick={() => handleAccountClick(transaction.origin)} style={{ cursor: "pointer" }}>
-            Origin: {transaction.origin}
+          <Text onClick={() => handleAccountClick(tx.origin)} style={{ cursor: "pointer" }}>
+            Origin: {tx.origin}
           </Text>
           {clause.to && (
             <Text onClick={() => handleAccountClick(clause.to!)} style={{ cursor: "pointer" }}>
