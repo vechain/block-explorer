@@ -5,7 +5,6 @@ import { useBestBlock } from "./useBestBlock"
 
 export function useB3trRewardDistributedEvents({ numBlocks }: { numBlocks: number }) {
   const { thorClient, activeNetwork } = useThorClient()
-
   const { data: bestBlock } = useBestBlock()
 
   const bestBlockNumber = bestBlock?.number ?? 0
@@ -21,6 +20,6 @@ export function useB3trRewardDistributedEvents({ numBlocks }: { numBlocks: numbe
         fromBlock,
         toBlock,
       }),
-    enabled: !!bestBlock,
+    enabled: !!bestBlockNumber,
   })
 }
