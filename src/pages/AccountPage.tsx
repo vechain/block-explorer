@@ -1,28 +1,17 @@
-import { useParams } from "react-router-dom"
-import { useQuery } from "@tanstack/react-query"
-import { ACCOUNT_KEY } from "@/constants/QueryKeys.ts"
-import { useNetwork } from "@/hooks/network/useNetwork.tsx"
-import { useAccountsQuery } from "@/hooks/accounts/useAccountsQuery.ts"
+import { useNavigate, useParams } from "react-router-dom"
 import { AccountDetails } from "@/components/accounts/AccountDetails.tsx"
+import { parseAddress } from "@/utils/address"
 
-const AccountPage = () => {
+export default function AccountPage() {
   const { address } = useParams<{ address: string }>()
-  const { selectedNetwork } = useNetwork()
-  const { getAccount } = useAccountsQuery()
+  const navigate = useNavigate()
 
-  const { data: account, isLoading: isLoading } = useQuery({
-    queryKey: [ACCOUNT_KEY, address, selectedNetwork.name],
-    queryFn: async () => {
-      if (!address) return null
-      return getAccount(address)
-    },
-    refetchInterval: 30000, // Poll every 30 seconds
-    enabled: !!address,
-  })
+  const addr = parseAddress(address)
 
-  if (isLoading || !account) return <div>Loading...</div>
+  if (!addr) {
+    navigate("/404")
+    return null
+  }
 
-  return <AccountDetails account={account} />
+  return <AccountDetails address={addr} />
 }
-
-export default AccountPage
