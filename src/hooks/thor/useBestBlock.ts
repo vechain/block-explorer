@@ -9,6 +9,6 @@ export function useBestBlock() {
   return useQuery({
     queryKey: [getBlock.name, Revision.BEST.toString()],
     queryFn: () => getBlock({ thorClient, revision: Revision.BEST }),
-    refetchInterval: 3000, // Poll every 3 seconds
+    staleTime: 10000,
   })
 }

@@ -9,5 +9,6 @@ export function useBlock(revision: Revision) {
   return useQuery({
     queryKey: [getBlock.name, revision.toString()],
     queryFn: () => getBlock({ thorClient, revision }),
+    staleTime: Infinity,
   })
 }

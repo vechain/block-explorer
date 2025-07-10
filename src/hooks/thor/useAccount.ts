@@ -9,5 +9,6 @@ export function useAccount(address: Address) {
   return useQuery({
     queryKey: [getAccount.name, address.toString(), activeNetwork.name],
     queryFn: () => getAccount({ thorClient, address }),
+    staleTime: Infinity,
   })
 }

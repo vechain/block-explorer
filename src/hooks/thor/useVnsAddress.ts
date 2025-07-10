@@ -8,5 +8,6 @@ export function useVnsAddress(name: string) {
   return useQuery({
     queryKey: [getVnsAddress.name, name, activeNetwork.name],
     queryFn: () => getVnsAddress({ thorClient, networkName: activeNetwork.name, name }),
+    staleTime: Infinity,
   })
 }

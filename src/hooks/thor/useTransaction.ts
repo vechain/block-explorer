@@ -9,5 +9,6 @@ export function useTransaction(transactionId: Hex) {
   return useQuery({
     queryKey: [getTransaction.name, transactionId.toString()],
     queryFn: () => getTransaction({ thorClient, transactionId }),
+    staleTime: Infinity,
   })
 }
