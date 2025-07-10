@@ -7,19 +7,19 @@ describe("Revision utils", () => {
     it("should return the revision for a valid revision string", () => {
       const revisionString = "1234567890"
       const revision = parseRevision(revisionString)
-      expect(revision).toBe(Revision.of(revisionString))
+      expect(revision).toEqual(Revision.of(revisionString))
     })
 
     it("should return the revision for a valid revision number", () => {
       const revisionNumber = 123456
       const revision = parseRevision(revisionNumber)
-      expect(revision).toBe(Revision.of(revisionNumber))
+      expect(revision).toEqual(Revision.of(revisionNumber))
     })
 
     it("should return the revision for the BEST revision", () => {
       const revisionString = Revision.BEST.toString()
       const revision = parseRevision(revisionString)
-      expect(revision).toBe(Revision.BEST)
+      expect(revision).toEqual(Revision.BEST)
     })
 
     it("should return undefined for an invalid revision string", () => {

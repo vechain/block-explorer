@@ -7,7 +7,7 @@ describe("Address utils", () => {
     it("should return the address for a valid address string", () => {
       const addressString = "0x1234567890abcdef1234567890abcdef12345678"
       const address = parseAddress(addressString)
-      expect(address).toBe(Address.of(addressString))
+      expect(address).toEqual(Address.of(addressString))
     })
 
     it("should return undefined for an invalid address string", () => {
