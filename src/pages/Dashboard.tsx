@@ -4,9 +4,9 @@ import { ClausesPerSecond } from "@/components/transactions/ClausesPerSecond.tsx
 import { TransactionsPerSecond } from "@/components/transactions/TransactionsPerSecond.tsx"
 import { LastBlock } from "@/components/blocks/LastBlock.tsx"
 import { ActionsPerSecond } from "@/components/vebetterdao/ActionsPerSecond.tsx"
-import BlockchainInsightsComponent from "@/components/blockchainInsight/BlockchainInsight"
+import { BlockchainInsightsComponent } from "@/components/blockchainInsight/BlockchainInsight"
 
-const Dashboard = () => {
+export function Dashboard() {
   return (
     <Flex w={"100%"} direction="column" align="center" mt={-36}>
       <BlockchainInsightsComponent />
@@ -18,5 +18,3 @@ const Dashboard = () => {
     </Flex>
   )
 }
-
-export default Dashboard

@@ -1,5 +1,4 @@
-// src/pages/NotFoundPage.tsx
-const NotFoundPage = () => {
+export function NotFoundPage() {
   return (
     <div>
       <h1>404 - Page Not Found</h1>
@@ -7,5 +6,3 @@ const NotFoundPage = () => {
     </div>
   )
 }
-
-export default NotFoundPage

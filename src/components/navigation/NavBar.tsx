@@ -1,11 +1,10 @@
-import React from "react"
 import { Box, Flex, Button, Text, HStack, Image } from "@chakra-ui/react"
 import { LuDownload } from "react-icons/lu"
 import { useTranslation } from "react-i18next"
 import { ColorModeButton } from "@/components/ui/ColorMode.tsx"
 import NetworkSwitcher from "../network/NetworkSwitcher"
 
-const Navbar: React.FC = () => {
+export function Navbar() {
   const { t } = useTranslation()
 
   return (
@@ -38,5 +37,3 @@ const Navbar: React.FC = () => {
     </Box>
   )
 }
-
-export default Navbar

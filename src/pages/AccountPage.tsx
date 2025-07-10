@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import { AccountDetails } from "@/components/accounts/AccountDetails.tsx"
 import { parseAddress } from "@/utils/address"
 
-export default function AccountPage() {
+export function AccountPage() {
   const { address } = useParams<{ address: string }>()
   const navigate = useNavigate()
 
