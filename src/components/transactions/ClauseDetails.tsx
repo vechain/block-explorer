@@ -1,47 +1,34 @@
-import { useNavigate } from "react-router-dom"
-import { Card, Text } from "@chakra-ui/react"
+import { Link as RouterLink } from "react-router-dom"
+import { Card, Text, Link as ChakraLink } from "@chakra-ui/react"
 import { Hex } from "@vechain/sdk-core"
 import { useTransaction } from "@/hooks/thor/useTransaction"
 
 export const ClauseDetails = ({ transactionId, clauseIndex }: { transactionId: Hex; clauseIndex: number }) => {
   const { data: tx, isLoading } = useTransaction(transactionId)
-  const navigate = useNavigate()
 
   if (isLoading) return <div>Loading...</div>
   if (!tx) return <div>Transaction not found</div>
 
   const clause = tx.clauses[clauseIndex]
 
-  const handleTransactionClick = (txId: string) => {
-    navigate(`/transaction/${txId}`)
-  }
-
-  const handleBlockClick = (blockId: string) => {
-    navigate(`/block/${blockId}`)
-  }
-
-  const handleAccountClick = (address: string) => {
-    navigate(`/account/${address}`)
-  }
-
   return (
     <Card.Root>
       <Card.Header>Clause</Card.Header>
       <Card.Body>
         <Card.Body>
-          <Text onClick={() => handleBlockClick(tx.meta.blockID)} style={{ cursor: "pointer" }}>
-            Block: {tx.meta.blockID}
-          </Text>
-          <Text onClick={() => handleTransactionClick(tx.id)} style={{ cursor: "pointer" }}>
-            Tx: {tx.id}
-          </Text>
-          <Text onClick={() => handleAccountClick(tx.origin)} style={{ cursor: "pointer" }}>
-            Origin: {tx.origin}
-          </Text>
+          <ChakraLink asChild>
+            <RouterLink to={`/block/${tx.meta.blockID}`}>Block: {tx.meta.blockID}</RouterLink>
+          </ChakraLink>
+          <ChakraLink asChild>
+            <RouterLink to={`/transaction/${tx.id}`}>Tx: {tx.id}</RouterLink>
+          </ChakraLink>
+          <ChakraLink asChild>
+            <RouterLink to={`/account/${tx.origin}`}>Origin: {tx.origin}</RouterLink>
+          </ChakraLink>
           {clause.to && (
-            <Text onClick={() => handleAccountClick(clause.to!)} style={{ cursor: "pointer" }}>
-              To: {clause.to}
-            </Text>
+            <ChakraLink asChild>
+              <RouterLink to={`/account/${clause.to}`}>To: {clause.to}</RouterLink>
+            </ChakraLink>
           )}
           <Text>Value: {clause.value}</Text>
           <Text>Data: {clause.data}</Text>

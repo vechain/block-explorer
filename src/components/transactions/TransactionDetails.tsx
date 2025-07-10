@@ -1,22 +1,13 @@
-import { useNavigate } from "react-router-dom"
-import { Card, List, ListItem, Text } from "@chakra-ui/react"
+import { Link as RouterLink } from "react-router-dom"
+import { Card, List, ListItem, Text, Link as ChakraLink } from "@chakra-ui/react"
 import { Hex } from "@vechain/sdk-core"
 import { useTransaction } from "@/hooks/thor/useTransaction"
 
 export const TransactionDetails = ({ id }: { id: Hex }) => {
   const { data: tx, isLoading } = useTransaction(id)
-  const navigate = useNavigate()
 
   if (isLoading) return <div>Loading...</div>
   if (!tx) return <div>Transaction not found</div>
-
-  const handleBlockClick = (blockId: string) => {
-    navigate(`/block/${blockId}`)
-  }
-
-  const handleClauseClick = (txId: string, clauseIndex: number) => {
-    navigate(`/transaction/${txId}/clause/${clauseIndex}`)
-  }
 
   return (
     <Card.Root>
@@ -24,9 +15,9 @@ export const TransactionDetails = ({ id }: { id: Hex }) => {
       <Card.Body>
         <Text>
           Block:{" "}
-          <span onClick={() => handleBlockClick(tx.meta.blockID)} style={{ cursor: "pointer" }}>
-            {tx.meta.blockID}
-          </span>
+          <ChakraLink asChild>
+            <RouterLink to={`/block/${tx.meta.blockID}`}>{tx.meta.blockID}</RouterLink>
+          </ChakraLink>
         </Text>
         <Text>Gas: {tx.gas.toLocaleString()}</Text>
         <Text>Origin: {tx.origin}</Text>
@@ -35,8 +26,10 @@ export const TransactionDetails = ({ id }: { id: Hex }) => {
         <Text>Clauses:</Text>
         <List.Root>
           {tx.clauses.map((clause, index) => (
-            <ListItem key={index} onClick={() => handleClauseClick(tx.id, index)} style={{ cursor: "pointer" }}>
-              {clause.to}
+            <ListItem key={index} asChild>
+              <ChakraLink asChild>
+                <RouterLink to={`/transaction/${tx.id}/clause/${index}`}>{clause.to}</RouterLink>
+              </ChakraLink>
             </ListItem>
           ))}
         </List.Root>
