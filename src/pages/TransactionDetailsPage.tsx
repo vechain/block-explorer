@@ -1,22 +1,17 @@
-import { useParams } from "react-router-dom"
-import { useTransactionQuery } from "@/hooks/transactions/useTransactionQuery.ts"
-import { TransactionDetailNoRaw } from "@vechain/sdk-network"
-import { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import { TransactionDetails } from "@/components/transactions/TransactionDetails.tsx"
+import { parseHex } from "@/utils/hex"
 
-const TransactionDetailsPage = () => {
+export function TransactionDetailsPage() {
   const { transactionId } = useParams<{ transactionId: string }>()
-  const { getTransaction } = useTransactionQuery()
-  const [transaction, setTransaction] = useState<TransactionDetailNoRaw | null>(null)
+  const navigate = useNavigate()
 
-  useEffect(() => {
-    if (!transactionId) return
-    getTransaction(transactionId).then(t => setTransaction(t))
-  }, [transactionId, getTransaction])
+  const hex = parseHex(transactionId)
 
-  if (!transaction) return <div>Loading...</div>
+  if (!hex) {
+    navigate("/404")
+    return null
+  }
 
-  return <TransactionDetails transaction={transaction} />
+  return <TransactionDetails id={hex} />
 }
-
-export default TransactionDetailsPage

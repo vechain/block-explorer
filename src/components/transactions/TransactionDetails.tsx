@@ -1,9 +1,14 @@
-import { TransactionDetailNoRaw } from "@vechain/sdk-network"
 import { useNavigate } from "react-router-dom"
 import { Card, List, ListItem, Text } from "@chakra-ui/react"
+import { Hex } from "@vechain/sdk-core"
+import { useTransaction } from "@/hooks/thor/useTransaction"
 
-export const TransactionDetails = ({ transaction }: { transaction: TransactionDetailNoRaw }) => {
+export function TransactionDetails({ id }: { id: Hex }) {
+  const { data: tx, isLoading } = useTransaction(id)
   const navigate = useNavigate()
+
+  if (isLoading) return <div>Loading...</div>
+  if (!tx) return <div>Transaction not found</div>
 
   const handleBlockClick = (blockId: string) => {
     navigate(`/block/${blockId}`)
@@ -15,25 +20,22 @@ export const TransactionDetails = ({ transaction }: { transaction: TransactionDe
 
   return (
     <Card.Root>
-      <Card.Header>{transaction.id}</Card.Header>
+      <Card.Header>{tx.id}</Card.Header>
       <Card.Body>
         <Text>
           Block:{" "}
-          <span onClick={() => handleBlockClick(transaction.meta.blockID)} style={{ cursor: "pointer" }}>
-            {transaction.meta.blockID}
+          <span onClick={() => handleBlockClick(tx.meta.blockID)} style={{ cursor: "pointer" }}>
+            {tx.meta.blockID}
           </span>
         </Text>
-        <Text>Gas: {transaction.gas.toLocaleString()}</Text>
-        <Text>Origin: {transaction.origin}</Text>
-        <Text>Nonce: {transaction.nonce.toLocaleString()}</Text>
-        <Text>Size: {transaction.size.toLocaleString()}</Text>
+        <Text>Gas: {tx.gas.toLocaleString()}</Text>
+        <Text>Origin: {tx.origin}</Text>
+        <Text>Nonce: {tx.nonce.toLocaleString()}</Text>
+        <Text>Size: {tx.size.toLocaleString()}</Text>
         <Text>Clauses:</Text>
         <List.Root>
-          {transaction.clauses?.map((clause, index) => (
-            <ListItem
-              key={index}
-              onClick={() => handleClauseClick(transaction.id, index)}
-              style={{ cursor: "pointer" }}>
+          {tx.clauses.map((clause, index) => (
+            <ListItem key={index} onClick={() => handleClauseClick(tx.id, index)} style={{ cursor: "pointer" }}>
               {clause.to}
             </ListItem>
           ))}
