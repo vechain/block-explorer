@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { useBlock } from "@/hooks/thor/useBlock"
 import { Revision } from "@vechain/sdk-core"
 
-export function BlockDetails({ revision }: { revision: Revision }) {
+export const BlockDetails = ({ revision }: { revision: Revision }) => {
   const { data: block, isLoading } = useBlock(revision)
   const navigate = useNavigate()
 

@@ -16,7 +16,7 @@ import { ColorModeProvider } from "@/components/ui/ColorMode.tsx"
 import { config } from "@/components/ui/Theme.tsx"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 
-export default function App() {
+export const App = () => {
   return (
     <Providers>
       <Router />
@@ -26,7 +26,7 @@ export default function App() {
 
 const queryClient = new QueryClient()
 
-function Providers({ children }: React.PropsWithChildren) {
+const Providers = ({ children }: React.PropsWithChildren) => {
   return (
     <ThorClientProvider>
       <NetworkProvider>
@@ -41,7 +41,7 @@ function Providers({ children }: React.PropsWithChildren) {
   )
 }
 
-function Router() {
+const Router = () => {
   return (
     <BrowserRouter>
       <Box bg="linear-gradient(180deg, #525860 0%, #363A3F 100%)" px={6} height={"252px"} py={4}>

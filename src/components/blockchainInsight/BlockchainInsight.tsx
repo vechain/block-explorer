@@ -6,7 +6,7 @@ import InsightData from "./InsightData"
 import { useBestBlock } from "@/hooks/thor/useBestBlock"
 import { useTranslation } from "react-i18next"
 
-export function BlockchainInsightsComponent() {
+export const BlockchainInsightsComponent = () => {
   const { data: bestBlock, isLoading } = useBestBlock()
   const { t } = useTranslation()
 

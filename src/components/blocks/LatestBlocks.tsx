@@ -8,7 +8,7 @@ function isExpandedBlockDetail(block: GetBlockReturnType | undefined): block is 
   return Boolean(block)
 }
 
-export function LatestBlocks({ count }: { count: number }) {
+export const LatestBlocks = ({ count }: { count: number }) => {
   const queries = useLatestBlocks({ count })
 
   const blocks = queries.map(query => query.data).filter(isExpandedBlockDetail)

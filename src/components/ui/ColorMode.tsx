@@ -7,11 +7,11 @@ import { ThemeProvider, ThemeProviderProps } from "next-themes"
 import { forwardRef } from "react"
 import { LuMoon, LuSun } from "react-icons/lu"
 
-export function ColorModeProvider(props: ThemeProviderProps) {
+export const ColorModeProvider = (props: ThemeProviderProps) => {
   return <ThemeProvider attribute="class" disableTransitionOnChange {...props} />
 }
 
-export function ColorModeIcon() {
+export const ColorModeIcon = () => {
   const { colorMode } = useColorMode()
   return colorMode === "light" ? <LuSun /> : <LuMoon color="black" />
 }

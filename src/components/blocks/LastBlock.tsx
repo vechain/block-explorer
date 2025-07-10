@@ -1,7 +1,7 @@
 import { Card, Text } from "@chakra-ui/react"
 import { useBestBlock } from "@/hooks/thor/useBestBlock"
 
-export function LastBlock() {
+export const LastBlock = () => {
   const { data: bestBlock, isLoading } = useBestBlock()
 
   if (isLoading) return <div>Loading...</div>

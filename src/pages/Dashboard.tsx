@@ -6,7 +6,7 @@ import { LastBlock } from "@/components/blocks/LastBlock.tsx"
 import { ActionsPerSecond } from "@/components/vebetterdao/ActionsPerSecond.tsx"
 import { BlockchainInsightsComponent } from "@/components/blockchainInsight/BlockchainInsight"
 
-export function Dashboard() {
+export const Dashboard = () => {
   return (
     <Flex w={"100%"} direction="column" align="center" mt={-36}>
       <BlockchainInsightsComponent />

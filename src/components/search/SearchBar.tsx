@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Box, Button, Group, Input, Text } from "@chakra-ui/react"
 import { useNavigate } from "react-router-dom"
 
-export function SearchBar() {
+export const SearchBar = () => {
   const { mutate: search, error } = useSearch()
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState<string>("")

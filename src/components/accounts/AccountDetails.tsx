@@ -3,7 +3,7 @@ import { Address } from "@vechain/sdk-core"
 import { useVnsName } from "@/hooks/thor/useVnsName"
 import { useAccount } from "@/hooks/thor/useAccount"
 
-export function AccountDetails({ address }: { address: Address }) {
+export const AccountDetails = ({ address }: { address: Address }) => {
   const { data: account, isLoading: isAccountLoading } = useAccount(address)
   const { data: vnsName, isLoading: isVnsLoading } = useVnsName(address)
 

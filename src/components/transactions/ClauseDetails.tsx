@@ -3,7 +3,7 @@ import { Card, Text } from "@chakra-ui/react"
 import { Hex } from "@vechain/sdk-core"
 import { useTransaction } from "@/hooks/thor/useTransaction"
 
-export function ClauseDetails({ transactionId, clauseIndex }: { transactionId: Hex; clauseIndex: number }) {
+export const ClauseDetails = ({ transactionId, clauseIndex }: { transactionId: Hex; clauseIndex: number }) => {
   const { data: tx, isLoading } = useTransaction(transactionId)
   const navigate = useNavigate()
 

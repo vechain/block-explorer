@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { ColorModeButton } from "@/components/ui/ColorMode.tsx"
 import NetworkSwitcher from "../network/NetworkSwitcher"
 
-export function Navbar() {
+export const Navbar = () => {
   const { t } = useTranslation()
 
   return (
