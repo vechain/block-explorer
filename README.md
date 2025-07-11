@@ -3,9 +3,10 @@
 This is the frontend for the VeChain Block Explorer.
 
 ## Stack
- - React
- - TypeScript
- - Vite
+
+- React
+- TypeScript
+- Vite
 
 ## Development
 
