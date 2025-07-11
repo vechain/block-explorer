@@ -3,7 +3,7 @@ import { Box, Flex, Button, Text, HStack, Image } from "@chakra-ui/react"
 import { LuDownload } from "react-icons/lu"
 import { useTranslation } from "react-i18next"
 import { ColorModeButton } from "@/components/ui/ColorMode.tsx"
-import NetworkSwitcher from "../network/NetworkSwitcher"
+import { NetworkSwitcher } from "../network/NetworkSwitcher"
 
 export const Navbar = () => {
   const { t } = useTranslation()
