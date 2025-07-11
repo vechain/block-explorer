@@ -1,9 +1,9 @@
 import { useMemo } from "react"
 import { Card, Text } from "@chakra-ui/react"
-import { useLatestB3trActions } from "@/hooks/vebetterdao/useLatestB3trActions.ts"
+import { useB3trRewardDistributedEvents } from "@/hooks/thor/useB3trRewardDistributedEvents"
 
 export const ActionsPerSecond = ({ numBlocks }: { numBlocks: number }) => {
-  const { data: actions } = useLatestB3trActions({ numBlocks })
+  const { data: actions } = useB3trRewardDistributedEvents({ numBlocks })
 
   const actionsPerSec = useMemo(() => {
     if (!actions) {

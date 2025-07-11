@@ -2,11 +2,11 @@ import { render, screen } from "@testing-library/react"
 import { describe, it, expect, vi, Mock } from "vitest"
 import { ChakraProvider } from "@chakra-ui/react"
 import { ClausesPerSecond } from "@/components/transactions/ClausesPerSecond"
-import { useLatestBlocks } from "@/hooks/blocks/useLatestBlocks"
+import { useLatestBlocks } from "@/hooks/thor/useLatestBlocks"
 import { config } from "@/components/ui/Theme.tsx"
 import "@testing-library/jest-dom"
 
-vi.mock("@/hooks/blocks/useLatestBlocks")
+vi.mock("@/hooks/thor/useLatestBlocks")
 
 describe("ClausesPerSecond", () => {
   it("renders the correct transactions per second", () => {
@@ -15,7 +15,7 @@ describe("ClausesPerSecond", () => {
       { timestamp: 90, transactions: [{ clauses: [{}, {}] }, { clauses: [{}, {}] }] },
       { timestamp: 80, transactions: [{ clauses: [{}, {}] }] },
     ]
-    ;(useLatestBlocks as Mock).mockReturnValue({ blocks: mockBlocks })
+    ;(useLatestBlocks as Mock).mockReturnValue({ data: mockBlocks, isPending: false })
 
     render(
       <ChakraProvider value={config}>
@@ -30,7 +30,7 @@ describe("ClausesPerSecond", () => {
 
   it("renders 0 transactions per second if not enough blocks", () => {
     const mockBlocks = [{ timestamp: 100, transactions: [{}, {}, {}] }]
-    ;(useLatestBlocks as Mock).mockReturnValue({ blocks: mockBlocks })
+    ;(useLatestBlocks as Mock).mockReturnValue({ data: mockBlocks, isPending: false })
 
     render(
       <ChakraProvider value={config}>

@@ -1,9 +1,9 @@
-import { useLatestBlocks } from "@/hooks/blocks/useLatestBlocks.ts"
+import { useLatestBlocks } from "@/hooks/thor/useLatestBlocks"
 import { useMemo } from "react"
 import { Card, Text } from "@chakra-ui/react"
 
 export const TransactionsPerSecond = ({ numBlocks }: { numBlocks: number }) => {
-  const { blocks } = useLatestBlocks({ count: numBlocks + 1 })
+  const { data: blocks, isPending } = useLatestBlocks({ count: numBlocks + 1 })
 
   const transactionsPerSec = useMemo(() => {
     if (blocks.length < numBlocks + 1) {
@@ -18,6 +18,10 @@ export const TransactionsPerSecond = ({ numBlocks }: { numBlocks: number }) => {
     // Calculate the transactions per second
     return totalTransactions / timeDifference
   }, [blocks, numBlocks])
+
+  if (isPending) {
+    return <div>Loading...</div>
+  }
 
   return (
     <Card.Root>
