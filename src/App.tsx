@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { NetworkProvider } from "@/providers/NetworkProvider"
 import { ThorClientProvider } from "@/context/ThorClientProvider"
 import { Dashboard } from "@/pages/Dashboard.tsx"
 import { BlockDetailsPage } from "@/pages/BlockDetailsPage.tsx"
@@ -29,14 +28,12 @@ const queryClient = new QueryClient()
 const Providers = ({ children }: React.PropsWithChildren) => {
   return (
     <ThorClientProvider>
-      <NetworkProvider>
-        <QueryClientProvider client={queryClient}>
-          <ChakraProvider value={config}>
-            <ColorModeProvider>{children}</ColorModeProvider>
-          </ChakraProvider>
-          <ReactQueryDevtools initialIsOpen={false} />
-        </QueryClientProvider>
-      </NetworkProvider>
+      <QueryClientProvider client={queryClient}>
+        <ChakraProvider value={config}>
+          <ColorModeProvider>{children}</ColorModeProvider>
+        </ChakraProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     </ThorClientProvider>
   )
 }
