@@ -25,35 +25,43 @@ async function search({
   thorClient: ThorClient
   activeNetwork: Network
 }): Promise<{ redirectTo: string }> {
-  // Check if it's an address
-  const account = await getAccount({ thorClient, address: Address.of(searchTerm) })
-  if (account) {
-    return {
-      redirectTo: `/account/${account.address}`,
+  const isAddress = Address.isValid(searchTerm)
+  if (isAddress) {
+    const account = await getAccount({ thorClient, address: Address.of(searchTerm) })
+    if (account) {
+      return {
+        redirectTo: `/account/${account.address}`,
+      }
     }
   }
 
-  // Check if it's a block
-  const block = await getBlock({ thorClient, revision: Revision.of(searchTerm) })
-  if (block) {
-    return {
-      redirectTo: `/block/${block.id}`,
+  const isBlock = Revision.isValid(searchTerm)
+  if (isBlock) {
+    const block = await getBlock({ thorClient, revision: Revision.of(searchTerm) })
+    if (block) {
+      return {
+        redirectTo: `/block/${block.id}`,
+      }
     }
   }
 
-  // Check if it's a transaction
-  const transaction = await getTransaction({ thorClient, transactionId: Hex.of(searchTerm) })
-  if (transaction) {
-    return {
-      redirectTo: `/transaction/${transaction.id}`,
+  const isTransaction = Hex.isValid(searchTerm)
+  if (isTransaction) {
+    const transaction = await getTransaction({ thorClient, transactionId: Hex.of(searchTerm) })
+    if (transaction) {
+      return {
+        redirectTo: `/transaction/${transaction.id}`,
+      }
     }
   }
 
-  // Search by VNS domain
-  const address = await getVnsAddress({ thorClient, networkName: activeNetwork.name, name: searchTerm })
-  if (address) {
-    return {
-      redirectTo: `/account/${address.toString()}`,
+  const isVnsDomain = searchTerm.endsWith(".vet")
+  if (isVnsDomain) {
+    const address = await getVnsAddress({ thorClient, networkName: activeNetwork.name, name: searchTerm })
+    if (address) {
+      return {
+        redirectTo: `/account/${address.toString()}`,
+      }
     }
   }
 

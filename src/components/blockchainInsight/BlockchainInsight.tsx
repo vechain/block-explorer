@@ -1,8 +1,8 @@
-import { Box, Input, Text, VStack, Flex, Icon } from "@chakra-ui/react"
-import { InputGroup } from "../ui/InputGroup"
-import { LuArrowBigRight, LuBox, LuSearch } from "react-icons/lu"
+import { Box, Text, VStack, Flex, Icon } from "@chakra-ui/react"
+import { LuArrowBigRight, LuBox } from "react-icons/lu"
 import { FaLinode } from "react-icons/fa"
 import InsightData from "./InsightData"
+import { SearchBar } from "@/components/search/SearchBar"
 import { useBestBlock } from "@/hooks/thor/useBestBlock"
 import { useTranslation } from "react-i18next"
 
@@ -17,17 +17,7 @@ export const BlockchainInsightsComponent = () => {
           <Text textAlign={"left"} w={"100%"} fontSize="18px" color={"grey.200"} fontWeight={600}>
             {t("tracking_blockchain_insights")}
           </Text>
-          <InputGroup w={"100%"} pt={4} startElement={<LuSearch />}>
-            <Input
-              size={"xl"}
-              w={"80%"}
-              borderRadius={"12px"}
-              bg={"white"}
-              color={"grey.400"}
-              placeholder={t("search_placeholder")}
-              _placeholder={{ opacity: 0.7 }}
-            />
-          </InputGroup>
+          <SearchBar />
         </VStack>
         <Box flex="4" textAlign="center">
           <InsightData

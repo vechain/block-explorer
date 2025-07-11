@@ -1,15 +1,18 @@
 import { useSearch } from "@/hooks/useSearch"
 import { useState } from "react"
 
-import { Box, Button, Group, Input, Text } from "@chakra-ui/react"
+import { InputGroup, Input, Text } from "@chakra-ui/react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
+import { LuSearch } from "react-icons/lu"
 
 export const SearchBar = () => {
-  const { mutate: search, error } = useSearch()
   const navigate = useNavigate()
+  const { t } = useTranslation()
+  const { mutate: search, error } = useSearch()
   const [searchTerm, setSearchTerm] = useState<string>("")
 
-  function handleSearch(e: React.FormEvent<HTMLFormElement>) {
+  function handleSearch(e: React.FormEvent<HTMLDivElement>) {
     e.preventDefault()
     search(searchTerm, {
       onSuccess: data => {
@@ -19,12 +22,28 @@ export const SearchBar = () => {
   }
 
   return (
-    <form onSubmit={handleSearch}>
-      <Group attached w="full" maxW="sm">
-        <Input flex="1" placeholder="Search" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-        <Button type="submit">Search</Button>
-      </Group>
-      <Box mt={2}>{error && <Text color="red.500">{error.message}</Text>}</Box>
-    </form>
+    <>
+      <InputGroup as="form" onSubmit={handleSearch} startElement={<LuSearch />}>
+        <Input
+          type="search"
+          name="search"
+          placeholder={t("search_placeholder")}
+          variant="subtle"
+          borderRadius={6}
+          p={2}
+          css={{ "&:focus": { borderColor: "blue.400" } }}
+          pl={4}
+          bg="white"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+      </InputGroup>
+
+      {error && (
+        <Text mt={2} color="red.500">
+          {error.message}
+        </Text>
+      )}
+    </>
   )
 }
