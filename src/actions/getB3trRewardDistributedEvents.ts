@@ -2,7 +2,7 @@ import { RewardDistributedEventSignature } from "@/constants/vebetterdao/EventSi
 import { EventLogs, ThorClient } from "@vechain/sdk-network"
 import { Network } from "@/constants/network"
 
-export type GetB3trRewardDistributedEventsReturnType = EventLogs[]
+type GetB3trRewardDistributedEventsReturnType = EventLogs[]
 
 export async function getB3trRewardDistributedEvents({
   thorClient,

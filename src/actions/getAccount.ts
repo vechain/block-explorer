@@ -1,7 +1,7 @@
 import { Address } from "@vechain/sdk-core"
 import { AccountDetail, ThorClient } from "@vechain/sdk-network"
 
-export type GetAccountReturnType = {
+type GetAccountReturnType = {
   address: string
   details: AccountDetail
 }
