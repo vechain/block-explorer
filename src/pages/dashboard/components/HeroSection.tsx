@@ -1,7 +1,7 @@
 import { Box, Text, VStack, Flex, Icon } from "@chakra-ui/react"
 import { LuArrowBigRight, LuBox } from "react-icons/lu"
 import { FaLinode } from "react-icons/fa"
-import InsightData from "./InsightData"
+import InsightData from "./InsightDataCard"
 import { SearchBar } from "@/components/search/SearchBar"
 import { useBestBlock } from "@/hooks/thor/useBestBlock"
 import { useTranslation } from "react-i18next"

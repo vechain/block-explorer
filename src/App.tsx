@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ThorClientProvider } from "@/context/ThorClientProvider"
-import { Dashboard } from "@/pages/Dashboard.tsx"
+import { DashboardPage } from "@/pages/dashboard"
 import { BlockDetailsPage } from "@/pages/BlockDetailsPage.tsx"
 import { TransactionDetailsPage } from "@/pages/TransactionDetailsPage.tsx"
 import { ClauseDetailsPage } from "@/pages/ClauseDetailsPage.tsx"
@@ -43,7 +43,7 @@ const Router = () => {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route index element={<Dashboard />} />
+          <Route index element={<DashboardPage />} />
           <Route path="/block/:blockId" element={<BlockDetailsPage />} />
           <Route path="/transaction/:transactionId" element={<TransactionDetailsPage />} />
           <Route path="/transaction/:transactionId/clause/:clauseIndex" element={<ClauseDetailsPage />} />

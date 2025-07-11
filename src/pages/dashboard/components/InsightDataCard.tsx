@@ -29,7 +29,7 @@ type StatCardProps = {
   loading?: boolean
 }
 
-const InsightData = ({ icon, label, value, loading }: StatCardProps) => {
+const InsightDataCard = ({ icon, label, value, loading }: StatCardProps) => {
   return (
     <Box bg="grey.600" borderRadius="md" m={2} display="flex" justifyContent="space-between">
       <Flex gap={3} p={4} w={"100%"} justifyContent={"space-between"}>
@@ -45,4 +45,4 @@ const InsightData = ({ icon, label, value, loading }: StatCardProps) => {
   )
 }
 
-export default InsightData
+export default InsightDataCard
