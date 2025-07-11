@@ -6,12 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
     "preview": "vite preview",
     "format": "prettier --write .",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "knip": "knip",
     "knip:fix": "knip --fix",
-    "test": "vitest run"
+    "test": "vitest run",
+    "validate": "yarn build && yarn test && yarn knip && yarn lint && yarn format"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.22.0",
