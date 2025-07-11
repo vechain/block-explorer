@@ -1,4 +1,19 @@
-import { Address, HexUInt } from "@vechain/sdk-core"
+import { Address, HexUInt, ZERO_ADDRESS } from "@vechain/sdk-core"
+
+/**
+ * Checks if the address is the zero address
+ * @param address
+ */
+export function isZeroAddress(address: string | Address): boolean {
+  let addrToCompare: Address
+  if (typeof address === "string") {
+    addrToCompare = Address.of(address)
+  } else {
+    addrToCompare = address
+  }
+
+  return addrToCompare.toString().toLowerCase() === ZERO_ADDRESS
+}
 
 type AddressValueParam = bigint | number | string | Uint8Array | HexUInt
 
