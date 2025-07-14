@@ -13,7 +13,7 @@ export const ColorModeProvider = (props: ThemeProviderProps) => {
 
 const ColorModeIcon = () => {
   const { colorMode } = useColorMode()
-  return colorMode === "light" ? <LuSun /> : <LuMoon color="black" />
+  return colorMode === "light" ? <LuSun /> : <LuMoon />
 }
 
 type ColorModeButtonProps = Omit<IconButtonProps, "aria-label">
@@ -25,7 +25,8 @@ export const ColorModeButton = forwardRef<HTMLButtonElement, ColorModeButtonProp
       <IconButton
         onClick={toggleColorMode}
         variant="ghost"
-        bg={"grey.300"}
+        bg="bg.subtle"
+        color="fg"
         aria-label="Toggle color mode"
         size="md"
         ref={ref}
