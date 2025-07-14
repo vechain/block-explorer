@@ -3,7 +3,7 @@ import { Flex, Button, Text, Image, Link as ChakraLink, Group, Stack } from "@ch
 import { LuDownload } from "react-icons/lu"
 import { useTranslation } from "react-i18next"
 import { ColorModeButton } from "@/components/ui/ColorMode.tsx"
-import { NetworkSelect } from "@/components/network/NetworkSwitcher"
+import { NetworkSelect } from "./NetworkSelect"
 
 const downloadVeWorldHref =
   "https://chromewebstore.google.com/detail/veworld/ffondjhiilhjpmfakjbejdgbemolaaho?utm_source=landing_page&utm_medium=website&utm_campaign=vechain_communication"
