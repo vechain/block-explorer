@@ -55,7 +55,7 @@ const InsightDataCard = ({ icon, label, value, isPending }: InsightDataCardProps
         <Heading as="h4" size="xs" fontWeight="bold" color="fg.muted" textTransform="uppercase">
           {label}
         </Heading>
-        {isPending  ? (
+        {isPending ? (
           <Skeleton height="30px" width="80%" bg="fg.muted" />
         ) : (
           <Text fontSize="2xl" fontWeight="bold" color="fg">
