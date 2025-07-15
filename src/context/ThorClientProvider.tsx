@@ -7,7 +7,7 @@ import { ThorClientContext } from "./ThorClientContext"
 const defaultNetwork = NETWORKS[NetworkName.MAINNET]
 const defaultThorClient = ThorClient.at(defaultNetwork.url)
 
-export function ThorClientProvider({ children }: React.PropsWithChildren) {
+export const ThorClientProvider = ({ children }: React.PropsWithChildren) => {
   const [activeNetwork, setActiveNetwork] = useState(defaultNetwork)
   const [thorClient, setThorClient] = useState(defaultThorClient)
 

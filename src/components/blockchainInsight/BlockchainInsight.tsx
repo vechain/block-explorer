@@ -3,11 +3,11 @@ import { InputGroup } from "../ui/InputGroup"
 import { LuArrowBigRight, LuBox, LuSearch } from "react-icons/lu"
 import { FaLinode } from "react-icons/fa"
 import InsightData from "./InsightData"
-import { useBestBlock } from "@/hooks/blocks/useBestBlock.ts"
+import { useBestBlock } from "@/hooks/thor/useBestBlock"
 import { useTranslation } from "react-i18next"
 
-const BlockchainInsightsComponent = () => {
-  const { bestBlock, isBestBlockLoading } = useBestBlock()
+export const BlockchainInsightsComponent = () => {
+  const { data: bestBlock, isLoading } = useBestBlock()
   const { t } = useTranslation()
 
   return (
@@ -38,7 +38,7 @@ const BlockchainInsightsComponent = () => {
             }
             label={t("block_number")}
             value={bestBlock?.number.toLocaleString()}
-            loading={isBestBlockLoading}
+            loading={isLoading}
           />
           <InsightData
             icon={
@@ -63,5 +63,3 @@ const BlockchainInsightsComponent = () => {
     </Flex>
   )
 }
-
-export default BlockchainInsightsComponent

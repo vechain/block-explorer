@@ -1,23 +1,17 @@
-// src/pages/BlockDetailsPage.tsx
-import { useParams } from "react-router-dom"
-import { useBlockQuery } from "@/hooks/blocks/useBlockQuery.ts"
-import { useEffect, useState } from "react"
-import { ExpandedBlockDetail } from "@vechain/sdk-network"
+import { useNavigate, useParams } from "react-router-dom"
 import { BlockDetails } from "@/components/blocks/BlockDetails.tsx"
+import { parseRevision } from "@/utils/revision"
 
-const BlockDetailsPage = () => {
+export const BlockDetailsPage = () => {
   const { blockId } = useParams<{ blockId: string }>()
-  const { getBlock } = useBlockQuery()
-  const [block, setBlock] = useState<ExpandedBlockDetail | null>(null)
+  const navigate = useNavigate()
 
-  useEffect(() => {
-    if (!blockId) return
-    getBlock(blockId).then(b => setBlock(b))
-  }, [blockId, getBlock])
+  const revision = parseRevision(blockId)
 
-  if (!block) return <div>Loading...</div>
+  if (!revision) {
+    navigate("/404")
+    return null
+  }
 
-  return <BlockDetails block={block} />
+  return <BlockDetails revision={revision} />
 }
-
-export default BlockDetailsPage
