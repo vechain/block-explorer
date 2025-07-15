@@ -17,7 +17,11 @@ export async function getB3trRewardDistributedEvents({
 }): Promise<GetB3trRewardDistributedEventsReturnType> {
   const X2EarnRewardsPoolAddress = network.contracts.X2EarnRewardsPool
 
-  if (!fromBlock || !toBlock || !X2EarnRewardsPoolAddress) {
+  if (!X2EarnRewardsPoolAddress) {
+    throw new Error("X2EarnRewardsPool address is not set")
+  }
+
+  if (!fromBlock || !toBlock) {
     return []
   }
 
