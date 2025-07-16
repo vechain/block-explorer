@@ -11,7 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@chakra-ui/react": "^3.2.5",
+    "@chakra-ui/react": "^3.22.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@tanstack/react-query": "^5.81.5",
