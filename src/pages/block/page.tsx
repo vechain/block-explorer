@@ -6,6 +6,7 @@ import { AddressLink, BlockLink, BlockTransactionsLink } from "@/components/ui/L
 import { Revision } from "@vechain/sdk-core"
 import { Stack, Table } from "@chakra-ui/react"
 import { Subtitle, Title } from "@/components/ui/Typography"
+import { formatDateFromTimestamp } from "@/utils/date"
 
 export const BlockPage = () => {
   const { blockId } = useParams<{ blockId: string }>()
@@ -29,7 +30,7 @@ const BlockDetails = ({ revision }: { revision: Revision }) => {
     { name: "ID", value: block.id },
     { name: "Number", value: "#" + block.number },
     { name: "Parent ID", value: <BlockLink blockId={block.parentID}>{block.parentID}</BlockLink> },
-    { name: "Timestamp", value: new Date(block.timestamp * 1000).toLocaleString() },
+    { name: "Timestamp", value: formatDateFromTimestamp(block.timestamp) },
     { name: "Signer", value: <AddressLink address={block.signer} /> },
     {
       name: "Transactions",

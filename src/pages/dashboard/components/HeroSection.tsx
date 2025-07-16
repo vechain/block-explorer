@@ -1,7 +1,7 @@
 import { Text, Flex, Stack } from "@chakra-ui/react"
 import { BlockNumberCard, TotalTransactionsCard, ValidatorNodesCard } from "./InsightDataCard"
 import { useTranslation } from "react-i18next"
-import { SearchBar } from "@/components/search/SearchBar"
+import { SearchBar } from "./SearchBar"
 
 export const HeroSection = () => {
   const { t } = useTranslation()
