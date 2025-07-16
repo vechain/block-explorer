@@ -3,6 +3,7 @@ import { getBlock } from "@/actions/getBlock"
 import { Revision } from "@vechain/sdk-core"
 import { useThorClient } from "./useThorClient"
 import { useBestBlock } from "./useBestBlock"
+import { isExpandedBlockDetail } from "@/utils/block"
 
 export function useLatestBlocks({ count }: { count: number }) {
   const { thorClient } = useThorClient()
@@ -24,5 +25,11 @@ export function useLatestBlocks({ count }: { count: number }) {
       queryFn: () => getBlock({ thorClient, revision: Revision.of(blockId) }),
       staleTime: Infinity,
     })),
+    combine: queries => {
+      return {
+        data: queries.map(query => query.data).filter(isExpandedBlockDetail),
+        isPending: queries.some(query => query.isPending),
+      }
+    },
   })
 }

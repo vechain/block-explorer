@@ -2,7 +2,8 @@ import { Address } from "@vechain/sdk-core"
 import { ThorClient } from "@vechain/sdk-network"
 import { VNS_FUNCTION_ABI_GET_ADDRESSES, VNS_RESOLVER } from "@/constants/vns"
 import { NetworkName } from "@/constants/network"
-import { isZeroAddress, normalizeName } from "@/utils/vns/VnsUtils"
+import { normalizeName } from "@/utils/vns"
+import { isZeroAddress } from "@/utils/address"
 
 export type GetVnsAddressReturnType = Address
 

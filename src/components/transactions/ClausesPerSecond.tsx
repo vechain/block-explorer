@@ -1,9 +1,9 @@
-import { useLatestBlocks } from "@/hooks/blocks/useLatestBlocks.ts"
+import { useLatestBlocks } from "@/hooks/thor/useLatestBlocks"
 import { useMemo } from "react"
 import { Card, Text } from "@chakra-ui/react"
 
 export const ClausesPerSecond = ({ numBlocks }: { numBlocks: number }) => {
-  const { blocks } = useLatestBlocks({ count: numBlocks + 1 })
+  const { data: blocks } = useLatestBlocks({ count: numBlocks + 1 })
 
   const clausesPerSec = useMemo(() => {
     if (blocks.length < numBlocks + 1) {
