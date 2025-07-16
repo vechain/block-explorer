@@ -5,7 +5,7 @@ import { DashboardPage } from "@/pages/dashboard/page"
 import { BlockPage } from "@/pages/block/page.tsx"
 import { BlockTransactionsPage } from "@/pages/block/transactions/page"
 import { TransactionPage } from "@/pages/transaction/page"
-import { ClauseDetailsPage } from "@/pages/ClauseDetailsPage.tsx"
+import { ClauseDetailsPage } from "@/pages/clause/page"
 import { NotFoundPage } from "@/pages/NotFoundPage.tsx"
 import { AddressPage } from "@/pages/address/page.tsx"
 import { Navbar } from "@/components/navigation/NavBar.tsx"
@@ -46,6 +46,7 @@ const Router = () => {
           <Route path="/block/:blockId" element={<BlockPage />} />
           <Route path="/block/:blockId/transactions" element={<BlockTransactionsPage />} />
           <Route path="/transaction/:transactionId" element={<TransactionPage />} />
+          <Route path="/transaction/:transactionId/clauses" element={<TransactionClausesPage />} />
           <Route path="/transaction/:transactionId/clause/:clauseIndex" element={<ClauseDetailsPage />} />
           <Route path="/address/:address" element={<AddressPage />} />
           <Route path="*" element={<NotFoundPage />} />
