@@ -12,7 +12,7 @@ export function useLatestBlocks({ count }: { count: number }) {
   const bestBlockNumber = bestBlock?.number ?? count
   const blockIds = []
 
-  for (let i = 1; i < count; i++) {
+  for (let i = 0; i < count; i++) {
     const currentBlockId = bestBlockNumber - i
     if (currentBlockId > 0) {
       blockIds.push(currentBlockId)

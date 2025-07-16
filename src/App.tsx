@@ -1,7 +1,7 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ThorClientProvider } from "@/context/ThorClientProvider"
-import { Dashboard } from "@/pages/Dashboard.tsx"
+import { DashboardPage } from "@/pages/dashboard"
 import { BlockDetailsPage } from "@/pages/BlockDetailsPage.tsx"
 import { TransactionDetailsPage } from "@/pages/TransactionDetailsPage.tsx"
 import { ClauseDetailsPage } from "@/pages/ClauseDetailsPage.tsx"
@@ -41,17 +41,25 @@ const Providers = ({ children }: React.PropsWithChildren) => {
 const Router = () => {
   return (
     <BrowserRouter>
-      <Box bg="linear-gradient(180deg, #525860 0%, #363A3F 100%)" px={6} height={"252px"} py={4}>
-        <Navbar />
-      </Box>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/block/:blockId" element={<BlockDetailsPage />} />
-        <Route path="/transaction/:transactionId" element={<TransactionDetailsPage />} />
-        <Route path="/transaction/:transactionId/clause/:clauseIndex" element={<ClauseDetailsPage />} />
-        <Route path="/account/:address" element={<AccountPage />} />
-        <Route path="*" element={<NotFoundPage />} />
+        <Route element={<Layout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="/block/:blockId" element={<BlockDetailsPage />} />
+          <Route path="/transaction/:transactionId" element={<TransactionDetailsPage />} />
+          <Route path="/transaction/:transactionId/clause/:clauseIndex" element={<ClauseDetailsPage />} />
+          <Route path="/account/:address" element={<AccountPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
+  )
+}
+
+const Layout = () => {
+  return (
+    <Box px={10} maxWidth="1440px" mx="auto" h="100vh">
+      <Navbar />
+      <Outlet />
+    </Box>
   )
 }
