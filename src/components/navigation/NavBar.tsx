@@ -12,11 +12,11 @@ export const Navbar = () => {
   const { t } = useTranslation()
 
   return (
-    <Flex as="nav" py={10} justify="space-between" align="center">
+    <Flex as="nav" justify="space-between" align="center">
       <RouterLink to="/">
         <Stack gap={0}>
           <Group gap={2}>
-            <Image src="vechain.svg" h="30px" w="30px" />
+            <Image src="/vechain.svg" h="30px" w="30px" />
             <Text fontSize="xl" fontWeight="bold" userSelect="none">
               {t("vechain_title")}
             </Text>
