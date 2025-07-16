@@ -7,7 +7,7 @@ import { BlockTransactionsPage } from "@/pages/block/transactions/page"
 import { TransactionPage } from "@/pages/transaction/page"
 import { ClauseDetailsPage } from "@/pages/ClauseDetailsPage.tsx"
 import { NotFoundPage } from "@/pages/NotFoundPage.tsx"
-import { AccountPage } from "@/pages/AccountPage.tsx"
+import { AddressPage } from "@/pages/address/page.tsx"
 import { Navbar } from "@/components/navigation/NavBar.tsx"
 import { Container, Flex, ChakraProvider } from "@chakra-ui/react"
 import { ColorModeProvider } from "@/components/ui/ColorMode.tsx"
@@ -47,7 +47,7 @@ const Router = () => {
           <Route path="/block/:blockId/transactions" element={<BlockTransactionsPage />} />
           <Route path="/transaction/:transactionId" element={<TransactionPage />} />
           <Route path="/transaction/:transactionId/clause/:clauseIndex" element={<ClauseDetailsPage />} />
-          <Route path="/account/:address" element={<AccountPage />} />
+          <Route path="/address/:address" element={<AddressPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
