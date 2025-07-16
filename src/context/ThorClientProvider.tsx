@@ -28,6 +28,8 @@ export const ThorClientProvider = ({ children }: React.PropsWithChildren) => {
   }
 
   return (
-    <ThorClientContext.Provider value={{ thorClient, activeNetwork, switchNetwork }}>{children}</ThorClientContext.Provider>
+    <ThorClientContext.Provider value={{ thorClient, activeNetwork, switchNetwork }}>
+      {children}
+    </ThorClientContext.Provider>
   )
 }

@@ -1,7 +1,7 @@
 import { Hex } from "@vechain/sdk-core"
 import { ThorClient, TransactionDetailNoRaw } from "@vechain/sdk-network"
 
-export type GetTransactionReturnType = TransactionDetailNoRaw | null
+type GetTransactionReturnType = TransactionDetailNoRaw | null
 
 export async function getTransaction({
   thorClient,

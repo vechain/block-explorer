@@ -11,7 +11,7 @@ export const ColorModeProvider = (props: ThemeProviderProps) => {
   return <ThemeProvider attribute="class" disableTransitionOnChange {...props} />
 }
 
-export const ColorModeIcon = () => {
+const ColorModeIcon = () => {
   const { colorMode } = useColorMode()
   return colorMode === "light" ? <LuSun /> : <LuMoon color="black" />
 }

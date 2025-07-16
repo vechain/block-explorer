@@ -18,5 +18,3 @@ i18n
       loadPath: "/locales/{{lng}}.json",
     },
   })
-
-export default i18n

@@ -5,7 +5,7 @@ import { NetworkName } from "@/constants/network"
 import { normalizeName } from "@/utils/vns"
 import { isZeroAddress } from "@/utils/address"
 
-export type GetVnsAddressReturnType = Address
+type GetVnsAddressReturnType = Address
 
 export async function getVnsAddress({
   thorClient,
