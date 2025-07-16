@@ -1,3 +1,4 @@
+import { Link as RouterLink } from "react-router-dom"
 import { Box, Flex, Button, Text, HStack, Image } from "@chakra-ui/react"
 import { LuDownload } from "react-icons/lu"
 import { useTranslation } from "react-i18next"
@@ -12,12 +13,14 @@ export const Navbar = () => {
       <Flex justify="space-between" align="center">
         <HStack gap={4}>
           <Box color={"white"}>
-            <HStack>
-              <Image color={"white"} height={"30px"} w={"30px"} src="Vector.png" />
-              <Text fontSize="xl" fontWeight="bold" userSelect="none" cursor="default">
-                {t("vechain_title")}
-              </Text>
-            </HStack>
+            <RouterLink to="/">
+              <HStack>
+                <Image color={"white"} height={"30px"} w={"30px"} src="Vector.png" />
+                <Text fontSize="xl" fontWeight="bold" userSelect="none">
+                  {t("vechain_title")}
+                </Text>
+              </HStack>
+            </RouterLink>
             <Text fontSize="sm" textAlign="right" userSelect="none" cursor="default">
               {t("explorer")}
             </Text>

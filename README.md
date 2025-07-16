@@ -16,11 +16,13 @@ nvm use
 ```
 
 Install the dependencies:
+
 ```bash
 yarn install
 ```
 
 Start the development server:
+
 ```bash
 yarn dev
 ```
