@@ -17,7 +17,9 @@ export const ThorClientProvider = ({ children }: React.PropsWithChildren) => {
       throw new Error("Invalid network")
     }
 
+    thorClient.destroy()
     const client = ThorClient.at(network.url)
+
     const healthy = await client.nodes.isHealthy()
     if (!healthy) {
       throw new Error("Network is not healthy")

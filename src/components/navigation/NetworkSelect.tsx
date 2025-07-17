@@ -26,11 +26,14 @@ export const NetworkSelect = () => {
   const handleNetworkChange = (details: Select.ValueChangeDetails<NetworkItem>) => {
     const [newNetwork] = details.value as NetworkItem["value"][]
     setError("")
-    switchNetwork(newNetwork).catch(err => {
-      console.error("Failed to switch network:", err)
-      setError("Failed to switch network")
-    })
-    queryClient.resetQueries()
+    switchNetwork(newNetwork)
+      .then(() => {
+        queryClient.clear()
+      })
+      .catch(err => {
+        console.error("Failed to switch network:", err)
+        setError("Failed to switch network")
+      })
   }
 
   return (
