@@ -63,7 +63,7 @@ const CopyableLink = ({ children, to, value }: { children: React.ReactNode; to: 
 
 const BaseLink = ({ children, to }: { children: React.ReactNode; to: string }) => {
   return (
-    <ChakraLink asChild colorPalette="blue">
+    <ChakraLink asChild color={{ base: "primary.500", _dark: "primary.400" }}>
       <RouterLink
         to={to}
         style={{

@@ -28,15 +28,23 @@ export const Navbar = () => {
       </RouterLink>
 
       <Group gap={4}>
-        <Button asChild bg="bg.inverted" color="fg.inverted">
-          <ChakraLink href={downloadVeWorldHref} target="_blank" textDecoration="none">
-            {t("download_button")}
-            <LuDownload />
-          </ChakraLink>
-        </Button>
+        <DownloadButton />
         <NetworkSelect />
         <ColorModeButton />
       </Group>
     </Flex>
+  )
+}
+
+const DownloadButton = () => {
+  const { t } = useTranslation()
+
+  return (
+    <Button asChild bg="primary.500" color="gray.50">
+      <ChakraLink href={downloadVeWorldHref} target="_blank" textDecoration="none">
+        {t("download_button")}
+        <LuDownload />
+      </ChakraLink>
+    </Button>
   )
 }

@@ -50,9 +50,9 @@ export const ColorModeButton = forwardRef<HTMLButtonElement, ColorModeButtonProp
         aria-label="Toggle color mode"
         size="md"
         ref={ref}
-        bg={{ base: "primary.800", _dark: "primary.200" }}
+        bg={{ base: "primary.200", _dark: "primary.800" }}
         {...props}
-        css={{ _icon: { width: "5", height: "5" } }}>
+        css={{ _icon: { width: "5", height: "5", color: { base: "primary.800", _dark: "primary.200" } } }}>
         <ColorModeIcon />
       </IconButton>
     )
