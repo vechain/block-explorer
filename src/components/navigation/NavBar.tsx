@@ -2,7 +2,7 @@ import { Link as RouterLink } from "react-router-dom"
 import { Flex, Button, Text, Image, Link as ChakraLink, Group, Stack } from "@chakra-ui/react"
 import { LuDownload } from "react-icons/lu"
 import { useTranslation } from "react-i18next"
-import { ColorModeButton } from "@/components/ui/ColorMode.tsx"
+import { ColorModeButton } from "@/components/ui/theme/color-mode"
 import { NetworkSelect } from "./NetworkSelect"
 
 const downloadVeWorldHref =
