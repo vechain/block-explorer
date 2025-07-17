@@ -10,9 +10,8 @@ import { ClauseDetailsPage } from "@/pages/clause/page"
 import { NotFoundPage } from "@/pages/NotFoundPage.tsx"
 import { AddressPage } from "@/pages/address/page.tsx"
 import { Navbar } from "@/components/navigation/NavBar.tsx"
-import { Container, Flex, ChakraProvider } from "@chakra-ui/react"
-import { ColorModeProvider } from "@/components/ui/ColorMode.tsx"
-import { config } from "@/components/ui/Theme.tsx"
+import { Container, Flex } from "@chakra-ui/react"
+import { UiProvider } from "@/components/ui/provider"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 
 export const App = () => {
@@ -29,9 +28,8 @@ const Providers = ({ children }: React.PropsWithChildren) => {
   return (
     <ThorClientProvider>
       <QueryClientProvider client={queryClient}>
-        <ChakraProvider value={config}>
-          <ColorModeProvider>{children}</ColorModeProvider>
-        </ChakraProvider>
+        <UiProvider>{children}</UiProvider>
+
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </ThorClientProvider>

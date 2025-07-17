@@ -1,9 +1,8 @@
 import { render, screen } from "@testing-library/react"
 import { describe, it, expect, vi, Mock } from "vitest"
-import { ChakraProvider } from "@chakra-ui/react"
 import { ActionsPerSecond } from "./ActionsPerSecond"
 import { useB3trRewardDistributedEvents } from "@/hooks/thor/useB3trRewardDistributedEvents"
-import { config } from "@/components/ui/Theme.tsx"
+import { ChakraProvider } from "@/components/ui/provider"
 import "@testing-library/jest-dom"
 
 // Mock the useLatestB3trActions hook
@@ -17,7 +16,7 @@ describe("ActionsPerSecond", () => {
     })
 
     render(
-      <ChakraProvider value={config}>
+      <ChakraProvider>
         <ActionsPerSecond numBlocks={10} />
       </ChakraProvider>,
     )
@@ -34,7 +33,7 @@ describe("ActionsPerSecond", () => {
     })
 
     render(
-      <ChakraProvider value={config}>
+      <ChakraProvider>
         <ActionsPerSecond numBlocks={10} />
       </ChakraProvider>,
     )
