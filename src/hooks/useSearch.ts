@@ -30,7 +30,7 @@ async function search({
     const account = await getAccount({ thorClient, address: Address.of(searchTerm) })
     if (account) {
       return {
-        redirectTo: `/account/${account.address}`,
+        redirectTo: `/address/${account.address}`,
       }
     }
   }
@@ -60,7 +60,7 @@ async function search({
     const address = await getVnsAddress({ thorClient, networkName: activeNetwork.name, name: searchTerm })
     if (address) {
       return {
-        redirectTo: `/account/${address.toString()}`,
+        redirectTo: `/address/${address.toString()}`,
       }
     }
   }

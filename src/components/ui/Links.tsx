@@ -4,7 +4,7 @@ import { CopyToClipBoard } from "./CopyToClipBoard"
 
 export const AddressLink = ({ address }: { address: string }) => {
   return (
-    <CopyableLink to={`/account/${address}`} value={address}>
+    <CopyableLink to={`/address/${address}`} value={address}>
       {address}
     </CopyableLink>
   )

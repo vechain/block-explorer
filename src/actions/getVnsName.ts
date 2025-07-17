@@ -3,7 +3,7 @@ import { ThorClient } from "@vechain/sdk-network"
 import { VNS_FUNCTION_ABI_GET_NAMES, VNS_RESOLVER } from "@/constants/vns"
 import { NetworkName } from "@/constants/network"
 
-type GetEnsNameReturnType = string | null
+type GetEnsNameReturnType = string[] | null
 
 export async function getVnsName({
   thorClient,
@@ -25,7 +25,7 @@ export async function getVnsName({
     return null
   }
 
-  const vnsName: string = result.array[0] as string
+  const vnsName: string[] = result.array[0] as string[]
 
   return vnsName
 }
