@@ -18,8 +18,26 @@ export const BlockLink = ({ blockId, children }: { blockId: string; children: Re
   )
 }
 
+export const TransactionLink = ({ transactionId, children }: { transactionId: string; children: React.ReactNode }) => {
+  return (
+    <CopyableLink to={`/transaction/${transactionId}`} value={transactionId}>
+      {children}
+    </CopyableLink>
+  )
+}
+
 export const BlockTransactionsLink = ({ blockId, children }: { blockId: string; children: React.ReactNode }) => {
   return <BaseLink to={`/block/${blockId}/transactions`}>{children}</BaseLink>
+}
+
+export const TransactionClausesLink = ({
+  transactionId,
+  children,
+}: {
+  transactionId: string
+  children: React.ReactNode
+}) => {
+  return <BaseLink to={`/transaction/${transactionId}/clauses`}>{children}</BaseLink>
 }
 
 const CopyableLink = ({ children, to, value }: { children: React.ReactNode; to: string; value: string }) => {
