@@ -1,15 +1,14 @@
 import { HeroSection } from "@/pages/dashboard/components/HeroSection.tsx"
 import { LatestBlocksSection } from "@/pages/dashboard/components/LatestBlocksSection"
 import { Stack } from "@chakra-ui/react"
+import { Stats } from "./components/Stats"
 
 export const DashboardPage = () => {
   return (
-    <>
+    <Stack direction="column" gap={20}>
       <HeroSection />
-
-      <Stack py={20} px={10} gap={20}>
-        <LatestBlocksSection />
-      </Stack>
-    </>
+      <Stats />
+      <LatestBlocksSection />
+    </Stack>
   )
 }
