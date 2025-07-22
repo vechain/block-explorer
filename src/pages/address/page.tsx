@@ -8,14 +8,13 @@ import { AccountDetails } from "./components/AccountDetails"
 
 export const AddressPage = () => {
   const { address } = useParams<{ address: string }>()
-
   const addr = parseAddress(address)
 
-  if (!addr) {
-    return <Navigate to="/404" replace state={{ message: "Invalid address" }} />
-  }
-
-  return <RenderAccountOrContract address={addr} />
+  return addr ? (
+    <RenderAccountOrContract address={addr} />
+  ) : (
+    <Navigate to="/404" replace state={{ message: "Invalid address" }} />
+  )
 }
 
 const RenderAccountOrContract = ({ address }: { address: Address }) => {
@@ -27,9 +26,5 @@ const RenderAccountOrContract = ({ address }: { address: Address }) => {
     return <Navigate to="/404" replace state={{ message: "The account you are looking for does not exist" }} />
   }
 
-  if (account.hasCode) {
-    return <ContractDetails account={account} />
-  }
-
-  return <AccountDetails account={account} />
+  return account.hasCode ? <ContractDetails account={account} /> : <AccountDetails account={account} />
 }
