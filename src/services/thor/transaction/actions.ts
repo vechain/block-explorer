@@ -1,5 +1,5 @@
 import { Hex } from "@vechain/sdk-core"
-import { ThorClient, TransactionDetailNoRaw } from "@vechain/sdk-network"
+import { ThorClient, TransactionDetailNoRaw, TransactionReceipt } from "@vechain/sdk-network"
 
 /**
  * TODO: fix this transaction detail typing when the SDK is updated.
@@ -50,4 +50,17 @@ export async function getTransaction({
 
   return tx as TransactionDetail
 }
+
+type GetTransactionReceiptReturnType = TransactionReceipt | null
+
+export async function getTransactionReceipt({
+  thorClient,
+  transactionId,
+}: {
+  thorClient: ThorClient
+  transactionId: Hex
+}): Promise<GetTransactionReceiptReturnType> {
+  const receipt = await thorClient.transactions.getTransactionReceipt(transactionId.toString())
+
+  return receipt
 }
