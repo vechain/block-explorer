@@ -1,22 +1,23 @@
 import { Navigate, useParams } from "react-router-dom"
 import { parseRevision } from "@/utils/revision"
 import { useBlock } from "@/services/thor/block/hooks"
-import { Hex, Revision } from "@vechain/sdk-core"
-import { Stack, Badge, Table } from "@chakra-ui/react"
-import { AddressLink, TransactionClausesLink, TransactionLink } from "@/components/ui/Links"
+import { Revision } from "@vechain/sdk-core"
+import { Stack, Table } from "@chakra-ui/react"
+import { TransactionClausesLink, TransactionLink } from "@/components/ui/Links"
 import { Subtitle, Title } from "@/components/ui/Typography"
-import { formatEther } from "viem"
+import { VnsBadgeOrAddressLink } from "@/components/ui/VnsBadge"
+import { PaidGasFees } from "@/components/PaidGasFees"
+import { TxStatus } from "@/components/TxStatus"
 
 export const BlockTransactionsPage = () => {
   const { blockId } = useParams<{ blockId: string }>()
-
   const revision = parseRevision(blockId)
 
-  if (!revision) {
-    return <Navigate to="/404" replace state={{ message: "Invalid block reference" }} />
-  }
-
-  return <BlockTransactionList revision={revision} />
+  return revision ? (
+    <BlockTransactionList revision={revision} />
+  ) : (
+    <Navigate to="/404" replace state={{ message: "Invalid block reference" }} />
+  )
 }
 
 const BlockTransactionList = ({ revision }: { revision: Revision }) => {
@@ -28,11 +29,10 @@ const BlockTransactionList = ({ revision }: { revision: Revision }) => {
   const items = block.transactions.map(tx => ({
     key: tx.id,
     id: <TransactionLink transactionId={tx.id}>{tx.id}</TransactionLink>,
-    origin: <AddressLink address={tx.origin} />,
-    delegator: tx.delegator && <AddressLink address={tx.delegator} />,
+    origin: <VnsBadgeOrAddressLink address={tx.origin} truncateAddress />,
+    paid: <PaidGasFees paid={tx.paid} delegator={tx.delegator} />,
     clauses: <TransactionClausesLink transactionId={tx.id}>{tx.clauses.length + " Clauses"}</TransactionClausesLink>,
-    paid: formatEther(Hex.of(tx.paid).bi),
-    status: tx.reverted ? <Badge colorPalette="red">Reverted</Badge> : <Badge colorPalette="green">Success</Badge>,
+    status: <TxStatus reverted={tx.reverted} />,
   }))
 
   return (
@@ -45,31 +45,27 @@ const BlockTransactionList = ({ revision }: { revision: Revision }) => {
           <Table.Header>
             <Table.Row bg="bg.subtle">
               <Table.ColumnHeader>ID</Table.ColumnHeader>
+              <Table.ColumnHeader>Status</Table.ColumnHeader>
               <Table.ColumnHeader>Origin</Table.ColumnHeader>
-              <Table.ColumnHeader>Delegator</Table.ColumnHeader>
               <Table.ColumnHeader>Clauses</Table.ColumnHeader>
               <Table.ColumnHeader>Paid</Table.ColumnHeader>
-              <Table.ColumnHeader>Status</Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
 
           <Table.Body>
             {items.map(item => (
               <Table.Row key={item.key}>
-                <Table.Cell maxW="120px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                <Table.Cell maxW="150px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
                   {item.id}
                 </Table.Cell>
-                <Table.Cell maxW="120px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                <Table.Cell>{item.status}</Table.Cell>
+                <Table.Cell w="100px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
                   {item.origin}
                 </Table.Cell>
-                <Table.Cell maxW="120px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                  {item.delegator}
-                </Table.Cell>
-                <Table.Cell maxW="120px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                <Table.Cell overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
                   {item.clauses}
                 </Table.Cell>
                 <Table.Cell>{item.paid}</Table.Cell>
-                <Table.Cell>{item.status}</Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>
