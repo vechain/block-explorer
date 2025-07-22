@@ -1,3 +1,4 @@
+import { z } from "zod"
 import { Hex } from "@vechain/sdk-core"
 
 type HexValueParam = bigint | number | string | Uint8Array
@@ -16,3 +17,7 @@ export function parseHex(value: HexValueParam | undefined): Hex | undefined {
     return undefined
   }
 }
+
+export const hexStringSchema = z.string().regex(/^0x[a-fA-F0-9]+$/, {
+  message: "Must be a valid hex string starting with 0x",
+}) as z.ZodType<`0x${string}`>
