@@ -1,4 +1,4 @@
-import { Clipboard, IconButton } from "@chakra-ui/react"
+import { Box, Clipboard, Flex, IconButton } from "@chakra-ui/react"
 
 export const CopyToClipBoard = ({ value }: { value: string }) => {
   return (
@@ -9,5 +9,15 @@ export const CopyToClipBoard = ({ value }: { value: string }) => {
         </IconButton>
       </Clipboard.Trigger>
     </Clipboard.Root>
+  )
+}
+
+export const CopyableText = ({ value }: { value: string }) => {
+  return (
+    <Box display="inline-block">
+      <Flex alignItems="center" gap={2}>
+        {value} <CopyToClipBoard value={value} />
+      </Flex>
+    </Box>
   )
 }
