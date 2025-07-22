@@ -1,7 +1,7 @@
 "use client"
 
 import { NetworkName, NETWORKS } from "@/constants/network"
-import { useSwitchNetwork } from "@/hooks/thor/useSwitchNetwork"
+import { useThorClient } from "@/services/thor/thor-client"
 import { Field, Portal, Select, createListCollection } from "@chakra-ui/react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
@@ -20,7 +20,7 @@ const networks = createListCollection<NetworkItem>({
 
 export const NetworkSelect = () => {
   const queryClient = useQueryClient()
-  const { switchNetwork, activeNetwork } = useSwitchNetwork()
+  const { switchNetwork, activeNetwork } = useThorClient()
   const [error, setError] = useState("")
 
   const handleNetworkChange = (details: Select.ValueChangeDetails<NetworkItem>) => {

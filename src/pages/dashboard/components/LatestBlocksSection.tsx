@@ -1,5 +1,5 @@
 import { Heading, Stack } from "@chakra-ui/react"
-import { useLatestBlocks } from "@/hooks/thor/useLatestBlocks"
+import { useLatestBlocks } from "@/services/thor/block/hooks"
 import { BlockRow, BlockRowSkeleton } from "./BlockRow"
 
 const BLOCKS_TO_DISPLAY = 5

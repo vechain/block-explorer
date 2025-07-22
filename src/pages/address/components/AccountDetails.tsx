@@ -1,13 +1,14 @@
 import { Stack, Table } from "@chakra-ui/react"
 
-import { GetAccountReturnType } from "@/actions/getAccount"
+import { GetAccountReturnType } from "@/services/thor/account/account"
 import { VnsBadge } from "@/components/ui/VnsBadge"
 import { VETBalance, VTHOBalance } from "@/components/ui/TokenBalance"
 import { Subtitle, Title } from "@/components/ui/Typography"
+import { parseAddress } from "@/utils/address"
 
 export const AccountDetails = ({ account }: { account: GetAccountReturnType }) => {
   const items = [
-    { name: "VNS", value: <VnsBadge address={account.address} /> },
+    { name: "VNS", value: <VnsBadge address={parseAddress(account.address)!} /> },
     { name: "Balance", value: <VETBalance balance={account.vet.wei} /> },
     { name: "VTHO / Energy", value: <VTHOBalance balance={account.vtho.wei} /> },
   ]

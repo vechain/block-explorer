@@ -1,8 +1,9 @@
+import { addressStringSchema, AddressString } from "@/utils/address"
 import { Address } from "@vechain/sdk-core"
 import { AccountDetail, ThorClient } from "@vechain/sdk-network"
 
 export interface GetAccountReturnType extends AccountDetail {
-  address: Address
+  address: AddressString
 }
 
 export async function getAccount({
@@ -20,6 +21,6 @@ export async function getAccount({
     ...account,
     vet: account.vet,
     vtho: account.vtho,
-    address: address,
+    address: addressStringSchema.parse(address.toString()),
   }
 }

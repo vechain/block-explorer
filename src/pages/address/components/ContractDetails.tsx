@@ -1,5 +1,5 @@
 import { Stack, Table } from "@chakra-ui/react"
-import { GetAccountReturnType } from "@/actions/getAccount"
+import { GetAccountReturnType } from "@/services/thor/account/account"
 import { VETBalance, VTHOBalance } from "@/components/ui/TokenBalance"
 import { Subtitle, Title } from "@/components/ui/Typography"
 

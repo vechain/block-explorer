@@ -1,3 +1,4 @@
+import z from "zod"
 import { Address, HexUInt, ZERO_ADDRESS } from "@vechain/sdk-core"
 
 /**
@@ -31,3 +32,9 @@ export function parseAddress(value: AddressValueParam | undefined): Address | un
     return undefined
   }
 }
+
+export const addressStringSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/, {
+  message: "Must be a valid address string starting with 0x",
+}) as z.ZodType<`0x${string}`> // 42 characters including 0x
+
+export type AddressString = z.infer<typeof addressStringSchema>

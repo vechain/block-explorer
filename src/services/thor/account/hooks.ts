@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
-import { getAccount } from "@/actions/getAccount"
 import { Address } from "@vechain/sdk-core"
-import { useThorClient } from "./useThorClient"
+import { getAccount } from "./account"
+import { useThorClient } from "../thor-client"
 
 export function useAccount(address: Address) {
   const { thorClient, activeNetwork } = useThorClient()

@@ -1,7 +1,7 @@
 import { Navigate, useParams } from "react-router-dom"
 import { parseAddress } from "@/utils/address"
 
-import { useAccount } from "@/hooks/thor/useAccount"
+import { useAccount } from "@/services/thor/account/hooks"
 import { Address } from "@vechain/sdk-core"
 import { ContractDetails } from "./components/ContractDetails"
 import { AccountDetails } from "./components/AccountDetails"

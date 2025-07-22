@@ -1,4 +1,4 @@
-import { useBestBlock } from "@/hooks/thor/useBestBlock"
+import { useBestBlock } from "@/services/thor/block/hooks"
 import { Flex, Text, Skeleton, Stack, Icon, Heading } from "@chakra-ui/react"
 import { useTranslation } from "react-i18next"
 import { LuArrowLeftRight, LuBox, LuUserCheck } from "react-icons/lu"

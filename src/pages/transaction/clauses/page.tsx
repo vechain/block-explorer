@@ -2,7 +2,7 @@ import { Navigate, useParams } from "react-router-dom"
 import { parseHex } from "@/utils/hex"
 import { Hex } from "@vechain/sdk-core"
 import { Stack, Table } from "@chakra-ui/react"
-import { useTransaction } from "@/hooks/thor/useTransaction"
+import { useTransaction } from "@/services/thor/transaction/hooks"
 import { AddressLink, ClauseLink } from "@/components/ui/Links"
 import { Subtitle, Title } from "@/components/ui/Typography"
 
