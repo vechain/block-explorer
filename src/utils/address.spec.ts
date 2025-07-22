@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { isZeroAddress, parseAddress } from "./address"
+import { isZeroAddress, parseAddress, truncateAddress } from "./address"
 import { Address, ZERO_ADDRESS } from "@vechain/sdk-core"
 
 describe("Address utils", () => {
@@ -43,6 +43,26 @@ describe("Address utils", () => {
     it("should return undefined for an undefined address", () => {
       const address = parseAddress(undefined)
       expect(address).toBeUndefined()
+    })
+  })
+
+  describe("truncateAddress", () => {
+    const testAddress = "0x1234567890abcdef1234567890abcdef12345678"
+
+    it("should truncate address with default parameters", () => {
+      const result = truncateAddress(testAddress)
+      expect(result).toBe("0x12345678...12345678")
+    })
+
+    it("should truncate address with custom parameters", () => {
+      const result = truncateAddress(testAddress, 8, 6)
+      expect(result).toBe("0x123456...345678")
+    })
+
+    it("should not truncate short addresses", () => {
+      const shortAddress = "0x123456"
+      const result = truncateAddress(shortAddress)
+      expect(result).toBe(shortAddress)
     })
   })
 })
