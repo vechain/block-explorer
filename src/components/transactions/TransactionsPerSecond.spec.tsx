@@ -1,9 +1,8 @@
 import { render, screen } from "@testing-library/react"
 import { describe, it, expect, vi, Mock } from "vitest"
-import { ChakraProvider } from "@chakra-ui/react"
 import { TransactionsPerSecond } from "@/components/transactions/TransactionsPerSecond"
 import { useLatestBlocks } from "@/hooks/thor/useLatestBlocks"
-import { config } from "@/components/ui/Theme.tsx"
+import { ChakraProvider } from "@/components/ui/provider"
 import "@testing-library/jest-dom"
 
 vi.mock("@/hooks/thor/useLatestBlocks")
@@ -18,7 +17,7 @@ describe("TransactionsPerSecond", () => {
     ;(useLatestBlocks as Mock).mockReturnValue({ data: mockBlocks, isPending: false })
 
     render(
-      <ChakraProvider value={config}>
+      <ChakraProvider>
         <TransactionsPerSecond numBlocks={2} />
       </ChakraProvider>,
     )
@@ -33,7 +32,7 @@ describe("TransactionsPerSecond", () => {
     ;(useLatestBlocks as Mock).mockReturnValue({ data: mockBlocks, isPending: false })
 
     render(
-      <ChakraProvider value={config}>
+      <ChakraProvider>
         <TransactionsPerSecond numBlocks={3} />
       </ChakraProvider>,
     )

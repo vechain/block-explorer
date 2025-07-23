@@ -2,7 +2,7 @@ import { Link as RouterLink } from "react-router-dom"
 import { Flex, Button, Text, Image, Link as ChakraLink, Group, Stack } from "@chakra-ui/react"
 import { LuDownload } from "react-icons/lu"
 import { useTranslation } from "react-i18next"
-import { ColorModeButton } from "@/components/ui/ColorMode.tsx"
+import { ColorModeButton } from "@/components/ui/theme/color-mode"
 import { NetworkSelect } from "./NetworkSelect"
 
 const downloadVeWorldHref =
@@ -28,15 +28,23 @@ export const Navbar = () => {
       </RouterLink>
 
       <Group gap={4}>
-        <Button asChild bg="bg.inverted" color="fg.inverted">
-          <ChakraLink href={downloadVeWorldHref} target="_blank" textDecoration="none">
-            {t("download_button")}
-            <LuDownload />
-          </ChakraLink>
-        </Button>
+        <DownloadButton />
         <NetworkSelect />
         <ColorModeButton />
       </Group>
     </Flex>
+  )
+}
+
+const DownloadButton = () => {
+  const { t } = useTranslation()
+
+  return (
+    <Button asChild bg="primary.500" color="gray.50">
+      <ChakraLink href={downloadVeWorldHref} target="_blank" textDecoration="none">
+        {t("download_button")}
+        <LuDownload />
+      </ChakraLink>
+    </Button>
   )
 }
