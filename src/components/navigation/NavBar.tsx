@@ -4,12 +4,14 @@ import { LuDownload } from "react-icons/lu"
 import { useTranslation } from "react-i18next"
 import { ColorModeButton } from "@/components/ui/theme/color-mode"
 import { NetworkSelect } from "./NetworkSelect"
+import { useVetVthoUsdPrice } from "@/services/coingecko/vet-vtho-usd-price/hooks"
 
 const downloadVeWorldHref =
   "https://chromewebstore.google.com/detail/veworld/ffondjhiilhjpmfakjbejdgbemolaaho?utm_source=landing_page&utm_medium=website&utm_campaign=vechain_communication"
 
 export const Navbar = () => {
   const { t } = useTranslation()
+  const { data: usdPrice } = useVetVthoUsdPrice()
 
   return (
     <Flex as="nav" justify="space-between" align="center">
@@ -26,6 +28,15 @@ export const Navbar = () => {
           </Text>
         </Stack>
       </RouterLink>
+
+      <Flex gap={4} alignItems="center">
+        <Text fontSize="sm" color="fg.muted">
+          VET: {usdPrice?.vechain.usd.toFixed(4).toLocaleString()} $
+        </Text>
+        <Text fontSize="sm" color="fg.muted">
+          VTHO: {usdPrice?.["vethor-token"].usd.toFixed(4).toLocaleString()} $
+        </Text>
+      </Flex>
 
       <Group gap={4}>
         <DownloadButton />
