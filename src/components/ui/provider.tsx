@@ -10,6 +10,6 @@ export const UiProvider = ({ children }: React.PropsWithChildren) => {
   )
 }
 
-export const ChakraProvider = ({ children }: React.PropsWithChildren) => {
+const ChakraProvider = ({ children }: React.PropsWithChildren) => {
   return <ChakraProviderBase value={system}>{children}</ChakraProviderBase>
 }

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
-import { getTransaction } from "@/actions/getTransaction"
 import { Hex } from "@vechain/sdk-core"
-import { useThorClient } from "./useThorClient"
+import { useThorClient } from "../thor-client"
+import { getTransaction } from "./actions"
 
 export function useTransaction(transactionId: Hex) {
   const { thorClient } = useThorClient()

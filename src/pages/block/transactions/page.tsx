@@ -1,6 +1,6 @@
 import { Navigate, useParams } from "react-router-dom"
 import { parseRevision } from "@/utils/revision"
-import { useBlock } from "@/hooks/thor/useBlock"
+import { useBlock } from "@/services/thor/block/hooks"
 import { Hex, Revision } from "@vechain/sdk-core"
 import { Stack, Badge, Table } from "@chakra-ui/react"
 import { AddressLink, TransactionClausesLink, TransactionLink } from "@/components/ui/Links"

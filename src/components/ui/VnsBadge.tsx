@@ -1,6 +1,6 @@
 import { Badge, Spinner } from "@chakra-ui/react"
 
-import { useVnsName } from "@/hooks/thor/useVnsName"
+import { useVnsName } from "@/services/thor/vns/hooks"
 
 import { Address } from "@vechain/sdk-core"
 
