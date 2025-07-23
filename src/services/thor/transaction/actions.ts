@@ -1,5 +1,43 @@
 import { Hex } from "@vechain/sdk-core"
-import { ThorClient, TransactionDetailNoRaw } from "@vechain/sdk-network"
+import { ThorClient, TransactionDetailNoRaw, TransactionReceipt } from "@vechain/sdk-network"
+
+/**
+ * TODO: fix this transaction detail typing when the SDK is updated.
+ * Currently, there is no disctinction between dynamic fee and legacy transactions.
+ * for instance, "type" is not in TransactionDetailNoRaw.
+ * The verbosity in type definition is not ideal, but it's the best we can do for now.
+ */
+
+export type BaseTransaction = {
+  id: TransactionDetailNoRaw["id"]
+  chainTag: TransactionDetailNoRaw["chainTag"]
+  blockRef: TransactionDetailNoRaw["blockRef"]
+  expiration: TransactionDetailNoRaw["expiration"]
+  clauses: TransactionDetailNoRaw["clauses"]
+  gas: TransactionDetailNoRaw["gas"]
+  origin: TransactionDetailNoRaw["origin"]
+  meta: TransactionDetailNoRaw["meta"]
+  delegator: TransactionDetailNoRaw["delegator"]
+  nonce: TransactionDetailNoRaw["nonce"]
+  dependsOn: TransactionDetailNoRaw["dependsOn"]
+  size: TransactionDetailNoRaw["size"]
+}
+
+type DynamicFeeTransactionFields = {
+  type: 81
+  maxFeePerGas: string
+  maxPriorityFeePerGas: string
+}
+
+type LegacyTransactionFields = {
+  type: 0
+  gasPriceCoef: TransactionDetailNoRaw["gasPriceCoef"]
+}
+
+export type DynamicFeeTransaction = BaseTransaction & DynamicFeeTransactionFields
+export type LegacyTransaction = BaseTransaction & LegacyTransactionFields
+
+type TransactionDetail = DynamicFeeTransaction | LegacyTransaction
 
 export async function getTransaction({
   thorClient,
@@ -7,8 +45,22 @@ export async function getTransaction({
 }: {
   thorClient: ThorClient
   transactionId: Hex
-}): Promise<TransactionDetailNoRaw | null> {
+}): Promise<TransactionDetail | null> {
   const tx = await thorClient.transactions.getTransaction(transactionId.toString())
 
-  return tx
+  return tx as TransactionDetail
+}
+
+type GetTransactionReceiptReturnType = TransactionReceipt | null
+
+export async function getTransactionReceipt({
+  thorClient,
+  transactionId,
+}: {
+  thorClient: ThorClient
+  transactionId: Hex
+}): Promise<GetTransactionReceiptReturnType> {
+  const receipt = await thorClient.transactions.getTransactionReceipt(transactionId.toString())
+
+  return receipt
 }
