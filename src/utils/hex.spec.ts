@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { parseHex } from "./hex"
+import { hexStringSchema, parseHex } from "./hex"
 import { Hex } from "@vechain/sdk-core"
 
 describe("Hex utils", () => {
@@ -24,6 +24,18 @@ describe("Hex utils", () => {
     it("should return undefined for an undefined hex", () => {
       const hex = parseHex(undefined)
       expect(hex).toBeUndefined()
+    })
+  })
+
+  describe("hexStringSchema", () => {
+    it("should return the hex for a valid hex string", () => {
+      const hexString = "0xf590b9627456e13e3039625cf7d34f46e4623972c5ce3af596417ba50a124773"
+      const hex = hexStringSchema.parse(hexString)
+      expect(hex).toEqual(hexString)
+    })
+
+    it("should throw an error for an invalid hex string", () => {
+      expect(() => hexStringSchema.parse("invalidHex")).toThrow()
     })
   })
 })

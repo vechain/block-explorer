@@ -1,11 +1,12 @@
 import { Link as RouterLink } from "react-router-dom"
 import { Link as ChakraLink, Flex } from "@chakra-ui/react"
 import { CopyToClipBoard } from "./CopyToClipBoard"
+import { truncateAddress } from "@/utils/address"
 
-export const AddressLink = ({ address }: { address: string }) => {
+export const AddressLink = ({ address, truncate = false }: { address: string; truncate?: boolean }) => {
   return (
     <CopyableLink to={`/address/${address}`} value={address}>
-      {address}
+      {truncate ? truncateAddress(address) : address}
     </CopyableLink>
   )
 }
@@ -52,7 +53,7 @@ export const ClauseLink = ({
   return <BaseLink to={`/transaction/${transactionId}/clause/${clauseIndex}`}>{children}</BaseLink>
 }
 
-const CopyableLink = ({ children, to, value }: { children: React.ReactNode; to: string; value: string }) => {
+export const CopyableLink = ({ children, to, value }: { children: React.ReactNode; to: string; value: string }) => {
   return (
     <Flex gap={2} alignItems="center">
       <BaseLink to={to}>{children}</BaseLink>

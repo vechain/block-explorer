@@ -1,24 +1,48 @@
-import { Badge, Spinner } from "@chakra-ui/react"
+import { Badge } from "@chakra-ui/react"
 
 import { useVnsName } from "@/services/thor/vns/hooks"
 
 import { Address } from "@vechain/sdk-core"
 
-const NO_VNS_NAME = "-"
+import { AddressLink, CopyableLink } from "./Links"
 
-export const VnsBadge = ({ address }: { address: Address }) => {
-  const { data: vnsNameArray, isLoading: isVnsLoading } = useVnsName(address)
+export const VnsBadgeOrAddressLink = ({
+  address,
+  truncateAddress = false,
+}: {
+  address: string | Address
+  truncateAddress?: boolean
+}) => {
+  const { data: vnsName } = useVnsName(address)
 
-  if (isVnsLoading) return <Spinner size="xs" />
-  if (!vnsNameArray) return NO_VNS_NAME
+  if (!vnsName) return <AddressLink address={address.toString()} truncate={truncateAddress} />
 
-  const [vnsName] = vnsNameArray
+  return <VnsBadge address={address} vnsName={vnsName} />
+}
 
-  if (!vnsName) return NO_VNS_NAME
+export const VnsBadge = ({
+  address,
+  vnsName,
+  size = "sm",
+}: {
+  address: Address | string
+  vnsName: string | null | undefined
+  size?: "sm" | "md"
+}) => {
+  if (!vnsName) return "-"
 
   return (
-    <Badge size="md" colorPalette="blue">
-      {vnsName}
-    </Badge>
+    <CopyableLink to={`/address/${address.toString()}`} value={address.toString()}>
+      <Badge
+        size={size}
+        variant="outline"
+        borderRadius="md"
+        border="1px dashed"
+        borderColor="blue.solid"
+        color="blue.solid"
+        boxShadow="none">
+        {vnsName}
+      </Badge>
+    </CopyableLink>
   )
 }

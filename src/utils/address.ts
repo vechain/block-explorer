@@ -38,3 +38,23 @@ export const addressStringSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/, {
 }) as z.ZodType<`0x${string}`> // 42 characters including 0x
 
 export type AddressString = z.infer<typeof addressStringSchema>
+
+/**
+ * Truncates an address to show only the beginning and end with "..." in the middle
+ * @param address - The address to truncate
+ * @param startLength - Number of characters to show at the beginning (default: 6)
+ * @param endLength - Number of characters to show at the end (default: 4)
+ * @returns The truncated address string
+ */
+export function truncateAddress(address: string, startLength: number = 10, endLength: number = 8) {
+  const parsedAddress = addressStringSchema.safeParse(address)
+
+  if (!parsedAddress.success) {
+    return address
+  }
+
+  const start = parsedAddress.data.slice(0, startLength)
+  const end = parsedAddress.data.slice(-endLength)
+
+  return `${start}...${end}`
+}
