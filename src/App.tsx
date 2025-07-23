@@ -57,7 +57,7 @@ const Router = () => {
 
 const Layout = () => {
   return (
-    <Container maxWidth="1440px" h="100vh" display="flex" flexDirection="column" p={10}>
+    <Container maxWidth="1440px" display="flex" flexDirection="column" p={10}>
       <Navbar />
       <Flex mt={10} direction="column" flex={1}>
         <Outlet />
