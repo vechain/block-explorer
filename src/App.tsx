@@ -10,9 +10,11 @@ import { ClauseDetailsPage } from "@/pages/clause/page"
 import { NotFoundPage } from "@/pages/NotFoundPage.tsx"
 import { AddressPage } from "@/pages/address/page.tsx"
 import { Navbar } from "@/components/navigation/NavBar.tsx"
-import { Container, Flex } from "@chakra-ui/react"
+import { Box, Container, Flex } from "@chakra-ui/react"
 import { UiProvider } from "@/components/ui/provider"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
+import { ErrorPage } from "./pages/ErrorPage"
+import { ErrorBoundary } from "./components/ui/ErrorBoundary"
 
 export const App = () => {
   return (
@@ -22,7 +24,7 @@ export const App = () => {
   )
 }
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
 const Providers = ({ children }: React.PropsWithChildren) => {
   return (
@@ -57,11 +59,15 @@ const Router = () => {
 
 const Layout = () => {
   return (
-    <Container maxWidth="1440px" display="flex" flexDirection="column" p={10}>
-      <Navbar />
-      <Flex mt={10} direction="column" flex={1}>
-        <Outlet />
-      </Flex>
-    </Container>
+    <Box h="100vh">
+      <ErrorBoundary FallbackComponent={ErrorPage}>
+        <Container maxWidth="1440px" display="flex" flexDirection="column" p={10} h="100%">
+          <Navbar />
+          <Flex mt={10} direction="column" flex={1}>
+            <Outlet />
+          </Flex>
+        </Container>
+      </ErrorBoundary>
+    </Box>
   )
 }
