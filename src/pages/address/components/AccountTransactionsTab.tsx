@@ -25,7 +25,7 @@ export const AccountTransactionsTab = ({ address }: { address: `0x${string}` }) 
   const items = transactions.data.map(tx => ({
     key: tx.id,
     id: <TransactionLink transactionId={tx.id}>{tx.id}</TransactionLink>,
-    status: <TxStatus reverted={tx.reverted} />,
+    status: <TxStatus status={tx.reverted ? "reverted" : "success"} />,
     origin: <VnsBadgeOrAddressLink address={tx.origin} truncateAddress />,
     block: <BlockLink blockId={tx.blockId}>{tx.blockNumber}</BlockLink>,
     timestamp: formatDateFromTimestamp(tx.blockTimestamp),

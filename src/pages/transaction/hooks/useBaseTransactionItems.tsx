@@ -14,7 +14,9 @@ import { GasUsed } from "@/components/GasUsed"
 import { TransactionReceipt } from "@vechain/sdk-network"
 import { BaseTransaction } from "@/services/thor/transaction/actions"
 
-export function useBaseTransactionItems(tx: BaseTransaction, receipt: TransactionReceipt) {
+export function useBaseTransactionItems(tx: BaseTransaction, receipt: TransactionReceipt | undefined) {
+  const status = receipt ? (receipt.reverted ? "reverted" : "success") : "pending"
+
   return {
     id: {
       name: "ID",
@@ -22,7 +24,7 @@ export function useBaseTransactionItems(tx: BaseTransaction, receipt: Transactio
     },
     status: {
       name: "Status",
-      value: <TxStatus reverted={receipt.reverted} />,
+      value: <TxStatus status={status} />,
     },
     blockNumber: {
       name: "Block Number",
@@ -58,7 +60,7 @@ export function useBaseTransactionItems(tx: BaseTransaction, receipt: Transactio
     },
     expiration: {
       name: "Expiration",
-      value: tx.expiration.toLocaleString(),
+      value: tx.expiration.toLocaleString() + " Blocks",
     },
     nonce: {
       name: "Nonce",
@@ -70,15 +72,15 @@ export function useBaseTransactionItems(tx: BaseTransaction, receipt: Transactio
     },
     reward: {
       name: "Reward",
-      value: <VTHOBalance balance={hexToBigInt(hexStringSchema.parse(receipt.reward))} />,
+      value: receipt ? <VTHOBalance balance={hexToBigInt(hexStringSchema.parse(receipt.reward))} /> : "-",
     },
     gasUsed: {
       name: "Gas Used",
-      value: <GasUsed gasUsed={receipt.gasUsed} gasLimit={Number(tx.gas)} />,
+      value: receipt ? <GasUsed gasUsed={receipt.gasUsed} gasLimit={Number(tx.gas)} /> : "-",
     },
     gasFees: {
       name: "Gas fees",
-      value: <PaidGasFees paid={receipt.paid} delegator={receipt.gasPayer} />,
+      value: receipt ? <PaidGasFees paid={receipt.paid} delegator={receipt.gasPayer} /> : "-",
     },
   }
 }

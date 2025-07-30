@@ -32,7 +32,7 @@ const BlockTransactionList = ({ revision }: { revision: Revision }) => {
     origin: <VnsBadgeOrAddressLink address={tx.origin} truncateAddress />,
     paid: <PaidGasFees paid={tx.paid} delegator={tx.delegator} />,
     clauses: <TransactionClausesLink transactionId={tx.id}>{tx.clauses.length + " Clauses"}</TransactionClausesLink>,
-    status: <TxStatus reverted={tx.reverted} />,
+    status: <TxStatus status={tx.reverted ? "reverted" : "success"} />,
   }))
 
   return (

@@ -37,7 +37,7 @@ type LegacyTransactionFields = {
 export type DynamicFeeTransaction = BaseTransaction & DynamicFeeTransactionFields
 export type LegacyTransaction = BaseTransaction & LegacyTransactionFields
 
-type TransactionDetail = DynamicFeeTransaction | LegacyTransaction
+export type TransactionDetail = DynamicFeeTransaction | LegacyTransaction
 
 export async function getTransaction({
   thorClient,
@@ -51,15 +51,13 @@ export async function getTransaction({
   return tx as TransactionDetail
 }
 
-type GetTransactionReceiptReturnType = TransactionReceipt | null
-
 export async function getTransactionReceipt({
   thorClient,
   transactionId,
 }: {
   thorClient: ThorClient
   transactionId: Hex
-}): Promise<GetTransactionReceiptReturnType> {
+}): Promise<TransactionReceipt | null> {
   const receipt = await thorClient.transactions.getTransactionReceipt(transactionId.toString())
 
   return receipt

@@ -9,7 +9,7 @@ export const DynamicFeeTransaction = ({
   receipt,
 }: {
   tx: DynamicFeeTransactionType
-  receipt: TransactionReceipt
+  receipt: TransactionReceipt | undefined
 }) => {
   const baseItems = useBaseTransactionItems(tx, receipt)
 
