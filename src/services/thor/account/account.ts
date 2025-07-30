@@ -1,4 +1,4 @@
-import { addressStringSchema, AddressString } from "@/utils/address"
+import { addressStringSchema, AddressString } from "@/schemas"
 import { Address } from "@vechain/sdk-core"
 import { AccountDetail, ThorClient } from "@vechain/sdk-network"
 

@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { addressStringSchema } from "@/utils/address"
+import { addressStringSchema } from "@/schemas"
 
 const transactionClausesSchema = z.object({
   to: z.string(),
