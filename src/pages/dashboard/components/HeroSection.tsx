@@ -1,5 +1,5 @@
 import { Text, Flex, Stack } from "@chakra-ui/react"
-import { BlockNumberCard, TotalTransactionsCard, ValidatorNodesCard } from "./InsightDataCard"
+import { BlockNumberCard, TransactionsPerSecondCard, ClausesPerSecondCard } from "./InsightDataCard"
 import { useTranslation } from "react-i18next"
 import { SearchBar } from "./SearchBar"
 
@@ -16,8 +16,8 @@ export const HeroSection = () => {
 
       <Flex gap={4}>
         <BlockNumberCard />
-        <TotalTransactionsCard />
-        <ValidatorNodesCard />
+        <TransactionsPerSecondCard />
+        <ClausesPerSecondCard />
       </Flex>
     </Stack>
   )
