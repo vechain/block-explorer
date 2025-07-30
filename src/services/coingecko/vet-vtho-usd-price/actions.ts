@@ -1,22 +1,20 @@
 import { z } from "zod"
 import * as coingecko from "../api-client"
 
-const vetVthoUsdPriceSchema = z.object({
-  vechain: z.object({
-    usd: z.number(),
-  }),
-  "vethor-token": z.object({
-    usd: z.number(),
-  }),
-})
-
-export async function getVetVthoUsdPrice() {
+export async function getTokenUsdPrice(tokens: string[]) {
   const response = await coingecko.get({
     endPoint: "/simple/price",
     params: {
-      ids: "vechain,vethor-token",
+      ids: tokens.join(","),
       vs_currencies: "usd",
     },
   })
-  return vetVthoUsdPriceSchema.parse(response)
+
+  const dynamicSchema = z
+    .record(z.string(), z.object({ usd: z.number() }))
+    .refine(data => tokens.every(token => token in data), {
+      message: `Missing required tokens: ${tokens.join(", ")}`,
+    })
+
+  return dynamicSchema.parse(response)
 }

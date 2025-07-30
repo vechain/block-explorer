@@ -4,14 +4,11 @@ import { LuDownload } from "react-icons/lu"
 import { useTranslation } from "react-i18next"
 import { ColorModeButton } from "@/components/ui/theme/color-mode"
 import { NetworkSelect } from "./NetworkSelect"
-import { useVetVthoUsdPrice } from "@/services/coingecko/vet-vtho-usd-price/hooks"
-
-const downloadVeWorldHref =
-  "https://chromewebstore.google.com/detail/veworld/ffondjhiilhjpmfakjbejdgbemolaaho?utm_source=landing_page&utm_medium=website&utm_campaign=vechain_communication"
+import { useTokenUsdPrice } from "@/services/coingecko/vet-vtho-usd-price/hooks"
 
 export const Navbar = () => {
   const { t } = useTranslation()
-  const { data: usdPrice } = useVetVthoUsdPrice()
+  const { data: tokenUsdPrice } = useTokenUsdPrice(["vechain", "vethor-token", "vebetterdao"])
 
   return (
     <Flex as="nav" justify="space-between" align="center">
@@ -30,11 +27,20 @@ export const Navbar = () => {
       </RouterLink>
 
       <Flex gap={4} alignItems="center">
-        <Text fontSize="sm" color="fg.muted">
-          VET: {usdPrice?.vechain.usd.toFixed(4).toLocaleString()} $
+        <Text asChild fontSize="sm" color="fg.muted">
+          <ChakraLink href="https://www.coingecko.com/fr/coins/vechain" target="_blank">
+            VET: {tokenUsdPrice?.vechain.usd.toFixed(4).toLocaleString()} $
+          </ChakraLink>
         </Text>
-        <Text fontSize="sm" color="fg.muted">
-          VTHO: {usdPrice?.["vethor-token"].usd.toFixed(4).toLocaleString()} $
+        <Text asChild fontSize="sm" color="fg.muted">
+          <ChakraLink href="https://www.coingecko.com/fr/coins/vethor-token" target="_blank">
+            VTHO: {tokenUsdPrice?.["vethor-token"].usd.toFixed(4).toLocaleString()} $
+          </ChakraLink>
+        </Text>
+        <Text asChild fontSize="sm" color="fg.muted">
+          <ChakraLink href="https://www.coingecko.com/fr/coins/vebetterdao" target="_blank">
+            B3TR: {tokenUsdPrice?.vebetterdao.usd.toFixed(4).toLocaleString()} $
+          </ChakraLink>
         </Text>
       </Flex>
 
@@ -46,6 +52,8 @@ export const Navbar = () => {
     </Flex>
   )
 }
+
+const downloadVeWorldHref = "https://www.veworld.net/"
 
 const DownloadButton = () => {
   const { t } = useTranslation()

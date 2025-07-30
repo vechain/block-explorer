@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query"
-import { getVetVthoUsdPrice } from "./actions"
+import { getTokenUsdPrice } from "./actions"
 
-export function useVetVthoUsdPrice() {
+export function useTokenUsdPrice(tokens: string[]) {
   return useQuery({
-    queryKey: [getVetVthoUsdPrice.name],
-    queryFn: getVetVthoUsdPrice,
+    queryKey: [getTokenUsdPrice.name, tokens],
+    queryFn: () => getTokenUsdPrice(tokens),
   })
 }
