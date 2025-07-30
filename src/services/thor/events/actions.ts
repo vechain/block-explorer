@@ -1,4 +1,4 @@
-import { RewardDistributedEventSignature } from "@/constants/vebetterdao/EventSignatures.ts"
+import { RewardDistributedEventSignature } from "@/constants/vebetterdao"
 import { EventLogs, ThorClient } from "@vechain/sdk-network"
 import { Network } from "@/constants/network"
 
