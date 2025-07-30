@@ -17,6 +17,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: path => path.replace(/^\/api\/coingecko/, ""),
       },
+      "/api/b32": {
+        target: "https://b32.vecha.in",
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/api\/b32/, ""),
+      },
     },
   },
 })
