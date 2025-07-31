@@ -5,6 +5,9 @@ import { Stack, Table } from "@chakra-ui/react"
 import { useTransaction } from "@/services/thor/transaction/hooks"
 import { AddressLink, ClauseLink } from "@/components/ui/Links"
 import { Subtitle, Title } from "@/components/ui/Typography"
+import { VETBalance } from "@/components/ui/TokenBalance"
+import { hexStringSchema } from "@/schemas"
+import { Code } from "@/components/ui/Code"
 
 export const TransactionClausesPage = () => {
   const { transactionId } = useParams<{ transactionId: string }>()
@@ -27,9 +30,9 @@ const TransactionClauseList = ({ id }: { id: Hex }) => {
 
   const items = transaction.clauses.map((clause, index) => ({
     index,
-    to: clause.to ? <AddressLink address={clause.to} /> : "N/A",
-    value: clause.value.toString(),
-    data: clause.data,
+    to: clause.to ? <AddressLink truncate address={clause.to} /> : "N/A",
+    value: <VETBalance balance={hexStringSchema.parse(clause.value)} />,
+    data: <Code>{clause.data}</Code>,
   }))
 
   return (
