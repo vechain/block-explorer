@@ -1,14 +1,20 @@
-import { Flex, Stack, Table } from "@chakra-ui/react"
+import { Flex, Stack, Table, Tabs } from "@chakra-ui/react"
 import { GetAccountReturnType } from "@/services/thor/account/account"
 import { VETBalance, VTHOBalance } from "@/components/ui/TokenBalance"
 import { Subtitle, Title } from "@/components/ui/Typography"
 import { CopyToClipBoard } from "@/components/ui/CopyToClipBoard"
+import { AccountTransactionsTab } from "./AccountTransactionsTab"
+import { LuArrowLeftRight } from "react-icons/lu"
+import { TbTransfer } from "react-icons/tb"
+import { NoTransfers } from "@/components/NoResults"
 
 export const ContractDetails = ({ account }: { account: GetAccountReturnType }) => {
   const items = [
     { name: "Balance", value: <VETBalance balance={account.vet.wei} /> },
     { name: "VTHO / Energy", value: <VTHOBalance balance={account.vtho.wei} /> },
   ]
+
+  const transfers: unknown[] = []
 
   return (
     <Stack flex={1}>
@@ -30,6 +36,27 @@ export const ContractDetails = ({ account }: { account: GetAccountReturnType }) 
           </Table.Body>
         </Table.Root>
       </Table.ScrollArea>
+
+      <Tabs.Root defaultValue="transactions" variant="subtle">
+        <Tabs.List bg="bg.muted" rounded="l3">
+          <Tabs.Trigger value="transactions">
+            <LuArrowLeftRight />
+            Transactions
+          </Tabs.Trigger>
+          <Tabs.Trigger value="transfers">
+            <TbTransfer />
+            Transfers
+          </Tabs.Trigger>
+          <Tabs.Indicator rounded="l2" />
+        </Tabs.List>
+
+        <Tabs.Content value="transactions">
+          <AccountTransactionsTab address={account.address} />
+        </Tabs.Content>
+        <Tabs.Content value="transfers">
+          {transfers ? "Transfer list coming soon ..." : <NoTransfers />}
+        </Tabs.Content>
+      </Tabs.Root>
     </Stack>
   )
 }

@@ -10,6 +10,7 @@ import { AccountTransactionsTab } from "./AccountTransactionsTab"
 
 import { LuArrowLeftRight, LuCoins } from "react-icons/lu"
 import { TbTransfer } from "react-icons/tb"
+import { NoTokens, NoTransfers } from "@/components/NoResults"
 
 export const AccountDetails = ({ account }: { account: GetAccountReturnType }) => {
   const { data: vnsName } = useVnsName(account.address)
@@ -19,6 +20,9 @@ export const AccountDetails = ({ account }: { account: GetAccountReturnType }) =
     { name: "Balance", value: <VETBalance balance={account.vet.wei} /> },
     { name: "VTHO / Energy", value: <VTHOBalance balance={account.vtho.wei} /> },
   ]
+
+  const transfers: unknown[] = []
+  const tokens: unknown[] = []
 
   return (
     <Stack flex={1}>
@@ -41,7 +45,7 @@ export const AccountDetails = ({ account }: { account: GetAccountReturnType }) =
         </Table.Root>
       </Table.ScrollArea>
 
-      <Tabs.Root lazyMount defaultValue="transactions" variant="enclosed" fitted>
+      <Tabs.Root defaultValue="transactions" variant="subtle">
         <Tabs.List bg="bg.muted" rounded="l3">
           <Tabs.Trigger value="transactions">
             <LuArrowLeftRight />
@@ -58,9 +62,11 @@ export const AccountDetails = ({ account }: { account: GetAccountReturnType }) =
           <Tabs.Indicator rounded="l2" />
         </Tabs.List>
 
-        <AccountTransactionsTab address={account.address} />
-        <Tabs.Content value="transfers">Transfers list</Tabs.Content>
-        <Tabs.Content value="tokens">Tokens list</Tabs.Content>
+        <Tabs.Content value="transactions">
+          <AccountTransactionsTab address={account.address} />
+        </Tabs.Content>
+        <Tabs.Content value="transfers">{transfers ? "Transfer list coming soon ..." : <NoTransfers />}</Tabs.Content>
+        <Tabs.Content value="tokens">{tokens ? "Token list coming soon ..." : <NoTokens />}</Tabs.Content>
       </Tabs.Root>
     </Stack>
   )
