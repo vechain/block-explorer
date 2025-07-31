@@ -14,6 +14,7 @@ import { AiOutlineWechat } from "react-icons/ai"
 import { TbTransfer } from "react-icons/tb"
 import { VscNewFile } from "react-icons/vsc"
 import { Pagination } from "@/components/ui/Pagination"
+import { VETTransferTable } from "@/components/VETTransferTable"
 import { EventList } from "./components/EventList"
 import { AddressLink } from "@/components/ui/Links"
 import { NoContractCreation, NoEvents, NoTransfers } from "@/components/NoResults"
@@ -95,7 +96,9 @@ const ClausePageContent = ({
           <ClauseDetailsTable clause={clause} txId={txId} clauseIndex={clauseIndex} />
         </Tabs.Content>
         <Tabs.Content value="events">{hasEvents ? <EventList eventLogs={output.events} /> : <NoEvents />}</Tabs.Content>
-        <Tabs.Content value="transfers">{hasTransfers ? "Transfer list coming soon..." : <NoTransfers />}</Tabs.Content>
+        <Tabs.Content value="transfers">
+          {hasTransfers ? <VETTransferTable transfers={output.transfers} /> : <NoTransfers />}
+        </Tabs.Content>
         <Tabs.Content value="contract-creation">
           {hasContractCreation ? <CreatedContract address={output.contractAddress!} /> : <NoContractCreation />}
         </Tabs.Content>
