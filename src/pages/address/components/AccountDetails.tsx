@@ -10,7 +10,8 @@ import { AccountTransactionsTab } from "./AccountTransactionsTab"
 
 import { LuArrowLeftRight, LuCoins } from "react-icons/lu"
 import { TbTransfer } from "react-icons/tb"
-import { NoTokens, NoTransfers } from "@/components/NoResults"
+import { NoTokens } from "@/components/NoResults"
+import { AccountTransfersTab } from "./AccountTransfersTab"
 
 export const AccountDetails = ({ account }: { account: GetAccountReturnType }) => {
   const { data: vnsName } = useVnsName(account.address)
@@ -21,7 +22,6 @@ export const AccountDetails = ({ account }: { account: GetAccountReturnType }) =
     { name: "VTHO / Energy", value: <VTHOBalance balance={account.vtho.wei} /> },
   ]
 
-  const transfers: unknown[] = []
   const tokens: unknown[] = []
 
   return (
@@ -65,7 +65,9 @@ export const AccountDetails = ({ account }: { account: GetAccountReturnType }) =
         <Tabs.Content value="transactions">
           <AccountTransactionsTab address={account.address} />
         </Tabs.Content>
-        <Tabs.Content value="transfers">{transfers ? "Transfer list coming soon ..." : <NoTransfers />}</Tabs.Content>
+        <Tabs.Content value="transfers">
+          <AccountTransfersTab address={account.address} />
+        </Tabs.Content>
         <Tabs.Content value="tokens">{tokens ? "Token list coming soon ..." : <NoTokens />}</Tabs.Content>
       </Tabs.Root>
     </Stack>
