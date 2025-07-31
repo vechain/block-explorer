@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { addressStringSchema } from "@/schemas"
+import { rawEventSchema } from "@/schemas/events"
 
 const transactionClausesSchema = z.object({
   to: z.string(),
@@ -7,10 +8,7 @@ const transactionClausesSchema = z.object({
   data: z.string(),
 })
 
-const transactionEventSchema = z.object({
-  address: z.string().nullable(),
-  topics: z.array(z.string()),
-  data: z.string(),
+const transactionEventSchema = rawEventSchema.extend({
   name: z.string(),
   params: z.record(z.string(), z.unknown()),
 })
