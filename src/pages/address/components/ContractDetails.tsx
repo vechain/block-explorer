@@ -7,9 +7,14 @@ import { AccountTransactionsTab } from "./AccountTransactionsTab"
 import { LuArrowLeftRight } from "react-icons/lu"
 import { TbTransfer } from "react-icons/tb"
 import { AccountTransfersTab } from "./AccountTransfersTab"
+import { VnsBadge } from "@/components/ui/VnsBadge"
+import { useVnsName } from "@/services/thor/vns/hooks"
 
 export const ContractDetails = ({ account }: { account: GetAccountReturnType }) => {
+  const { data: vnsName } = useVnsName(account.address)
+
   const items = [
+    { name: "VNS", value: <VnsBadge size="md" address={account.address} vnsName={vnsName} /> },
     { name: "Balance", value: <VETBalance balance={account.vet.wei} /> },
     { name: "VTHO / Energy", value: <VTHOBalance balance={account.vtho.wei} /> },
   ]
