@@ -1,14 +1,14 @@
 import { useAccountTransactions } from "@/services/veworld-indexer/transactions/hooks"
 
-import { IconButton, ButtonGroup, Pagination, Table, Stack } from "@chakra-ui/react"
+import { Stack, Table } from "@chakra-ui/react"
 import { BlockLink, TransactionClausesLink, TransactionLink } from "@/components/ui/Links"
 
 import { VnsBadgeOrAddressLink } from "@/components/ui/VnsBadge"
 import { PaidGasFees } from "@/components/PaidGasFees"
 import { TxStatus } from "@/components/TxStatus"
-import { LuChevronLeft, LuChevronRight } from "react-icons/lu"
 import { useState } from "react"
 import { formatDateFromTimestamp } from "@/utils/date"
+import { Pagination } from "@/components/ui/Pagination"
 import { NoTransactions } from "@/components/NoResults"
 
 const PAGE_SIZE = 30
@@ -83,7 +83,7 @@ export const AccountTransactionsTab = ({ address }: { address: `0x${string}` }) 
         </Table.Body>
       </Table.Root>
 
-      <Pagination.Root
+      <Pagination
         mt={4}
         display="flex"
         justifyContent="center"
@@ -92,21 +92,8 @@ export const AccountTransactionsTab = ({ address }: { address: `0x${string}` }) 
         defaultPage={defaultPage}
         onPageChange={details => {
           setPage(details.page - defaultPage)
-        }}>
-        <ButtonGroup gap={4} size="xs" variant="ghost">
-          <Pagination.PrevTrigger asChild>
-            <IconButton>
-              <LuChevronLeft />
-            </IconButton>
-          </Pagination.PrevTrigger>
-          <Pagination.PageText />
-          <Pagination.NextTrigger asChild>
-            <IconButton>
-              <LuChevronRight />
-            </IconButton>
-          </Pagination.NextTrigger>
-        </ButtonGroup>
-      </Pagination.Root>
+        }}
+      />
     </Stack>
   )
 }
