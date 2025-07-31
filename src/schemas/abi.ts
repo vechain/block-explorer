@@ -1,5 +1,11 @@
-import { AbiEvent } from "viem"
+import { AbiEvent, AbiParameter } from "viem"
 import { z } from "zod"
+
+export const parameterSchema = z.object({
+  internalType: z.string(),
+  name: z.string(),
+  type: z.string(),
+}) as z.ZodType<AbiParameter>
 
 export type AbiEventParameter = AbiEvent["inputs"][number]
 
