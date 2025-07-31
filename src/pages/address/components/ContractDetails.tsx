@@ -53,9 +53,7 @@ export const ContractDetails = ({ account }: { account: GetAccountReturnType }) 
         <Tabs.Content value="transactions">
           <AccountTransactionsTab address={account.address} />
         </Tabs.Content>
-        <Tabs.Content value="transfers">
-          {transfers ? "Transfer list coming soon ..." : <NoTransfers />}
-        </Tabs.Content>
+        <Tabs.Content value="transfers">{transfers ? "Transfer list coming soon ..." : <NoTransfers />}</Tabs.Content>
       </Tabs.Root>
     </Stack>
   )

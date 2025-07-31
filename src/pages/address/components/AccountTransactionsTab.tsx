@@ -1,6 +1,6 @@
 import { useAccountTransactions } from "@/services/veworld-indexer/transactions/hooks"
 
-import { IconButton, ButtonGroup, Pagination, Table, Tabs, Stack } from "@chakra-ui/react"
+import { IconButton, ButtonGroup, Pagination, Table, Stack } from "@chakra-ui/react"
 import { BlockLink, TransactionClausesLink, TransactionLink } from "@/components/ui/Links"
 
 import { VnsBadgeOrAddressLink } from "@/components/ui/VnsBadge"
