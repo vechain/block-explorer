@@ -50,8 +50,8 @@ const Router = () => {
           <Route path="/transaction/:transactionId/clauses" element={<TransactionClausesPage />} />
           <Route path="/transaction/:transactionId/clause/:clauseIndex" element={<ClauseDetailsPage />} />
           <Route path="/address/:address" element={<AddressPage />} />
-          <Route path="*" element={<NotFoundPage />} />
         </Route>
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   )
@@ -61,7 +61,7 @@ const Layout = () => {
   return (
     <Box h="100vh">
       <ErrorBoundary FallbackComponent={ErrorPage}>
-        <Container maxWidth="1440px" display="flex" flexDirection="column" p={10} h="100%">
+        <Container maxWidth="1440px" display="flex" flexDirection="column" p={10}>
           <Navbar />
           <Flex mt={10} direction="column" flex={1}>
             <Outlet />
