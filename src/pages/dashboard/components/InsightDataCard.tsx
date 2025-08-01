@@ -1,7 +1,11 @@
+import { useClausesPerSecond, useTransactionsPerSecond } from "@/hooks/stats-per-second"
 import { useBestBlock } from "@/services/thor/block/hooks"
 import { Flex, Text, Skeleton, Stack, Icon, Heading } from "@chakra-ui/react"
 import { useTranslation } from "react-i18next"
-import { LuArrowLeftRight, LuBox, LuUserCheck } from "react-icons/lu"
+import { LuArrowLeftRight, LuBox } from "react-icons/lu"
+import { FaListCheck } from "react-icons/fa6"
+
+const NUMBER_OF_BLOCKS = 10
 
 export const BlockNumberCard = () => {
   const { t } = useTranslation()
@@ -12,31 +16,20 @@ export const BlockNumberCard = () => {
   return <InsightDataCard label={t("block_number")} value={blockNumber} isPending={isPending} icon={<LuBox />} />
 }
 
-export const TotalTransactionsCard = () => {
-  const { t } = useTranslation()
-  const { isPending } = useBestBlock()
+export const TransactionsPerSecondCard = () => {
+  const { data: transactionsPerSecond, isPending } = useTransactionsPerSecond({ numBlocks: NUMBER_OF_BLOCKS })
 
-  const totalTransactions = Number(123456789).toLocaleString()
+  const value = Math.floor(transactionsPerSecond).toLocaleString() + " tx/s"
 
-  return (
-    <InsightDataCard
-      label={t("total_transactions")}
-      value={totalTransactions}
-      isPending={isPending}
-      icon={<LuArrowLeftRight />}
-    />
-  )
+  return <InsightDataCard label="TPS" value={value} isPending={isPending} icon={<LuArrowLeftRight />} />
 }
 
-export const ValidatorNodesCard = () => {
-  const { t } = useTranslation()
-  const { isPending } = useBestBlock()
+export const ClausesPerSecondCard = () => {
+  const { data: clausesPerSecond, isPending } = useClausesPerSecond({ numBlocks: 10 })
 
-  const validatorNodes = Number(12345).toLocaleString()
+  const value = Math.floor(clausesPerSecond).toLocaleString() + " clause/s"
 
-  return (
-    <InsightDataCard label={t("validator_nodes")} value={validatorNodes} isPending={isPending} icon={<LuUserCheck />} />
-  )
+  return <InsightDataCard label="CPS" value={value} isPending={isPending} icon={<FaListCheck />} />
 }
 
 type InsightDataCardProps = {
