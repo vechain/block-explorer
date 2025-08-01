@@ -27,8 +27,6 @@ const TransactionDetails = ({ id }: { id: Hex }) => {
   if (!transaction)
     return <Navigate to="/404" replace state={{ message: "The transaction you are looking for does not exist" }} />
 
-  if (!receipt) return <div>Transaction is pending</div>
-
   return (
     <Stack>
       <Title>Transaction details</Title>
@@ -38,9 +36,9 @@ const TransactionDetails = ({ id }: { id: Hex }) => {
       </Flex>
 
       {transaction.type === 81 ? (
-        <DynamicFeeTransaction tx={transaction} receipt={receipt} />
+        <DynamicFeeTransaction tx={transaction} receipt={receipt ?? undefined} />
       ) : (
-        <LegacyTransaction tx={transaction} receipt={receipt} />
+        <LegacyTransaction tx={transaction} receipt={receipt ?? undefined} />
       )}
     </Stack>
   )

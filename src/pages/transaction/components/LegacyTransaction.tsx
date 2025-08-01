@@ -4,7 +4,13 @@ import { LegacyTransaction as LegacyTransactionType } from "@/services/thor/tran
 import { TransactionReceipt } from "@vechain/sdk-network"
 import { useBaseTransactionItems } from "../hooks/useBaseTransactionItems"
 
-export const LegacyTransaction = ({ tx, receipt }: { tx: LegacyTransactionType; receipt: TransactionReceipt }) => {
+export const LegacyTransaction = ({
+  tx,
+  receipt,
+}: {
+  tx: LegacyTransactionType
+  receipt: TransactionReceipt | undefined
+}) => {
   const baseItems = useBaseTransactionItems(tx, receipt)
 
   const items = [
