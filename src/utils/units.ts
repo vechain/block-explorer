@@ -1,5 +1,5 @@
 import { hexToBigInt, formatGwei as formatGweiViem, formatEther as formatEtherViem } from "viem"
-import { hexStringSchema } from "./hex"
+import { hexStringSchema } from "@/schemas"
 
 export function formatGwei(value: bigint): string {
   return Number(formatGweiViem(value)).toLocaleString()

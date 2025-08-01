@@ -1,7 +1,7 @@
 import { Flex, Text } from "@chakra-ui/react"
 import { VnsBadgeOrAddressLink } from "@/components/ui/VnsBadge"
 import { VTHOBalance } from "@/components/ui/TokenBalance"
-import { hexStringSchema } from "@/utils/hex"
+import { hexStringSchema } from "@/schemas"
 import { hexToBigInt } from "viem"
 
 export const PaidGasFees = ({ paid, delegator }: { paid: string; delegator?: string }) => {

@@ -1,4 +1,4 @@
-import { hexStringSchema } from "@/utils/hex"
+import { hexStringSchema } from "@/schemas"
 
 import { BlockLink, TransactionClausesLink, TransactionLink } from "@/components/ui/Links"
 import { formatDateFromTimestamp } from "@/utils/date"
