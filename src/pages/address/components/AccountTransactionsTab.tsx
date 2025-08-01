@@ -47,41 +47,43 @@ export const AccountTransactionsTab = ({ address }: { address: `0x${string}` }) 
 
   return (
     <Stack>
-      <Table.Root size="md">
-        <Table.Header>
-          <Table.Row bg="bg.subtle">
-            <Table.ColumnHeader>ID</Table.ColumnHeader>
-            <Table.ColumnHeader>Status</Table.ColumnHeader>
-            <Table.ColumnHeader>Block</Table.ColumnHeader>
-            <Table.ColumnHeader>Timestamp</Table.ColumnHeader>
-            <Table.ColumnHeader>Origin</Table.ColumnHeader>
-            <Table.ColumnHeader>Clauses</Table.ColumnHeader>
-            <Table.ColumnHeader>Paid</Table.ColumnHeader>
-          </Table.Row>
-        </Table.Header>
-
-        <Table.Body>
-          {items.map(item => (
-            <Table.Row key={item.key}>
-              <Table.Cell maxW="150px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                {item.id}
-              </Table.Cell>
-              <Table.Cell>{item.status}</Table.Cell>
-              <Table.Cell w="100px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                {item.block}
-              </Table.Cell>
-              <Table.Cell>{item.timestamp}</Table.Cell>
-              <Table.Cell w="100px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                {item.origin}
-              </Table.Cell>
-              <Table.Cell overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-                {item.clauses}
-              </Table.Cell>
-              <Table.Cell>{item.paid}</Table.Cell>
+      <Table.ScrollArea borderWidth="1px" rounded="md">
+        <Table.Root size="md">
+          <Table.Header>
+            <Table.Row bg="bg.subtle">
+              <Table.ColumnHeader>ID</Table.ColumnHeader>
+              <Table.ColumnHeader>Status</Table.ColumnHeader>
+              <Table.ColumnHeader>Block</Table.ColumnHeader>
+              <Table.ColumnHeader>Timestamp</Table.ColumnHeader>
+              <Table.ColumnHeader>Origin</Table.ColumnHeader>
+              <Table.ColumnHeader>Clauses</Table.ColumnHeader>
+              <Table.ColumnHeader>Paid</Table.ColumnHeader>
             </Table.Row>
-          ))}
-        </Table.Body>
-      </Table.Root>
+          </Table.Header>
+
+          <Table.Body>
+            {items.map(item => (
+              <Table.Row key={item.key}>
+                <Table.Cell maxW="150px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                  {item.id}
+                </Table.Cell>
+                <Table.Cell>{item.status}</Table.Cell>
+                <Table.Cell w="100px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                  {item.block}
+                </Table.Cell>
+                <Table.Cell>{item.timestamp}</Table.Cell>
+                <Table.Cell w="100px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                  {item.origin}
+                </Table.Cell>
+                <Table.Cell overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+                  {item.clauses}
+                </Table.Cell>
+                <Table.Cell>{item.paid}</Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+      </Table.ScrollArea>
 
       <Pagination
         mt={4}

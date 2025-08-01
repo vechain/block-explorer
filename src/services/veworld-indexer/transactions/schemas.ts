@@ -1,11 +1,22 @@
 import { z } from "zod"
-import { addressStringSchema } from "@/schemas"
+import { addressStringSchema, hexStringSchema } from "@/schemas"
 import { rawEventSchema } from "@/schemas/events"
+import { paginationParamsSchema } from "../schemas"
+
+export const paramsSchema = z
+  .object({
+    origin: addressStringSchema,
+    includeDelegated: z.boolean().optional(),
+    expanded: z.boolean().optional(),
+  })
+  .extend(paginationParamsSchema.shape)
+
+export type GetTransactionsParams = z.infer<typeof paramsSchema>
 
 const transactionClausesSchema = z.object({
-  to: z.string(),
-  value: z.string(),
-  data: z.string(),
+  to: addressStringSchema,
+  value: hexStringSchema,
+  data: hexStringSchema,
 })
 
 const transactionEventSchema = rawEventSchema.extend({
@@ -14,36 +25,36 @@ const transactionEventSchema = rawEventSchema.extend({
 })
 
 const transactionTransferSchema = z.object({
-  from: z.string(),
-  to: z.string(),
-  value: z.string(),
+  from: addressStringSchema,
+  to: addressStringSchema,
+  value: hexStringSchema,
 })
 
 const transactionOutputSchema = z.object({
-  contractAddress: z.string().nullable(),
+  contractAddress: addressStringSchema.nullable(),
   events: z.array(transactionEventSchema),
   transfers: z.array(transactionTransferSchema),
 })
 
 const transactionBaseSchema = z.object({
-  id: z.string(),
+  id: hexStringSchema,
   chainTag: z.number(),
-  blockRef: z.string(),
+  blockRef: hexStringSchema,
   expiration: z.number(),
   clauses: z.array(z.union([transactionClausesSchema, z.object({})])),
   gas: z.number(),
-  origin: z.string(),
-  blockId: z.string(),
+  origin: addressStringSchema,
+  blockId: hexStringSchema,
   blockNumber: z.number(),
   blockTimestamp: z.number(),
   size: z.number(),
   gasUsed: z.number(),
-  gasPayer: z.string(),
-  paid: z.string(),
-  reward: z.string(),
+  gasPayer: addressStringSchema,
+  paid: hexStringSchema,
+  reward: hexStringSchema,
   reverted: z.boolean(),
-  dependsOn: z.string().nullable(),
-  nonce: z.string(),
+  dependsOn: hexStringSchema.nullable(),
+  nonce: hexStringSchema,
   outputs: z.array(z.union([transactionOutputSchema, z.object({})])),
 })
 
@@ -54,25 +65,8 @@ const transactionLegacySchema = transactionBaseSchema.extend({
 
 const transactionDynamicFeeSchema = transactionBaseSchema.extend({
   type: z.literal(81),
-  maxFeePerGas: z.string(),
-  maxPriorityFeePerGas: z.string(),
+  maxFeePerGas: hexStringSchema,
+  maxPriorityFeePerGas: hexStringSchema,
 })
 
 export const transactionSchema = z.discriminatedUnion("type", [transactionLegacySchema, transactionDynamicFeeSchema])
-
-export const paginationSchema = z.object({
-  hasCount: z.boolean(),
-  countLimit: z.number(),
-  totalPages: z.number().nullable(),
-  totalElements: z.number().nullable(),
-  hasNext: z.boolean(),
-})
-
-export const paramsSchema = z.object({
-  origin: addressStringSchema,
-  includeDelegated: z.boolean().optional(),
-  expanded: z.boolean().optional(),
-  page: z.number().optional(),
-  size: z.number().optional(),
-  direction: z.enum(["ASC", "DESC"]).optional(),
-})

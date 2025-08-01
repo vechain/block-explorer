@@ -3,7 +3,8 @@ import { parseHex } from "@/utils/hex"
 import { Hex } from "@vechain/sdk-core"
 import { Stack, Table } from "@chakra-ui/react"
 import { useTransaction } from "@/services/thor/transaction/hooks"
-import { AddressLink, ClauseLink } from "@/components/ui/Links"
+import { VnsBadgeOrAddressLink } from "@/components/ui/VnsBadge"
+import { ClauseLink } from "@/components/ui/Links"
 import { Subtitle, Title } from "@/components/ui/Typography"
 import { VETBalance } from "@/components/ui/TokenBalance"
 import { hexStringSchema } from "@/schemas"
@@ -30,7 +31,7 @@ const TransactionClauseList = ({ id }: { id: Hex }) => {
 
   const items = transaction.clauses.map((clause, index) => ({
     index,
-    to: clause.to ? <AddressLink truncate address={clause.to} /> : "N/A",
+    to: clause.to ? <VnsBadgeOrAddressLink address={clause.to} /> : "N/A",
     value: <VETBalance balance={hexStringSchema.parse(clause.value)} />,
     data: <Code>{clause.data}</Code>,
   }))
