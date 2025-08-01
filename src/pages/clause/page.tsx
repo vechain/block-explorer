@@ -12,11 +12,11 @@ export const ClauseDetailsPage = () => {
   const id = parseHex(transactionId)
   const index = parseInt(clauseIndex ?? "0")
 
-  if (!id) {
-    return <Navigate to="/404" replace state={{ message: "Invalid transaction id" }} />
-  }
-
-  return <ClauseDetails transactionId={id} clauseIndex={index} />
+  return id ? (
+    <ClauseDetails transactionId={id} clauseIndex={index} />
+  ) : (
+    <Navigate to="/404" replace state={{ message: "Invalid transaction id" }} />
+  )
 }
 
 const ClauseDetails = ({ transactionId, clauseIndex }: { transactionId: Hex; clauseIndex: number }) => {

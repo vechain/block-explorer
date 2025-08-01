@@ -1,6 +1,6 @@
 import { useAccountTransactions } from "@/services/veworld-indexer/transactions/hooks"
 
-import { IconButton, ButtonGroup, Pagination, Table, Tabs } from "@chakra-ui/react"
+import { IconButton, ButtonGroup, Pagination, Table, Stack } from "@chakra-ui/react"
 import { BlockLink, TransactionClausesLink, TransactionLink } from "@/components/ui/Links"
 
 import { VnsBadgeOrAddressLink } from "@/components/ui/VnsBadge"
@@ -9,6 +9,7 @@ import { TxStatus } from "@/components/TxStatus"
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu"
 import { useState } from "react"
 import { formatDateFromTimestamp } from "@/utils/date"
+import { NoTransactions } from "@/components/NoResults"
 
 const PAGE_SIZE = 30
 
@@ -19,7 +20,7 @@ export const AccountTransactionsTab = ({ address }: { address: `0x${string}` }) 
   })
 
   if (isLoading) return <div>Loading...</div>
-  if (!transactions) return <div>No transactions found</div>
+  if (!transactions || transactions.data.length === 0) return <NoTransactions />
 
   const items = transactions.data.map(tx => ({
     key: tx.id,
@@ -45,7 +46,7 @@ export const AccountTransactionsTab = ({ address }: { address: `0x${string}` }) 
   const count = PAGE_SIZE
 
   return (
-    <Tabs.Content value="transactions">
+    <Stack>
       <Table.Root size="md">
         <Table.Header>
           <Table.Row bg="bg.subtle">
@@ -106,6 +107,6 @@ export const AccountTransactionsTab = ({ address }: { address: `0x${string}` }) 
           </Pagination.NextTrigger>
         </ButtonGroup>
       </Pagination.Root>
-    </Tabs.Content>
+    </Stack>
   )
 }

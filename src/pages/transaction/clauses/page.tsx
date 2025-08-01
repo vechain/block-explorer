@@ -11,11 +11,11 @@ export const TransactionClausesPage = () => {
 
   const id = parseHex(transactionId)
 
-  if (!id) {
-    return <Navigate to="/404" replace state={{ message: "Invalid transaction id" }} />
-  }
-
-  return <TransactionClauseList id={id} />
+  return id ? (
+    <TransactionClauseList id={id} />
+  ) : (
+    <Navigate to="/404" replace state={{ message: "Invalid transaction id" }} />
+  )
 }
 
 const TransactionClauseList = ({ id }: { id: Hex }) => {
