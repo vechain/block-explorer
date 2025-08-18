@@ -19,6 +19,6 @@ export function useTransactionReceipt(transactionId: Hex) {
   return useQuery({
     queryKey: [getTransactionReceipt.name, transactionId.toString()],
     queryFn: () => getTransactionReceipt({ thorClient, transactionId }),
-    staleTime: Infinity,
+    refetchInterval: query => (!query.state.data ? 3000 : false),
   })
 }
