@@ -5,6 +5,7 @@ import { ThorClient } from "@vechain/sdk-network"
 
 import { NETWORKS, Network, NetworkName } from "@/constants/network"
 import { useState } from "react"
+import { useLocalStorage } from "@/hooks/usehooks-ts/useLocalStorage"
 
 type ThorClientContextType = {
   thorClient: ThorClient
@@ -32,7 +33,7 @@ export const useThorClient = () => {
 }
 
 export const ThorClientProvider = ({ children }: React.PropsWithChildren) => {
-  const [activeNetwork, setActiveNetwork] = useState(defaultNetwork)
+  const [activeNetwork, setActiveNetwork] = useLocalStorage("active-network", defaultNetwork)
   const [thorClient, setThorClient] = useState(defaultThorClient)
 
   const switchNetwork = async (name: NetworkName) => {
