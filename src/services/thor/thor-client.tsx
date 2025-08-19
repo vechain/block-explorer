@@ -5,7 +5,7 @@ import { ThorClient } from "@vechain/sdk-network"
 
 import { NETWORKS, Network, NetworkName } from "@/constants/network"
 import { useState } from "react"
-import { useLocalStorage } from "@/hooks/usehooks-ts/useLocalStorage"
+import { useLocalStorage } from "usehooks-ts"
 
 type ThorClientContextType = {
   thorClient: ThorClient
