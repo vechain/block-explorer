@@ -3,7 +3,7 @@ import { Hex } from "@vechain/sdk-core"
 import { useThorClient } from "../thor-client"
 import { getTransaction, getTransactionReceipt } from "./actions"
 
-export function useTransaction(transactionId: Hex) {
+export const useTransaction = (transactionId: Hex) => {
   const { thorClient } = useThorClient()
 
   return useQuery({
@@ -13,7 +13,7 @@ export function useTransaction(transactionId: Hex) {
   })
 }
 
-export function useTransactionReceipt(transactionId: Hex) {
+export const useTransactionReceipt = (transactionId: Hex) => {
   const { thorClient } = useThorClient()
 
   return useQuery({

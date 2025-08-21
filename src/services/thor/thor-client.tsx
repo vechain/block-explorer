@@ -23,7 +23,7 @@ const ThorClientContext = createContext<ThorClientContextType>({
   },
 })
 
-export function useThorClient() {
+export const useThorClient = () => {
   const context = useContext(ThorClientContext)
   if (!context) {
     throw new Error("useThorClient must be used within a ThorClientProvider")
@@ -35,7 +35,7 @@ export const ThorClientProvider = ({ children }: React.PropsWithChildren) => {
   const [activeNetwork, setActiveNetwork] = useState(defaultNetwork)
   const [thorClient, setThorClient] = useState(defaultThorClient)
 
-  async function switchNetwork(name: NetworkName) {
+  const switchNetwork = async (name: NetworkName) => {
     const network = NETWORKS[name]
     if (!network) {
       throw new Error("Invalid network")

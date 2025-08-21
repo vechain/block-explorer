@@ -2,7 +2,7 @@ import { useLatestBlocks } from "@/services/thor/block/hooks"
 import { useB3trRewardDistributedEvents } from "@/services/thor/events/hooks"
 import { ExpandedBlockDetail } from "@vechain/sdk-network"
 
-export function useClausesPerSecond({ numBlocks }: { numBlocks: number }) {
+export const useClausesPerSecond = ({ numBlocks }: { numBlocks: number }) => {
   const { data: blocks, ...rest } = useLatestBlocks({ count: numBlocks + 1 })
 
   if (blocks.length < numBlocks + 1) {
@@ -19,7 +19,7 @@ export function useClausesPerSecond({ numBlocks }: { numBlocks: number }) {
   return { data: clausesPerSecond, ...rest }
 }
 
-export function useTransactionsPerSecond({ numBlocks }: { numBlocks: number }) {
+export const useTransactionsPerSecond = ({ numBlocks }: { numBlocks: number }) => {
   const { data: blocks, ...rest } = useLatestBlocks({ count: numBlocks + 1 })
 
   if (blocks.length < numBlocks + 1) {
@@ -34,7 +34,7 @@ export function useTransactionsPerSecond({ numBlocks }: { numBlocks: number }) {
   return { data: txPerSecond, ...rest }
 }
 
-export function useRewardDistributedPerSecond({ numBlocks }: { numBlocks: number }) {
+export const useRewardDistributedPerSecond = ({ numBlocks }: { numBlocks: number }) => {
   const { data: blocks } = useLatestBlocks({ count: numBlocks + 1 })
   const { data: actions, ...rest } = useB3trRewardDistributedEvents({ numBlocks: numBlocks + 1 })
 
@@ -47,6 +47,6 @@ export function useRewardDistributedPerSecond({ numBlocks }: { numBlocks: number
   return { data: actionsPerSecond, ...rest }
 }
 
-function getTimeDifference(blocks: ExpandedBlockDetail[]) {
+const getTimeDifference = (blocks: ExpandedBlockDetail[]) => {
   return blocks[0].timestamp - blocks[blocks.length - 1].timestamp
 }

@@ -1,6 +1,6 @@
 const BASE_URL = "https://b32.vecha.in"
 
-export async function get({ endPoint }: { endPoint: string }) {
+export const get = async ({ endPoint }: { endPoint: string }) => {
   const url = BASE_URL + endPoint
 
   const res = await fetch(url, {

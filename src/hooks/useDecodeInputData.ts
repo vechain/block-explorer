@@ -10,7 +10,7 @@ type InputData = {
   decoded?: DecodedInputData
 }
 
-export function useDecodeInputData(data: HexString) {
+export const useDecodeInputData = (data: HexString) => {
   const signature = data.substring(0, 10)
 
   const { data: abi, ...rest } = useAbi(signature)
@@ -18,7 +18,7 @@ export function useDecodeInputData(data: HexString) {
   return { data: parseInputData({ abi, signature, data }), ...rest }
 }
 
-function parseInputData({
+const parseInputData = ({
   abi,
   signature,
   data,
@@ -26,7 +26,7 @@ function parseInputData({
   abi: Abi | undefined
   signature: string
   data: HexString
-}): InputData {
+}): InputData => {
   if (!abi) {
     return { raw: data }
   }

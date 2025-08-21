@@ -14,7 +14,7 @@ import { GasUsed } from "@/components/GasUsed"
 import { TransactionReceipt } from "@vechain/sdk-network"
 import { BaseTransaction } from "@/services/thor/transaction/actions"
 
-export function useBaseTransactionItems(tx: BaseTransaction, receipt: TransactionReceipt | undefined) {
+export const useBaseTransactionItems = (tx: BaseTransaction, receipt: TransactionReceipt | undefined) => {
   const status = receipt ? (receipt.reverted ? "reverted" : "success") : "pending"
 
   return {

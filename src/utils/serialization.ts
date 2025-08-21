@@ -3,7 +3,7 @@ import { z } from "zod"
 /**
  * Type-safe version that works with Zod schemas
  */
-export function serializeZodParams<T extends z.ZodRawShape>(params: z.infer<z.ZodObject<T>>): Record<string, string> {
+export const serializeZodParams = <T extends z.ZodRawShape>(params: z.infer<z.ZodObject<T>>): Record<string, string> => {
   return serializeToSearchParams(params)
 }
 
@@ -11,7 +11,7 @@ export function serializeZodParams<T extends z.ZodRawShape>(params: z.infer<z.Zo
  * Serializes an object to search params format
  * Converts all values to strings and only includes defined (non-undefined) values
  */
-function serializeToSearchParams<T extends Record<string, unknown>>(params: T): Record<string, string> {
+const serializeToSearchParams = <T extends Record<string, unknown>>(params: T): Record<string, string> => {
   const serialized: Record<string, string> = {}
 
   for (const [key, value] of Object.entries(params)) {

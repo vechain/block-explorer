@@ -1,7 +1,7 @@
 import { z } from "zod"
 import * as coinApi from "../api-client"
 
-export async function getPriceList() {
+export const getPriceList = async () => {
   const response = await coinApi.get({
     endPoint: "/price-list",
     params: { expanded: "false" },

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useThorClient } from "@/services/thor/thor-client"
 import { getNftHolders } from "./actions"
 
-export function useNftHolders() {
+export const useNftHolders = () => {
   const { activeNetwork } = useThorClient()
 
   return useQuery({

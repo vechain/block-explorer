@@ -8,7 +8,7 @@ import { useThorClient } from "@/services/thor/thor-client"
 import { ThorClient } from "@vechain/sdk-network"
 import { Network } from "@/constants/network"
 
-export function useSearch() {
+export const useSearch = () => {
   const { thorClient, activeNetwork } = useThorClient()
 
   return useMutation({
@@ -16,7 +16,7 @@ export function useSearch() {
   })
 }
 
-async function search({
+const search = async ({
   searchTerm,
   thorClient,
   activeNetwork,
@@ -24,7 +24,7 @@ async function search({
   searchTerm: string
   thorClient: ThorClient
   activeNetwork: Network
-}): Promise<{ redirectTo: string }> {
+}): Promise<{ redirectTo: string }> => {
   const isAddress = Address.isValid(searchTerm)
   if (isAddress) {
     const account = await getAccount({ thorClient, address: Address.of(searchTerm) })

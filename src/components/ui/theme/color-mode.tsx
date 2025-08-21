@@ -41,7 +41,7 @@ const ColorModeIcon = () => {
 }
 
 export const ColorModeButton = forwardRef<HTMLButtonElement, ColorModeButtonProps>(
-  function ColorModeButton(props, ref) {
+  (props, ref) => {
     const { toggleColorMode } = useColorMode()
     return (
       <IconButton

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { getPriceList } from "./actions"
 
-export function usePriceList() {
+export const usePriceList = () => {
   return useQuery({
     queryKey: [getPriceList.name],
     queryFn: getPriceList,

@@ -1,6 +1,6 @@
 const BASE_URL = "https://coin-api.veworld.vechain.org"
 
-export async function get({ endPoint, params }: { endPoint: string; params?: Record<string, string> }) {
+export const get = async ({ endPoint, params }: { endPoint: string; params?: Record<string, string> }) => {
   const url = BASE_URL + endPoint + "?" + new URLSearchParams(params).toString()
 
   const res = await fetch(url, {

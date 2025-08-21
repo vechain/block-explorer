@@ -4,7 +4,7 @@ import { useAbi } from "@/services/b32/hooks"
 import { Event } from "@vechain/sdk-network"
 import { decodedEventSchema, EventType, ParsedEvent, parsedRawEventSchema } from "@/schemas/events"
 
-export function useDecodeEvent(rawEvent: Event) {
+export const useDecodeEvent = (rawEvent: Event) => {
   const [signature] = rawEvent.topics
 
   const { data: abi, ...rest } = useAbi(signature)
@@ -12,7 +12,7 @@ export function useDecodeEvent(rawEvent: Event) {
   return { event: parseEvent(abi, rawEvent), ...rest }
 }
 
-function parseEvent(abi: Abi | undefined, rawEvent: Event): ParsedEvent {
+const parseEvent = (abi: Abi | undefined, rawEvent: Event): ParsedEvent => {
   const parsedRawEvent = parsedRawEventSchema.parse({
     type: EventType.RAW,
     raw: rawEvent,

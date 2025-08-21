@@ -23,7 +23,7 @@ export const ErrorBoundary = (props: ErrorBoundaryProps) => {
   )
 }
 
-function DefaultFallbackComponent({ error }: { error: Error }) {
+const DefaultFallbackComponent = ({ error }: { error: Error }) => {
   const [showErrorDetails, setShowErrorDetails] = useState(false)
 
   return (
@@ -42,6 +42,6 @@ function DefaultFallbackComponent({ error }: { error: Error }) {
   )
 }
 
-function logError(error: Error, info: ErrorInfo) {
+const logError = (error: Error, info: ErrorInfo) => {
   console.error(error, info)
 }
