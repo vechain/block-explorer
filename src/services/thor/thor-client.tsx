@@ -5,7 +5,8 @@ import { ThorClient } from "@vechain/sdk-network"
 
 import { NETWORKS, Network, NetworkName } from "@/constants/network"
 import { useState } from "react"
-import { useLocalStorage } from "usehooks-ts"
+import { useSettingsStore } from "@/stores/settings"
+import { useQueryClient } from "@tanstack/react-query"
 
 type ThorClientContextType = {
   thorClient: ThorClient
@@ -33,25 +34,29 @@ export const useThorClient = () => {
 }
 
 export const ThorClientProvider = ({ children }: React.PropsWithChildren) => {
-  const [activeNetwork, setActiveNetwork] = useLocalStorage("active-network", defaultNetwork)
+  const { activeNetwork, setActiveNetwork } = useSettingsStore()
   const [thorClient, setThorClient] = useState(defaultThorClient)
+  const queryClient = useQueryClient()
 
   const switchNetwork = async (name: NetworkName) => {
-    const network = NETWORKS[name]
-    if (!network) {
+    const selectedNetwork = NETWORKS[name]
+    if (!selectedNetwork) {
       throw new Error("Invalid network")
     }
 
     thorClient.destroy()
-    const client = ThorClient.at(network.url)
+    const client = ThorClient.at(selectedNetwork.url)
 
     const healthy = await client.nodes.isHealthy()
+
     if (!healthy) {
       throw new Error("Network is not healthy")
     }
 
     setThorClient(client)
-    setActiveNetwork(network)
+    setActiveNetwork(selectedNetwork)
+
+    queryClient.invalidateQueries()
   }
 
   return (
