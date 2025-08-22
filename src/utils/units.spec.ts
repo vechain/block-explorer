@@ -25,8 +25,10 @@ describe("Units utils", () => {
       expect(gwei).toEqual("4,722,366,482,869.646")
     })
 
-    it("should throw an error for an invalid hex string", () => {
-      expect(() => formatHexToGwei("invalidHex")).toThrow()
+    it("should return the string for an invalid hex string", () => {
+      const hexString = "invalidHex"
+      const gwei = formatHexToGwei(hexString)
+      expect(gwei).toEqual(hexString)
     })
   })
 
@@ -37,8 +39,10 @@ describe("Units utils", () => {
       expect(ether).toEqual("4,722.366")
     })
 
-    it("should throw an error for an invalid hex string", () => {
-      expect(() => formatHexToEther("invalidHex")).toThrow()
+    it("should return the string for an invalid hex string", () => {
+      const hexString = "invalidHex"
+      const ether = formatHexToEther(hexString)
+      expect(ether).toEqual(hexString)
     })
   })
 })

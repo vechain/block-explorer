@@ -13,3 +13,9 @@ export const paginationParamsSchema = z.object({
   size: z.number().optional(),
   direction: z.enum(["ASC", "DESC"]).optional(),
 })
+
+export const responseSchema = <T extends z.ZodSchema>(schema: T) =>
+  z.object({
+    data: z.array(schema),
+    pagination: paginationSchema,
+  })
