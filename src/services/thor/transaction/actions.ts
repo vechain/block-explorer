@@ -10,28 +10,29 @@ import { ThorClient, TransactionDetailNoRaw, TransactionReceipt } from "@vechain
 
 export type BaseTransaction = {
   id: TransactionDetailNoRaw["id"]
+  origin: TransactionDetailNoRaw["origin"]
+  gasPayer: TransactionDetailNoRaw["gasPayer"]
+  size: TransactionDetailNoRaw["size"]
+  meta: TransactionDetailNoRaw["meta"]
   chainTag: TransactionDetailNoRaw["chainTag"]
   blockRef: TransactionDetailNoRaw["blockRef"]
   expiration: TransactionDetailNoRaw["expiration"]
   clauses: TransactionDetailNoRaw["clauses"]
   gas: TransactionDetailNoRaw["gas"]
-  origin: TransactionDetailNoRaw["origin"]
-  meta: TransactionDetailNoRaw["meta"]
-  delegator: TransactionDetailNoRaw["delegator"]
-  nonce: TransactionDetailNoRaw["nonce"]
   dependsOn: TransactionDetailNoRaw["dependsOn"]
-  size: TransactionDetailNoRaw["size"]
+  nonce: TransactionDetailNoRaw["nonce"]
+  reserved: TransactionDetailNoRaw["reserved"]
 }
 
 type DynamicFeeTransactionFields = {
   type: 81
-  maxFeePerGas: string
-  maxPriorityFeePerGas: string
+  maxFeePerGas: Required<TransactionDetailNoRaw>["maxFeePerGas"]
+  maxPriorityFeePerGas: Required<TransactionDetailNoRaw>["maxPriorityFeePerGas"]
 }
 
 type LegacyTransactionFields = {
   type: 0
-  gasPriceCoef: TransactionDetailNoRaw["gasPriceCoef"]
+  gasPriceCoef: Required<TransactionDetailNoRaw>["gasPriceCoef"]
 }
 
 export type DynamicFeeTransaction = BaseTransaction & DynamicFeeTransactionFields
