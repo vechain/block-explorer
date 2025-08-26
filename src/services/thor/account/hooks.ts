@@ -7,7 +7,7 @@ export const useAccount = (address: Address) => {
   const { thorClient, activeNetwork } = useThorClient()
 
   return useQuery({
-    queryKey: [getAccount.name, address.toString(), activeNetwork.name],
+    queryKey: [getAccount.name, activeNetwork.name, address.toString()],
     queryFn: () => getAccount({ thorClient, address }),
     staleTime: Infinity,
   })

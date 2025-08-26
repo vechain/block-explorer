@@ -3,7 +3,6 @@
 import { NetworkName, NETWORKS } from "@/constants/network"
 import { useThorClient } from "@/services/thor/thor-client"
 import { Field, Portal, Select, createListCollection } from "@chakra-ui/react"
-import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { LuGlobe } from "react-icons/lu"
 
@@ -19,21 +18,16 @@ const networks = createListCollection<NetworkItem>({
 })
 
 export const NetworkSelect = () => {
-  const queryClient = useQueryClient()
   const { switchNetwork, activeNetwork } = useThorClient()
   const [error, setError] = useState("")
 
   const handleNetworkChange = (details: Select.ValueChangeDetails<NetworkItem>) => {
-    const [newNetwork] = details.value as NetworkItem["value"][]
+    const [newNetwork] = details.value as NetworkName[]
     setError("")
-    switchNetwork(newNetwork)
-      .then(() => {
-        queryClient.clear()
-      })
-      .catch(err => {
-        console.error("Failed to switch network:", err)
-        setError("Failed to switch network")
-      })
+    switchNetwork(newNetwork).catch(err => {
+      console.error(`Failed to switch to ${newNetwork} network`, "\n", err)
+      setError(`Failed to switch to ${newNetwork} network`)
+    })
   }
 
   return (

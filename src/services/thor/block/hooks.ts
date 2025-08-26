@@ -7,20 +7,20 @@ import { ExpandedBlockDetail } from "@vechain/sdk-network"
 const BLOCK_TIME = 10 * 1000 // 10 seconds
 
 export const useBlock = (revision: Revision) => {
-  const { thorClient } = useThorClient()
+  const { thorClient, activeNetwork } = useThorClient()
 
   return useQuery({
-    queryKey: [getBlock.name, revision.toString()],
+    queryKey: [getBlock.name, activeNetwork.name, revision.toString()],
     queryFn: () => getBlock({ thorClient, revision }),
     staleTime: Infinity,
   })
 }
 
 export const useBestBlock = () => {
-  const { thorClient } = useThorClient()
+  const { thorClient, activeNetwork } = useThorClient()
 
   return useQuery({
-    queryKey: [getBlock.name, Revision.BEST.toString()],
+    queryKey: [getBlock.name, activeNetwork.name, Revision.BEST.toString()],
     queryFn: () => getBlock({ thorClient, revision: Revision.BEST }),
     refetchInterval: BLOCK_TIME,
     staleTime: BLOCK_TIME,
@@ -28,7 +28,7 @@ export const useBestBlock = () => {
 }
 
 export const useLatestBlocks = ({ count }: { count: number }) => {
-  const { thorClient } = useThorClient()
+  const { thorClient, activeNetwork } = useThorClient()
   const { data: bestBlock } = useBestBlock()
 
   const bestBlockNumber = bestBlock?.number ?? count
@@ -43,7 +43,7 @@ export const useLatestBlocks = ({ count }: { count: number }) => {
 
   return useQueries({
     queries: blockIds.map(blockId => ({
-      queryKey: [getBlock.name, blockId],
+      queryKey: [getBlock.name, activeNetwork.name, blockId],
       queryFn: () => getBlock({ thorClient, revision: Revision.of(blockId) }),
       staleTime: Infinity,
     })),

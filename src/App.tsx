@@ -28,13 +28,13 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false 
 
 const Providers = ({ children }: React.PropsWithChildren) => {
   return (
-    <ThorClientProvider>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <ThorClientProvider>
         <UiProvider>{children}</UiProvider>
 
         <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
-    </ThorClientProvider>
+      </ThorClientProvider>
+    </QueryClientProvider>
   )
 }
 

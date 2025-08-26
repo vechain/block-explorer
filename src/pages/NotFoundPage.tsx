@@ -24,7 +24,7 @@ export const NotFoundPage = () => {
           <EmptyState.Title>This page does not exist</EmptyState.Title>
 
           <EmptyState.Description display="flex" flexDirection="column" alignItems="center" gap="8">
-            <Text>{message}</Text>
+            <Text as="span">{message}</Text>
             <Button variant="subtle" colorPalette="purple" size="sm" onClick={handleGoHome}>
               Back to dashboard
             </Button>

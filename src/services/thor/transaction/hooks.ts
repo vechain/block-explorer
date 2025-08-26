@@ -4,20 +4,20 @@ import { useThorClient } from "../thor-client"
 import { getTransaction, getTransactionReceipt } from "./actions"
 
 export const useTransaction = (transactionId: Hex) => {
-  const { thorClient } = useThorClient()
+  const { thorClient, activeNetwork } = useThorClient()
 
   return useQuery({
-    queryKey: [getTransaction.name, transactionId.toString()],
+    queryKey: [getTransaction.name, activeNetwork.name, transactionId.toString()],
     queryFn: () => getTransaction({ thorClient, transactionId }),
     staleTime: Infinity,
   })
 }
 
 export const useTransactionReceipt = (transactionId: Hex) => {
-  const { thorClient } = useThorClient()
+  const { thorClient, activeNetwork } = useThorClient()
 
   return useQuery({
-    queryKey: [getTransactionReceipt.name, transactionId.toString()],
+    queryKey: [getTransactionReceipt.name, activeNetwork.name, transactionId.toString()],
     queryFn: () => getTransactionReceipt({ thorClient, transactionId }),
     refetchInterval: query => (!query.state.data ? 3000 : false),
   })

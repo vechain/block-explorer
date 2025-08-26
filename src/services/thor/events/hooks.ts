@@ -12,7 +12,7 @@ export const useB3trRewardDistributedEvents = ({ numBlocks }: { numBlocks: numbe
   const toBlock = bestBlockNumber
 
   return useQuery({
-    queryKey: [getB3trRewardDistributedEvents.name, numBlocks, fromBlock, toBlock],
+    queryKey: [getB3trRewardDistributedEvents.name, activeNetwork.name, numBlocks, fromBlock, toBlock],
     queryFn: () =>
       getB3trRewardDistributedEvents({
         thorClient,

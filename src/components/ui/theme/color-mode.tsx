@@ -5,8 +5,12 @@ import { IconButton } from "@chakra-ui/react"
 import { forwardRef } from "react"
 import { LuMoon, LuSun } from "react-icons/lu"
 import { ThemeProvider, ThemeProviderProps, useTheme } from "next-themes"
+import { useSettingsStore } from "@/stores/settings"
 
-type ColorMode = "light" | "dark"
+export enum ColorMode {
+  LIGHT = "light",
+  DARK = "dark",
+}
 
 interface UseColorModeReturn {
   colorMode: ColorMode
@@ -16,14 +20,23 @@ interface UseColorModeReturn {
 
 export const useColorMode = (): UseColorModeReturn => {
   const { resolvedTheme, setTheme, forcedTheme } = useTheme()
-  const colorMode = forcedTheme || resolvedTheme
+  const { colorMode: storeColorMode, setColorMode: setStoreColorMode } = useSettingsStore()
+
+  const colorMode: ColorMode = storeColorMode || forcedTheme || resolvedTheme
+
+  const setColorMode = (newColorMode: ColorMode) => {
+    setStoreColorMode(newColorMode)
+    setTheme(newColorMode)
+  }
+
   const toggleColorMode = () => {
-    setTheme(resolvedTheme === "dark" ? "light" : "dark")
+    const newColorMode = colorMode === ColorMode.DARK ? ColorMode.LIGHT : ColorMode.DARK
+    setColorMode(newColorMode)
   }
 
   return {
-    colorMode: colorMode as ColorMode,
-    setColorMode: setTheme,
+    colorMode,
+    setColorMode,
     toggleColorMode,
   }
 }

@@ -10,7 +10,7 @@ export const useVnsName = (address: Address | string) => {
   const parsedAddress = parseAddress(address)
 
   return useQuery({
-    queryKey: [getVnsName.name, address.toString(), activeNetwork.name],
+    queryKey: [getVnsName.name, activeNetwork.name, address.toString()],
     queryFn: () => getVnsName({ thorClient, networkName: activeNetwork.name, address: parsedAddress! }),
     staleTime: Infinity,
     enabled: !!parsedAddress,
