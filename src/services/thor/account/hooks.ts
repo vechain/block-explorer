@@ -3,7 +3,7 @@ import { Address } from "@vechain/sdk-core"
 import { getAccount } from "./account"
 import { useThorClient } from "../thor-client"
 
-export function useAccount(address: Address) {
+export const useAccount = (address: Address) => {
   const { thorClient, activeNetwork } = useThorClient()
 
   return useQuery({

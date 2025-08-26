@@ -12,7 +12,7 @@ export const SearchBar = () => {
   const { mutate: search, error } = useSearch()
   const [searchTerm, setSearchTerm] = useState<string>("")
 
-  function handleSearch(e: React.FormEvent<HTMLDivElement>) {
+  const handleSearch = (e: React.FormEvent<HTMLDivElement>) => {
     e.preventDefault()
     search(searchTerm, {
       onSuccess: data => {

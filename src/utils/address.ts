@@ -5,7 +5,7 @@ import { addressStringSchema } from "@/schemas"
  * Checks if the address is the zero address
  * @param address
  */
-export function isZeroAddress(address: string | Address): boolean {
+export const isZeroAddress = (address: string | Address): boolean => {
   let addrToCompare: Address
   if (typeof address === "string") {
     addrToCompare = Address.of(address)
@@ -23,7 +23,7 @@ type AddressValueParam = bigint | number | string | Uint8Array | HexUInt
  * @param address
  * @returns The parsed address or undefined if the address is invalid
  */
-export function parseAddress(value: AddressValueParam | undefined): Address | undefined {
+export const parseAddress = (value: AddressValueParam | undefined): Address | undefined => {
   if (!value) return undefined
 
   try {
@@ -40,7 +40,7 @@ export function parseAddress(value: AddressValueParam | undefined): Address | un
  * @param endLength - Number of characters to show at the end (default: 4)
  * @returns The truncated address string
  */
-export function truncateAddress(address: string, startLength: number = 10, endLength: number = 8) {
+export const truncateAddress = (address: string, startLength: number = 10, endLength: number = 8) => {
   const parsedAddress = addressStringSchema.safeParse(address)
 
   if (!parsedAddress.success) {

@@ -6,13 +6,13 @@ export interface GetAccountReturnType extends AccountDetail {
   address: AddressString
 }
 
-export async function getAccount({
+export const getAccount = async ({
   thorClient,
   address,
 }: {
   thorClient: ThorClient
   address: Address
-}): Promise<GetAccountReturnType | null> {
+}): Promise<GetAccountReturnType | null> => {
   const account = await thorClient.accounts.getAccount(address)
 
   if (!account) return null

@@ -6,7 +6,7 @@ import { serializeZodParams } from "@/utils/serialization"
 import { transactionSchema, GetTransactionsParams } from "./schemas"
 import { paginationSchema } from "../schemas"
 
-export async function getTransactions({ network, params }: { network: NetworkName; params: GetTransactionsParams }) {
+export const getTransactions = async ({ network, params }: { network: NetworkName; params: GetTransactionsParams }) => {
   const response = await veWorldIndexer.get({
     endPoint: "/transactions",
     network,

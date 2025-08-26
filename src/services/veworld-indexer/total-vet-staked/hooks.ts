@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useThorClient } from "@/services/thor/thor-client"
 import { getTotalVetStaked } from "./actions"
 
-export function useTotalVetStaked() {
+export const useTotalVetStaked = () => {
   const { activeNetwork } = useThorClient()
 
   return useQuery({

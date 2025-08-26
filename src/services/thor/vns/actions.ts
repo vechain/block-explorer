@@ -10,7 +10,7 @@ const resultSchema = z.object({
   array: z.array(z.array(z.string())).nonempty(),
 })
 
-export async function getVnsName({
+export const getVnsName = async ({
   thorClient,
   networkName,
   address,
@@ -18,7 +18,7 @@ export async function getVnsName({
   thorClient: ThorClient
   networkName: NetworkName
   address: Address
-}): Promise<string | null> {
+}): Promise<string | null> => {
   const vnsContractAddress = VNS_RESOLVER[networkName]
   if (!vnsContractAddress) return null
 
@@ -40,7 +40,7 @@ export async function getVnsName({
   return vnsName
 }
 
-export async function getVnsAddress({
+export const getVnsAddress = async ({
   thorClient,
   networkName,
   name,
@@ -48,7 +48,7 @@ export async function getVnsAddress({
   thorClient: ThorClient
   networkName: NetworkName
   name: string
-}): Promise<Address | null> {
+}): Promise<Address | null> => {
   const vnsContractAddress = VNS_RESOLVER[networkName]
   if (!vnsContractAddress) return null
 

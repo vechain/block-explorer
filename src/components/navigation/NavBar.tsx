@@ -4,11 +4,11 @@ import { LuDownload } from "react-icons/lu"
 import { useTranslation } from "react-i18next"
 import { ColorModeButton } from "@/components/ui/theme/color-mode"
 import { NetworkSelect } from "./NetworkSelect"
-import { useTokenUsdPrice } from "@/services/coingecko/vet-vtho-usd-price/hooks"
+import { usePriceList } from "@/services/coin-api/price-list/hooks"
 
 export const Navbar = () => {
   const { t } = useTranslation()
-  const { data: tokenUsdPrice } = useTokenUsdPrice(["vechain", "vethor-token", "vebetterdao"])
+  const { data: priceList } = usePriceList()
 
   return (
     <Flex as="nav" justify="space-between" align="center">
@@ -26,23 +26,25 @@ export const Navbar = () => {
         </Stack>
       </RouterLink>
 
-      <Flex gap={4} alignItems="center">
-        <Text asChild fontSize="sm" color="fg.muted">
-          <ChakraLink href="https://www.coingecko.com/fr/coins/vechain" target="_blank">
-            VET: {tokenUsdPrice?.vechain.usd.toFixed(4).toLocaleString()} $
-          </ChakraLink>
-        </Text>
-        <Text asChild fontSize="sm" color="fg.muted">
-          <ChakraLink href="https://www.coingecko.com/fr/coins/vethor-token" target="_blank">
-            VTHO: {tokenUsdPrice?.["vethor-token"].usd.toFixed(4).toLocaleString()} $
-          </ChakraLink>
-        </Text>
-        <Text asChild fontSize="sm" color="fg.muted">
-          <ChakraLink href="https://www.coingecko.com/fr/coins/vebetterdao" target="_blank">
-            B3TR: {tokenUsdPrice?.vebetterdao.usd.toFixed(4).toLocaleString()} $
-          </ChakraLink>
-        </Text>
-      </Flex>
+      {priceList && (
+        <Flex gap={4} alignItems="center">
+          <Text asChild fontSize="sm" color="fg.muted">
+            <ChakraLink href="https://www.coingecko.com/fr/coins/vechain" target="_blank">
+              VET: {priceList.vet.usd.toFixed(4).toLocaleString()} $
+            </ChakraLink>
+          </Text>
+          <Text asChild fontSize="sm" color="fg.muted">
+            <ChakraLink href="https://www.coingecko.com/fr/coins/vethor-token" target="_blank">
+              VTHO: {priceList.vtho.usd.toFixed(4).toLocaleString()} $
+            </ChakraLink>
+          </Text>
+          <Text asChild fontSize="sm" color="fg.muted">
+            <ChakraLink href="https://www.coingecko.com/fr/coins/vebetterdao" target="_blank">
+              B3TR: {priceList.b3tr.usd.toFixed(4).toLocaleString()} $
+            </ChakraLink>
+          </Text>
+        </Flex>
+      )}
 
       <Group gap={4}>
         <DownloadButton />

@@ -3,7 +3,7 @@ import { getB3trRewardDistributedEvents } from "./actions"
 import { useThorClient } from "../thor-client"
 import { useBestBlock } from "../block/hooks"
 
-export function useB3trRewardDistributedEvents({ numBlocks }: { numBlocks: number }) {
+export const useB3trRewardDistributedEvents = ({ numBlocks }: { numBlocks: number }) => {
   const { thorClient, activeNetwork } = useThorClient()
   const { data: bestBlock } = useBestBlock()
 

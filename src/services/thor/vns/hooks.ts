@@ -4,7 +4,7 @@ import { useThorClient } from "../thor-client"
 import { Address } from "@vechain/sdk-core"
 import { parseAddress } from "@/utils/address"
 
-export function useVnsName(address: Address | string) {
+export const useVnsName = (address: Address | string) => {
   const { thorClient, activeNetwork } = useThorClient()
 
   const parsedAddress = parseAddress(address)

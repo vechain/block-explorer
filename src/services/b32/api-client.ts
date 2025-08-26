@@ -1,9 +1,7 @@
-// This is a proxy to avoid CORS issues. Proxy is configured in vite.config.ts
-const PROXY_URL = "/api/b32"
-// const BASE_URL = "https://b32.vecha.in"
+const BASE_URL = "https://b32.vecha.in"
 
-export async function get({ endPoint }: { endPoint: string }) {
-  const url = PROXY_URL + endPoint
+export const get = async ({ endPoint }: { endPoint: string }) => {
+  const url = BASE_URL + endPoint
 
   const res = await fetch(url, {
     method: "GET",

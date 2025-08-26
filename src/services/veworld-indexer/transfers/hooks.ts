@@ -3,7 +3,7 @@ import { useThorClient } from "@/services/thor/thor-client"
 import { getTransfers } from "./actions"
 import { GetTransfersParams } from "./schemas"
 
-export function useAccountTransfers({ params }: { params: GetTransfersParams }) {
+export const useAccountTransfers = ({ params }: { params: GetTransfersParams }) => {
   const { activeNetwork } = useThorClient()
 
   return useQuery({

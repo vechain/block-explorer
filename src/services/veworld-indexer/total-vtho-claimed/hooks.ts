@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getTotalVthoClaimed } from "./actions"
 import { useThorClient } from "@/services/thor/thor-client"
 
-export function useTotalVthoClaimed() {
+export const useTotalVthoClaimed = () => {
   const { activeNetwork } = useThorClient()
 
   return useQuery({

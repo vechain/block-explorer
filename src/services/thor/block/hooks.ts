@@ -6,7 +6,7 @@ import { ExpandedBlockDetail } from "@vechain/sdk-network"
 
 const BLOCK_TIME = 10 * 1000 // 10 seconds
 
-export function useBlock(revision: Revision) {
+export const useBlock = (revision: Revision) => {
   const { thorClient } = useThorClient()
 
   return useQuery({
@@ -16,7 +16,7 @@ export function useBlock(revision: Revision) {
   })
 }
 
-export function useBestBlock() {
+export const useBestBlock = () => {
   const { thorClient } = useThorClient()
 
   return useQuery({
@@ -27,7 +27,7 @@ export function useBestBlock() {
   })
 }
 
-export function useLatestBlocks({ count }: { count: number }) {
+export const useLatestBlocks = ({ count }: { count: number }) => {
   const { thorClient } = useThorClient()
   const { data: bestBlock } = useBestBlock()
 
@@ -56,6 +56,6 @@ export function useLatestBlocks({ count }: { count: number }) {
   })
 }
 
-function isExpandedBlockDetail(block: GetBlockReturnType | undefined): block is ExpandedBlockDetail {
+const isExpandedBlockDetail = (block: GetBlockReturnType | undefined): block is ExpandedBlockDetail => {
   return Boolean(block)
 }

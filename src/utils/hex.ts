@@ -7,7 +7,7 @@ type HexValueParam = bigint | number | string | Uint8Array
  * @param value
  * @returns The parsed revision or undefined if the value is invalid
  */
-export function parseHex(value: HexValueParam | undefined): Hex | undefined {
+export const parseHex = (value: HexValueParam | undefined): Hex | undefined => {
   if (!value) return undefined
 
   try {

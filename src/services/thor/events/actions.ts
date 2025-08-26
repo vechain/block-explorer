@@ -4,7 +4,7 @@ import { Network } from "@/constants/network"
 
 type GetB3trRewardDistributedEventsReturnType = EventLogs[]
 
-export async function getB3trRewardDistributedEvents({
+export const getB3trRewardDistributedEvents = async ({
   thorClient,
   network,
   fromBlock,
@@ -14,7 +14,7 @@ export async function getB3trRewardDistributedEvents({
   network: Network
   fromBlock: number
   toBlock: number
-}): Promise<GetB3trRewardDistributedEventsReturnType> {
+}): Promise<GetB3trRewardDistributedEventsReturnType> => {
   const X2EarnRewardsPoolAddress = network.contracts.X2EarnRewardsPool
 
   if (!X2EarnRewardsPoolAddress) {
