@@ -1,28 +1,24 @@
-import { ButtonGroup, IconButton, Pagination as PaginationChakra, PaginationRootProps } from "@chakra-ui/react"
+import { Button, Flex, Text } from "@chakra-ui/react"
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu"
 
-export const Pagination = ({ count, pageSize, defaultPage, onPageChange, ...rest }: PaginationRootProps) => {
+export const Pagination = ({
+  page,
+  hasNext,
+  onPageChange,
+}: {
+  onPageChange: (page: number) => void
+  page: number
+  hasNext: boolean
+}) => {
   return (
-    <PaginationChakra.Root
-      m="auto"
-      count={count}
-      pageSize={pageSize}
-      defaultPage={defaultPage}
-      onPageChange={onPageChange}
-      {...rest}>
-      <ButtonGroup gap="4" size="sm" variant="ghost">
-        <PaginationChakra.PrevTrigger asChild>
-          <IconButton>
-            <LuChevronLeft />
-          </IconButton>
-        </PaginationChakra.PrevTrigger>
-        <PaginationChakra.PageText />
-        <PaginationChakra.NextTrigger asChild>
-          <IconButton>
-            <LuChevronRight />
-          </IconButton>
-        </PaginationChakra.NextTrigger>
-      </ButtonGroup>
-    </PaginationChakra.Root>
+    <Flex justifyContent="center" gap={2} alignItems="center">
+      <Button variant="ghost" size="xs" disabled={page === 0} onClick={() => onPageChange(page - 1)}>
+        <LuChevronLeft />
+      </Button>
+      <Text>Page {page + 1}</Text>
+      <Button variant="ghost" size="xs" onClick={() => onPageChange(page + 1)} disabled={!hasNext}>
+        <LuChevronRight />
+      </Button>
+    </Flex>
   )
 }

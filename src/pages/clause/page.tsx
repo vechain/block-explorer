@@ -106,12 +106,10 @@ const ClausePageContent = ({
 
       {tx.clauses.length > 1 && (
         <Pagination
-          pageSize={1}
-          defaultPage={clauseIndex + 1}
-          count={tx.clauses.length}
-          page={clauseIndex + 1}
+          page={clauseIndex}
+          hasNext={clauseIndex < tx.clauses.length - 1}
           onPageChange={page => {
-            navigate(`/transaction/${txId}/clause/${page.page - 1}`)
+            navigate(`/transaction/${txId}/clause/${page - 1}`)
           }}
         />
       )}
