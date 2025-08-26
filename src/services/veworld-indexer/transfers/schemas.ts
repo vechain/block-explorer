@@ -13,7 +13,7 @@ export const transferSchema = z.object({
   from: addressStringSchema,
   to: addressStringSchema,
   value: z.coerce.bigint(),
-  tokenAddress: addressStringSchema,
+  tokenAddress: addressStringSchema.nullable(),
   tokenId: z.string().nullable(),
   topics: z.array(hexStringSchema),
   eventType: eventTypeSchema,

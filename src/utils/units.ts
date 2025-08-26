@@ -9,12 +9,20 @@ export const formatEther = (value: bigint): string => {
   return Number(formatEtherViem(value)).toLocaleString()
 }
 
-export const formatHexToGwei = (value: string): string => {
-  const parsedValue = hexStringSchema.parse(value)
-  return formatGwei(hexToBigInt(parsedValue))
+export function formatHexToGwei(value: string): string {
+  const result = hexStringSchema.safeParse(value)
+  if (!result.success) {
+    return value
+  }
+
+  return formatGwei(hexToBigInt(result.data))
 }
 
-export const formatHexToEther = (value: string): string => {
-  const parsedValue = hexStringSchema.parse(value)
-  return formatEther(hexToBigInt(parsedValue))
+export function formatHexToEther(value: string): string {
+  const result = hexStringSchema.safeParse(value)
+  if (!result.success) {
+    return value
+  }
+
+  return formatEther(hexToBigInt(result.data))
 }

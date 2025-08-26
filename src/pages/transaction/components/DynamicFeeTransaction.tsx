@@ -40,11 +40,11 @@ export const DynamicFeeTransaction = ({
     baseItems.gasFees,
     {
       name: "Max Fee Per Gas",
-      value: formatHexToGwei(tx.maxFeePerGas) + " Gwei",
+      value: formatHexToGwei(tx.maxFeePerGas.toString()) + " Gwei",
     },
     {
       name: "Max Priority Fee Per Gas",
-      value: formatHexToGwei(tx.maxPriorityFeePerGas) + " Gwei",
+      value: formatHexToGwei(tx.maxPriorityFeePerGas.toString()) + " Gwei",
     },
   ]
 

@@ -25,7 +25,7 @@ export const AccountTransfersTab = ({ address }: { address: `0x${string}` }) => 
     txId: <TransactionLink transactionId={transfer.txId}>{transfer.txId}</TransactionLink>,
     from: <VnsBadgeOrAddressLink truncateAddress address={transfer.from} />,
     to: <VnsBadgeOrAddressLink truncateAddress address={transfer.to} />,
-    token: <VnsBadgeOrAddressLink truncateAddress address={transfer.tokenAddress} />,
+    token: transfer.tokenAddress && <VnsBadgeOrAddressLink truncateAddress address={transfer.tokenAddress} />,
     amount: formatEther(transfer.value),
   }))
 
@@ -56,7 +56,7 @@ export const AccountTransfersTab = ({ address }: { address: `0x${string}` }) => 
                   <Table.Cell maxW="150px">{item.txId}</Table.Cell>
                   <Table.Cell>{item.from}</Table.Cell>
                   <Table.Cell>{item.to}</Table.Cell>
-                  <Table.Cell>{item.token}</Table.Cell>
+                  <Table.Cell>{item.token || "-"}</Table.Cell>
                   <Table.Cell>{item.amount}</Table.Cell>
                 </Table.Row>
               ))}

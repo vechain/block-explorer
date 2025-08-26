@@ -51,8 +51,6 @@ const BlockDetails = ({ revision }: { revision: Revision }) => {
     { name: "Gas Used", value: <GasUsed gasUsed={block.gasUsed} gasLimit={block.gasLimit} /> },
     {
       name: "Base Fee Per Gas",
-      // TODO: fix this 👇
-      // @ts-expect-error - baseFeePerGas is not in the type
       value: block.baseFeePerGas ? formatHexToGwei(block.baseFeePerGas) + " Gwei" : "-",
     },
     { name: "Signer", value: <VnsBadgeOrAddressLink address={block.signer} /> },
