@@ -38,13 +38,6 @@ export const AccountTransactionsTab = ({ address }: { address: `0x${string}` }) 
     clauses: <TransactionClausesLink transactionId={tx.id}>{tx.clauses.length + " Clauses"}</TransactionClausesLink>,
   }))
 
-  /**
-   * TODO: fix pagination
-   * The pagination is not working as expected. Because the indexer is not returning pagination information.
-   */
-  const defaultPage = 1
-  const count = PAGE_SIZE
-
   return (
     <Stack>
       <Table.ScrollArea borderWidth="1px" rounded="md">
@@ -85,17 +78,7 @@ export const AccountTransactionsTab = ({ address }: { address: `0x${string}` }) 
         </Table.Root>
       </Table.ScrollArea>
 
-      <Pagination
-        mt={4}
-        display="flex"
-        justifyContent="center"
-        count={count}
-        pageSize={PAGE_SIZE}
-        defaultPage={defaultPage}
-        onPageChange={details => {
-          setPage(details.page - defaultPage)
-        }}
-      />
+      <Pagination page={page} hasNext={transactions.pagination.hasNext} onPageChange={setPage} />
     </Stack>
   )
 }
