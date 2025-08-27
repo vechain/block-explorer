@@ -7,7 +7,7 @@ export const AmountWithHover = ({ amount, decimals }: { amount: bigint | HexStri
   const [truncatedAmount, fullAmount] = formatAmount({ amount, decimals })
 
   return (
-    <Tooltip showArrow positioning={{ placement: "top" }} content={fullAmount}>
+    <Tooltip showArrow positioning={{ placement: "top" }} openDelay={0} closeDelay={0} content={fullAmount}>
       <Text>{truncatedAmount}</Text>
     </Tooltip>
   )
