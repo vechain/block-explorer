@@ -1,10 +1,11 @@
-import { Badge } from "@chakra-ui/react"
+import { Badge, Text } from "@chakra-ui/react"
 
 import { useVnsName } from "@/services/thor/vns/hooks"
 
 import { Address } from "@vechain/sdk-core"
 
 import { AddressLink, CopyableLink } from "./Links"
+import { Tooltip } from "./Tooltip"
 
 export const VnsBadgeOrAddressLink = ({
   address,
@@ -33,16 +34,20 @@ export const VnsBadge = ({
 
   return (
     <CopyableLink to={`/address/${address.toString()}`} value={address.toString()}>
-      <Badge
-        size={size}
-        variant="outline"
-        borderRadius="md"
-        border="1px dashed"
-        borderColor="blue.solid"
-        color="blue.solid"
-        boxShadow="none">
-        {vnsName}
-      </Badge>
+      <Tooltip showArrow positioning={{ placement: "top" }} openDelay={0} closeDelay={0} content={vnsName}>
+        <Badge
+          size={size}
+          variant="outline"
+          borderRadius="md"
+          border="1px dashed"
+          borderColor="blue.solid"
+          color="blue.solid"
+          boxShadow="none">
+          <Text as="span" maxW="150px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+            {vnsName}
+          </Text>
+        </Badge>
+      </Tooltip>
     </CopyableLink>
   )
 }
