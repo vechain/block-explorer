@@ -1,5 +1,5 @@
-import { Stack, Table } from "@chakra-ui/react"
-import { TransactionLink } from "@/components/ui/Links"
+import { Badge, BadgeProps, Stack, Table } from "@chakra-ui/react"
+import { BaseLink, TransactionLink } from "@/components/ui/Links"
 
 import { VnsBadgeOrAddressLink } from "@/components/ui/VnsBadge"
 import { useState } from "react"
@@ -7,7 +7,12 @@ import { Pagination } from "@/components/ui/Pagination"
 import { NoTransfers } from "@/components/NoResults"
 import { useAccountTransfers } from "@/services/veworld-indexer/transfers/hooks"
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary"
-import { formatEther } from "viem"
+import { useVip180List } from "@/services/thor/contract/hooks"
+import { Transfer } from "@/services/veworld-indexer/transfers/schemas"
+import { AddressString } from "@/schemas"
+import { Vip180 } from "@/services/thor/contract/actions"
+import { ZERO_ADDRESS } from "@vechain/sdk-core"
+import { AmountWithHover } from "@/components/ui/AmountWithHover"
 
 const PAGE_SIZE = 30
 
@@ -17,17 +22,13 @@ export const AccountTransfersTab = ({ address }: { address: `0x${string}` }) => 
     params: { address, page, size: PAGE_SIZE },
   })
 
+  const allTokenAddresses = transfers?.data.map(transfer => transfer.tokenAddress).filter(Boolean) ?? []
+  const uniqueTokenAddresses = Array.from(new Set(allTokenAddresses)) as AddressString[]
+
+  const allTokens = useVip180List(uniqueTokenAddresses)
+
   if (isLoading) return <div>Loading...</div>
   if (!transfers || transfers.data.length === 0) return <NoTransfers />
-
-  const items = transfers.data.map(transfer => ({
-    key: transfer.id,
-    txId: <TransactionLink transactionId={transfer.txId}>{transfer.txId}</TransactionLink>,
-    from: <VnsBadgeOrAddressLink truncateAddress address={transfer.from} />,
-    to: <VnsBadgeOrAddressLink truncateAddress address={transfer.to} />,
-    token: transfer.tokenAddress && <VnsBadgeOrAddressLink truncateAddress address={transfer.tokenAddress} />,
-    amount: formatEther(transfer.value),
-  }))
 
   return (
     <Stack>
@@ -37,21 +38,21 @@ export const AccountTransfersTab = ({ address }: { address: `0x${string}` }) => 
             <Table.Row bg="bg.subtle">
               <Table.ColumnHeader>Tx ID</Table.ColumnHeader>
               <Table.ColumnHeader>From</Table.ColumnHeader>
+              <Table.ColumnHeader></Table.ColumnHeader>
               <Table.ColumnHeader>To</Table.ColumnHeader>
-              <Table.ColumnHeader>Token</Table.ColumnHeader>
               <Table.ColumnHeader>Amount</Table.ColumnHeader>
+              <Table.ColumnHeader>Token</Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
             <ErrorBoundary>
-              {items.map(item => (
-                <Table.Row key={item.key}>
-                  <Table.Cell maxW="150px">{item.txId}</Table.Cell>
-                  <Table.Cell>{item.from}</Table.Cell>
-                  <Table.Cell>{item.to}</Table.Cell>
-                  <Table.Cell>{item.token || "-"}</Table.Cell>
-                  <Table.Cell>{item.amount}</Table.Cell>
-                </Table.Row>
+              {transfers.data.map(transfer => (
+                <TransferRow
+                  key={transfer.id}
+                  transfer={transfer}
+                  accountAddress={address}
+                  token={allTokens[transfer.tokenAddress ?? ZERO_ADDRESS]}
+                />
               ))}
             </ErrorBoundary>
           </Table.Body>
@@ -61,4 +62,52 @@ export const AccountTransfersTab = ({ address }: { address: `0x${string}` }) => 
       <Pagination page={page} hasNext={transfers.pagination.hasNext} onPageChange={setPage} />
     </Stack>
   )
+}
+
+const TransferRow = ({
+  transfer,
+  accountAddress,
+  token,
+}: {
+  transfer: Transfer
+  accountAddress: AddressString
+  token: Vip180 | null
+}) => {
+  const symbol = token?.symbol ?? "-"
+  const decimals = !token ? 18 : token.decimals
+
+  const isReceived = transfer.to.toLowerCase() === accountAddress.toLowerCase()
+
+  return (
+    <Table.Row key={transfer.id}>
+      <Table.Cell maxW="150px">
+        <TransactionLink transactionId={transfer.txId}>{transfer.txId}</TransactionLink>
+      </Table.Cell>
+      <Table.Cell>
+        <VnsBadgeOrAddressLink truncateAddress address={transfer.from} />
+      </Table.Cell>
+      <Table.Cell>{isReceived ? <InBadge /> : <OutBadge />}</Table.Cell>
+      <Table.Cell>
+        <VnsBadgeOrAddressLink truncateAddress address={transfer.to} />
+      </Table.Cell>
+      <Table.Cell>
+        <AmountWithHover amount={transfer.value} decimals={decimals} />
+      </Table.Cell>
+      <Table.Cell>
+        {!transfer.tokenAddress ? "VET" : <BaseLink to={`/address/${transfer.tokenAddress}`}>{symbol}</BaseLink>}
+      </Table.Cell>
+    </Table.Row>
+  )
+}
+
+const InBadge = () => {
+  return <InOutBadge colorPalette="green">IN</InOutBadge>
+}
+
+const OutBadge = () => {
+  return <InOutBadge colorPalette="yellow">OUT</InOutBadge>
+}
+
+const InOutBadge = (props: BadgeProps) => {
+  return <Badge w="40px" justifyContent="center" p={1} size="xs" {...props} />
 }
