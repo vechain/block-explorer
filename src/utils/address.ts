@@ -41,14 +41,14 @@ export const parseAddress = (value: AddressValueParam | undefined): Address | un
  * @returns The truncated address string
  */
 export const truncateAddress = (address: string, startLength: number = 10, endLength: number = 8) => {
-  const parsedAddress = addressStringSchema.safeParse(address)
+  const result = addressStringSchema.safeParse(address)
 
-  if (!parsedAddress.success) {
+  if (!result.success) {
     return address
   }
 
-  const start = parsedAddress.data.slice(0, startLength)
-  const end = parsedAddress.data.slice(-endLength)
+  const start = result.data.slice(0, startLength)
+  const end = result.data.slice(-endLength)
 
   return `${start}...${end}`
 }

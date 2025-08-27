@@ -53,24 +53,22 @@ const ColorModeIcon = () => {
   return colorMode === "dark" ? <LuMoon /> : <LuSun />
 }
 
-export const ColorModeButton = forwardRef<HTMLButtonElement, ColorModeButtonProps>(
-  (props, ref) => {
-    const { toggleColorMode } = useColorMode()
-    return (
-      <IconButton
-        onClick={toggleColorMode}
-        variant="ghost"
-        aria-label="Toggle color mode"
-        size="md"
-        ref={ref}
-        bg={{ base: "primary.200", _dark: "primary.800" }}
-        {...props}
-        css={{ _icon: { width: "5", height: "5", color: { base: "primary.800", _dark: "primary.200" } } }}>
-        <ColorModeIcon />
-      </IconButton>
-    )
-  },
-)
+export const ColorModeButton = forwardRef<HTMLButtonElement, ColorModeButtonProps>((props, ref) => {
+  const { toggleColorMode } = useColorMode()
+  return (
+    <IconButton
+      onClick={toggleColorMode}
+      variant="ghost"
+      aria-label="Toggle color mode"
+      size="md"
+      ref={ref}
+      bg={{ base: "primary.200", _dark: "primary.800" }}
+      {...props}
+      css={{ _icon: { width: "5", height: "5", color: { base: "primary.800", _dark: "primary.200" } } }}>
+      <ColorModeIcon />
+    </IconButton>
+  )
+})
 
 export const ColorModeProvider = (props: ThemeProviderProps) => {
   return <ThemeProvider attribute="class" disableTransitionOnChange {...props} />
