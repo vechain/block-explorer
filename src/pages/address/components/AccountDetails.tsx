@@ -18,8 +18,8 @@ export const AccountDetails = ({ account }: { account: GetAccountReturnType }) =
 
   const items = [
     { name: "VNS", value: <VnsBadge size="md" address={account.address} vnsName={vnsName} /> },
-    { name: "Balance", value: <VETBalance balance={account.vet.wei} /> },
-    { name: "VTHO / Energy", value: <VTHOBalance balance={account.vtho.wei} /> },
+    { name: "Balance", value: <VETBalance balance={account.vet} /> },
+    { name: "VTHO / Energy", value: <VTHOBalance balance={account.vtho} /> },
   ]
 
   const tokens: unknown[] = []

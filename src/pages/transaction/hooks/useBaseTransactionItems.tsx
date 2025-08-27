@@ -9,7 +9,6 @@ import { PaidGasFees } from "@/components/PaidGasFees"
 import { TxStatus } from "@/components/TxStatus"
 import { Size } from "@/components/Size"
 import { VTHOBalance } from "@/components/ui/TokenBalance"
-import { hexToBigInt } from "viem"
 import { GasUsed } from "@/components/GasUsed"
 import { TransactionReceipt } from "@vechain/sdk-network"
 import { BaseTransaction } from "@/services/thor/transaction/actions"
@@ -72,7 +71,7 @@ export const useBaseTransactionItems = (tx: BaseTransaction, receipt: Transactio
     },
     reward: {
       name: "Reward",
-      value: receipt ? <VTHOBalance balance={hexToBigInt(hexStringSchema.parse(receipt.reward))} /> : "-",
+      value: receipt ? <VTHOBalance balance={hexStringSchema.parse(receipt.reward)} /> : "-",
     },
     gasUsed: {
       name: "Gas Used",
