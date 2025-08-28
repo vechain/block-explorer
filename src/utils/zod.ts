@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const zodParse = <T extends z.ZodSchema>(response: unknown, schema: T, errorMessage: string): z.infer<T> => {
+export const zodParse = <T extends z.ZodSchema>(response: unknown, schema: T, errorMessage?: string): z.infer<T> => {
   const result = schema.safeParse(response)
 
   if (!result.success) {

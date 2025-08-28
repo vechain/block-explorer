@@ -3,7 +3,9 @@ import { z } from "zod"
 /**
  * Type-safe version that works with Zod schemas
  */
-export const serializeZodParams = <T extends z.ZodRawShape>(params: z.infer<z.ZodObject<T>>): Record<string, string> => {
+export const serializeZodParams = <T extends z.ZodRawShape>(
+  params: z.infer<z.ZodObject<T>>,
+): Record<string, string> => {
   return serializeToSearchParams(params)
 }
 
