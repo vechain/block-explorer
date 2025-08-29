@@ -62,7 +62,7 @@ export const CopyableLink = ({ children, to, value }: { children: React.ReactNod
   )
 }
 
-const BaseLink = ({ children, to }: { children: React.ReactNode; to: string }) => {
+export const BaseLink = ({ children, to }: { children: React.ReactNode; to: string }) => {
   return (
     <ChakraLink asChild color={{ base: "primary.500", _dark: "primary.400" }}>
       <RouterLink
