@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "v22.12.0"
-          cache: "yarn"
+          cache: "pnpm"
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -27,10 +27,10 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ACCESS_ROLE }}
 
       - name: Install dependencies
-        run: yarn --immutable
+        run: pnpm install
 
       - name: Build
-        run: yarn  build
+        run: pnpm build
 
       - name: Deploy S3
         run: |

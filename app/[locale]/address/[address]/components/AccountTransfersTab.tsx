@@ -1,0 +1,114 @@
+'use client'
+
+import { Badge, type BadgeProps, Stack, Table } from '@chakra-ui/react'
+import { ZERO_ADDRESS } from '@vechain/sdk-core'
+import { useState } from 'react'
+import { NoTransfers } from '@/components/NoResults'
+import { AmountWithHover } from '@/components/ui/AmountWithHover'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { BaseLink, TransactionLink } from '@/components/ui/Links'
+import { Pagination } from '@/components/ui/Pagination'
+import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
+import type { AddressString } from '@/lib/schemas'
+import type { Vip180 } from '@/services/thor/contract'
+import { useVip180List } from '@/services/thor/hooks'
+import { useAccountTransfers } from '@/services/veworld-indexer/hooks'
+import type { Transfer } from '@/services/veworld-indexer/schemas'
+
+const PAGE_SIZE = 30
+
+export const AccountTransfersTab = ({ address }: { address: `0x${string}` }) => {
+  const [page, setPage] = useState(0)
+  const { data: transfers, isLoading } = useAccountTransfers({
+    params: { address, page, size: PAGE_SIZE },
+  })
+
+  const allTokenAddresses = transfers?.data.map(transfer => transfer.tokenAddress).filter(Boolean) ?? []
+  const uniqueTokenAddresses = Array.from(new Set(allTokenAddresses)) as AddressString[]
+
+  const allTokens = useVip180List(uniqueTokenAddresses)
+
+  if (isLoading) return <div>Loading...</div>
+  if (!transfers || transfers.data.length === 0) return <NoTransfers />
+
+  return (
+    <Stack>
+      <Table.ScrollArea borderWidth="1px" rounded="md">
+        <Table.Root size="md" borderWidth="1px" rounded="md">
+          <Table.Header>
+            <Table.Row bg="bg.subtle">
+              <Table.ColumnHeader>Tx ID</Table.ColumnHeader>
+              <Table.ColumnHeader>From</Table.ColumnHeader>
+              <Table.ColumnHeader></Table.ColumnHeader>
+              <Table.ColumnHeader>To</Table.ColumnHeader>
+              <Table.ColumnHeader>Amount</Table.ColumnHeader>
+              <Table.ColumnHeader>Token</Table.ColumnHeader>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            <ErrorBoundary>
+              {transfers.data.map(transfer => (
+                <TransferRow
+                  key={transfer.id}
+                  transfer={transfer}
+                  accountAddress={address}
+                  token={allTokens[transfer.tokenAddress ?? ZERO_ADDRESS]}
+                />
+              ))}
+            </ErrorBoundary>
+          </Table.Body>
+        </Table.Root>
+      </Table.ScrollArea>
+
+      <Pagination page={page} hasNext={transfers.pagination.hasNext} onPageChange={setPage} />
+    </Stack>
+  )
+}
+
+const TransferRow = ({
+  transfer,
+  accountAddress,
+  token,
+}: {
+  transfer: Transfer
+  accountAddress: AddressString
+  token: Vip180 | null
+}) => {
+  const symbol = token?.symbol ?? '-'
+  const decimals = !token ? 18 : token.decimals
+
+  const isReceived = transfer.to.toLowerCase() === accountAddress.toLowerCase()
+
+  return (
+    <Table.Row key={transfer.id}>
+      <Table.Cell maxW="150px">
+        <TransactionLink transactionId={transfer.txId}>{transfer.txId}</TransactionLink>
+      </Table.Cell>
+      <Table.Cell>
+        <VnsBadgeOrAddressLink truncateAddress address={transfer.from} />
+      </Table.Cell>
+      <Table.Cell>{isReceived ? <InBadge /> : <OutBadge />}</Table.Cell>
+      <Table.Cell>
+        <VnsBadgeOrAddressLink truncateAddress address={transfer.to} />
+      </Table.Cell>
+      <Table.Cell>
+        <AmountWithHover amount={transfer.value} decimals={decimals} />
+      </Table.Cell>
+      <Table.Cell>
+        {!transfer.tokenAddress ? 'VET' : <BaseLink to={`/address/${transfer.tokenAddress}`}>{symbol}</BaseLink>}
+      </Table.Cell>
+    </Table.Row>
+  )
+}
+
+const InBadge = () => {
+  return <InOutBadge colorPalette="green">IN</InOutBadge>
+}
+
+const OutBadge = () => {
+  return <InOutBadge colorPalette="yellow">OUT</InOutBadge>
+}
+
+const InOutBadge = (props: BadgeProps) => {
+  return <Badge w="40px" justifyContent="center" p={1} size="xs" {...props} />
+}

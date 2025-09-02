@@ -6,7 +6,7 @@ This is the frontend for the VeChain Block Explorer.
 
 - React
 - TypeScript
-- Vite
+- Next.js
 
 ## Development
 
@@ -19,11 +19,11 @@ nvm use
 Install the dependencies:
 
 ```bash
-yarn install
+pnpm install
 ```
 
 Start the development server:
 
 ```bash
-yarn dev
+pnpm dev
 ```

@@ -18,11 +18,16 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
       - name: Install dependencies
-        run: yarn install
+        run: pnpm install
 
       - name: Run tests
-        run: yarn test
+        run: pnpm test
 
       - name: Upload coverage report
         if: success()

@@ -1,0 +1,34 @@
+'use client'
+
+import { Link as ChakraLink, Flex, Text } from '@chakra-ui/react'
+
+import { usePriceList } from '@/services/coin-api/hooks'
+
+export const TokenPrices = () => {
+  const { data: priceList } = usePriceList()
+
+  if (!priceList) return null
+
+  return (
+    <Flex gap={4} alignItems="center">
+      <TokenPrice token="VET" usdPrice={priceList.vet.usd} />
+      <TokenPrice token="VTHO" usdPrice={priceList.vtho.usd} />
+      <TokenPrice token="B3TR" usdPrice={priceList.b3tr.usd} />
+    </Flex>
+  )
+}
+const COINGECKO_URL = {
+  VET: 'vechain',
+  VTHO: 'vethor-token',
+  B3TR: 'vebetterdao',
+}
+
+function TokenPrice({ token, usdPrice }: { token: keyof typeof COINGECKO_URL; usdPrice: number }) {
+  return (
+    <Text asChild fontSize="sm" color="fg.muted">
+      <ChakraLink href={`https://www.coingecko.com/fr/coins/${COINGECKO_URL[token]}`} target="_blank">
+        {token}: {usdPrice.toFixed(4).toLocaleString()} $
+      </ChakraLink>
+    </Text>
+  )
+}

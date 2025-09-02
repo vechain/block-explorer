@@ -1,0 +1,12 @@
+{
+  "vechain_title": "VeChain",
+  "explorer": "Exploreur",
+  "download_button": "Télécharger VeWorld",
+  "latest_blocks": "Derniers blocs",
+  "tracking_blockchain_insights": "Tracking Blockchain Insights and Sustainability Metrics",
+  "search_placeholder": "Rechercher des transactions, blocs, adresses, contrats ou VNS domains...",
+  "block_number": "Numéro de bloc",
+  "total_transactions": "Total des transactions",
+  "validator_nodes": "Nœuds validateurs",
+  "no_data": "Aucune données"
+}
