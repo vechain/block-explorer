@@ -1,0 +1,67 @@
+'use client'
+
+import { Flex, Stack, Table, Tabs } from '@chakra-ui/react'
+import { LuArrowLeftRight } from 'react-icons/lu'
+import { TbTransfer } from 'react-icons/tb'
+import { CopyToClipBoard } from '@/components/ui/CopyToClipBoard'
+import { VETBalance, VTHOBalance } from '@/components/ui/TokenBalance'
+import { Subtitle, Title } from '@/components/ui/Typography'
+import { VnsBadge } from '@/components/ui/VnsBadge'
+import type { GetAccountReturnType } from '@/services/thor/account'
+import { useVnsName } from '@/services/thor/hooks'
+import { AccountTransactionsTab } from './AccountTransactionsTab'
+import { AccountTransfersTab } from './AccountTransfersTab'
+
+export const ContractDetails = ({ account }: { account: GetAccountReturnType }) => {
+  const { data: vnsName } = useVnsName(account.address)
+
+  const items = [
+    { name: 'VNS', value: <VnsBadge size="md" address={account.address} vnsName={vnsName} /> },
+    { name: 'Balance', value: <VETBalance balance={account.vet} /> },
+    { name: 'VTHO / Energy', value: <VTHOBalance balance={account.vtho} /> },
+  ]
+
+  return (
+    <Stack flex={1}>
+      <Title>Contract Details</Title>
+      <Flex alignItems="center" gap={2}>
+        <Subtitle>{account.address.toString()}</Subtitle>
+        <CopyToClipBoard value={account.address.toString()} />
+      </Flex>
+
+      <Table.ScrollArea my={12} borderWidth="1px" rounded="md">
+        <Table.Root size="md">
+          <Table.Body>
+            {items.map(item => (
+              <Table.Row key={item.name}>
+                <Table.Cell>{item.name}</Table.Cell>
+                <Table.Cell>{item.value}</Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+      </Table.ScrollArea>
+
+      <Tabs.Root defaultValue="transactions" variant="subtle">
+        <Tabs.List bg="bg.muted" rounded="l3">
+          <Tabs.Trigger value="transactions">
+            <LuArrowLeftRight />
+            Transactions
+          </Tabs.Trigger>
+          <Tabs.Trigger value="transfers">
+            <TbTransfer />
+            Transfers
+          </Tabs.Trigger>
+          <Tabs.Indicator rounded="l2" />
+        </Tabs.List>
+
+        <Tabs.Content value="transactions">
+          <AccountTransactionsTab address={account.address} />
+        </Tabs.Content>
+        <Tabs.Content value="transfers">
+          <AccountTransfersTab address={account.address} />
+        </Tabs.Content>
+      </Tabs.Root>
+    </Stack>
+  )
+}
