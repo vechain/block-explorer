@@ -7,6 +7,7 @@ import type { Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
 import { QueryClientProvider } from '@/lib/query-client/provider'
 import { ThorClientProvider } from '@/services/thor/thor-client'
+import { PrereleaseBanner } from './components/PrereleaseBanner'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -34,6 +35,7 @@ export default async function RootLayout({
       <body className={inter.variable}>
         <Providers locale={locale}>
           <Box h="100vh">
+            <PrereleaseBanner />
             <Container maxWidth="1440px" display="flex" flexDirection="column" p={10}>
               <Navbar />
               <Flex mt={10} direction="column" flex={1}>
