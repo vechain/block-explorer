@@ -1,4 +1,4 @@
-import { MAINNET_URL, TESTNET_URL, THOR_SOLO_URL } from '@vechain/sdk-network'
+import { MAINNET_URL, TESTNET_URL } from '@vechain/sdk-network'
 
 export type Network = {
   name: NetworkName
@@ -11,7 +11,7 @@ export type Network = {
 export enum NetworkName {
   MAINNET = 'mainnet',
   TESTNET = 'testnet',
-  SOLO = 'solo',
+  // SOLO = 'solo',
 }
 
 const mainnet: Network = {
@@ -26,14 +26,14 @@ const testnet: Network = {
   contracts: { X2EarnRewardsPool: '0x5F8f86B8D0Fa93cdaE20936d150175dF0205fB38' },
 }
 
-const solo: Network = {
-  name: NetworkName.SOLO,
-  url: THOR_SOLO_URL,
-  contracts: {},
-}
+// const solo: Network = {
+//   name: NetworkName.SOLO,
+//   url: THOR_SOLO_URL,
+//   contracts: {},
+// }
 
 export const NETWORKS: Record<NetworkName, Network> = {
   [NetworkName.MAINNET]: mainnet,
   [NetworkName.TESTNET]: testnet,
-  [NetworkName.SOLO]: solo,
+  // [NetworkName.SOLO]: solo,
 }
