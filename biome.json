@@ -22,7 +22,8 @@
       "quoteStyle": "single",
       "trailingCommas": "all",
       "arrowParentheses": "asNeeded",
-      "semicolons": "asNeeded"
+      "semicolons": "asNeeded",
+      "jsxQuoteStyle": "double"
     }
   },
   "linter": {

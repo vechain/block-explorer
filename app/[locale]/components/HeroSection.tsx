@@ -1,7 +1,7 @@
 import { Flex, Stack, Text } from '@chakra-ui/react'
+import { SearchBar } from '@/components/navigation/SearchBar'
 import { i18n } from '@/i18n/server'
 import { BlockNumberCard, ClausesPerSecondCard, TransactionsPerSecondCard } from './InsightDataCard'
-import { SearchBar } from './SearchBar'
 
 export const HeroSection = async () => {
   const { t } = await i18n()

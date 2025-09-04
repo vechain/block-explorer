@@ -1,6 +1,7 @@
-import { Button, Link as ChakraLink, Flex, Group, Image, Stack, Text } from '@chakra-ui/react'
+import { Button, Flex, Group, Image, Stack, Text } from '@chakra-ui/react'
 import Link from 'next/link'
 import { LuDownload } from 'react-icons/lu'
+import { SearchBar } from '@/components/navigation/SearchBar'
 import { ColorModeButton } from '@/components/theme/color-mode'
 import { i18n } from '@/i18n/server'
 import { NetworkSelect } from './NetworkSelect'
@@ -28,6 +29,7 @@ export const Navbar = async () => {
       <TokenPrices />
 
       <Group gap={4}>
+        <SearchBar />
         <DownloadButton />
         <NetworkSelect />
         <ColorModeButton />
@@ -43,10 +45,10 @@ const DownloadButton = async () => {
 
   return (
     <Button asChild bg="primary.500" color="gray.50">
-      <ChakraLink href={downloadVeWorldHref} target="_blank" textDecoration="none">
+      <Link href={downloadVeWorldHref} target="_blank">
         {t('download_button')}
         <LuDownload />
-      </ChakraLink>
+      </Link>
     </Button>
   )
 }
