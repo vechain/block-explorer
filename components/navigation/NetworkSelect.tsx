@@ -31,8 +31,8 @@ export const NetworkSelect = () => {
   }
 
   return (
-    <Field.Root invalid={!!error}>
-      <Select.Root collection={networks} width="120px" value={[activeNetwork.name]} onValueChange={handleNetworkChange}>
+    <Field.Root invalid={!!error} width="120px">
+      <Select.Root collection={networks} value={[activeNetwork.name]} onValueChange={handleNetworkChange}>
         <Select.HiddenSelect />
         <Select.Control>
           <Select.Trigger>

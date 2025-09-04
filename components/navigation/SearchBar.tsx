@@ -23,7 +23,7 @@ export const SearchBar = () => {
   }
 
   return (
-    <Field.Root invalid={!!error}>
+    <Field.Root invalid={!!error} minW="300px">
       <InputGroup as="form" onSubmit={handleSearch} startElement={<LuSearch />}>
         <Input
           type="search"
