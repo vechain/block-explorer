@@ -47,7 +47,7 @@ const search = async ({
     }
   }
 
-  const isTransaction = Hex.isValid(searchTerm)
+  const isTransaction = searchTerm.startsWith('0x') && Hex.isValid(searchTerm)
   if (isTransaction) {
     const transaction = await getTransaction({ thorClient, transactionId: Hex.of(searchTerm) })
     if (transaction) {
