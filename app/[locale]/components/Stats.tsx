@@ -4,6 +4,12 @@ import { Flex, Heading, Stack, Text } from '@chakra-ui/react'
 import { formatEther } from 'viem'
 import { useNftHolders, useTotalVetStaked, useTotalVthoClaimed } from '@/services/veworld-indexer/hooks'
 
+const prettifyAmount = (amount: bigint = 0n) => {
+  const amountString = formatEther(amount)
+  const [intPart] = amountString.split('.')
+  return Number(intPart).toLocaleString()
+}
+
 export const Stats = () => {
   const { data: totalVthoClaimed } = useTotalVthoClaimed()
   const { data: totalVetStaked } = useTotalVetStaked()
@@ -16,8 +22,8 @@ export const Stats = () => {
       </Heading>
 
       <Flex gap={4} width="100%">
-        <StatCard title="Total VTHO Claimed" value={formatEther(totalVthoClaimed ?? 0n)} />
-        <StatCard title="Total VET Staked" value={formatEther(totalVetStaked?.total ?? 0n)} />
+        <StatCard title="Total VTHO Claimed" value={prettifyAmount(totalVthoClaimed)} />
+        <StatCard title="Total VET Staked" value={prettifyAmount(totalVetStaked?.total)} />
         <StatCard title="NFT Holders" value={nftHolders?.total.toLocaleString() ?? '0'} />
       </Flex>
     </Stack>

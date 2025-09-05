@@ -7,7 +7,7 @@ export const HeroSection = async () => {
   const { t } = await i18n()
 
   return (
-    <Stack py={16} px={40} bg="bg.subtle" rounded="xl" gap={24}>
+    <Stack py={8} px={40} bg="bg.subtle" rounded="xl" gap={8}>
       <Text maxW="700px" fontSize="5xl" fontWeight={600}>
         {t('tracking_blockchain_insights')}
       </Text>

@@ -5,7 +5,7 @@ import { Stats } from './components/Stats'
 
 export default async function HomePage() {
   return (
-    <Stack direction="column" gap={20}>
+    <Stack direction="column" gap={12}>
       <HeroSection />
       <Stats />
       <LatestBlocksSection />
