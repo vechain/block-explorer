@@ -17,16 +17,16 @@ export const TokenPrices = () => {
     </Flex>
   )
 }
-const COINGECKO_URL = {
+const COINGECKO_TOKEN_IDS = {
   VET: 'vechain',
   VTHO: 'vethor-token',
   B3TR: 'vebetterdao',
 }
 
-function TokenPrice({ token, usdPrice }: { token: keyof typeof COINGECKO_URL; usdPrice: number }) {
+function TokenPrice({ token, usdPrice }: { token: keyof typeof COINGECKO_TOKEN_IDS; usdPrice: number }) {
   return (
     <Text asChild fontSize="sm" color="fg.muted">
-      <ChakraLink href={`https://www.coingecko.com/fr/coins/${COINGECKO_URL[token]}`} target="_blank">
+      <ChakraLink href={`https://www.coingecko.com/coins/${COINGECKO_TOKEN_IDS[token]}`} target="_blank">
         {token}: {usdPrice.toFixed(4).toLocaleString()} $
       </ChakraLink>
     </Text>
