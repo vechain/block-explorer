@@ -1,9 +1,8 @@
 import { Table } from '@chakra-ui/react'
-import type { TransactionClause } from '@vechain/sdk-core'
 import { TransactionLink } from '@/components/ui/Links'
 import { VETBalance } from '@/components/ui/TokenBalance'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
-import { addressStringSchema, hexStringSchema } from '@/lib/schemas'
+import type { Clause, HexString } from '@/lib/schemas'
 import { InputData } from './InputData'
 
 export const ClauseDetailsTable = ({
@@ -11,8 +10,8 @@ export const ClauseDetailsTable = ({
   txId,
   clauseIndex,
 }: {
-  clause: TransactionClause
-  txId: string
+  clause: Clause
+  txId: HexString
   clauseIndex: number
 }) => {
   const items = [
@@ -21,9 +20,9 @@ export const ClauseDetailsTable = ({
       value: <TransactionLink transactionId={txId}>{txId}</TransactionLink>,
     },
     { name: 'Index', value: `# ${clauseIndex.toLocaleString()}` },
-    { name: 'To', value: clause.to ? <VnsBadgeOrAddressLink address={addressStringSchema.parse(clause.to)} /> : 'N/A' },
-    { name: 'Value', value: <VETBalance balance={hexStringSchema.parse(clause.value)} /> },
-    { name: 'Input data', value: <InputData rawData={hexStringSchema.parse(clause.data)} /> },
+    { name: 'To', value: clause.to ? <VnsBadgeOrAddressLink address={clause.to} /> : 'N/A' },
+    { name: 'Value', value: <VETBalance balance={clause.value} /> },
+    { name: 'Input data', value: <InputData rawData={clause.data} /> },
   ]
 
   return (

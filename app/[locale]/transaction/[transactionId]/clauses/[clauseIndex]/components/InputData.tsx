@@ -1,8 +1,8 @@
 import { Card, Code as ChakraCode, Table, Text } from '@chakra-ui/react'
 import type { AbiParameter } from 'viem'
 import { Code } from '@/components/ui/Code'
-import { useDecodeInputData } from '@/hooks/useDecodeInputData'
-import type { DecodedInputData, DecodedInputDataArgs, HexString } from '@/lib/schemas'
+import { type DecodedInputData, type DecodedInputDataArgs, useDecodeInputData } from '@/hooks/useDecodeInputData'
+import type { HexString } from '@/lib/schemas'
 
 export const InputData = ({ rawData }: { rawData: HexString }) => {
   const { data } = useDecodeInputData(rawData)
@@ -39,7 +39,7 @@ const DecodedInputDataArgsTable = ({ inputs, args }: { inputs: AbiParameter[]; a
             </Table.Cell>
             <Table.Cell>
               <Code w="100%" whiteSpace="normal" wordBreak="break-all">
-                {args[i] ?? '0x'}
+                {args?.[i] ?? '0x'}
               </Code>
             </Table.Cell>
           </Table.Row>

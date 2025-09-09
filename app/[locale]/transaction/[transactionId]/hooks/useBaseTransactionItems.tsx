@@ -1,4 +1,3 @@
-import type { TransactionReceipt } from '@vechain/sdk-network'
 import { GasUsed } from '@/components/GasUsed'
 import { PaidGasFees } from '@/components/PaidGasFees'
 import { Size } from '@/components/Size'
@@ -7,9 +6,8 @@ import { CopyableText } from '@/components/ui/CopyToClipBoard'
 import { BlockLink, TransactionClausesLink, TransactionLink } from '@/components/ui/Links'
 import { VTHOBalance } from '@/components/ui/TokenBalance'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
-import { addressStringSchema, hexStringSchema } from '@/lib/schemas'
+import type { BaseTransaction, TransactionReceipt } from '@/lib/schemas'
 import { formatDateFromTimestamp } from '@/lib/utils/date'
-import type { BaseTransaction } from '@/services/thor/transaction'
 
 export const useBaseTransactionItems = (tx: BaseTransaction, receipt: TransactionReceipt | undefined) => {
   const status = receipt ? (receipt.reverted ? 'reverted' : 'success') : 'pending'
@@ -41,7 +39,7 @@ export const useBaseTransactionItems = (tx: BaseTransaction, receipt: Transactio
     },
     origin: {
       name: 'Origin',
-      value: <VnsBadgeOrAddressLink address={addressStringSchema.parse(tx.origin)} />,
+      value: <VnsBadgeOrAddressLink address={tx.origin} />,
     },
     clauses: {
       name: 'Clauses',
@@ -69,7 +67,7 @@ export const useBaseTransactionItems = (tx: BaseTransaction, receipt: Transactio
     },
     reward: {
       name: 'Reward',
-      value: receipt ? <VTHOBalance balance={hexStringSchema.parse(receipt.reward)} /> : '-',
+      value: receipt ? <VTHOBalance balance={receipt.reward} /> : '-',
     },
     gasUsed: {
       name: 'Gas Used',
@@ -77,11 +75,7 @@ export const useBaseTransactionItems = (tx: BaseTransaction, receipt: Transactio
     },
     gasFees: {
       name: 'Gas fees',
-      value: receipt ? (
-        <PaidGasFees paid={receipt.paid} delegator={addressStringSchema.parse(receipt.gasPayer)} />
-      ) : (
-        '-'
-      ),
+      value: receipt ? <PaidGasFees paid={receipt.paid} delegator={receipt.gasPayer} /> : '-',
     },
   }
 }

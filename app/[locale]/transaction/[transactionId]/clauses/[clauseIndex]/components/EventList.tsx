@@ -1,15 +1,13 @@
 import { Badge, Card, Code as ChakraCode, DataList, Flex, List, Stack, Switch, Table, Text } from '@chakra-ui/react'
-import type { Event } from '@vechain/sdk-network'
 import { useEffect, useState } from 'react'
 import { Code } from '@/components/ui/Code'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
-import { useDecodeEvent } from '@/hooks/useDecodeEvent'
-import { addressStringSchema } from '@/lib/schemas'
+import { type DecodedEvent, type DecodedEventArgs, useDecodeEvent } from '@/hooks/useDecodeEvent'
+import { EventType, type RawEvent } from '@/lib/schemas'
 import type * as abi from '@/lib/schemas/abi'
-import { type DecodedEvent, type DecodedEventArgs, EventType } from '@/lib/schemas/events'
 
-export const EventList = ({ eventLogs }: { eventLogs: Event[] }) => {
+export const EventList = ({ eventLogs }: { eventLogs: RawEvent[] }) => {
   return (
     <Stack gap={2}>
       {eventLogs.map((eventLog, i) => (
@@ -21,7 +19,7 @@ export const EventList = ({ eventLogs }: { eventLogs: Event[] }) => {
   )
 }
 
-const EventCard = ({ eventLog }: { eventLog: Event }) => {
+const EventCard = ({ eventLog }: { eventLog: RawEvent }) => {
   const { event, isLoading } = useDecodeEvent(eventLog)
 
   const [showDecoded, setShowDecoded] = useState(true)
@@ -59,14 +57,14 @@ const EventCard = ({ eventLog }: { eventLog: Event }) => {
   )
 }
 
-const RawEventCard = ({ event }: { event: Event }) => {
+const RawEventCard = ({ event }: { event: RawEvent }) => {
   return (
     <Card.Body color="fg.muted">
       <DataList.Root orientation="horizontal">
         <DataList.Item>
           <DataList.ItemLabel fontWeight="bold">Address</DataList.ItemLabel>
           <DataList.ItemValue>
-            <VnsBadgeOrAddressLink address={addressStringSchema.parse(event.address)} />
+            <VnsBadgeOrAddressLink address={event.address} />
           </DataList.ItemValue>
         </DataList.Item>
 
