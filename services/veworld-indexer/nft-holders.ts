@@ -16,18 +16,20 @@ const getNftHolders = async ({ networkName }: { networkName: NetworkName }) => {
   return zodParse(data, nftHoldersSchema, 'Invalid nft holders response from VeWorld Indexer')
 }
 
+export const nftNameSchema = z.enum([
+  'Dawn',
+  'Strength',
+  'ThunderX',
+  'Flash',
+  'VeThorX',
+  'Lightning',
+  'StrengthX',
+  'MjolnirX',
+  'Mjolnir',
+  'Thunder',
+])
+
 const nftHoldersSchema = z.object({
   total: z.number(),
-  byLevel: z.object({
-    Dawn: z.number(),
-    Strength: z.number(),
-    ThunderX: z.number(),
-    Flash: z.number(),
-    VeThorX: z.number(),
-    Lightning: z.number(),
-    StrengthX: z.number(),
-    MjolnirX: z.number(),
-    Mjolnir: z.number(),
-    Thunder: z.number(),
-  }),
+  byLevel: z.record(nftNameSchema, z.number()),
 })
