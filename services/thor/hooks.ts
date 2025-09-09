@@ -2,8 +2,7 @@
 
 import { useQueries, useQuery } from '@tanstack/react-query'
 import type { Address, Hex, Revision } from '@vechain/sdk-core'
-import type { ExpandedBlockDetail } from '@vechain/sdk-network'
-import type { AddressString } from '@/lib/schemas'
+import type { AddressString, ExpandedBlockDetail } from '@/lib/schemas'
 import { accountQueryOptions } from './account'
 import { bestBlockQueryOptions, blockQueryOptions, latestBlocksQueryOptions } from './block'
 import { type Vip180List, vip180QueryOptions } from './contract'
@@ -49,7 +48,7 @@ export const useLatestBlocks = ({ count }: { count: number }) => {
   })
 }
 
-const isExpandedBlockDetail = (block: ExpandedBlockDetail | null | undefined): block is ExpandedBlockDetail => {
+const isExpandedBlockDetail = (block: unknown): block is ExpandedBlockDetail => {
   return Boolean(block)
 }
 

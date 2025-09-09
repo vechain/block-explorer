@@ -13,7 +13,7 @@ import type { AddressString } from '@/lib/schemas'
 import type { Vip180 } from '@/services/thor/contract'
 import { useVip180List } from '@/services/thor/hooks'
 import { useAccountTransfers } from '@/services/veworld-indexer/hooks'
-import type { Transfer } from '@/services/veworld-indexer/schemas'
+import type { IndexerTransfer } from '@/services/veworld-indexer/schemas'
 
 const PAGE_SIZE = 30
 
@@ -70,7 +70,7 @@ const TransferRow = ({
   accountAddress,
   token,
 }: {
-  transfer: Transfer
+  transfer: IndexerTransfer
   accountAddress: AddressString
   token: Vip180 | null
 }) => {

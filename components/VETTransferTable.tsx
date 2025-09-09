@@ -1,8 +1,8 @@
 import { Table } from '@chakra-ui/react'
-import type { Transfer } from '@vechain/sdk-network'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { VETBalance } from '@/components/ui/TokenBalance'
 import { addressStringSchema, hexStringSchema } from '@/lib/schemas'
+import type { Transfer } from '@/lib/schemas'
 import { VnsBadgeOrAddressLink } from './ui/VnsBadge'
 
 export const VETTransferTable = ({ transfers }: { transfers: Transfer[] }) => {

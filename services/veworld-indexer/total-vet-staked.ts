@@ -3,6 +3,7 @@ import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
+import { nftNameSchema } from './nft-holders'
 
 export const totalVetStakedQueryOptions = (networkName: NetworkName) => ({
   queryKey: [getTotalVetStaked.name, networkName],

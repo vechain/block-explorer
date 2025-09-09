@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useThorClient } from '@/services/thor/thor-client'
 import { nftHoldersQueryOptions } from './nft-holders'
-import type { GetTransactionsParams, GetTransfersParams } from './schemas'
+import type { IndexerGetTransactionsParams, IndexerGetTransfersParams } from './schemas'
 import { totalVetStakedQueryOptions } from './total-vet-staked'
 import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
@@ -24,12 +24,12 @@ export const useTotalVthoClaimed = () => {
   return useQuery(totalVthoClaimedQueryOptions(activeNetwork.name))
 }
 
-export const useAccountTransactions = ({ params }: { params: GetTransactionsParams }) => {
+export const useAccountTransactions = ({ params }: { params: IndexerGetTransactionsParams }) => {
   const { activeNetwork } = useThorClient()
   return useQuery(accountTransactionsQueryOptions(activeNetwork.name, params))
 }
 
-export const useAccountTransfers = ({ params }: { params: GetTransfersParams }) => {
+export const useAccountTransfers = ({ params }: { params: IndexerGetTransfersParams }) => {
   const { activeNetwork } = useThorClient()
   return useQuery(accountTransfersQueryOptions(activeNetwork.name, params))
 }
