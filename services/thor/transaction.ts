@@ -16,9 +16,9 @@ export const transactionQueryOptions = (
 export const transactionReceiptQueryOptions = (
   thorClient: ThorClient,
   networkName: NetworkName,
-  transactionId: Hex,
+  transactionId: HexString,
 ) => ({
-  queryKey: [getTransactionReceipt.name, networkName, transactionId.toString()],
+  queryKey: [getTransactionReceipt.name, networkName, transactionId],
   queryFn: () => getTransactionReceipt({ thorClient, transactionId }),
 })
 
@@ -33,7 +33,11 @@ export const getTransaction = async ({
 
   if (!tx) return null
 
-  return tx
+  return zodParse({
+    data: tx,
+    schema: transactionSchema,
+    errorMessage: 'Failed to parse Thor transaction',
+  })
 }
 
 const getTransactionReceipt = async ({
@@ -47,5 +51,9 @@ const getTransactionReceipt = async ({
 
   if (!receipt) return null
 
-  return receipt
+  return zodParse({
+    data: receipt,
+    schema: transactionReceiptSchema,
+    errorMessage: 'Failed to parse Thor transaction receipt',
+  })
 }

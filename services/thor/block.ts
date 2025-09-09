@@ -2,6 +2,7 @@ import { Revision } from '@vechain/sdk-core'
 import type { ThorClient } from '@vechain/sdk-network'
 import type { NetworkName } from '@/lib/constants/network'
 import { expandedBlockDetailSchema } from '@/lib/schemas'
+import { zodParse } from '@/lib/utils/zod'
 
 const BLOCK_TIME = 10 * 1000 // 10 seconds
 
@@ -29,5 +30,9 @@ export const getBlock = async ({ thorClient, revision }: { thorClient: ThorClien
 
   if (!block) return null
 
-  return block
+  return zodParse({
+    data: block,
+    schema: expandedBlockDetailSchema,
+    errorMessage: 'Failed to parse block',
+  })
 }

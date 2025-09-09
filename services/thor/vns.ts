@@ -47,7 +47,11 @@ const getVnsName = async ({
     return null
   }
 
-  const result = zodParse(vnsResult, vnsResultSchema, 'Failed to parse VNS result')
+  const result = zodParse({
+    data: vnsResult,
+    schema: vnsResultSchema,
+    errorMessage: 'Failed to parse VNS result',
+  })
 
   const vnsName = result.array[0][0]
 
@@ -80,7 +84,11 @@ export const getVnsAddress = async ({
     return null
   }
 
-  const address = result.array[0]
+  const [address] = zodParse({
+    data: result.array[0],
+    schema: z.array(addressStringSchema),
+    errorMessage: 'Failed to parse VNS address',
+  })
 
   if (isZeroAddress(address)) return null
 

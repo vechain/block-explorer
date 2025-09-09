@@ -25,5 +25,8 @@ export const getAccount = async ({ thorClient, address }: { thorClient: ThorClie
     vtho: account.vtho.wei,
   }
 
-  return zodParse(accountData, accountSchema)
+  return zodParse({
+    data: accountData,
+    schema: accountSchema,
+  })
 }

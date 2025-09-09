@@ -12,8 +12,15 @@ export const totalVetStakedQueryOptions = (networkName: NetworkName) => ({
 })
 
 const getTotalVetStaked = async ({ networkName }: { networkName: NetworkName }) => {
-  const { data } = await apiClient.get({ baseUrl: resolveUrl(networkName), endPoint: '/stargate/total-vet-staked' })
-  return zodParse(data, totalVetStakedSchema, 'Invalid total vet staked response from VeWorld Indexer')
+  const { data } = await apiClient.get({
+    baseUrl: resolveUrl(networkName),
+    endPoint: '/stargate/total-vet-staked',
+  })
+  return zodParse({
+    data,
+    schema: totalVetStakedSchema,
+    errorMessage: 'Invalid total vet staked response from VeWorld Indexer',
+  })
 }
 
 const totalVetStakedSchema = z.object({

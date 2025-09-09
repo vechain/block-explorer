@@ -12,7 +12,11 @@ export const totalVthoClaimedQueryOptions = (networkName: NetworkName) => ({
 
 const getTotalVthoClaimed = async ({ networkName }: { networkName: NetworkName }) => {
   const { data } = await apiClient.get({ baseUrl: resolveUrl(networkName), endPoint: '/stargate/total-vtho-claimed' })
-  return zodParse(data, totalVthoClaimedSchema, 'Invalid total vtho claimed response from VeWorld Indexer')
+  return zodParse({
+    data,
+    schema: totalVthoClaimedSchema,
+    errorMessage: 'Invalid total vtho claimed response from VeWorld Indexer',
+  })
 }
 
 const totalVthoClaimedSchema = z.coerce.bigint()

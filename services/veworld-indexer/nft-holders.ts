@@ -11,9 +11,16 @@ export const nftHoldersQueryOptions = (networkName: NetworkName) => ({
 })
 
 const getNftHolders = async ({ networkName }: { networkName: NetworkName }) => {
-  const { data } = await apiClient.get({ baseUrl: resolveUrl(networkName), endPoint: '/stargate/nft-holders' })
+  const { data } = await apiClient.get({
+    baseUrl: resolveUrl(networkName),
+    endPoint: '/stargate/nft-holders',
+  })
 
-  return zodParse(data, nftHoldersSchema, 'Invalid nft holders response from VeWorld Indexer')
+  return zodParse({
+    data,
+    schema: nftHoldersSchema,
+    errorMessage: 'Invalid nft holders response from VeWorld Indexer',
+  })
 }
 
 export const nftNameSchema = z.enum([

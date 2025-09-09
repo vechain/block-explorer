@@ -23,5 +23,9 @@ const getTransactions = async ({
     params: serializeZodParams(params),
   })
 
-  return zodParse(data, responseSchema(transactionSchema), 'Invalid transactions response from VeWorld Indexer')
+  return zodParse({
+    data,
+    schema: indexerResponseSchema(indexerTransactionSchema),
+    errorMessage: 'Invalid transactions response from VeWorld Indexer',
+  })
 }

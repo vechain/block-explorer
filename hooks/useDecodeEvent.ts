@@ -6,6 +6,7 @@ import z from 'zod'
 import type { RawEvent } from '@/lib/schemas'
 import { addressStringSchema, EventType, rawEventSchema } from '@/lib/schemas'
 import * as abi from '@/lib/schemas/abi'
+import { zodParse } from '@/lib/utils/zod'
 import { useAbi } from '@/services/b32/hooks'
 
 export const useDecodeEvent = (rawEvent: RawEvent) => {
@@ -34,32 +35,35 @@ const parseEvent = (abi: Abi | undefined, rawEvent: RawEvent): ParsedEvent => {
         const eventAbi = new ABIEvent(abiItem)
 
         if (eventAbi.signatureHash === signature) {
-          const decodedEvent = eventAbi.decodeEventLog({
+          const { args } = eventAbi.decodeEventLog({
             data: Hex.of(rawEvent.data),
             topics: rawEvent.topics.map(topic => Hex.of(topic)),
           })
 
-          const parsedDecodedEvent = decodedEventSchema.safeParse({
+          const data = {
             address: rawEvent.address,
             signature: eventAbi.format(),
             signatureHash: eventAbi.signatureHash,
-            args: decodedEvent.args,
             name: eventAbi.signature.name,
             inputs: eventAbi.signature.inputs,
-          })
-
-          if (!parsedDecodedEvent.success) {
-            console.error({ issues: parsedDecodedEvent.error.issues, decodedEvent, eventAbi })
-            return parsedRawEvent
+            args,
           }
+
+          const decoded = zodParse({
+            data,
+            schema: decodedEventSchema,
+            errorMessage: 'Failed to parse decoded event',
+          })
 
           return {
             type: EventType.DECODED,
             raw: parsedRawEvent.raw,
-            decoded: parsedDecodedEvent.data,
+            decoded,
           }
         }
-      } catch (_error) {}
+      } catch (_error) {
+        return parsedRawEvent
+      }
     }
   }
 
