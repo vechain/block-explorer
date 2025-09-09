@@ -1,25 +1,23 @@
 'use client'
 
-import type { Address } from '@vechain/sdk-core'
 import { notFound } from 'next/navigation'
 import { use } from 'react'
-import { parseAddress } from '@/lib/utils/address'
+import type { AddressString } from '@/lib/schemas'
 import { useAccount } from '@/services/thor/hooks'
 import { AccountDetails } from './components/AccountDetails'
 import { ContractDetails } from './components/ContractDetails'
 
-export default function AddressPage({ params }: { params: Promise<{ address: string }> }) {
+export default function AddressPage({ params }: { params: Promise<{ address: AddressString }> }) {
   const { address } = use(params)
-  const addr = parseAddress(address)
 
-  if (!addr) {
+  if (!address) {
     notFound()
   }
 
-  return <RenderAccountOrContract address={addr} />
+  return <RenderAccountOrContract address={address} />
 }
 
-const RenderAccountOrContract = ({ address }: { address: Address }) => {
+const RenderAccountOrContract = ({ address }: { address: AddressString }) => {
   const { data: account, isLoading: isAccountLoading } = useAccount(address)
 
   if (isAccountLoading) return <div>Loading...</div>

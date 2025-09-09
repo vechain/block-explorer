@@ -1,8 +1,8 @@
-import { ABIFunction, type Address } from '@vechain/sdk-core'
+import { ABIFunction } from '@vechain/sdk-core'
 import type { ThorClient } from '@vechain/sdk-network'
 import { z } from 'zod'
 import { NetworkName } from '@/lib/constants/network'
-import type { AddressString } from '@/lib/schemas'
+import { type AddressString, addressStringSchema } from '@/lib/schemas'
 import { isZeroAddress } from '@/lib/utils/address'
 import { normalizeName } from '@/lib/utils/vns'
 import { zodParse } from '@/lib/utils/zod'
@@ -66,7 +66,7 @@ export const getVnsAddress = async ({
   thorClient: ThorClient
   networkName: NetworkName
   name: string
-}): Promise<Address | null> => {
+}): Promise<AddressString | null> => {
   const vnsContractAddress = VNS_RESOLVER[networkName]
   if (!vnsContractAddress) return null
 
@@ -80,7 +80,7 @@ export const getVnsAddress = async ({
     return null
   }
 
-  const address = result.array[0] as Address
+  const address = result.array[0]
 
   if (isZeroAddress(address)) return null
 

@@ -1,9 +1,10 @@
 import { Link as ChakraLink, Flex } from '@chakra-ui/react'
 import Link from 'next/link'
+import type { AddressString, HexString } from '@/lib/schemas'
 import { truncateAddress } from '@/lib/utils/address'
 import { CopyToClipBoard } from './CopyToClipBoard'
 
-export const AddressLink = ({ address, truncate = false }: { address: string; truncate?: boolean }) => {
+export const AddressLink = ({ address, truncate = false }: { address: AddressString; truncate?: boolean }) => {
   return (
     <CopyableLink to={`/address/${address}`} value={address}>
       {truncate ? truncateAddress(address) : address}
@@ -11,7 +12,7 @@ export const AddressLink = ({ address, truncate = false }: { address: string; tr
   )
 }
 
-export const BlockLink = ({ blockId, children }: { blockId: string; children: React.ReactNode }) => {
+export const BlockLink = ({ blockId, children }: { blockId: HexString; children: React.ReactNode }) => {
   return (
     <CopyableLink to={`/block/${blockId}`} value={blockId}>
       {children}
@@ -19,7 +20,13 @@ export const BlockLink = ({ blockId, children }: { blockId: string; children: Re
   )
 }
 
-export const TransactionLink = ({ transactionId, children }: { transactionId: string; children: React.ReactNode }) => {
+export const TransactionLink = ({
+  transactionId,
+  children,
+}: {
+  transactionId: HexString
+  children: React.ReactNode
+}) => {
   return (
     <CopyableLink to={`/transaction/${transactionId}`} value={transactionId}>
       {children}
@@ -27,7 +34,7 @@ export const TransactionLink = ({ transactionId, children }: { transactionId: st
   )
 }
 
-export const BlockTransactionsLink = ({ blockId, children }: { blockId: string; children: React.ReactNode }) => {
+export const BlockTransactionsLink = ({ blockId, children }: { blockId: HexString; children: React.ReactNode }) => {
   return <BaseLink to={`/block/${blockId}/transactions`}>{children}</BaseLink>
 }
 
@@ -35,7 +42,7 @@ export const TransactionClausesLink = ({
   transactionId,
   children,
 }: {
-  transactionId: string
+  transactionId: HexString
   children: React.ReactNode
 }) => {
   return <BaseLink to={`/transaction/${transactionId}/clauses`}>{children}</BaseLink>
@@ -46,7 +53,7 @@ export const ClauseLink = ({
   clauseIndex,
   children,
 }: {
-  transactionId: string
+  transactionId: HexString
   clauseIndex: number
   children: React.ReactNode
 }) => {

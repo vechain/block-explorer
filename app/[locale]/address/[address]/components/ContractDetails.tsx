@@ -25,8 +25,8 @@ export const ContractDetails = ({ account }: { account: Account }) => {
     <Stack flex={1}>
       <Title>Contract Details</Title>
       <Flex alignItems="center" gap={2}>
-        <Subtitle>{account.address.toString()}</Subtitle>
-        <CopyToClipBoard value={account.address.toString()} />
+        <Subtitle>{account.address}</Subtitle>
+        <CopyToClipBoard value={account.address} />
       </Flex>
 
       <Table.ScrollArea my={12} borderWidth="1px" rounded="md">
