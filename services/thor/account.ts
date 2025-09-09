@@ -27,14 +27,3 @@ export const getAccount = async ({ thorClient, address }: { thorClient: ThorClie
 
   return zodParse(accountData, accountSchema)
 }
-
-export type GetAccountReturnType = z.infer<typeof accountSchema>
-
-const accountSchema = z.object({
-  address: addressStringSchema,
-  balance: hexStringSchema,
-  energy: hexStringSchema,
-  hasCode: z.boolean(),
-  vet: z.bigint(),
-  vtho: z.bigint(),
-})

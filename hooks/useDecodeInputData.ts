@@ -2,7 +2,9 @@
 
 import { ABIFunction, Hex } from '@vechain/sdk-core'
 import type { Abi } from 'viem'
-import { type DecodedInputData, decodedInputDataSchema, type HexString } from '@/lib/schemas'
+import z from 'zod'
+import { type HexString, hexStringSchema } from '@/lib/schemas'
+import * as abi from '@/lib/schemas/abi'
 import { useAbi } from '@/services/b32/hooks'
 
 type InputData = {
@@ -63,3 +65,14 @@ const parseInputData = ({
 
   return { raw: data }
 }
+
+const decodedInputDataSchema = z.object({
+  signature: z.string(),
+  signatureHash: z.string(),
+  args: z.array(z.any()).optional(),
+  name: z.string(),
+  inputs: z.array(abi.parameterSchema),
+})
+
+export type DecodedInputDataArgs = z.infer<typeof decodedInputDataSchema.shape.args>
+export type DecodedInputData = z.infer<typeof decodedInputDataSchema>
