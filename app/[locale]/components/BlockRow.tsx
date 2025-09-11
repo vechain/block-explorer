@@ -1,6 +1,6 @@
 import { Group, Skeleton, Text } from '@chakra-ui/react'
-import type { ExpandedBlockDetail } from '@vechain/sdk-network'
 import { BlockLink } from '@/components/ui/Links'
+import type { ExpandedBlockDetail } from '@/lib/schemas'
 import { formatDateFromTimestamp } from '@/lib/utils/date'
 
 export const BlockRow = ({ block }: { block: ExpandedBlockDetail }) => {

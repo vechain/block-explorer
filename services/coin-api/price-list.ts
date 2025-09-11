@@ -16,7 +16,11 @@ const getPriceList = async () => {
     params: { expanded: 'false' },
   })
 
-  return zodParse(data, priceListSchema, 'Invalid price list response from Coin API')
+  return zodParse({
+    data,
+    schema: priceListSchema,
+    errorMessage: 'Invalid price list response from Coin API',
+  })
 }
 
 const tokensSchema = z.enum([

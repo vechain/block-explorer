@@ -1,9 +1,8 @@
 'use client'
 
 import { useQueries, useQuery } from '@tanstack/react-query'
-import type { Address, Hex, Revision } from '@vechain/sdk-core'
-import type { ExpandedBlockDetail } from '@vechain/sdk-network'
-import type { AddressString } from '@/lib/schemas'
+import type { Revision } from '@vechain/sdk-core'
+import type { AddressString, ExpandedBlockDetail, HexString } from '@/lib/schemas'
 import { accountQueryOptions } from './account'
 import { bestBlockQueryOptions, blockQueryOptions, latestBlocksQueryOptions } from './block'
 import { type Vip180List, vip180QueryOptions } from './contract'
@@ -11,7 +10,7 @@ import { useThorClient } from './thor-client'
 import { transactionQueryOptions, transactionReceiptQueryOptions } from './transaction'
 import { vnsNameQueryOptions } from './vns'
 
-export const useAccount = (address: Address) => {
+export const useAccount = (address: AddressString) => {
   const { thorClient, activeNetwork } = useThorClient()
   return useQuery(accountQueryOptions(thorClient, activeNetwork.name, address))
 }
@@ -49,7 +48,7 @@ export const useLatestBlocks = ({ count }: { count: number }) => {
   })
 }
 
-const isExpandedBlockDetail = (block: ExpandedBlockDetail | null | undefined): block is ExpandedBlockDetail => {
+const isExpandedBlockDetail = (block: unknown): block is ExpandedBlockDetail => {
   return Boolean(block)
 }
 
@@ -69,12 +68,12 @@ export const useVip180List = (addresses: AddressString[]) => {
   })
 }
 
-export const useTransaction = (transactionId: Hex) => {
+export const useTransaction = (transactionId: HexString) => {
   const { thorClient, activeNetwork } = useThorClient()
   return useQuery(transactionQueryOptions(thorClient, activeNetwork.name, transactionId))
 }
 
-export const useTransactionReceipt = (transactionId: Hex) => {
+export const useTransactionReceipt = (transactionId: HexString) => {
   const { thorClient, activeNetwork } = useThorClient()
   return useQuery({
     ...transactionReceiptQueryOptions(thorClient, activeNetwork.name, transactionId),

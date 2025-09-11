@@ -1,6 +1,5 @@
 import { Badge, Table } from '@chakra-ui/react'
-import type { TransactionReceipt } from '@vechain/sdk-network'
-import type { LegacyTransaction as LegacyTransactionType } from '@/services/thor/transaction'
+import type { LegacyTransaction as LegacyTransactionType, TransactionReceipt } from '@/lib/schemas'
 import { useBaseTransactionItems } from '../hooks/useBaseTransactionItems'
 
 export const LegacyTransaction = ({

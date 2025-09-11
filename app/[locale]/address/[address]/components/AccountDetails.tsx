@@ -6,12 +6,12 @@ import { CopyToClipBoard } from '@/components/ui/CopyToClipBoard'
 import { VETBalance, VTHOBalance } from '@/components/ui/TokenBalance'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadge } from '@/components/ui/VnsBadge'
-import type { GetAccountReturnType } from '@/services/thor/account'
+import type { Account } from '@/lib/schemas'
 import { useVnsName } from '@/services/thor/hooks'
 import { AccountTransactionsTab } from './AccountTransactionsTab'
 import { AccountTransfersTab } from './AccountTransfersTab'
 
-export const AccountDetails = ({ account }: { account: GetAccountReturnType }) => {
+export const AccountDetails = ({ account }: { account: Account }) => {
   const { data: vnsName } = useVnsName(account.address)
 
   const items = [
@@ -26,8 +26,8 @@ export const AccountDetails = ({ account }: { account: GetAccountReturnType }) =
     <Stack flex={1}>
       <Title>Account</Title>
       <Flex alignItems="center" gap={2}>
-        <Subtitle>{account.address.toString()}</Subtitle>
-        <CopyToClipBoard value={account.address.toString()} />
+        <Subtitle>{account.address}</Subtitle>
+        <CopyToClipBoard value={account.address} />
       </Flex>
 
       <Table.ScrollArea my={12} borderWidth="1px" rounded="md">

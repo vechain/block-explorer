@@ -6,13 +6,13 @@ import { TxStatus } from '@/components/TxStatus'
 import { BlockLink, TransactionClausesLink, TransactionLink } from '@/components/ui/Links'
 import { Pagination } from '@/components/ui/Pagination'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
-import { addressStringSchema } from '@/lib/schemas'
+import type { AddressString } from '@/lib/schemas'
 import { formatDateFromTimestamp } from '@/lib/utils/date'
 import { useAccountTransactions } from '@/services/veworld-indexer/hooks'
 
 const PAGE_SIZE = 30
 
-export const AccountTransactionsTab = ({ address }: { address: `0x${string}` }) => {
+export const AccountTransactionsTab = ({ address }: { address: AddressString }) => {
   const [page, setPage] = useState(0)
   const { data: transactions, isLoading } = useAccountTransactions({
     params: { origin: address, page, size: PAGE_SIZE },
@@ -31,11 +31,7 @@ export const AccountTransactionsTab = ({ address }: { address: `0x${string}` }) 
     paid: (
       <PaidGasFees
         paid={tx.paid}
-        delegator={
-          tx.gasPayer.toLocaleLowerCase() === address.toLocaleLowerCase()
-            ? null
-            : addressStringSchema.parse(tx.gasPayer)
-        }
+        delegator={tx.gasPayer.toLowerCase() === address.toLowerCase() ? null : tx.gasPayer}
       />
     ),
     clauses: <TransactionClausesLink transactionId={tx.id}>{`${tx.clauses.length} Clauses`}</TransactionClausesLink>,

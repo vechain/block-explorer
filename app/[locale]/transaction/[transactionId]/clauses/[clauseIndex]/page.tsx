@@ -1,8 +1,6 @@
 'use client'
 
 import { Group, Stack, Tabs, Text } from '@chakra-ui/react'
-import type { Hex } from '@vechain/sdk-core'
-import type { TransactionReceipt } from '@vechain/sdk-network'
 import { notFound, useRouter } from 'next/navigation'
 import { use } from 'react'
 import { AiOutlineWechat } from 'react-icons/ai'
@@ -14,18 +12,17 @@ import { Pagination } from '@/components/ui/Pagination'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
 import { VETTransferTable } from '@/components/VETTransferTable'
-import { type AddressString, addressStringSchema } from '@/lib/schemas'
-import { parseHex } from '@/lib/utils/hex'
+import type { AddressString, HexString, Transaction, TransactionReceipt } from '@/lib/schemas'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/hooks'
-import type { TransactionDetail } from '@/services/thor/transaction'
 import { ClauseDetailsTable } from './components/ClauseDetailsTable'
 import { EventList } from './components/EventList'
 
-export default function ClauseDetailsPage({ params }: { params: Promise<{ id: string; index: string }> }) {
-  const { id, index } = use(params)
-
-  const transactionId = parseHex(id)
-  const clauseIndex = parseInt(index ?? '0', 10)
+export default function ClauseDetailsPage({
+  params,
+}: {
+  params: Promise<{ transactionId: HexString; clauseIndex: number }>
+}) {
+  const { transactionId, clauseIndex } = use(params)
 
   if (!transactionId) {
     notFound()
@@ -34,7 +31,7 @@ export default function ClauseDetailsPage({ params }: { params: Promise<{ id: st
   return <ClauseTransactionLoader transactionId={transactionId} clauseIndex={clauseIndex} />
 }
 
-const ClauseTransactionLoader = ({ transactionId, clauseIndex }: { transactionId: Hex; clauseIndex: number }) => {
+const ClauseTransactionLoader = ({ transactionId, clauseIndex }: { transactionId: HexString; clauseIndex: number }) => {
   const { data: transaction, isLoading } = useTransaction(transactionId)
   const { data: receipt, isLoading: isReceiptLoading } = useTransactionReceipt(transactionId)
 
@@ -52,19 +49,17 @@ const ClausePageContent = ({
   receipt,
   clauseIndex,
 }: {
-  tx: TransactionDetail
+  tx: Transaction
   receipt: TransactionReceipt
   clauseIndex: number
 }) => {
-  const txId = tx.id.toString()
+  const router = useRouter()
+
   const clause = tx.clauses[clauseIndex]
   const output = receipt.outputs[clauseIndex] ?? { events: [], transfers: [], contractAddress: null }
 
   const hasEvents = output.events.length > 0
   const hasTransfers = output.transfers.length > 0
-  const hasContractCreation = !!output.contractAddress
-
-  const router = useRouter()
 
   return (
     <Stack gap="4">
@@ -89,7 +84,7 @@ const ClausePageContent = ({
             <TbTransfer />
             VET Transfers
           </Tabs.Trigger>
-          <Tabs.Trigger value="contract-creation" disabled={!hasContractCreation}>
+          <Tabs.Trigger value="contract-creation" disabled={!output.contractAddress}>
             <VscNewFile />
             Contract created
           </Tabs.Trigger>
@@ -97,18 +92,14 @@ const ClausePageContent = ({
         </Tabs.List>
 
         <Tabs.Content value="details">
-          <ClauseDetailsTable clause={clause} txId={txId} clauseIndex={clauseIndex} />
+          <ClauseDetailsTable clause={clause} txId={tx.id} clauseIndex={clauseIndex} />
         </Tabs.Content>
         <Tabs.Content value="events">{hasEvents ? <EventList eventLogs={output.events} /> : <NoEvents />}</Tabs.Content>
         <Tabs.Content value="transfers">
           {hasTransfers ? <VETTransferTable transfers={output.transfers} /> : <NoTransfers />}
         </Tabs.Content>
         <Tabs.Content value="contract-creation">
-          {hasContractCreation ? (
-            <CreatedContract address={addressStringSchema.parse(output.contractAddress)} />
-          ) : (
-            <NoContractCreation />
-          )}
+          {output.contractAddress ? <CreatedContract address={output.contractAddress} /> : <NoContractCreation />}
         </Tabs.Content>
       </Tabs.Root>
 
@@ -117,7 +108,7 @@ const ClausePageContent = ({
           page={clauseIndex}
           hasNext={clauseIndex < tx.clauses.length - 1}
           onPageChange={page => {
-            router.push(`/transaction/${txId}/clauses/${page - 1}`)
+            router.push(`/transaction/${tx.id}/clauses/${page - 1}`)
           }}
         />
       )}

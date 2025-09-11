@@ -1,7 +1,6 @@
 import { Badge, Table } from '@chakra-ui/react'
-import type { TransactionReceipt } from '@vechain/sdk-network'
+import type { DynamicFeeTransaction as DynamicFeeTransactionType, TransactionReceipt } from '@/lib/schemas'
 import { formatHexToGwei } from '@/lib/utils/units'
-import type { DynamicFeeTransaction as DynamicFeeTransactionType } from '@/services/thor/transaction'
 import { useBaseTransactionItems } from '../hooks/useBaseTransactionItems'
 
 export const DynamicFeeTransaction = ({

@@ -1,6 +1,6 @@
 'use client'
 
-import type { ExpandedBlockDetail } from '@vechain/sdk-network'
+import type { ExpandedBlockDetail } from '@/lib/schemas'
 import { useLatestBlocks } from '@/services/thor/hooks'
 
 export const useClausesPerSecond = ({ numBlocks }: { numBlocks: number }) => {

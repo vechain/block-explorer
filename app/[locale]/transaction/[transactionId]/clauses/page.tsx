@@ -1,7 +1,6 @@
 'use client'
 
 import { Stack, Table } from '@chakra-ui/react'
-import type { Hex } from '@vechain/sdk-core'
 import { notFound } from 'next/navigation'
 import { use } from 'react'
 import { Code } from '@/components/ui/Code'
@@ -9,23 +8,21 @@ import { ClauseLink } from '@/components/ui/Links'
 import { VETBalance } from '@/components/ui/TokenBalance'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
-import { addressStringSchema, hexStringSchema } from '@/lib/schemas'
-import { parseHex } from '@/lib/utils/hex'
+import type { HexString } from '@/lib/schemas'
 import { useTransaction } from '@/services/thor/hooks'
 
-export default function TransactionClausesPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
-  const transactionId = parseHex(id)
+export default function TransactionClausesPage({ params }: { params: Promise<{ transactionId: HexString }> }) {
+  const { transactionId } = use(params)
 
   if (!transactionId) {
     notFound()
   }
 
-  return <TransactionClauseList id={transactionId} />
+  return <TransactionClauseList transactionId={transactionId} />
 }
 
-const TransactionClauseList = ({ id }: { id: Hex }) => {
-  const { data: transaction, isLoading } = useTransaction(id)
+const TransactionClauseList = ({ transactionId }: { transactionId: HexString }) => {
+  const { data: transaction, isLoading } = useTransaction(transactionId)
 
   if (isLoading) return <div>Loading...</div>
   if (!transaction) {
@@ -34,8 +31,8 @@ const TransactionClauseList = ({ id }: { id: Hex }) => {
 
   const items = transaction.clauses.map((clause, index) => ({
     index,
-    to: clause.to ? <VnsBadgeOrAddressLink address={addressStringSchema.parse(clause.to)} /> : 'N/A',
-    value: <VETBalance balance={hexStringSchema.parse(clause.value)} />,
+    to: clause.to ? <VnsBadgeOrAddressLink address={clause.to} /> : 'N/A',
+    value: <VETBalance balance={clause.value} />,
     data: <Code>{clause.data}</Code>,
   }))
 

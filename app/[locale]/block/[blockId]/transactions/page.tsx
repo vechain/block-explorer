@@ -9,7 +9,6 @@ import { TxStatus } from '@/components/TxStatus'
 import { TransactionClausesLink, TransactionLink } from '@/components/ui/Links'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
-import { addressStringSchema } from '@/lib/schemas'
 import { parseRevision } from '@/lib/utils/revision'
 import { useBlock } from '@/services/thor/hooks'
 
@@ -36,8 +35,8 @@ const BlockTransactionList = ({ revision }: { revision: Revision }) => {
   const items = block.transactions.map(tx => ({
     key: tx.id,
     id: <TransactionLink transactionId={tx.id}>{tx.id}</TransactionLink>,
-    origin: <VnsBadgeOrAddressLink address={addressStringSchema.parse(tx.origin)} truncateAddress />,
-    paid: <PaidGasFees paid={tx.paid} delegator={tx.delegator ? addressStringSchema.parse(tx.delegator) : null} />,
+    origin: <VnsBadgeOrAddressLink address={tx.origin} truncateAddress />,
+    paid: <PaidGasFees paid={tx.paid} delegator={tx.delegator ? tx.delegator : null} />,
     clauses: <TransactionClausesLink transactionId={tx.id}>{`${tx.clauses.length} Clauses`}</TransactionClausesLink>,
     status: <TxStatus status={tx.reverted ? 'reverted' : 'success'} />,
   }))

@@ -1,8 +1,7 @@
 import { Table } from '@chakra-ui/react'
-import type { Transfer } from '@vechain/sdk-network'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { VETBalance } from '@/components/ui/TokenBalance'
-import { addressStringSchema, hexStringSchema } from '@/lib/schemas'
+import type { Transfer } from '@/lib/schemas'
 import { VnsBadgeOrAddressLink } from './ui/VnsBadge'
 
 export const VETTransferTable = ({ transfers }: { transfers: Transfer[] }) => {
@@ -21,13 +20,13 @@ export const VETTransferTable = ({ transfers }: { transfers: Transfer[] }) => {
             {transfers.map((transfer, i) => (
               <Table.Row key={[i, '-', transfer.recipient].join('')}>
                 <Table.Cell>
-                  <VnsBadgeOrAddressLink address={addressStringSchema.parse(transfer.sender)} />
+                  <VnsBadgeOrAddressLink address={transfer.sender} />
                 </Table.Cell>
                 <Table.Cell>
-                  <VnsBadgeOrAddressLink address={addressStringSchema.parse(transfer.recipient)} />
+                  <VnsBadgeOrAddressLink address={transfer.recipient} />
                 </Table.Cell>
                 <Table.Cell>
-                  <VETBalance balance={hexStringSchema.parse(transfer.amount)} />
+                  <VETBalance balance={transfer.amount} />
                 </Table.Cell>
               </Table.Row>
             ))}

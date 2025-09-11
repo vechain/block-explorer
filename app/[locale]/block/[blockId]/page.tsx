@@ -10,7 +10,6 @@ import { CopyableText, CopyToClipBoard } from '@/components/ui/CopyToClipBoard'
 import { BlockLink, BlockTransactionsLink } from '@/components/ui/Links'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
-import { addressStringSchema } from '@/lib/schemas'
 import { formatDateFromTimestamp } from '@/lib/utils/date'
 import { parseRevision } from '@/lib/utils/revision'
 import { formatHexToGwei } from '@/lib/utils/units'
@@ -60,8 +59,8 @@ const BlockDetails = ({ revision }: { revision: Revision }) => {
       name: 'Base Fee Per Gas',
       value: block.baseFeePerGas ? `${formatHexToGwei(block.baseFeePerGas)} Gwei` : '-',
     },
-    { name: 'Signer', value: <VnsBadgeOrAddressLink address={addressStringSchema.parse(block.signer)} /> },
-    { name: 'Beneficiary', value: <VnsBadgeOrAddressLink address={addressStringSchema.parse(block.beneficiary)} /> },
+    { name: 'Signer', value: <VnsBadgeOrAddressLink address={block.signer} /> },
+    { name: 'Beneficiary', value: <VnsBadgeOrAddressLink address={block.beneficiary} /> },
     { name: 'Transactions Root', value: block.txsRoot },
     { name: 'State Root', value: block.stateRoot },
     { name: 'Receipts Root', value: block.receiptsRoot },

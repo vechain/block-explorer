@@ -1,48 +1,14 @@
-import type { Hex } from '@vechain/sdk-core'
-import type { ThorClient, TransactionDetailNoRaw } from '@vechain/sdk-network'
+import type { ThorClient } from '@vechain/sdk-network'
 import type { NetworkName } from '@/lib/constants/network'
+import { type HexString, transactionReceiptSchema, transactionSchema } from '@/lib/schemas'
+import { zodParse } from '@/lib/utils/zod'
 
-/**
- * TODO: fix this transaction detail typing when the SDK is updated.
- * Currently, there is no disctinction between dynamic fee and legacy transactions.
- * for instance, "type" is not in TransactionDetailNoRaw.
- * The verbosity in type definition is not ideal, but it's the best we can do for now.
- */
-
-export type BaseTransaction = {
-  id: TransactionDetailNoRaw['id']
-  origin: TransactionDetailNoRaw['origin']
-  gasPayer: TransactionDetailNoRaw['gasPayer']
-  size: TransactionDetailNoRaw['size']
-  meta: TransactionDetailNoRaw['meta']
-  chainTag: TransactionDetailNoRaw['chainTag']
-  blockRef: TransactionDetailNoRaw['blockRef']
-  expiration: TransactionDetailNoRaw['expiration']
-  clauses: TransactionDetailNoRaw['clauses']
-  gas: TransactionDetailNoRaw['gas']
-  dependsOn: TransactionDetailNoRaw['dependsOn']
-  nonce: TransactionDetailNoRaw['nonce']
-  reserved: TransactionDetailNoRaw['reserved']
-}
-
-type DynamicFeeTransactionFields = {
-  type: 81
-  maxFeePerGas: Required<TransactionDetailNoRaw>['maxFeePerGas']
-  maxPriorityFeePerGas: Required<TransactionDetailNoRaw>['maxPriorityFeePerGas']
-}
-
-type LegacyTransactionFields = {
-  type: 0
-  gasPriceCoef: Required<TransactionDetailNoRaw>['gasPriceCoef']
-}
-
-export type DynamicFeeTransaction = BaseTransaction & DynamicFeeTransactionFields
-export type LegacyTransaction = BaseTransaction & LegacyTransactionFields
-
-export type TransactionDetail = DynamicFeeTransaction | LegacyTransaction
-
-export const transactionQueryOptions = (thorClient: ThorClient, networkName: NetworkName, transactionId: Hex) => ({
-  queryKey: [getTransaction.name, networkName, transactionId.toString()],
+export const transactionQueryOptions = (
+  thorClient: ThorClient,
+  networkName: NetworkName,
+  transactionId: HexString,
+) => ({
+  queryKey: [getTransaction.name, networkName, transactionId],
   queryFn: () => getTransaction({ thorClient, transactionId }),
   staleTime: Infinity,
 })
@@ -50,24 +16,44 @@ export const transactionQueryOptions = (thorClient: ThorClient, networkName: Net
 export const transactionReceiptQueryOptions = (
   thorClient: ThorClient,
   networkName: NetworkName,
-  transactionId: Hex,
+  transactionId: HexString,
 ) => ({
-  queryKey: [getTransactionReceipt.name, networkName, transactionId.toString()],
+  queryKey: [getTransactionReceipt.name, networkName, transactionId],
   queryFn: () => getTransactionReceipt({ thorClient, transactionId }),
 })
 
-export const getTransaction = async ({ thorClient, transactionId }: { thorClient: ThorClient; transactionId: Hex }) => {
-  const tx = await thorClient.transactions.getTransaction(transactionId.toString())
+export const getTransaction = async ({
+  thorClient,
+  transactionId,
+}: {
+  thorClient: ThorClient
+  transactionId: HexString
+}) => {
+  const tx = await thorClient.transactions.getTransaction(transactionId)
 
   if (!tx) return null
 
-  return tx as TransactionDetail
+  return zodParse({
+    data: tx,
+    schema: transactionSchema,
+    errorMessage: 'Failed to parse Thor transaction',
+  })
 }
 
-const getTransactionReceipt = async ({ thorClient, transactionId }: { thorClient: ThorClient; transactionId: Hex }) => {
-  const receipt = await thorClient.transactions.getTransactionReceipt(transactionId.toString())
+const getTransactionReceipt = async ({
+  thorClient,
+  transactionId,
+}: {
+  thorClient: ThorClient
+  transactionId: HexString
+}) => {
+  const receipt = await thorClient.transactions.getTransactionReceipt(transactionId)
 
   if (!receipt) return null
 
-  return receipt
+  return zodParse({
+    data: receipt,
+    schema: transactionReceiptSchema,
+    errorMessage: 'Failed to parse Thor transaction receipt',
+  })
 }

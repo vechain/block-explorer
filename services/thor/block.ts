@@ -1,6 +1,8 @@
 import { Revision } from '@vechain/sdk-core'
-import type { ExpandedBlockDetail, ThorClient } from '@vechain/sdk-network'
+import type { ThorClient } from '@vechain/sdk-network'
 import type { NetworkName } from '@/lib/constants/network'
+import { expandedBlockDetailSchema } from '@/lib/schemas'
+import { zodParse } from '@/lib/utils/zod'
 
 const BLOCK_TIME = 10 * 1000 // 10 seconds
 
@@ -23,14 +25,14 @@ export const latestBlocksQueryOptions = (thorClient: ThorClient, networkName: Ne
   staleTime: Infinity,
 })
 
-export const getBlock = async ({
-  thorClient,
-  revision,
-}: {
-  thorClient: ThorClient
-  revision: Revision
-}): Promise<ExpandedBlockDetail | null> => {
+export const getBlock = async ({ thorClient, revision }: { thorClient: ThorClient; revision: Revision }) => {
   const block = await thorClient.blocks.getBlockExpanded(revision.toString())
 
-  return block
+  if (!block) return null
+
+  return zodParse({
+    data: block,
+    schema: expandedBlockDetailSchema,
+    errorMessage: 'Failed to parse block',
+  })
 }
