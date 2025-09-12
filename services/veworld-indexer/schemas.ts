@@ -51,6 +51,13 @@ const indexerGetTransactionsParamsSchema = z
   })
   .extend(paginationParamsSchema.shape)
 
+const indexerGetContractTransactionsParamsSchema = z
+  .object({
+    contractAddress: addressStringSchema,
+    expanded: z.boolean().optional(),
+  })
+  .extend(paginationParamsSchema.shape)
+
 const indexerGetTransfersParamsSchema = z
   .object({
     address: addressStringSchema,
@@ -104,6 +111,36 @@ export const indexerTransactionSchema = baseTransactionSchema
     reverted: z.boolean(),
   })
 
+export const indexerContractTransactionSchema = baseTransactionSchema
+  .omit({ meta: true, clauses: true })
+  .extend(indexerTransactionMetaSchema.shape)
+  .extend(transactionReceiptSchema.omit({ meta: true, outputs: true }).shape)
+  .extend({
+    gasPriceCoef: legacyTransactionFieldsSchema.shape.gasPriceCoef.nullable(),
+    maxFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxFeePerGas.nullable(),
+    maxPriorityFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxPriorityFeePerGas.nullable(),
+    type: transactionTypeSchema,
+    clauses: z.array(withEmptyObjects(clauseSchema)),
+    outputs: z.array(withEmptyObjects(transactionOutputSchema)),
+    reverted: z.boolean(),
+  })
+
+// "clauses": [
+//   {
+//     "to": "string",
+//     "value": "string",
+//     "data": "string"
+//   }
+// ],
+
+//     "transfers": [
+//       {
+//         "sender": "string",
+//         "recipient": "string",
+//         "amount": "string"
+//       }
+//     ]
+
 const eventTypeSchema = z.enum({
   FUNGIBLE_TOKEN: 'FUNGIBLE_TOKEN',
   NFT: 'NFT',
@@ -123,7 +160,10 @@ export const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTra
 export const indexerFungibleTokenContractSchema = addressStringSchema
 
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
+export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
+export type IndexerContractTransaction = z.infer<typeof indexerContractTransactionSchema>
 export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>
 export type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParamsSchema>
 export type IndexerGetFungibleTokenContractsParams = z.infer<typeof indexerGetFungibleTokenContractsParamsSchema>
 export type IndexerFungibleTokenContract = z.infer<typeof indexerFungibleTokenContractSchema>
+export type IndexerGetContractTransactionsParams = z.infer<typeof indexerGetContractTransactionsParamsSchema>
