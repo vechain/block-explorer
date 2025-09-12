@@ -52,19 +52,27 @@ const isExpandedBlockDetail = (block: unknown): block is ExpandedBlockDetail => 
   return Boolean(block)
 }
 
-export const useVip180List = (addresses: AddressString[]) => {
+export const useVip180List = ({
+  addresses,
+  accountAddress,
+}: {
+  addresses: AddressString[]
+  accountAddress: AddressString
+}) => {
   const { activeNetwork, thorClient } = useThorClient()
 
   return useQueries({
-    queries: addresses.map(address => vip180QueryOptions(thorClient, activeNetwork.name, address)),
-    combine: queries =>
-      queries.reduce((acc, query) => {
+    queries: addresses.map(address => vip180QueryOptions(thorClient, activeNetwork.name, address, accountAddress)),
+    combine: queries => ({
+      data: queries.reduce((acc, query) => {
         if (query.data) {
           const { address, vip180 } = query.data
           acc[address] = vip180
         }
         return acc
       }, {} as Vip180List),
+      isPending: queries.some(query => query.isPending),
+    }),
   })
 }
 

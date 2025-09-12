@@ -17,7 +17,7 @@ import type { IndexerTransfer } from '@/services/veworld-indexer/schemas'
 
 const PAGE_SIZE = 30
 
-export const AccountTransfersTab = ({ address }: { address: `0x${string}` }) => {
+export const AccountTransfersTab = ({ address }: { address: AddressString }) => {
   const [page, setPage] = useState(0)
   const { data: transfers, isLoading } = useAccountTransfers({
     params: { address, page, size: PAGE_SIZE },
@@ -26,9 +26,12 @@ export const AccountTransfersTab = ({ address }: { address: `0x${string}` }) => 
   const allTokenAddresses = transfers?.data.map(transfer => transfer.tokenAddress).filter(Boolean) ?? []
   const uniqueTokenAddresses = Array.from(new Set(allTokenAddresses)) as AddressString[]
 
-  const allTokens = useVip180List(uniqueTokenAddresses)
+  const { data: allTokens, isPending: isPendingTokens } = useVip180List({
+    addresses: uniqueTokenAddresses,
+    accountAddress: address,
+  })
 
-  if (isLoading) return <div>Loading...</div>
+  if (isLoading || isPendingTokens) return <div>Loading...</div>
   if (!transfers || transfers.data.length === 0) return <NoTransfers />
 
   return (
