@@ -19,11 +19,11 @@ export const zodParse = <T extends z.ZodSchema>({
     console.error('Data:', data)
     console.groupEnd()
 
-    if (fallbackData) {
+    if (typeof fallbackData !== 'undefined') {
       return fallbackData as z.infer<T>
     }
 
-    throw new Error(errorMessage || 'Zod Parsing failed')
+    throw new Error(errorMessage || 'Unknown error')
   }
 
   return result.data as z.infer<T>
