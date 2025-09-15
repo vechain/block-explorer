@@ -1,7 +1,7 @@
 import { ABIFunction } from '@vechain/sdk-core'
-import type { ThorClient } from '@vechain/sdk-network'
+import { ThorClient } from '@vechain/sdk-network'
 import { z } from 'zod'
-import { NetworkName } from '@/lib/constants/network'
+import { NETWORKS, NetworkName } from '@/lib/constants/network'
 import { type AddressString, addressStringSchema } from '@/lib/schemas'
 import { isZeroAddress } from '@/lib/utils/address'
 import { normalizeName } from '@/lib/utils/vns'
@@ -18,25 +18,24 @@ const VNS_FUNCTION_ABI_GET_ADDRESSES = new ABIFunction(
 
 const VNS_FUNCTION_ABI_GET_NAMES = new ABIFunction('function getNames(address[] addresses) returns (string[] names)')
 
-export const vnsNameQueryOptions = (thorClient: ThorClient, networkName: NetworkName, address: AddressString) => ({
+export const vnsNameQueryOptions = (networkName: NetworkName, address: AddressString) => ({
   queryKey: [getVnsName.name, networkName, address],
-  queryFn: () => getVnsName({ thorClient, networkName, address }),
+  queryFn: () => getVnsName({ networkName, address }),
   staleTime: Infinity,
   enabled: !!address,
 })
 
 const getVnsName = async ({
-  thorClient,
   networkName,
   address,
 }: {
-  thorClient: ThorClient
   networkName: NetworkName
   address: AddressString
 }): Promise<string | null> => {
   const vnsContractAddress = VNS_RESOLVER[networkName]
   if (!vnsContractAddress) return null
 
+  const thorClient = ThorClient.at(NETWORKS[networkName].url)
   const { result: vnsResult, success } = await thorClient.contracts.executeCall(
     vnsContractAddress,
     VNS_FUNCTION_ABI_GET_NAMES,
@@ -63,17 +62,16 @@ const vnsResultSchema = z.object({
 })
 
 export const getVnsAddress = async ({
-  thorClient,
   networkName,
   name,
 }: {
-  thorClient: ThorClient
   networkName: NetworkName
   name: string
 }): Promise<AddressString | null> => {
   const vnsContractAddress = VNS_RESOLVER[networkName]
   if (!vnsContractAddress) return null
 
+  const thorClient = ThorClient.at(NETWORKS[networkName].url)
   const { result, success } = await thorClient.contracts.executeCall(
     vnsContractAddress,
     VNS_FUNCTION_ABI_GET_ADDRESSES,
