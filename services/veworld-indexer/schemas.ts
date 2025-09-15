@@ -125,22 +125,6 @@ export const indexerContractTransactionSchema = baseTransactionSchema
     reverted: z.boolean(),
   })
 
-// "clauses": [
-//   {
-//     "to": "string",
-//     "value": "string",
-//     "data": "string"
-//   }
-// ],
-
-//     "transfers": [
-//       {
-//         "sender": "string",
-//         "recipient": "string",
-//         "amount": "string"
-//       }
-//     ]
-
 const eventTypeSchema = z.enum({
   FUNGIBLE_TOKEN: 'FUNGIBLE_TOKEN',
   NFT: 'NFT',
