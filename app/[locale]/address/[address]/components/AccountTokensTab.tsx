@@ -13,18 +13,18 @@ import { useAccountFungibleTokenContracts } from '@/services/veworld-indexer/hoo
 const PAGE_SIZE = 30
 
 export const AccountTokensTab = ({ address }: { address: AddressString }) => {
-  const { data: tokenAdresses, isLoading: isLoadingTokenAdresses } = useAccountFungibleTokenContracts({
+  const { data: tokenAddresses, isLoading: isLoadingTokenAddresses } = useAccountFungibleTokenContracts({
     params: { address, size: PAGE_SIZE },
   })
 
   const { data: tokenContracts, isPending: isPendingTokenContracts } = useVip180List({
-    addresses: tokenAdresses?.data ?? [],
+    addresses: tokenAddresses?.data ?? [],
     accountAddress: address,
   })
 
-  if (isLoadingTokenAdresses || isPendingTokenContracts) return <div>Loading...</div>
+  if (isLoadingTokenAddresses || isPendingTokenContracts) return <div>Loading...</div>
 
-  if (!tokenAdresses || tokenAdresses.data.length === 0 || !tokenContracts) return <NoTokens />
+  if (!tokenAddresses || tokenAddresses.data.length === 0 || !tokenContracts) return <NoTokens />
 
   const tokens = Object.values(tokenContracts).filter(t => Boolean(t) && t?.balance !== BigInt(0)) as Vip180[]
 
