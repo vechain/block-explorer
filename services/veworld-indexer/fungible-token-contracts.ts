@@ -5,14 +5,13 @@ import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 import {
   type IndexerGetFungibleTokenContractsParams,
-  type IndexerGetTransfersParams,
   indexerFungibleTokenContractSchema,
   indexerResponseSchema,
 } from './schemas'
 
 export const accountFungibleTokenContractsQueryOptions = (
   networkName: NetworkName,
-  params: IndexerGetTransfersParams,
+  params: IndexerGetFungibleTokenContractsParams,
 ) => ({
   queryKey: [getFungibleTokenContracts.name, networkName, params],
   queryFn: () => getFungibleTokenContracts({ networkName, params }),
