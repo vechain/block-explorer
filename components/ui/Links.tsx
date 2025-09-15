@@ -1,6 +1,6 @@
 import { Link as ChakraLink, Flex } from '@chakra-ui/react'
 import Link from 'next/link'
-import type { AddressString, HexString } from '@/lib/schemas'
+import type { AddressString, BlockId, TransactionId } from '@/lib/schemas'
 import { truncateAddress } from '@/lib/utils/address'
 import { CopyToClipBoard } from './CopyToClipBoard'
 
@@ -12,7 +12,7 @@ export const AddressLink = ({ address, truncate = false }: { address: AddressStr
   )
 }
 
-export const BlockLink = ({ blockId, children }: { blockId: HexString; children: React.ReactNode }) => {
+export const BlockLink = ({ blockId, children }: { blockId: BlockId; children: React.ReactNode }) => {
   return (
     <CopyableLink to={`/block/${blockId}`} value={blockId}>
       {children}
@@ -24,7 +24,7 @@ export const TransactionLink = ({
   transactionId,
   children,
 }: {
-  transactionId: HexString
+  transactionId: TransactionId
   children: React.ReactNode
 }) => {
   return (
@@ -34,7 +34,7 @@ export const TransactionLink = ({
   )
 }
 
-export const BlockTransactionsLink = ({ blockId, children }: { blockId: HexString; children: React.ReactNode }) => {
+export const BlockTransactionsLink = ({ blockId, children }: { blockId: BlockId; children: React.ReactNode }) => {
   return <BaseLink to={`/block/${blockId}/transactions`}>{children}</BaseLink>
 }
 
@@ -42,7 +42,7 @@ export const TransactionClausesLink = ({
   transactionId,
   children,
 }: {
-  transactionId: HexString
+  transactionId: TransactionId
   children: React.ReactNode
 }) => {
   return <BaseLink to={`/transaction/${transactionId}/clauses`}>{children}</BaseLink>
@@ -53,7 +53,7 @@ export const ClauseLink = ({
   clauseIndex,
   children,
 }: {
-  transactionId: HexString
+  transactionId: TransactionId
   clauseIndex: number
   children: React.ReactNode
 }) => {

@@ -1,7 +1,6 @@
 'use client'
 
 import { Stack, Table } from '@chakra-ui/react'
-import type { Revision } from '@vechain/sdk-core'
 import { notFound } from 'next/navigation'
 import { use } from 'react'
 import { PaidGasFees } from '@/components/PaidGasFees'
@@ -9,22 +8,21 @@ import { TxStatus } from '@/components/TxStatus'
 import { TransactionClausesLink, TransactionLink } from '@/components/ui/Links'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
-import { parseRevision } from '@/lib/utils/revision'
+import { type BlockId, blockIdSchema } from '@/lib/schemas'
 import { useBlock } from '@/services/thor/hooks'
 
-export default function BlockTransactionsPage({ params }: { params: Promise<{ blockId: string }> }) {
+export default function BlockTransactionsPage({ params }: { params: Promise<{ blockId: BlockId }> }) {
   const { blockId } = use(params)
-  const revision = parseRevision(blockId)
 
-  if (!revision) {
+  if (!blockId || !blockIdSchema.safeParse(blockId).success) {
     notFound()
   }
 
-  return <BlockTransactionList revision={revision} />
+  return <BlockTransactionList blockId={blockId} />
 }
 
-const BlockTransactionList = ({ revision }: { revision: Revision }) => {
-  const { data: block, isLoading } = useBlock(revision)
+const BlockTransactionList = ({ blockId }: { blockId: BlockId }) => {
+  const { data: block, isLoading } = useBlock(blockId)
 
   if (isLoading) return <div>Loading...</div>
 

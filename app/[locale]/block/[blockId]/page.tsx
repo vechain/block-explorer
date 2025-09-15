@@ -1,7 +1,6 @@
 'use client'
 
 import { Badge, Flex, Stack, Table } from '@chakra-ui/react'
-import type { Revision } from '@vechain/sdk-core'
 import { notFound } from 'next/navigation'
 import { use } from 'react'
 import { GasUsed } from '@/components/GasUsed'
@@ -10,24 +9,23 @@ import { CopyableText, CopyToClipBoard } from '@/components/ui/CopyToClipBoard'
 import { BlockLink, BlockTransactionsLink } from '@/components/ui/Links'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
+import { type BlockId, blockIdSchema } from '@/lib/schemas'
 import { formatDateFromTimestamp } from '@/lib/utils/date'
-import { parseRevision } from '@/lib/utils/revision'
 import { formatHexToGwei } from '@/lib/utils/units'
 import { useBlock } from '@/services/thor/hooks'
 
-export default function BlockPage({ params }: { params: Promise<{ blockId: string }> }) {
+export default function BlockPage({ params }: { params: Promise<{ blockId: BlockId }> }) {
   const { blockId } = use(params)
-  const revision = parseRevision(blockId)
 
-  if (!revision) {
+  if (!blockId || !blockIdSchema.safeParse(blockId).success) {
     notFound()
   }
 
-  return <BlockDetails revision={revision} />
+  return <BlockDetails blockId={blockId} />
 }
 
-const BlockDetails = ({ revision }: { revision: Revision }) => {
-  const { data: block, isLoading } = useBlock(revision)
+const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
+  const { data: block, isLoading } = useBlock(blockId)
 
   if (isLoading) return <div>Loading...</div>
 
@@ -37,7 +35,7 @@ const BlockDetails = ({ revision }: { revision: Revision }) => {
 
   const items = [
     { name: 'Number', value: `# ${block.number.toLocaleString()}` },
-    { name: 'ID', value: <CopyableText value={block.id.toString()} /> },
+    { name: 'ID', value: <CopyableText value={block.id} /> },
     { name: 'Parent ID', value: <BlockLink blockId={block.parentID}>{block.parentID}</BlockLink> },
     { name: 'Timestamp', value: formatDateFromTimestamp(block.timestamp) },
     { name: 'Size', value: <Size size={block.size} /> },
