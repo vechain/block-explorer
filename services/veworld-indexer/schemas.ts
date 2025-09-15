@@ -149,5 +149,4 @@ export type IndexerContractTransaction = z.infer<typeof indexerContractTransacti
 export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>
 export type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParamsSchema>
 export type IndexerGetFungibleTokenContractsParams = z.infer<typeof indexerGetFungibleTokenContractsParamsSchema>
-export type IndexerFungibleTokenContract = z.infer<typeof indexerFungibleTokenContractSchema>
 export type IndexerGetContractTransactionsParams = z.infer<typeof indexerGetContractTransactionsParamsSchema>
