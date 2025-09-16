@@ -17,7 +17,7 @@ export const useBlock = (revision: BlockRevision) => {
   return useQuery(blockQueryOptions(activeNetwork.name, revision))
 }
 
-export const useBestBlock = () => {
+const useBestBlock = () => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(bestBlockQueryOptions(activeNetwork.name))
 }
