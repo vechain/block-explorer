@@ -1,13 +1,13 @@
 import { Flex, Stack, Table, Tabs } from '@chakra-ui/react'
 import { LuArrowLeftRight, LuCoins } from 'react-icons/lu'
 import { TbTransfer } from 'react-icons/tb'
-import { NoTokens } from '@/components/NoResults'
 import { CopyToClipBoard } from '@/components/ui/CopyToClipBoard'
 import { VETBalance, VTHOBalance } from '@/components/ui/TokenBalance'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadge } from '@/components/ui/VnsBadge'
 import type { Account } from '@/lib/schemas'
 import { useVnsName } from '@/services/thor/hooks'
+import { AccountTokensTab } from './AccountTokensTab'
 import { AccountTransactionsTab } from './AccountTransactionsTab'
 import { AccountTransfersTab } from './AccountTransfersTab'
 
@@ -15,12 +15,13 @@ export const AccountDetails = ({ account }: { account: Account }) => {
   const { data: vnsName } = useVnsName(account.address)
 
   const items = [
-    { name: 'VNS', value: <VnsBadge size="md" address={account.address} vnsName={vnsName} /> },
+    {
+      name: 'VNS',
+      value: <VnsBadge size="md" address={account.address} vnsName={vnsName} />,
+    },
     { name: 'Balance', value: <VETBalance balance={account.vet} /> },
     { name: 'VTHO / Energy', value: <VTHOBalance balance={account.vtho} /> },
   ]
-
-  const tokens: unknown[] = []
 
   return (
     <Stack flex={1}>
@@ -53,7 +54,7 @@ export const AccountDetails = ({ account }: { account: Account }) => {
             <TbTransfer />
             Transfers
           </Tabs.Trigger>
-          <Tabs.Trigger disabled value="tokens">
+          <Tabs.Trigger value="tokens">
             <LuCoins />
             Tokens
           </Tabs.Trigger>
@@ -66,7 +67,9 @@ export const AccountDetails = ({ account }: { account: Account }) => {
         <Tabs.Content value="transfers">
           <AccountTransfersTab address={account.address} />
         </Tabs.Content>
-        <Tabs.Content value="tokens">{tokens ? 'Token list coming soon ...' : <NoTokens />}</Tabs.Content>
+        <Tabs.Content value="tokens">
+          <AccountTokensTab address={account.address} />
+        </Tabs.Content>
       </Tabs.Root>
     </Stack>
   )

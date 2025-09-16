@@ -24,12 +24,6 @@ const paginationSchema = z.object({
   hasNext: z.boolean(),
 })
 
-const paginationParamsSchema = z.object({
-  page: z.number().optional(),
-  size: z.number().optional(),
-  direction: z.enum(['ASC', 'DESC']).optional(),
-})
-
 export const indexerResponseSchema = <T extends z.ZodSchema>(schema: T) =>
   z.object({
     data: z.array(schema),
@@ -37,7 +31,19 @@ export const indexerResponseSchema = <T extends z.ZodSchema>(schema: T) =>
   })
 
 /***************************** Indexer API params schemas *****************************/
-const transactionsParamsSchema = z
+
+const sortDirectionEnum = z.enum({
+  ASC: 'ASC',
+  DESC: 'DESC',
+})
+
+const paginationParamsSchema = z.object({
+  page: z.number().optional(),
+  size: z.number().optional(),
+  direction: sortDirectionEnum.optional(),
+})
+
+const indexerGetTransactionsParamsSchema = z
   .object({
     origin: addressStringSchema,
     includeDelegated: z.boolean().optional(),
@@ -45,18 +51,19 @@ const transactionsParamsSchema = z
   })
   .extend(paginationParamsSchema.shape)
 
-const transfersParamsSchema = z
+const indexerGetTransfersParamsSchema = z
   .object({
     address: addressStringSchema,
     tokenAddress: addressStringSchema.optional(),
   })
   .extend(paginationParamsSchema.shape)
 
-const eventTypeSchema = z.enum({
-  FUNGIBLE_TOKEN: 'FUNGIBLE_TOKEN',
-  NFT: 'NFT',
-  VET: 'VET',
-})
+const indexerGetFungibleTokenContractsParamsSchema = z
+  .object({
+    address: addressStringSchema,
+    officialTokensOnly: z.boolean().optional(),
+  })
+  .extend(paginationParamsSchema.shape)
 
 /***************************** Indexer API resources schemas *****************************/
 const withEmptyObjects = (schema: z.ZodSchema) => z.union([schema, z.object({})])
@@ -85,21 +92,23 @@ const indexerTransactionMetaSchema = transactionMetaSchema.pick({ blockNumber: t
 
 export const indexerTransactionSchema = baseTransactionSchema
   .omit({ meta: true, clauses: true })
-  .extend({
-    maxFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxFeePerGas.nullable(),
-    maxPriorityFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxPriorityFeePerGas.nullable(),
-  })
-  .extend({
-    gasPriceCoef: legacyTransactionFieldsSchema.shape.gasPriceCoef.nullable(),
-  })
   .extend(indexerTransactionMetaSchema.shape)
   .extend(transactionReceiptSchema.omit({ meta: true, outputs: true }).shape)
   .extend({
+    gasPriceCoef: legacyTransactionFieldsSchema.shape.gasPriceCoef.nullable(),
+    maxFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxFeePerGas.nullable(),
+    maxPriorityFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxPriorityFeePerGas.nullable(),
     type: transactionTypeSchema,
     clauses: z.array(withEmptyObjects(clauseSchema)),
     outputs: z.array(withEmptyObjects(transactionOutputSchema)),
     reverted: z.boolean(),
   })
+
+const eventTypeSchema = z.enum({
+  FUNGIBLE_TOKEN: 'FUNGIBLE_TOKEN',
+  NFT: 'NFT',
+  VET: 'VET',
+})
 
 export const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTransactionMetaSchema.shape).extend({
   id: z.string(),
@@ -111,6 +120,10 @@ export const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTra
   eventType: eventTypeSchema,
 })
 
+export const indexerFungibleTokenContractSchema = addressStringSchema
+
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
-export type IndexerGetTransactionsParams = z.infer<typeof transactionsParamsSchema>
-export type IndexerGetTransfersParams = z.infer<typeof transfersParamsSchema>
+export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>
+export type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParamsSchema>
+export type IndexerGetFungibleTokenContractsParams = z.infer<typeof indexerGetFungibleTokenContractsParamsSchema>
+export type IndexerFungibleTokenContract = z.infer<typeof indexerFungibleTokenContractSchema>
