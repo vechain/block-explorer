@@ -7,13 +7,14 @@ import { Group } from '@visx/group'
 import { scaleBand, scaleLinear } from '@visx/scale'
 import { Bar } from '@visx/shape'
 import { defaultStyles, useTooltip, useTooltipInPortal } from '@visx/tooltip'
+import { useRouter } from 'next/navigation'
 import { datetimeFormat, timeFormat } from '@/lib/utils/date'
 import { useLatestBlocks } from '@/services/thor/hooks'
 
 const topMargin = 32
 const bottomMargin = 32
 const rightMargin = 16
-const leftMargin = 32
+const leftMargin = 40
 
 const width = 1000
 const height = 400
@@ -46,6 +47,7 @@ const getTimestamp = (d: Datum) => d.timestamp
 
 export const BlockUsageChart = () => {
   const data = useBlockUsageChartData()
+  const router = useRouter()
 
   const { tooltipOpen, tooltipLeft, tooltipTop, tooltipData, hideTooltip, showTooltip } = useTooltip<Datum>()
 
@@ -117,7 +119,8 @@ export const BlockUsageChart = () => {
                   fill="url(#greenToRed)"
                   onMouseMove={handleMouseMove(d)}
                   onMouseLeave={handleMouseLeave}
-                  //* add onClick to visit block page ?
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => router.push(`/block/${d.id}`)}
                 />
               )
             })}
