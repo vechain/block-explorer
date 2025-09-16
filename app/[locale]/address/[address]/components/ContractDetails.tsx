@@ -9,8 +9,8 @@ import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadge } from '@/components/ui/VnsBadge'
 import type { Account } from '@/lib/schemas'
 import { useVnsName } from '@/services/thor/hooks'
-import { AccountTransactionsTab } from './AccountTransactionsTab'
 import { AccountTransfersTab } from './AccountTransfersTab'
+import { ContractTransactionsTab } from './ContractTransactionsTab'
 
 export const ContractDetails = ({ account }: { account: Account }) => {
   const { data: vnsName } = useVnsName(account.address)
@@ -56,7 +56,7 @@ export const ContractDetails = ({ account }: { account: Account }) => {
         </Tabs.List>
 
         <Tabs.Content value="transactions">
-          <AccountTransactionsTab address={account.address} />
+          <ContractTransactionsTab address={account.address} />
         </Tabs.Content>
         <Tabs.Content value="transfers">
           <AccountTransfersTab address={account.address} />

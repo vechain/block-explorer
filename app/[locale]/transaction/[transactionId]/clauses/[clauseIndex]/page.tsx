@@ -24,11 +24,13 @@ export default function ClauseDetailsPage({
 }) {
   const { transactionId, clauseIndex } = use(params)
 
-  if (!transactionId) {
+  const clauseIndexNumber = Number(clauseIndex)
+
+  if (!transactionId || Number.isNaN(clauseIndexNumber)) {
     notFound()
   }
 
-  return <ClauseTransactionLoader transactionId={transactionId} clauseIndex={clauseIndex} />
+  return <ClauseTransactionLoader transactionId={transactionId} clauseIndex={clauseIndexNumber} />
 }
 
 const ClauseTransactionLoader = ({ transactionId, clauseIndex }: { transactionId: HexString; clauseIndex: number }) => {
@@ -56,7 +58,11 @@ const ClausePageContent = ({
   const router = useRouter()
 
   const clause = tx.clauses[clauseIndex]
-  const output = receipt.outputs[clauseIndex] ?? { events: [], transfers: [], contractAddress: null }
+  const output = receipt.outputs[clauseIndex] ?? {
+    events: [],
+    transfers: [],
+    contractAddress: null,
+  }
 
   const hasEvents = output.events.length > 0
   const hasTransfers = output.transfers.length > 0
@@ -108,7 +114,7 @@ const ClausePageContent = ({
           page={clauseIndex}
           hasNext={clauseIndex < tx.clauses.length - 1}
           onPageChange={page => {
-            router.push(`/transaction/${tx.id}/clauses/${page - 1}`)
+            router.push(`/transaction/${tx.id}/clauses/${page}`)
           }}
         />
       )}
