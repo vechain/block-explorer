@@ -20,6 +20,7 @@ export const Navbar = async () => {
               VeChain
             </Text>
           </Group>
+
           <Text fontSize="sm" textAlign="right" textTransform="uppercase" userSelect="none">
             {t('explorer')}
           </Text>
