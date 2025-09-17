@@ -2,7 +2,7 @@ import { Table } from '@chakra-ui/react'
 import { TransactionLink } from '@/components/ui/Links'
 import { VETBalance } from '@/components/ui/TokenBalance'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
-import type { Clause, HexString } from '@/lib/schemas'
+import type { Clause, TransactionId } from '@/lib/schemas'
 import { InputData } from './InputData'
 
 export const ClauseDetailsTable = ({
@@ -11,7 +11,7 @@ export const ClauseDetailsTable = ({
   clauseIndex,
 }: {
   clause: Clause
-  txId: HexString
+  txId: TransactionId
   clauseIndex: number
 }) => {
   const items = [

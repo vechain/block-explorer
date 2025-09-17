@@ -8,23 +8,24 @@ import { ClauseLink } from '@/components/ui/Links'
 import { VETBalance } from '@/components/ui/TokenBalance'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
-import type { HexString } from '@/lib/schemas'
+import { type TransactionId, transactionIdSchema } from '@/lib/schemas'
 import { useTransaction } from '@/services/thor/hooks'
 
-export default function TransactionClausesPage({ params }: { params: Promise<{ transactionId: HexString }> }) {
+export default function TransactionClausesPage({ params }: { params: Promise<{ transactionId: TransactionId }> }) {
   const { transactionId } = use(params)
 
-  if (!transactionId) {
+  if (!transactionId || !transactionIdSchema.safeParse(transactionId).success) {
     notFound()
   }
 
   return <TransactionClauseList transactionId={transactionId} />
 }
 
-const TransactionClauseList = ({ transactionId }: { transactionId: HexString }) => {
+const TransactionClauseList = ({ transactionId }: { transactionId: TransactionId }) => {
   const { data: transaction, isLoading } = useTransaction(transactionId)
 
   if (isLoading) return <div>Loading...</div>
+
   if (!transaction) {
     notFound()
   }
@@ -39,7 +40,7 @@ const TransactionClauseList = ({ transactionId }: { transactionId: HexString }) 
   return (
     <Stack>
       <Title>Clauses</Title>
-      <Subtitle>Transaction {transaction.id.toString()}</Subtitle>
+      <Subtitle>Transaction {transaction.id}</Subtitle>
 
       <Table.ScrollArea my={12} borderWidth="1px" rounded="md">
         <Table.Root size="md">

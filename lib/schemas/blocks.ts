@@ -1,5 +1,5 @@
 import z from 'zod'
-import { addressStringSchema, hexStringSchema } from './common'
+import { addressStringSchema, blockIdSchema, blockNumberSchema, hexStringSchema } from './common'
 import {
   baseTransactionSchema,
   dynamicFeeTransactionFieldsSchema,
@@ -19,9 +19,9 @@ const transactionsDetailSchema = baseTransactionSchema
   })
 
 export const expandedBlockDetailSchema = z.object({
-  id: hexStringSchema,
-  number: z.number(),
-  parentID: hexStringSchema,
+  id: blockIdSchema,
+  number: blockNumberSchema,
+  parentID: blockIdSchema,
   timestamp: z.number(),
   size: z.number(),
   isFinalized: z.boolean(),
@@ -40,4 +40,14 @@ export const expandedBlockDetailSchema = z.object({
   com: z.boolean(),
 })
 
+export const blockRevisionEnumSchema = z.enum({
+  BEST: 'best',
+  NEXT: 'next',
+  FINALIZED: 'finalized',
+  JUSTIFIED: 'justified',
+})
+
+const blockRevisionSchema = blockRevisionEnumSchema.or(blockNumberSchema).or(blockIdSchema)
+
 export type ExpandedBlockDetail = z.infer<typeof expandedBlockDetailSchema>
+export type BlockRevision = z.infer<typeof blockRevisionSchema>

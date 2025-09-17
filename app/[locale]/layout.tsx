@@ -6,7 +6,6 @@ import { ChakraProvider } from '@/components/theme/provider'
 import type { Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
 import { QueryClientProvider } from '@/lib/query-client/provider'
-import { ThorClientProvider } from '@/services/thor/thor-client'
 import { PrereleaseBanner } from './components/PrereleaseBanner'
 
 const inter = Inter({
@@ -52,11 +51,9 @@ export default async function RootLayout({
 const Providers = ({ children, locale }: { children: React.ReactNode; locale: string }) => {
   return (
     <QueryClientProvider>
-      <ThorClientProvider>
-        <ChakraProvider>
-          <TranslationsProvider locale={locale as Locale}>{children}</TranslationsProvider>
-        </ChakraProvider>
-      </ThorClientProvider>
+      <ChakraProvider>
+        <TranslationsProvider locale={locale as Locale}>{children}</TranslationsProvider>
+      </ChakraProvider>
     </QueryClientProvider>
   )
 }

@@ -1,5 +1,5 @@
 import z from 'zod'
-import { addressStringSchema, hexStringSchema } from './common'
+import { addressStringSchema, blockIdSchema, blockNumberSchema, hexStringSchema, transactionIdSchema } from './common'
 import { rawEventSchema, transferSchema } from './events'
 
 export const clauseSchema = z.object({
@@ -11,15 +11,15 @@ export const clauseSchema = z.object({
 })
 
 export const transactionMetaSchema = z.object({
-  blockID: hexStringSchema,
-  blockNumber: z.number(),
+  blockID: blockIdSchema,
+  blockNumber: blockNumberSchema,
   blockTimestamp: z.number(),
-  txID: hexStringSchema.optional(),
+  txID: transactionIdSchema.optional(),
   txOrigin: addressStringSchema.optional(),
 })
 
 export const baseTransactionSchema = z.object({
-  id: hexStringSchema,
+  id: transactionIdSchema,
   origin: addressStringSchema,
   gasPayer: addressStringSchema.optional(),
   size: z.number(),
@@ -29,7 +29,7 @@ export const baseTransactionSchema = z.object({
   expiration: z.number(),
   clauses: z.array(clauseSchema),
   gas: z.number(), // string | number
-  dependsOn: hexStringSchema.nullable(),
+  dependsOn: transactionIdSchema.nullable(),
   nonce: hexStringSchema, // string | number
   reserved: z
     .object({

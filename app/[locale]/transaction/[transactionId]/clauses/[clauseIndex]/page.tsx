@@ -12,7 +12,13 @@ import { Pagination } from '@/components/ui/Pagination'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
 import { VETTransferTable } from '@/components/VETTransferTable'
-import type { AddressString, HexString, Transaction, TransactionReceipt } from '@/lib/schemas'
+import {
+  type AddressString,
+  type Transaction,
+  type TransactionId,
+  type TransactionReceipt,
+  transactionIdSchema,
+} from '@/lib/schemas'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/hooks'
 import { ClauseDetailsTable } from './components/ClauseDetailsTable'
 import { EventList } from './components/EventList'
@@ -20,20 +26,26 @@ import { EventList } from './components/EventList'
 export default function ClauseDetailsPage({
   params,
 }: {
-  params: Promise<{ transactionId: HexString; clauseIndex: number }>
+  params: Promise<{ transactionId: TransactionId; clauseIndex: number }>
 }) {
   const { transactionId, clauseIndex } = use(params)
 
   const clauseIndexNumber = Number(clauseIndex)
 
-  if (!transactionId || Number.isNaN(clauseIndexNumber)) {
+  if (!transactionId || !transactionIdSchema.safeParse(transactionId).success || Number.isNaN(clauseIndexNumber)) {
     notFound()
   }
 
   return <ClauseTransactionLoader transactionId={transactionId} clauseIndex={clauseIndexNumber} />
 }
 
-const ClauseTransactionLoader = ({ transactionId, clauseIndex }: { transactionId: HexString; clauseIndex: number }) => {
+const ClauseTransactionLoader = ({
+  transactionId,
+  clauseIndex,
+}: {
+  transactionId: TransactionId
+  clauseIndex: number
+}) => {
   const { data: transaction, isLoading } = useTransaction(transactionId)
   const { data: receipt, isLoading: isReceiptLoading } = useTransactionReceipt(transactionId)
 

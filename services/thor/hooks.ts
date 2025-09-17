@@ -1,32 +1,29 @@
-'use client'
-
 import { useQueries, useQuery } from '@tanstack/react-query'
-import type { Revision } from '@vechain/sdk-core'
-import type { AddressString, ExpandedBlockDetail, HexString } from '@/lib/schemas'
+import type { AddressString, BlockRevision, ExpandedBlockDetail, TransactionId } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { accountQueryOptions } from './account'
 import { bestBlockQueryOptions, blockQueryOptions, latestBlocksQueryOptions } from './block'
 import { type Vip180List, vip180QueryOptions } from './contract'
-import { useThorClient } from './thor-client'
 import { transactionQueryOptions, transactionReceiptQueryOptions } from './transaction'
 import { vnsNameQueryOptions } from './vns'
 
 export const useAccount = (address: AddressString) => {
-  const { thorClient, activeNetwork } = useThorClient()
-  return useQuery(accountQueryOptions(thorClient, activeNetwork.name, address))
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountQueryOptions(activeNetwork.name, address))
 }
 
-export const useBlock = (revision: Revision) => {
-  const { thorClient, activeNetwork } = useThorClient()
-  return useQuery(blockQueryOptions(thorClient, activeNetwork.name, revision))
+export const useBlock = (revision: BlockRevision) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(blockQueryOptions(activeNetwork.name, revision))
 }
 
 export const useBestBlock = () => {
-  const { thorClient, activeNetwork } = useThorClient()
-  return useQuery(bestBlockQueryOptions(thorClient, activeNetwork.name))
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(bestBlockQueryOptions(activeNetwork.name))
 }
 
 export const useLatestBlocks = ({ count }: { count: number }) => {
-  const { thorClient, activeNetwork } = useThorClient()
+  const { activeNetwork } = useSettingsStore()
   const { data: bestBlock } = useBestBlock()
 
   const bestBlockNumber = bestBlock?.number ?? count
@@ -40,7 +37,7 @@ export const useLatestBlocks = ({ count }: { count: number }) => {
   }
 
   return useQueries({
-    queries: blockIds.map(blockId => latestBlocksQueryOptions(thorClient, activeNetwork.name, blockId)),
+    queries: blockIds.map(blockId => latestBlocksQueryOptions(activeNetwork.name, blockId)),
     combine: queries => ({
       data: queries.map(query => query.data).filter(isExpandedBlockDetail),
       isPending: queries.some(query => query.isPending),
@@ -59,10 +56,10 @@ export const useVip180List = ({
   addresses: AddressString[]
   accountAddress: AddressString
 }) => {
-  const { activeNetwork, thorClient } = useThorClient()
+  const { activeNetwork } = useSettingsStore()
 
   return useQueries({
-    queries: addresses.map(address => vip180QueryOptions(thorClient, activeNetwork.name, address, accountAddress)),
+    queries: addresses.map(address => vip180QueryOptions(activeNetwork.name, address, accountAddress)),
     combine: queries => ({
       data: queries.reduce((acc, query) => {
         if (query.data) {
@@ -76,21 +73,21 @@ export const useVip180List = ({
   })
 }
 
-export const useTransaction = (transactionId: HexString) => {
-  const { thorClient, activeNetwork } = useThorClient()
-  return useQuery(transactionQueryOptions(thorClient, activeNetwork.name, transactionId))
+export const useTransaction = (transactionId: TransactionId) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(transactionQueryOptions(activeNetwork.name, transactionId))
 }
 
-export const useTransactionReceipt = (transactionId: HexString) => {
-  const { thorClient, activeNetwork } = useThorClient()
+export const useTransactionReceipt = (transactionId: TransactionId) => {
+  const { activeNetwork } = useSettingsStore()
   return useQuery({
-    ...transactionReceiptQueryOptions(thorClient, activeNetwork.name, transactionId),
+    ...transactionReceiptQueryOptions(activeNetwork.name, transactionId),
     refetchInterval: query => (query.state.data ? false : 3000),
   })
 }
 
 export const useVnsName = (address: AddressString) => {
-  const { thorClient, activeNetwork } = useThorClient()
+  const { activeNetwork } = useSettingsStore()
 
-  return useQuery(vnsNameQueryOptions(thorClient, activeNetwork.name, address))
+  return useQuery(vnsNameQueryOptions(activeNetwork.name, address))
 }

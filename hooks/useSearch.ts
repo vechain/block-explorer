@@ -1,37 +1,31 @@
-'use client'
-
 import { useMutation } from '@tanstack/react-query'
-import { Revision } from '@vechain/sdk-core'
-import type { ThorClient } from '@vechain/sdk-network'
 import type { Network } from '@/lib/constants/network'
-import { addressStringSchema, hexStringSchema } from '@/lib/schemas'
+import { addressStringSchema, blockRevisionEnumSchema, hexStringSchema } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { getAccount } from '@/services/thor/account'
 import { getBlock } from '@/services/thor/block'
-import { useThorClient } from '@/services/thor/thor-client'
 import { getTransaction } from '@/services/thor/transaction'
 import { getVnsAddress } from '@/services/thor/vns'
 
 export const useSearch = () => {
-  const { thorClient, activeNetwork } = useThorClient()
+  const { activeNetwork } = useSettingsStore()
 
   return useMutation({
-    mutationFn: (searchTerm: string) => search({ searchTerm, thorClient, activeNetwork }),
+    mutationFn: (searchTerm: string) => search({ searchTerm, activeNetwork }),
   })
 }
 
 const search = async ({
   searchTerm,
-  thorClient,
   activeNetwork,
 }: {
   searchTerm: string
-  thorClient: ThorClient
   activeNetwork: Network
 }): Promise<{ redirectTo: string }> => {
   const parsedAddress = addressStringSchema.safeParse(searchTerm)
   if (parsedAddress.success) {
     const account = await getAccount({
-      thorClient,
+      networkName: activeNetwork.name,
       address: parsedAddress.data,
     })
     if (account) {
@@ -41,9 +35,10 @@ const search = async ({
     }
   }
 
-  const isBlock = Revision.isValid(searchTerm)
+  const result = blockRevisionEnumSchema.safeParse(searchTerm)
+  const isBlock = result.success
   if (isBlock) {
-    const block = await getBlock({ thorClient, revision: Revision.of(searchTerm) })
+    const block = await getBlock({ networkName: activeNetwork.name, revision: result.data })
     if (block) {
       return {
         redirectTo: `/block/${block.id}`,
@@ -53,7 +48,7 @@ const search = async ({
 
   const parsedHex = hexStringSchema.safeParse(searchTerm)
   if (parsedHex.success) {
-    const transaction = await getTransaction({ thorClient, transactionId: parsedHex.data })
+    const transaction = await getTransaction({ networkName: activeNetwork.name, transactionId: parsedHex.data })
     if (transaction) {
       return {
         redirectTo: `/transaction/${transaction.id}`,
@@ -63,7 +58,7 @@ const search = async ({
 
   const isVnsDomain = searchTerm.endsWith('.vet')
   if (isVnsDomain) {
-    const address = await getVnsAddress({ thorClient, networkName: activeNetwork.name, name: searchTerm })
+    const address = await getVnsAddress({ networkName: activeNetwork.name, name: searchTerm })
     if (address) {
       return {
         redirectTo: `/address/${address}`,

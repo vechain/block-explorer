@@ -1,17 +1,18 @@
 import { Address } from '@vechain/sdk-core'
-import type { ThorClient } from '@vechain/sdk-network'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { accountSchema } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
+import { getThorClient } from './client'
 
-export const accountQueryOptions = (thorClient: ThorClient, networkName: NetworkName, address: AddressString) => ({
+export const accountQueryOptions = (networkName: NetworkName, address: AddressString) => ({
   queryKey: [getAccount.name, networkName, address],
-  queryFn: () => getAccount({ thorClient, address }),
+  queryFn: () => getAccount({ networkName, address }),
   staleTime: Infinity,
 })
 
-export const getAccount = async ({ thorClient, address }: { thorClient: ThorClient; address: AddressString }) => {
+export const getAccount = async ({ networkName, address }: { networkName: NetworkName; address: AddressString }) => {
+  const thorClient = getThorClient(networkName)
   const account = await thorClient.accounts.getAccount(Address.of(address))
 
   if (!account) return null
@@ -28,5 +29,7 @@ export const getAccount = async ({ thorClient, address }: { thorClient: ThorClie
   return zodParse({
     data: accountData,
     schema: accountSchema,
+    errorMessage: 'Failed to parse account',
+    fallbackData: null,
   })
 }

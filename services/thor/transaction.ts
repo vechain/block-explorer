@@ -1,34 +1,27 @@
-import type { ThorClient } from '@vechain/sdk-network'
 import type { NetworkName } from '@/lib/constants/network'
-import { type HexString, transactionReceiptSchema, transactionSchema } from '@/lib/schemas'
+import { type TransactionId, transactionReceiptSchema, transactionSchema } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
+import { getThorClient } from './client'
 
-export const transactionQueryOptions = (
-  thorClient: ThorClient,
-  networkName: NetworkName,
-  transactionId: HexString,
-) => ({
+export const transactionQueryOptions = (networkName: NetworkName, transactionId: TransactionId) => ({
   queryKey: [getTransaction.name, networkName, transactionId],
-  queryFn: () => getTransaction({ thorClient, transactionId }),
+  queryFn: () => getTransaction({ networkName, transactionId }),
   staleTime: Infinity,
 })
 
-export const transactionReceiptQueryOptions = (
-  thorClient: ThorClient,
-  networkName: NetworkName,
-  transactionId: HexString,
-) => ({
+export const transactionReceiptQueryOptions = (networkName: NetworkName, transactionId: TransactionId) => ({
   queryKey: [getTransactionReceipt.name, networkName, transactionId],
-  queryFn: () => getTransactionReceipt({ thorClient, transactionId }),
+  queryFn: () => getTransactionReceipt({ networkName, transactionId }),
 })
 
 export const getTransaction = async ({
-  thorClient,
+  networkName,
   transactionId,
 }: {
-  thorClient: ThorClient
-  transactionId: HexString
+  networkName: NetworkName
+  transactionId: TransactionId
 }) => {
+  const thorClient = getThorClient(networkName)
   const tx = await thorClient.transactions.getTransaction(transactionId)
 
   if (!tx) return null
@@ -37,16 +30,18 @@ export const getTransaction = async ({
     data: tx,
     schema: transactionSchema,
     errorMessage: 'Failed to parse Thor transaction',
+    fallbackData: null,
   })
 }
 
 const getTransactionReceipt = async ({
-  thorClient,
+  networkName,
   transactionId,
 }: {
-  thorClient: ThorClient
-  transactionId: HexString
+  networkName: NetworkName
+  transactionId: TransactionId
 }) => {
+  const thorClient = getThorClient(networkName)
   const receipt = await thorClient.transactions.getTransactionReceipt(transactionId)
 
   if (!receipt) return null
@@ -55,5 +50,6 @@ const getTransactionReceipt = async ({
     data: receipt,
     schema: transactionReceiptSchema,
     errorMessage: 'Failed to parse Thor transaction receipt',
+    fallbackData: null,
   })
 }

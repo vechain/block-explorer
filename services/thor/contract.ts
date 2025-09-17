@@ -1,7 +1,7 @@
 import { VIP180_ABI, ZERO_ADDRESS } from '@vechain/sdk-core'
-import type { ThorClient } from '@vechain/sdk-network'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
+import { getThorClient } from './client'
 
 export type Vip180 = {
   address: AddressString
@@ -14,23 +14,23 @@ export type Vip180 = {
 export type Vip180List = Record<AddressString, Vip180 | null>
 
 export const vip180QueryOptions = (
-  thorClient: ThorClient,
   networkName: NetworkName,
   address: AddressString,
   accountAddress: AddressString,
 ) => ({
   queryKey: [getVip180.name, networkName, address, accountAddress],
-  queryFn: () => getVip180(thorClient, address, accountAddress),
+  queryFn: () => getVip180(networkName, address, accountAddress),
   select: (data: Vip180 | null) => ({ address, vip180: data }),
 })
 
 const getVip180 = async (
-  thorClient: ThorClient,
+  networkName: NetworkName,
   address: AddressString,
   accountAddress: AddressString,
 ): Promise<Vip180 | null> => {
   if (address === ZERO_ADDRESS) return null
 
+  const thorClient = getThorClient(networkName)
   const vip180 = thorClient.contracts.load(address, VIP180_ABI)
 
   const [name] = await vip180.read.name()
