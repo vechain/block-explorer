@@ -1,7 +1,7 @@
-import { ThorClient } from '@vechain/sdk-network'
-import { NETWORKS, type NetworkName } from '@/lib/constants/network'
+import type { NetworkName } from '@/lib/constants/network'
 import { type TransactionId, transactionReceiptSchema, transactionSchema } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
+import { getThorClient } from './client'
 
 export const transactionQueryOptions = (networkName: NetworkName, transactionId: TransactionId) => ({
   queryKey: [getTransaction.name, networkName, transactionId],
@@ -21,7 +21,7 @@ export const getTransaction = async ({
   networkName: NetworkName
   transactionId: TransactionId
 }) => {
-  const thorClient = ThorClient.at(NETWORKS[networkName].url)
+  const thorClient = getThorClient(networkName)
   const tx = await thorClient.transactions.getTransaction(transactionId)
 
   if (!tx) return null
@@ -41,7 +41,7 @@ const getTransactionReceipt = async ({
   networkName: NetworkName
   transactionId: TransactionId
 }) => {
-  const thorClient = ThorClient.at(NETWORKS[networkName].url)
+  const thorClient = getThorClient(networkName)
   const receipt = await thorClient.transactions.getTransactionReceipt(transactionId)
 
   if (!receipt) return null

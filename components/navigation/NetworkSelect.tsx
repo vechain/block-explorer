@@ -2,11 +2,11 @@
 
 import { createListCollection, Field, Portal, Select } from '@chakra-ui/react'
 import { useQueryClient } from '@tanstack/react-query'
-import { ThorClient } from '@vechain/sdk-network'
 import { useState } from 'react'
 import { LuGlobe } from 'react-icons/lu'
 import { NETWORKS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { getThorClient } from '@/services/thor/client'
 
 const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1)
 
@@ -34,7 +34,7 @@ export const NetworkSelect = () => {
       return
     }
 
-    const thorClient = ThorClient.at(selectedNetwork.url)
+    const thorClient = getThorClient(newNetworkName)
     const healthy = await thorClient.nodes.isHealthy()
     if (!healthy) {
       setError(`Network is not healthy: ${newNetworkName}`)

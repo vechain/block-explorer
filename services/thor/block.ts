@@ -1,7 +1,7 @@
-import { ThorClient } from '@vechain/sdk-network'
-import { NETWORKS, type NetworkName } from '@/lib/constants/network'
+import type { NetworkName } from '@/lib/constants/network'
 import { type BlockRevision, blockRevisionEnumSchema, expandedBlockDetailSchema } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
+import { getThorClient } from './client'
 
 const BLOCK_TIME = 10 * 1000 // 10 seconds
 
@@ -25,7 +25,7 @@ export const latestBlocksQueryOptions = (networkName: NetworkName, revision: Blo
 })
 
 export const getBlock = async ({ revision, networkName }: { revision: BlockRevision; networkName: NetworkName }) => {
-  const thorClient = ThorClient.at(NETWORKS[networkName].url)
+  const thorClient = getThorClient(networkName)
   const block = await thorClient.blocks.getBlockExpanded(revision)
 
   return zodParse({

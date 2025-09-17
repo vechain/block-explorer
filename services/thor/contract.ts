@@ -1,7 +1,7 @@
 import { VIP180_ABI, ZERO_ADDRESS } from '@vechain/sdk-core'
-import { ThorClient } from '@vechain/sdk-network'
-import { NETWORKS, type NetworkName } from '@/lib/constants/network'
+import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
+import { getThorClient } from './client'
 
 export type Vip180 = {
   address: AddressString
@@ -30,7 +30,7 @@ const getVip180 = async (
 ): Promise<Vip180 | null> => {
   if (address === ZERO_ADDRESS) return null
 
-  const thorClient = ThorClient.at(NETWORKS[networkName].url)
+  const thorClient = getThorClient(networkName)
   const vip180 = thorClient.contracts.load(address, VIP180_ABI)
 
   const [name] = await vip180.read.name()
