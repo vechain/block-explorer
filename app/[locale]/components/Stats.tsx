@@ -1,6 +1,6 @@
 'use client'
 
-import { Flex, Heading, Stack, Text } from '@chakra-ui/react'
+import { Heading, Stack, Text } from '@chakra-ui/react'
 import { formatEther } from 'viem'
 import { useNftHolders, useTotalVetStaked, useTotalVthoClaimed } from '@/services/veworld-indexer/hooks'
 
@@ -17,26 +17,20 @@ export const Stats = () => {
 
   return (
     <Stack gap={10}>
-      <Heading as="h2" size="2xl" fontWeight="bold" color="fg">
-        Stats
-      </Heading>
-
-      <Flex gap={4} width="100%">
-        <StatCard title="Total VTHO Claimed" value={prettifyAmount(totalVthoClaimed)} />
-        <StatCard title="Total VET Staked" value={prettifyAmount(totalVetStaked?.total)} />
-        <StatCard title="NFT Holders" value={nftHolders?.total.toLocaleString() ?? '0'} />
-      </Flex>
+      <StatCard title="Total VTHO Claimed" value={prettifyAmount(totalVthoClaimed)} />
+      <StatCard title="Total VET Staked" value={prettifyAmount(totalVetStaked?.total)} />
+      <StatCard title="NFT Holders" value={nftHolders?.total.toLocaleString() ?? '0'} />
     </Stack>
   )
 }
 
 const StatCard = ({ title, value }: { title: string; value: string }) => {
   return (
-    <Stack bg="bg.muted" p={4} rounded="md" width="100%">
-      <Heading as="h4" size="xs" fontWeight="bold" color="fg.muted" textTransform="uppercase">
+    <Stack bg="bg.muted" p={6} rounded="md" height="120px" width="320px" justifyContent="space-between">
+      <Heading as="h4" size="sm" color="fg.muted">
         {title}
       </Heading>
-      <Text fontSize="2xl" fontWeight="bold">
+      <Text fontSize="2xl" fontWeight={600}>
         {value}
       </Text>
     </Stack>

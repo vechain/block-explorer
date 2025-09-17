@@ -8,9 +8,14 @@ export const hexStringSchema = z.string().regex(/^0x[a-fA-F0-9]*$/, {
   message: 'Must be a valid hex string starting with 0x',
 }) as z.ZodType<`0x${string}`>
 
-export const transactionIdSchema = hexStringSchema
+// Make these more specific rather than just aliases
+export const transactionIdSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/, {
+  message: 'Must be a valid transaction ID (64 hex characters)',
+}) as z.ZodType<`0x${string}`>
 
-export const blockIdSchema = hexStringSchema
+export const blockIdSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/, {
+  message: 'Must be a valid block ID (64 hex characters)',
+}) as z.ZodType<`0x${string}`>
 
 export const blockNumberSchema = z.number()
 
@@ -18,4 +23,3 @@ export type AddressString = z.infer<typeof addressStringSchema>
 export type HexString = z.infer<typeof hexStringSchema>
 export type TransactionId = z.infer<typeof transactionIdSchema>
 export type BlockId = z.infer<typeof blockIdSchema>
-export type BlockNumber = z.infer<typeof blockNumberSchema>
