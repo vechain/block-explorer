@@ -1,32 +1,27 @@
 'use client'
 
-import { Box, Heading, Stack } from '@chakra-ui/react'
-import { AxisBottom, AxisLeft } from '@visx/axis'
-import { LinearGradient } from '@visx/gradient'
-import { Group } from '@visx/group'
-import { scaleBand, scaleLinear } from '@visx/scale'
-import { Bar } from '@visx/shape'
-import { defaultStyles, useTooltip, useTooltipInPortal } from '@visx/tooltip'
+import { Flex, Heading, Stack, Text } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
-import { datetimeFormat, timeFormat } from '@/lib/utils/date'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  type TooltipContentProps,
+  XAxis,
+  YAxis,
+} from 'recharts'
+import type { BarRectangleItem } from 'recharts/types/cartesian/Bar'
+import { timeFormat } from '@/lib/utils/date'
 import { useLatestBlocks } from '@/services/thor/hooks'
-
-const topMargin = 32
-const bottomMargin = 32
-const rightMargin = 16
-const leftMargin = 40
 
 const width = 1000
 const height = 400
 
-const xMin = leftMargin
-const xMax = width - rightMargin
-const yMin = topMargin
-const yMax = height - bottomMargin
-
 const MAX_BLOCKS_COUNT = 100
 
-type Datum = {
+type DataPoint = {
   id: string
   gasLimit: number
   gasUsed: number
@@ -34,58 +29,12 @@ type Datum = {
   timestamp: number
 }
 
-const tooltipStyles = {
-  ...defaultStyles,
-  backgroundColor: 'rgba(0,0,0,0.9)',
-  color: 'white',
-}
-
-// accessors
-const getGasLimit = (d: Datum) => d.gasLimit
-const getGasUsed = (d: Datum) => d.gasUsed
-const getTimestamp = (d: Datum) => d.timestamp
-
 export const BlockUsageChart = () => {
   const data = useBlockUsageChartData()
   const router = useRouter()
 
-  const { tooltipOpen, tooltipLeft, tooltipTop, tooltipData, hideTooltip, showTooltip } = useTooltip<Datum>()
-
-  const { containerRef, TooltipInPortal } = useTooltipInPortal({
-    scroll: true,
-  })
-
-  const xScale = scaleBand<number>({
-    range: [xMin, xMax],
-    round: true,
-    domain: data.map(getTimestamp),
-    padding: 0.2,
-  })
-
-  const yScale = scaleLinear<number>({
-    range: [yMax, yMin],
-    round: true,
-    domain: [0, Math.max(...data.map(getGasLimit))],
-  })
-
-  let tooltipTimeout: number
-
-  const handleMouseMove = (d: Datum) => (event: React.MouseEvent<SVGRectElement>) => {
-    if (tooltipTimeout) clearTimeout(tooltipTimeout)
-
-    const tooltipData = data.find(({ id }) => id === d.id)
-    const tooltipTop = event.nativeEvent.offsetY
-    const tooltipLeft = event.nativeEvent.offsetX
-
-    if (tooltipLeft && tooltipTop && tooltipData) {
-      showTooltip({ tooltipData, tooltipTop, tooltipLeft })
-    }
-  }
-
-  const handleMouseLeave = () => {
-    tooltipTimeout = window.setTimeout(() => {
-      hideTooltip()
-    }, 300)
+  const handleBarClick = (dataPoint: BarRectangleItem) => {
+    router.push(`/block/${dataPoint.id}`)
   }
 
   return (
@@ -94,89 +43,84 @@ export const BlockUsageChart = () => {
         Block Usage
       </Heading>
 
-      <Box flex={1}>
-        <svg
-          ref={containerRef}
-          width="100%"
-          height="100%"
-          role="img"
-          aria-label="Chart"
-          viewBox={`0 0 ${width} ${height}`}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart width={width} height={height} data={data}>
           <GreenToRedGradient />
-          <Group>
-            {data.map(d => {
-              const barHeight = yMax - yScale(getGasUsed(d))
-              const barWidth = xScale.bandwidth()
-              const barX = xScale(getTimestamp(d))
-              const barY = yMax - barHeight
-              return (
-                <Bar
-                  key={d.id}
-                  x={barX}
-                  y={barY}
-                  width={barWidth}
-                  height={barHeight}
-                  fill="url(#greenToRed)"
-                  onMouseMove={handleMouseMove(d)}
-                  onMouseLeave={handleMouseLeave}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => router.push(`/block/${d.id}`)}
-                />
-              )
-            })}
-          </Group>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            dataKey="timestamp"
+            interval={10}
+            textAnchor="start"
+            tickLine={false}
+            tickFormatter={timeFormat}
+            tick={{ style: { fontSize: '.7rem' } }}
+          />
+          <YAxis
+            unit="M"
+            dataKey="gasLimit"
+            tickFormatter={value => (Number(value) / 10 ** 6).toLocaleString()}
+            tick={{ style: { fontSize: '.8rem' } }}
+          />
 
-          <Group>
-            <AxisLeft
-              left={leftMargin}
-              scale={yScale}
-              tickFormat={value => `${(Number(value) / 10 ** 6).toLocaleString()}M`}
-              tickLabelProps={() => ({
-                textAnchor: 'end',
-                dx: '-0.35rem',
-                style: { fontSize: '0.7rem', paddingRight: 10 },
-              })}
-            />
-          </Group>
+          <Tooltip contentStyle={{ fontSize: '.8rem' }} content={CustomTooltip} />
+          <Bar dataKey="gasUsed" fill="url(#greenToRed)" onClick={handleBarClick} />
+        </BarChart>
+      </ResponsiveContainer>
+    </Stack>
+  )
+}
 
-          <Group>
-            <AxisBottom
-              top={yMax}
-              scale={xScale}
-              tickFormat={timestamp => timeFormat(timestamp)}
-              tickLabelProps={() => ({
-                textAnchor: 'middle',
-                style: { fontSize: '0.7rem' },
-              })}
-            />
-          </Group>
+const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>) => {
+  const isVisible = active && payload.length > 0
 
-          {tooltipOpen && tooltipData && (
-            <Group>
-              <TooltipInPortal top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
-                <Stack>
-                  <div>Block Number: {tooltipData.number.toLocaleString()}</div>
-                  <div>Gas limit: {tooltipData.gasLimit.toLocaleString()}</div>
-                  <div>Gas used: {tooltipData.gasUsed.toLocaleString()}</div>
-                  <div>Usage: {((tooltipData.gasUsed / tooltipData.gasLimit) * 100).toFixed(2)}%</div>
-                  <strong>{datetimeFormat(tooltipData.timestamp)}</strong>
-                </Stack>
-              </TooltipInPortal>
-            </Group>
-          )}
-        </svg>
-      </Box>
+  if (!isVisible) return null
+
+  const dataPoint = payload[0].payload as DataPoint
+
+  return (
+    <Stack bg="bg" rounded="xl" p={4}>
+      <Flex alignItems="center" gap={2}>
+        <Text fontSize="sm" fontWeight="bold">
+          Block Number:
+        </Text>
+        <Text fontSize="sm">{dataPoint.number.toLocaleString()}</Text>
+      </Flex>
+
+      <Flex alignItems="center" gap={2}>
+        <Text fontSize="sm" fontWeight="bold">
+          Gas Used:
+        </Text>
+        <Text fontSize="sm">{dataPoint.gasUsed.toLocaleString()}</Text>
+      </Flex>
+
+      <Flex alignItems="center" gap={2}>
+        <Text fontSize="sm" fontWeight="bold">
+          Gas Limit:
+        </Text>
+        <Text fontSize="sm">{dataPoint.gasLimit.toLocaleString()}</Text>
+      </Flex>
+
+      <Flex alignItems="center" gap={2}>
+        <Text fontSize="sm" fontWeight="bold">
+          Usage:
+        </Text>
+        <Text fontSize="sm">{((dataPoint.gasUsed / dataPoint.gasLimit) * 100).toFixed(2)}%</Text>
+      </Flex>
     </Stack>
   )
 }
 
 const GreenToRedGradient = () => {
   return (
-    <LinearGradient id="greenToRed" x1="0%" y1="0%" x2="0%" y2="100%" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor="red" />
-      <stop offset="50%" stopColor="yellow" />
-      <stop offset="100%" stopColor="green" />
-    </LinearGradient>
+    <defs>
+      <linearGradient id="greenToRed" x1="0" x2="0" y1="0" y2="90%" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#ff0000" />
+        <stop offset="25%" stopColor="#ff9900" />
+        <stop offset="50%" stopColor="#ffff00" />
+        <stop offset="75%" stopColor="#80ff00" />
+        <stop offset="100%" stopColor="#33cc33" />
+      </linearGradient>
+    </defs>
   )
 }
 
