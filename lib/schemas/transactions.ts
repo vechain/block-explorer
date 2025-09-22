@@ -14,7 +14,7 @@ export const transactionMetaSchema = z.object({
   blockID: blockIdSchema,
   blockNumber: blockNumberSchema,
   blockTimestamp: z.number(),
-  txID: transactionIdSchema.nullable().optional(),
+  txID: transactionIdSchema.optional(),
   txOrigin: addressStringSchema.nullable().optional(),
 })
 
