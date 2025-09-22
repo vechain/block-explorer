@@ -15,7 +15,7 @@ const transactionsDetailSchema = baseTransactionSchema
   .extend(transactionReceiptSchema.omit({ meta: true }).shape)
   .extend({
     type: transactionTypeSchema,
-    delegator: addressStringSchema.nullable(),
+    delegator: addressStringSchema.nullable().optional(),
   })
 
 export const expandedBlockDetailSchema = z.object({

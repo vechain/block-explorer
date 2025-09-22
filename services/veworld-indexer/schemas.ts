@@ -19,8 +19,8 @@ import {
 const paginationSchema = z.object({
   hasCount: z.boolean(),
   countLimit: z.number(),
-  totalPages: z.number().nullable(),
-  totalElements: z.number().nullable(),
+  totalPages: z.number().nullable().optional(),
+  totalElements: z.number().nullable().optional(),
   hasNext: z.boolean(),
 })
 
@@ -38,37 +38,37 @@ const sortDirectionEnum = z.enum({
 })
 
 const paginationParamsSchema = z.object({
-  page: z.number().optional(),
-  size: z.number().optional(),
-  direction: sortDirectionEnum.optional(),
+  page: z.number().nullable().optional(),
+  size: z.number().nullable().optional(),
+  direction: sortDirectionEnum.nullable().optional(),
 })
 
 const indexerGetTransactionsParamsSchema = z
   .object({
     origin: addressStringSchema,
-    includeDelegated: z.boolean().optional(),
-    expanded: z.boolean().optional(),
+    includeDelegated: z.boolean().nullable().optional(),
+    expanded: z.boolean().nullable().optional(),
   })
   .extend(paginationParamsSchema.shape)
 
 const indexerGetContractTransactionsParamsSchema = z
   .object({
     contractAddress: addressStringSchema,
-    expanded: z.boolean().optional(),
+    expanded: z.boolean().nullable().optional(),
   })
   .extend(paginationParamsSchema.shape)
 
 const indexerGetTransfersParamsSchema = z
   .object({
     address: addressStringSchema,
-    tokenAddress: addressStringSchema.optional(),
+    tokenAddress: addressStringSchema.nullable().optional(),
   })
   .extend(paginationParamsSchema.shape)
 
 const indexerGetFungibleTokenContractsParamsSchema = z
   .object({
     address: addressStringSchema,
-    officialTokensOnly: z.boolean().optional(),
+    officialTokensOnly: z.boolean().nullable().optional(),
   })
   .extend(paginationParamsSchema.shape)
 
@@ -102,9 +102,9 @@ export const indexerTransactionSchema = baseTransactionSchema
   .extend(indexerTransactionMetaSchema.shape)
   .extend(transactionReceiptSchema.omit({ meta: true, outputs: true }).shape)
   .extend({
-    gasPriceCoef: legacyTransactionFieldsSchema.shape.gasPriceCoef.nullable(),
-    maxFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxFeePerGas.nullable(),
-    maxPriorityFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxPriorityFeePerGas.nullable(),
+    gasPriceCoef: legacyTransactionFieldsSchema.shape.gasPriceCoef.nullable().optional(),
+    maxFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxFeePerGas.nullable().optional(),
+    maxPriorityFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxPriorityFeePerGas.nullable().optional(),
     type: transactionTypeSchema,
     clauses: z.array(withEmptyObjects(clauseSchema)),
     outputs: z.array(withEmptyObjects(transactionOutputSchema)),
@@ -116,9 +116,9 @@ export const indexerContractTransactionSchema = baseTransactionSchema
   .extend(indexerTransactionMetaSchema.shape)
   .extend(transactionReceiptSchema.omit({ meta: true, outputs: true }).shape)
   .extend({
-    gasPriceCoef: legacyTransactionFieldsSchema.shape.gasPriceCoef.nullable(),
-    maxFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxFeePerGas.nullable(),
-    maxPriorityFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxPriorityFeePerGas.nullable(),
+    gasPriceCoef: legacyTransactionFieldsSchema.shape.gasPriceCoef.nullable().optional(),
+    maxFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxFeePerGas.nullable().optional(),
+    maxPriorityFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxPriorityFeePerGas.nullable().optional(),
     type: transactionTypeSchema,
     clauses: z.array(withEmptyObjects(clauseSchema)),
     outputs: z.array(withEmptyObjects(transactionOutputSchema)),
@@ -136,7 +136,7 @@ export const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTra
   txId: transactionMetaSchema.shape.txID.nonoptional(),
   value: z.coerce.bigint(),
   tokenAddress: addressStringSchema.nullable(),
-  tokenId: z.string().nullable(),
+  tokenId: z.string().nullable().optional(),
   topics: z.array(hexStringSchema),
   eventType: eventTypeSchema,
 })
