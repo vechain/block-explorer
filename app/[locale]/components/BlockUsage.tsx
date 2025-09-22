@@ -1,6 +1,6 @@
 'use client'
 
-import { Flex, Heading, Stack, Text } from '@chakra-ui/react'
+import { Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
 import {
   Bar,
@@ -29,13 +29,10 @@ type DataPoint = {
   timestamp: number
 }
 
-export const BlockUsageChart = () => {
-  const data = useBlockUsageChartData()
-  const router = useRouter()
+export const BlockUsage = () => {
+  const { blocksDataPoints, isPending } = useBlockUsageChartData()
 
-  const handleBarClick = (dataPoint: BarRectangleItem) => {
-    router.push(`/block/${dataPoint.id}`)
-  }
+  if (isPending) return <Skeleton height={height} width={width} rounded="xl" />
 
   return (
     <Stack flex={1} gap={4} bg="bg.muted" rounded="xl" p={8}>
@@ -43,30 +40,42 @@ export const BlockUsageChart = () => {
         Block Usage
       </Heading>
 
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart width={width} height={height} data={data}>
-          <GreenToRedGradient />
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="timestamp"
-            interval={10}
-            textAnchor="start"
-            tickLine={false}
-            tickFormatter={timeFormat}
-            tick={{ style: { fontSize: '.7rem' } }}
-          />
-          <YAxis
-            unit="M"
-            dataKey="gasLimit"
-            tickFormatter={value => (Number(value) / 10 ** 6).toLocaleString()}
-            tick={{ style: { fontSize: '.8rem' } }}
-          />
-
-          <Tooltip contentStyle={{ fontSize: '.8rem' }} content={CustomTooltip} />
-          <Bar dataKey="gasUsed" fill="url(#greenToRed)" onClick={handleBarClick} />
-        </BarChart>
-      </ResponsiveContainer>
+      <BlockUsageChart data={blocksDataPoints} />
     </Stack>
+  )
+}
+
+const BlockUsageChart = ({ data }: { data: DataPoint[] }) => {
+  const router = useRouter()
+
+  const handleBarClick = (dataPoint: BarRectangleItem) => {
+    router.push(`/block/${dataPoint.id}`)
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart width={width} height={height} data={data}>
+        <GreenToRedGradient />
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis
+          dataKey="timestamp"
+          interval={10}
+          textAnchor="start"
+          tickLine={false}
+          tickFormatter={timeFormat}
+          tick={{ style: { fontSize: '.7rem' } }}
+        />
+        <YAxis
+          unit="M"
+          dataKey="gasLimit"
+          tickFormatter={value => (Number(value) / 10 ** 6).toLocaleString()}
+          tick={{ style: { fontSize: '.8rem' } }}
+        />
+
+        <Tooltip contentStyle={{ fontSize: '.8rem' }} content={CustomTooltip} />
+        <Bar dataKey="gasUsed" fill="url(#greenToRed)" onClick={handleBarClick} />
+      </BarChart>
+    </ResponsiveContainer>
   )
 }
 
@@ -125,8 +134,10 @@ const GreenToRedGradient = () => {
 }
 
 const useBlockUsageChartData = () => {
-  const { data = [] } = useLatestBlocks({ count: MAX_BLOCKS_COUNT })
-  return data
+  const { data = [], ...rest } = useLatestBlocks({ count: MAX_BLOCKS_COUNT })
+  const blocksDataPoints = data
     .reverse()
     .map(({ id, gasUsed, gasLimit, number, timestamp }) => ({ id, gasUsed, gasLimit, number, timestamp }))
+
+  return { blocksDataPoints, ...rest }
 }

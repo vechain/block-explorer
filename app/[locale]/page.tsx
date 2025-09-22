@@ -5,7 +5,7 @@ import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
 import { zodParse } from '@/lib/utils/zod'
 import { latestBlocksQueryOptions } from '@/services/thor/block'
-import { BlockUsageChart } from './components/BlockUsageChart'
+import { BlockUsage } from './components/BlockUsage'
 import { LatestBlocksSection } from './components/LatestBlocksSection'
 import { Stats } from './components/Stats'
 
@@ -28,7 +28,7 @@ export default async function HomePage({
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Stack direction="column" gap={12}>
         <Flex gap={4}>
-          <BlockUsageChart />
+          <BlockUsage />
           <Stats />
         </Flex>
 
