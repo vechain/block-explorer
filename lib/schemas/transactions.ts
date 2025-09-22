@@ -3,11 +3,11 @@ import { addressStringSchema, blockIdSchema, blockNumberSchema, hexStringSchema,
 import { rawEventSchema, transferSchema } from './events'
 
 export const clauseSchema = z.object({
-  to: addressStringSchema.nullable(),
+  to: addressStringSchema.nullable().optional(),
   value: hexStringSchema, // string | number
   data: hexStringSchema, // string
-  comment: z.string().optional(),
-  abi: z.string().optional(),
+  comment: z.string().nullable().optional(),
+  abi: z.string().nullable().optional(),
 })
 
 export const transactionMetaSchema = z.object({
@@ -15,13 +15,13 @@ export const transactionMetaSchema = z.object({
   blockNumber: blockNumberSchema,
   blockTimestamp: z.number(),
   txID: transactionIdSchema.optional(),
-  txOrigin: addressStringSchema.optional(),
+  txOrigin: addressStringSchema.nullable().optional(),
 })
 
 export const baseTransactionSchema = z.object({
   id: transactionIdSchema,
   origin: addressStringSchema,
-  gasPayer: addressStringSchema.optional(),
+  gasPayer: addressStringSchema.nullable().optional(),
   size: z.number(),
   meta: transactionMetaSchema,
   chainTag: z.number(),
@@ -29,13 +29,14 @@ export const baseTransactionSchema = z.object({
   expiration: z.number(),
   clauses: z.array(clauseSchema),
   gas: z.number(), // string | number
-  dependsOn: transactionIdSchema.nullable(),
+  dependsOn: transactionIdSchema.nullable().optional(),
   nonce: hexStringSchema, // string | number
   reserved: z
     .object({
-      features: z.number().optional(),
-      unused: z.string().optional(), // Uint8Array[]
+      features: z.number().nullable().optional(),
+      unused: z.string().nullable().optional(), // Uint8Array[]
     })
+    .nullable()
     .optional(),
 })
 
@@ -64,7 +65,7 @@ const legacyTransactionSchema = baseTransactionSchema.extend(legacyTransactionFi
 export const transactionSchema = z.discriminatedUnion('type', [dynamicFeeTransactionSchema, legacyTransactionSchema])
 
 export const outputSchema = z.object({
-  contractAddress: addressStringSchema.nullable(),
+  contractAddress: addressStringSchema.nullable().optional(),
   events: z.array(rawEventSchema),
   transfers: z.array(transferSchema),
 })
@@ -77,8 +78,8 @@ export const transactionReceiptSchema = z.object({
   reverted: z.boolean(),
   outputs: z.array(outputSchema),
   meta: transactionMetaSchema,
-  maxFeePerGas: hexStringSchema.optional(),
-  maxPriorityFeePerGas: hexStringSchema.optional(),
+  maxFeePerGas: hexStringSchema.nullable().optional(),
+  maxPriorityFeePerGas: hexStringSchema.nullable().optional(),
 })
 
 export type DynamicFeeTransaction = z.infer<typeof dynamicFeeTransactionSchema>
