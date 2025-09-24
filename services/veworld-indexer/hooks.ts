@@ -2,11 +2,11 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { accountFungibleTokenContractsQueryOptions } from './fungible-token-contracts'
+import { accountErc20ContractsQueryOptions } from './erc20-contracts'
 import { nftHoldersQueryOptions } from './nft-holders'
 import type {
   IndexerGetContractTransactionsParams,
-  IndexerGetFungibleTokenContractsParams,
+  IndexerGetErc20ContractsParams,
   IndexerGetTransactionsParams,
   IndexerGetTransfersParams,
 } from './schemas'
@@ -41,12 +41,12 @@ export const useAccountTransfers = ({ params }: { params: IndexerGetTransfersPar
   return useQuery(accountTransfersQueryOptions(activeNetwork.name, params))
 }
 
-export const useAccountFungibleTokenContracts = ({ params }: { params: IndexerGetFungibleTokenContractsParams }) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(accountFungibleTokenContractsQueryOptions(activeNetwork.name, params))
-}
-
 export const useContractTransactions = ({ params }: { params: IndexerGetContractTransactionsParams }) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(contractTransactionsQueryOptions(activeNetwork.name, params))
+}
+
+export const useAccountErc20Contracts = ({ params }: { params: IndexerGetErc20ContractsParams }) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountErc20ContractsQueryOptions(activeNetwork.name, params))
 }

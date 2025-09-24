@@ -14,7 +14,7 @@ import {
   transferSchema,
 } from '@/lib/schemas'
 
-/***************************** Indexer API common schemas *****************************/
+// ***************************** Indexer API common schemas *****************************/
 
 const paginationSchema = z.object({
   hasCount: z.boolean(),
@@ -30,7 +30,7 @@ export const indexerResponseSchema = <T extends z.ZodSchema>(schema: T) =>
     pagination: paginationSchema,
   })
 
-/***************************** Indexer API params schemas *****************************/
+// ***************************** Indexer API params schemas *****************************/
 
 const sortDirectionEnum = z.enum({
   ASC: 'ASC',
@@ -65,14 +65,14 @@ const indexerGetTransfersParamsSchema = z
   })
   .extend(paginationParamsSchema.shape)
 
-const indexerGetFungibleTokenContractsParamsSchema = z
+const indexerGetErc20ContractsParamsSchema = z
   .object({
     address: addressStringSchema,
     officialTokensOnly: z.boolean().nullable().optional(),
   })
   .extend(paginationParamsSchema.shape)
 
-/***************************** Indexer API resources schemas *****************************/
+// ***************************** Indexer API resources schemas *****************************/
 const withEmptyObjects = (schema: z.ZodSchema) => z.union([schema, z.object({})])
 
 const indexerBaseTransferSchema = z.object({
@@ -135,18 +135,16 @@ export const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTra
   id: z.string(),
   txId: transactionMetaSchema.shape.txID.nonoptional(),
   value: z.coerce.bigint(),
-  tokenAddress: addressStringSchema.nullable(),
+  tokenAddress: addressStringSchema.nullable().optional(),
   tokenId: z.string().nullable().optional(),
   topics: z.array(hexStringSchema),
   eventType: eventTypeSchema,
 })
-
-export const indexerFungibleTokenContractSchema = addressStringSchema
 
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
 export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
 export type IndexerContractTransaction = z.infer<typeof indexerContractTransactionSchema>
 export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>
 export type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParamsSchema>
-export type IndexerGetFungibleTokenContractsParams = z.infer<typeof indexerGetFungibleTokenContractsParamsSchema>
+export type IndexerGetErc20ContractsParams = z.infer<typeof indexerGetErc20ContractsParamsSchema>
 export type IndexerGetContractTransactionsParams = z.infer<typeof indexerGetContractTransactionsParamsSchema>
