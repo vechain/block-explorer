@@ -7,7 +7,7 @@ import type { RawEvent } from '@/lib/schemas'
 import { addressStringSchema, EventType, rawEventSchema } from '@/lib/schemas'
 import * as abi from '@/lib/schemas/abi'
 import { zodParse } from '@/lib/utils/zod'
-import { useAbi } from '@/services/b32/hooks'
+import { useAbi } from '@/services/b32'
 
 export const useDecodeEvent = (rawEvent: RawEvent) => {
   const [signature] = rawEvent.topics
