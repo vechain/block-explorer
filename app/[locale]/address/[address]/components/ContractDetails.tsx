@@ -1,5 +1,3 @@
-'use client'
-
 import { Flex, Stack, Table, Tabs } from '@chakra-ui/react'
 import { LuArrowLeftRight } from 'react-icons/lu'
 import { TbTransfer } from 'react-icons/tb'
@@ -7,6 +5,7 @@ import { CopyToClipBoard } from '@/components/ui/CopyToClipBoard'
 import { VETBalance, VTHOBalance } from '@/components/ui/TokenBalance'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadge } from '@/components/ui/VnsBadge'
+import { useTabs } from '@/hooks/useTabs'
 import type { Account } from '@/lib/schemas'
 import { useVnsName } from '@/services/thor/hooks'
 import { AccountTransfersTab } from './AccountTransfersTab'
@@ -14,6 +13,7 @@ import { ContractTransactionsTab } from './ContractTransactionsTab'
 
 export const ContractDetails = ({ account }: { account: Account }) => {
   const { data: vnsName } = useVnsName(account.address)
+  const { currentTab, handleTabChange } = useTabs('transactions')
 
   const items = [
     { name: 'VNS', value: <VnsBadge size="md" address={account.address} vnsName={vnsName} /> },
@@ -42,7 +42,7 @@ export const ContractDetails = ({ account }: { account: Account }) => {
         </Table.Root>
       </Table.ScrollArea>
 
-      <Tabs.Root defaultValue="transactions" variant="subtle">
+      <Tabs.Root value={currentTab} onValueChange={handleTabChange} variant="subtle" lazyMount>
         <Tabs.List bg="bg.muted" rounded="l3">
           <Tabs.Trigger value="transactions">
             <LuArrowLeftRight />
