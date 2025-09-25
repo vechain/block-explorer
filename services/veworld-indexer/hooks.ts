@@ -4,9 +4,11 @@ import { useQuery } from '@tanstack/react-query'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
 import { nftHoldersQueryOptions } from './nft-holders'
+import { accountErc721TokensQueryOptions } from './nfts'
 import type {
   IndexerGetContractTransactionsParams,
   IndexerGetErc20ContractsParams,
+  IndexerGetErc721Params,
   IndexerGetTransactionsParams,
   IndexerGetTransfersParams,
 } from './schemas'
@@ -49,4 +51,9 @@ export const useContractTransactions = ({ params }: { params: IndexerGetContract
 export const useAccountErc20Contracts = ({ params }: { params: IndexerGetErc20ContractsParams }) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(accountErc20ContractsQueryOptions(activeNetwork.name, params))
+}
+
+export const useAccountErc721 = ({ params }: { params: IndexerGetErc721Params }) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountErc721TokensQueryOptions(activeNetwork.name, params))
 }

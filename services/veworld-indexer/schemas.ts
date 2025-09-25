@@ -2,12 +2,15 @@ import { z } from 'zod'
 import {
   addressStringSchema,
   baseTransactionSchema,
+  blockIdSchema,
+  blockNumberSchema,
   clauseSchema,
   dynamicFeeTransactionFieldsSchema,
   hexStringSchema,
   legacyTransactionFieldsSchema,
   outputSchema,
   rawEventSchema,
+  transactionIdSchema,
   transactionMetaSchema,
   transactionReceiptSchema,
   transactionTypeSchema,
@@ -69,6 +72,14 @@ const indexerGetErc20ContractsParamsSchema = z
   .object({
     address: addressStringSchema,
     officialTokensOnly: z.boolean().nullable().optional(),
+  })
+  .extend(paginationParamsSchema.shape)
+
+const indexerGetErc721ParamsSchema = z
+  .object({
+    address: addressStringSchema,
+    contractAddress: addressStringSchema.optional(),
+    tokenId: z.string().optional(),
   })
   .extend(paginationParamsSchema.shape)
 
@@ -141,6 +152,18 @@ export const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTra
   eventType: eventTypeSchema,
 })
 
+export const indexerErc721Schema = z.object({
+  id: z.string(),
+  version: z.number(),
+  tokenId: z.coerce.bigint(),
+  contractAddress: addressStringSchema,
+  owner: addressStringSchema,
+  txId: transactionIdSchema,
+  blockNumber: blockNumberSchema,
+  blockId: blockIdSchema,
+  blockTimestamp: z.number(),
+})
+
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
 export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
 export type IndexerContractTransaction = z.infer<typeof indexerContractTransactionSchema>
@@ -148,3 +171,5 @@ export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactions
 export type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParamsSchema>
 export type IndexerGetErc20ContractsParams = z.infer<typeof indexerGetErc20ContractsParamsSchema>
 export type IndexerGetContractTransactionsParams = z.infer<typeof indexerGetContractTransactionsParamsSchema>
+export type IndexerGetErc721Params = z.infer<typeof indexerGetErc721ParamsSchema>
+export type IndexerResponse<T extends z.ZodSchema> = z.infer<ReturnType<typeof indexerResponseSchema<T>>>
