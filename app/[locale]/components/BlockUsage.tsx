@@ -30,9 +30,9 @@ type DataPoint = {
 }
 
 export const BlockUsage = () => {
-  const { blocksDataPoints, isPending } = useBlockUsageChartData()
+  const { blocksDataPoints, isLoading } = useBlockUsageChartData()
 
-  if (isPending) return <Skeleton height={height} width={width} rounded="xl" />
+  if (isLoading) return <Skeleton height={height} width={width} rounded="xl" />
 
   return (
     <Stack flex={1} gap={4} bg="bg.muted" rounded="xl" p={8}>
