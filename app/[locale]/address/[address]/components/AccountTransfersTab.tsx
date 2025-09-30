@@ -10,8 +10,8 @@ import { BaseLink, TransactionLink } from '@/components/ui/Links'
 import { Pagination } from '@/components/ui/Pagination'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
 import type { AddressString } from '@/lib/schemas'
-import type { Vip180 } from '@/services/thor/contract'
-import { useVip180List } from '@/services/thor/hooks'
+import { isNotNullish } from '@/lib/type-predicates'
+import { type Erc20, useErc20Contracts } from '@/services/thor/tokens/erc20'
 import { useAccountTransfers } from '@/services/veworld-indexer/hooks'
 import type { IndexerTransfer } from '@/services/veworld-indexer/schemas'
 
@@ -23,15 +23,14 @@ export const AccountTransfersTab = ({ address }: { address: AddressString }) => 
     params: { address, page, size: PAGE_SIZE },
   })
 
-  const allTokenAddresses = transfers?.data.map(transfer => transfer.tokenAddress).filter(Boolean) ?? []
-  const uniqueTokenAddresses = Array.from(new Set(allTokenAddresses)) as AddressString[]
+  const allTokenAddresses: AddressString[] =
+    transfers?.data.map(transfer => transfer.tokenAddress).filter(isNotNullish) ?? []
 
-  const { data: allTokens, isPending: isPendingTokens } = useVip180List({
-    addresses: uniqueTokenAddresses,
-    accountAddress: address,
+  const { data: erc20Map, isPending: isPendingErc20List } = useErc20Contracts({
+    contractAddressList: new Set<AddressString>(allTokenAddresses),
   })
 
-  if (isLoading || isPendingTokens) return <div>Loading...</div>
+  if (isLoading || isPendingErc20List) return <div>Loading...</div>
   if (!transfers || transfers.data.length === 0) return <NoTransfers />
 
   return (
@@ -55,7 +54,7 @@ export const AccountTransfersTab = ({ address }: { address: AddressString }) => 
                   key={transfer.id}
                   transfer={transfer}
                   accountAddress={address}
-                  token={allTokens[transfer.tokenAddress ?? ZERO_ADDRESS]}
+                  token={erc20Map.get(transfer.tokenAddress ?? ZERO_ADDRESS)}
                 />
               ))}
             </ErrorBoundary>
@@ -75,10 +74,10 @@ const TransferRow = ({
 }: {
   transfer: IndexerTransfer
   accountAddress: AddressString
-  token: Vip180 | null
+  token: Erc20 | null | undefined
 }) => {
   const symbol = token?.symbol ?? '-'
-  const decimals = !token ? 18 : token.decimals
+  const decimals = token?.decimals ?? 18
 
   const isReceived = transfer.to.toLowerCase() === accountAddress.toLowerCase()
 

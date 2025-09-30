@@ -3,7 +3,6 @@ import type { AddressString, BlockRevision, ExpandedBlockDetail, TransactionId }
 import { useSettingsStore } from '@/lib/stores/settings'
 import { accountQueryOptions } from './account'
 import { bestBlockQueryOptions, blockQueryOptions, latestBlocksQueryOptions } from './block'
-import { type Vip180List, vip180QueryOptions } from './contract'
 import { transactionQueryOptions, transactionReceiptQueryOptions } from './transaction'
 import { vnsNameQueryOptions } from './vns'
 
@@ -47,30 +46,6 @@ export const useLatestBlocks = ({ count }: { count: number }) => {
 
 const isExpandedBlockDetail = (block: unknown): block is ExpandedBlockDetail => {
   return Boolean(block)
-}
-
-export const useVip180List = ({
-  addresses,
-  accountAddress,
-}: {
-  addresses: AddressString[]
-  accountAddress: AddressString
-}) => {
-  const { activeNetwork } = useSettingsStore()
-
-  return useQueries({
-    queries: addresses.map(address => vip180QueryOptions(activeNetwork.name, address, accountAddress)),
-    combine: queries => ({
-      data: queries.reduce((acc, query) => {
-        if (query.data) {
-          const { address, vip180 } = query.data
-          acc[address] = vip180
-        }
-        return acc
-      }, {} as Vip180List),
-      isPending: queries.some(query => query.isPending),
-    }),
-  })
 }
 
 export const useTransaction = (transactionId: TransactionId) => {

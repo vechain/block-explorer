@@ -6,7 +6,7 @@ import z from 'zod'
 import { type HexString, hexStringSchema } from '@/lib/schemas'
 import * as abi from '@/lib/schemas/abi'
 import { zodParse } from '@/lib/utils/zod'
-import { useAbi } from '@/services/b32/hooks'
+import { useAbi } from '@/services/b32'
 
 type InputData = {
   raw: HexString

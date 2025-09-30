@@ -1,18 +1,21 @@
 import { Flex, Stack, Table, Tabs } from '@chakra-ui/react'
-import { LuArrowLeftRight, LuCoins } from 'react-icons/lu'
+import { LuArrowLeftRight, LuCoins, LuImage } from 'react-icons/lu'
 import { TbTransfer } from 'react-icons/tb'
 import { CopyToClipBoard } from '@/components/ui/CopyToClipBoard'
 import { VETBalance, VTHOBalance } from '@/components/ui/TokenBalance'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadge } from '@/components/ui/VnsBadge'
+import { useTabs } from '@/hooks/useTabs'
 import type { Account } from '@/lib/schemas'
 import { useVnsName } from '@/services/thor/hooks'
+import { AccountNftsTab } from './AccountNftTab'
 import { AccountTokensTab } from './AccountTokensTab'
 import { AccountTransactionsTab } from './AccountTransactionsTab'
 import { AccountTransfersTab } from './AccountTransfersTab'
 
 export const AccountDetails = ({ account }: { account: Account }) => {
   const { data: vnsName } = useVnsName(account.address)
+  const { currentTab, handleTabChange } = useTabs('transactions')
 
   const items = [
     {
@@ -44,7 +47,7 @@ export const AccountDetails = ({ account }: { account: Account }) => {
         </Table.Root>
       </Table.ScrollArea>
 
-      <Tabs.Root defaultValue="transactions" variant="subtle">
+      <Tabs.Root value={currentTab} onValueChange={handleTabChange} variant="subtle" lazyMount>
         <Tabs.List bg="bg.muted" rounded="l3">
           <Tabs.Trigger value="transactions">
             <LuArrowLeftRight />
@@ -58,7 +61,12 @@ export const AccountDetails = ({ account }: { account: Account }) => {
             <LuCoins />
             Tokens
           </Tabs.Trigger>
-          <Tabs.Indicator rounded="l2" />
+          <Tabs.Indicator rounded="l3" />
+          <Tabs.Trigger value="nfts">
+            <LuImage />
+            NFTs
+          </Tabs.Trigger>
+          <Tabs.Indicator rounded="l3" />
         </Tabs.List>
 
         <Tabs.Content value="transactions">
@@ -69,6 +77,9 @@ export const AccountDetails = ({ account }: { account: Account }) => {
         </Tabs.Content>
         <Tabs.Content value="tokens">
           <AccountTokensTab address={account.address} />
+        </Tabs.Content>
+        <Tabs.Content value="nfts">
+          <AccountNftsTab address={account.address} />
         </Tabs.Content>
       </Tabs.Root>
     </Stack>

@@ -12,6 +12,7 @@ import { Pagination } from '@/components/ui/Pagination'
 import { Subtitle, Title } from '@/components/ui/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
 import { VETTransferTable } from '@/components/VETTransferTable'
+import { useTabs } from '@/hooks/useTabs'
 import {
   type AddressString,
   type Transaction,
@@ -68,6 +69,7 @@ const ClausePageContent = ({
   clauseIndex: number
 }) => {
   const router = useRouter()
+  const { currentTab, handleTabChange } = useTabs('details')
 
   const clause = tx.clauses[clauseIndex]
   const output = receipt.outputs[clauseIndex] ?? {
@@ -88,7 +90,7 @@ const ClausePageContent = ({
         </Subtitle>
       </Group>
 
-      <Tabs.Root defaultValue="details" variant="subtle">
+      <Tabs.Root value={currentTab} onValueChange={handleTabChange} variant="subtle" lazyMount>
         <Tabs.List bg="bg.muted" rounded="l3">
           <Tabs.Trigger value="details">
             <LuInfo />
