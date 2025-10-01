@@ -26,20 +26,20 @@ export const useLatestBlocks = ({ count }: { count: number }) => {
   const { data: bestBlock } = useBestBlock()
 
   const bestBlockNumber = bestBlock?.number ?? count
-  const blockIds = []
+  const queries = []
 
   for (let i = 0; i < count; i++) {
     const currentBlockId = bestBlockNumber - i
     if (currentBlockId > 0) {
-      blockIds.push(currentBlockId)
+      queries.push(latestBlocksQueryOptions(activeNetwork.name, currentBlockId))
     }
   }
 
   return useQueries({
-    queries: blockIds.map(blockId => latestBlocksQueryOptions(activeNetwork.name, blockId)),
+    queries,
     combine: queries => ({
       data: queries.map(query => query.data).filter(isExpandedBlockDetail),
-      isPending: queries.some(query => query.isPending),
+      isLoading: queries.every(query => query.isLoading),
     }),
   })
 }
