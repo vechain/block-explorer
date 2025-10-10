@@ -47,7 +47,10 @@ export const blockRevisionEnumSchema = z.enum({
   JUSTIFIED: 'justified',
 })
 
-const blockRevisionSchema = blockRevisionEnumSchema.or(blockNumberSchema).or(blockIdSchema)
+export const blockRevisionSchema = blockRevisionEnumSchema
+  .or(z.coerce.number().int().positive().max(100000000))
+  .or(blockNumberSchema)
+  .or(blockIdSchema)
 
 export type ExpandedBlockDetail = z.infer<typeof expandedBlockDetailSchema>
 export type BlockRevision = z.infer<typeof blockRevisionSchema>
