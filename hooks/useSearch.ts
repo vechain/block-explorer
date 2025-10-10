@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import type { Network } from '@/lib/constants/network'
-import { addressStringSchema, blockRevisionEnumSchema, hexStringSchema } from '@/lib/schemas'
+import { addressStringSchema, blockRevisionSchema, hexStringSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getAccount } from '@/services/thor/account'
 import { getBlock } from '@/services/thor/block'
@@ -35,7 +35,7 @@ const search = async ({
     }
   }
 
-  const result = blockRevisionEnumSchema.safeParse(searchTerm)
+  const result = blockRevisionSchema.safeParse(searchTerm)
   const isBlock = result.success
   if (isBlock) {
     const block = await getBlock({ networkName: activeNetwork.name, revision: result.data })
