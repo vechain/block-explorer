@@ -8,54 +8,60 @@ import { resolveUrl } from './index'
 
 export const blockUsageQueryOptions = (
   networkName: NetworkName,
-  startBlock: number,
-  endBlock: number,
-  granularity: string = 'block',
+  startTimestamp: number,
+  endTimestamp: number,
+  isLiveMode: boolean = true,
 ) => {
-  // Adjust refetch intervals based on granularity to reduce flickering
-  const getRefetchInterval = (granularity: string) => {
-    switch (granularity) {
-      case 'block':
-        return 1000 * 30 // 30 seconds for block-level data
-      case 'hourly':
-        return 1000 * 60 * 5 // 5 minutes for hourly data
-      case 'daily':
-        return 1000 * 60 * 15 // 15 minutes for daily data
-      case 'weekly':
-        return 1000 * 60 * 30 // 30 minutes for weekly data
-      case 'monthly':
-        return 1000 * 60 * 60 // 1 hour for monthly data
-      default:
-        return 1000 * 60 * 5 // 5 minutes default
+  // Calculate time range in seconds
+  const rangeSeconds = endTimestamp - startTimestamp
+  
+  // Adjust refetch intervals based on time range
+  const getRefetchInterval = (rangeSeconds: number) => {
+    if (rangeSeconds <= 3600) {
+      // ≤ 1 hour
+      return 1000 * 30 // 30 seconds for block-level data
+    } else if (rangeSeconds <= 604800) {
+      // ≤ 1 week
+      return 1000 * 60 * 5 // 5 minutes for hourly data
+    } else if (rangeSeconds <= 2592000) {
+      // ≤ 1 month
+      return 1000 * 60 * 15 // 15 minutes for daily data
+    } else if (rangeSeconds <= 31536000) {
+      // ≤ 1 year
+      return 1000 * 60 * 30 // 30 minutes for weekly data
+    } else {
+      // > 1 year
+      return 1000 * 60 * 60 // 1 hour for monthly data
     }
   }
 
-  const refetchInterval = getRefetchInterval(granularity)
+  const refetchInterval: number | false = isLiveMode ? getRefetchInterval(rangeSeconds) : false
 
   return {
-    queryKey: ['blockUsage', networkName, startBlock, endBlock, granularity],
-    queryFn: () => getBlockUsage({ networkName, startBlock, endBlock }),
-    staleTime: refetchInterval,
-    refetchInterval,
+    queryKey: ['blockUsage', networkName, startTimestamp, endTimestamp, isLiveMode],
+    queryFn: () => getBlockUsage({ networkName, startTimestamp, endTimestamp }),
+    staleTime: isLiveMode ? getRefetchInterval(rangeSeconds) : Infinity,
+    refetchInterval: refetchInterval,
   }
 }
 
 const getBlockUsage = async ({
   networkName,
-  startBlock,
-  endBlock,
+  startTimestamp,
+  endTimestamp,
 }: {
   networkName: NetworkName
-  startBlock: number
-  endBlock: number
+  startTimestamp: number
+  endTimestamp: number
 }) => {
   const baseUrl = resolveUrl(networkName)
+  // const baseUrl = "http://localhost:8080/api/v1"
   const { data } = await apiClient.get<BlockUsageResponse>({
     baseUrl,
     endPoint: '/explorer/block-usage',
     params: {
-      startBlock: startBlock.toString(),
-      endBlock: endBlock.toString(),
+      startTimestamp: startTimestamp.toString(),
+      endTimestamp: endTimestamp.toString(),
     },
   })
 
@@ -67,7 +73,7 @@ const getBlockUsage = async ({
   })
 }
 
-export const useBlockUsage = (startBlock: number, endBlock: number, granularity: string = 'block') => {
+export const useBlockUsage = (startTimestamp: number, endTimestamp: number, isLiveMode: boolean = true) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(blockUsageQueryOptions(activeNetwork.name, startBlock, endBlock, granularity))
+  return useQuery(blockUsageQueryOptions(activeNetwork.name, startTimestamp, endTimestamp, isLiveMode))
 }
