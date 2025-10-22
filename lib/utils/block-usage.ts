@@ -42,6 +42,11 @@ export const transformBlockUsageData = (cumulativeData: BlockUsageData[]): Block
     // Calculate number of blocks in this range
     const blockRange = currentBlock.blockNumber - previousBlock.blockNumber
     
+    // Prevent division by zero in case of duplicate or malformed data
+    if (blockRange === 0) {
+      // Optionally, you could log a warning here
+      continue
+    }
     // Calculate average per block (for sparse data) or actual values (for consecutive blocks)
     const gasUsed = blockRange > 1 ? totalGasUsed / blockRange : totalGasUsed
     const gasLimit = blockRange > 1 ? totalGasLimit / blockRange : totalGasLimit
