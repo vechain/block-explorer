@@ -201,8 +201,11 @@ export const BlockUsage = () => {
       return `${year}-${month}`
     }
     
-    // For all other views, use date picker
-    return date.toISOString().split('T')[0] // YYYY-MM-DD format
+    // For all other views, use date picker (format in local timezone)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
 
   // Get the appropriate input type and attributes based on range
@@ -348,11 +351,10 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
     }
   }
 
-  // Format X-axis labels based on the selected time range (not just granularity)
+  // Format X-axis labels based on the selected time range
   const formatXAxis = (timestamp: number) => {
     const date = new Date(timestamp * 1000)
     
-    // Determine format based on the selected range, not just granularity
     switch (selectedRange) {
       case 'hourly':
         // For hourly view, show time with minutes
@@ -474,6 +476,15 @@ const CustomTooltip = ({ active, payload, selectedRange }: TooltipContentProps<n
 
   return (
     <Stack bg="bg" rounded="xl" p={4}>
+      {selectedRange === 'hourly' && (
+        <Flex alignItems="center" gap={2}>
+          <Text fontSize="sm" fontWeight="bold">
+            Block Number:
+          </Text>
+          <Text fontSize="sm">{dataPoint.number.toLocaleString()}</Text>
+        </Flex>
+      )}
+      
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
           {labels.identifier}:
@@ -566,8 +577,15 @@ const useBlockUsageChartData = (selectedRange: TimeRangeKey, timeOffset: number 
       // Calculate period boundaries using date-fns based on offset
       switch (selectedRange) {
         case 'hourly':
-          periodEnd = endOfHour(subHours(now, timeOffset))
-          periodStart = startOfHour(subHours(now, timeOffset))
+          // For hourly in live mode (offset = 0), show past hour from now
+          // For offset > 0, show complete hours
+          if (timeOffset === 0) {
+            periodEnd = now
+            periodStart = subHours(now, 1)
+          } else {
+            periodEnd = endOfHour(subHours(now, timeOffset))
+            periodStart = startOfHour(subHours(now, timeOffset))
+          }
           break
         case 'daily':
           periodEnd = endOfDay(subDays(now, timeOffset))
