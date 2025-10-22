@@ -52,5 +52,20 @@ export const blockRevisionSchema = blockRevisionEnumSchema
   .or(blockNumberSchema)
   .or(blockIdSchema)
 
+// Block usage schema for indexer endpoint
+export const blockUsageDataSchema = z.object({
+  blockId: blockIdSchema,
+  blockNumber: blockNumberSchema,
+  blockTimestamp: z.number(),
+  cumulativeGasLimit: z.string(),
+  cumulativeGasUsed: z.string(),
+  cumulativeNumTransactions: z.string(),
+  cumulativeNumClauses: z.string(),
+})
+
+export const blockUsageResponseSchema = z.array(blockUsageDataSchema)
+
 export type ExpandedBlockDetail = z.infer<typeof expandedBlockDetailSchema>
 export type BlockRevision = z.infer<typeof blockRevisionSchema>
+export type BlockUsageData = z.infer<typeof blockUsageDataSchema>
+export type BlockUsageResponse = z.infer<typeof blockUsageResponseSchema>
