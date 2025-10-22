@@ -21,13 +21,17 @@ import {
   startOfMonth, endOfMonth, 
   startOfYear, endOfYear,
   subHours, subDays, subWeeks, subMonths, subYears,
-  getUnixTime
+  getUnixTime,
+  addHours,
+  addDays,
+  addWeeks,
+  addMonths,
+  addYears
 } from 'date-fns'
 import { timeFormat } from '@/lib/utils/date'
 import { transformBlockUsageData, type BlockUsageDataPoint } from '@/lib/utils/block-usage'
 import { useBlockUsage } from '@/services/veworld-indexer/block-usage'
-import { useBlock } from '@/services/thor/hooks'
-import { blockRevisionEnumSchema, type BlockUsageData } from '@/lib/schemas'
+import { type BlockUsageData } from '@/lib/schemas'
 
 const width = 1000
 const height = 400
@@ -123,19 +127,19 @@ export const BlockUsage = () => {
       
       switch (selectedRange) {
         case 'hourly':
-          newDate = subHours(selectedDate, -1) // Add 1 hour
+          newDate = addHours(selectedDate, 1) // Add 1 hour
           break
         case 'daily':
-          newDate = subDays(selectedDate, -1) // Add 1 day
+          newDate = addDays(selectedDate, 1) // Add 1 day
           break
         case 'weekly':
-          newDate = subWeeks(selectedDate, -1) // Add 1 week
+          newDate = addWeeks(selectedDate, 1) // Add 1 week
           break
         case 'monthly':
-          newDate = subMonths(selectedDate, -1) // Add 1 month
+          newDate = addMonths(selectedDate, 1) // Add 1 month
           break
         case 'yearly':
-          newDate = subYears(selectedDate, -1) // Add 1 year
+          newDate = addYears(selectedDate, 1) // Add 1 year
           break
         default:
           return
