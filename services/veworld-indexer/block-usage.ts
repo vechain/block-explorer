@@ -55,7 +55,6 @@ const getBlockUsage = async ({
   endTimestamp: number
 }) => {
   const baseUrl = resolveUrl(networkName)
-  // const baseUrl = "http://localhost:8080/api/v1"
   const { data } = await apiClient.get<BlockUsageResponse>({
     baseUrl,
     endPoint: '/explorer/block-usage',
