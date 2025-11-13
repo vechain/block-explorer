@@ -13,7 +13,7 @@ RUN corepack enable pnpm && pnpm install --frozen-lockfile
 COPY . .
 
 # Build the application
-RUN pnpm build
+RUN next build --turbopack
 
 # Production stage
 FROM node:20.17.0-alpine
@@ -30,5 +30,5 @@ COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["next", "start"]
 
