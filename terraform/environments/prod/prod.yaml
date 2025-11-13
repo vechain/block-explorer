@@ -1,0 +1,30 @@
+# Production Environment Configuration
+environment: production
+region: eu-west-1
+
+# Domain configuration
+domain: block-explorer-prod.vechain.org
+enable_custom_domain: true
+
+# Docker image configuration
+# This will be updated by GitHub Actions on deployment
+image_tag: latest
+
+# App Runner instance configuration
+cpu: 1024          # 1 vCPU
+memory: 2048       # 2 GB
+port: 3000
+
+# Auto-scaling configuration
+min_size: 1        # Always keep at least 1 instance running (no cold starts)
+max_size: 10       # Maximum 10 instances
+max_concurrency: 100  # Max concurrent requests per instance
+
+# Health check
+health_check_path: /
+node_env: production
+
+# Optional: Additional environment variables for the application
+environment_variables:
+  NEXT_PUBLIC_NETWORK: mainnet
+  # Add more env vars as needed
