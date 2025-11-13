@@ -7,13 +7,13 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
-RUN corepack enable pnpm && pnpm install --frozen-lockfile
+RUN yarn install --frozen-lockfile --production=false
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN next build --turbopack
+RUN yarn build
 
 # Production stage
 FROM node:20.17.0-alpine
