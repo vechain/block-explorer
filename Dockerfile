@@ -6,14 +6,16 @@ WORKDIR /app
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies
-RUN yarn install --frozen-lockfile --production=false
+# Install pnpm and dependencies
+RUN corepack enable && \
+    corepack prepare pnpm@9.15.4 --activate && \
+    pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN yarn build
+RUN pnpm build
 
 # Production stage
 FROM node:20.17.0-alpine
@@ -30,5 +32,5 @@ COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 
-CMD ["next", "start"]
+CMD ["node", "server.js"]
 
