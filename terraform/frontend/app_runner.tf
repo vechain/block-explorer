@@ -37,6 +37,7 @@ resource "aws_apprunner_service" "frontend" {
           {
             NODE_ENV = local.env.node_env
             PORT     = tostring(local.env.port)
+            HOSTNAME = "0.0.0.0"
           },
           lookup(local.env, "environment_variables", {})
         )
@@ -57,10 +58,10 @@ resource "aws_apprunner_service" "frontend" {
   health_check_configuration {
     protocol            = "HTTP"
     path                = local.env.health_check_path
-    interval            = 10
-    timeout             = 5
+    interval            = 20
+    timeout             = 10
     healthy_threshold   = 1
-    unhealthy_threshold = 5
+    unhealthy_threshold = 3
   }
 
   tags = {
