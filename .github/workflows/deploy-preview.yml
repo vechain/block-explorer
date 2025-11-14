@@ -204,7 +204,7 @@ jobs:
             
             | Name | Status | Preview | Updated (UTC) |
             |------|--------|---------|---------------|
-            | **block-explorer-preview** | ✅ Ready ([${commitSha}](${commitUrl})) | [Visit Preview →](${previewUrl}) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
+            | **block-explorer-preview** | ✅ Ready ([${commitSha}](${commitUrl})) | [Visit Preview →](${serviceUrl}) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
             
             ---
             <sub>Built with commit ${commitSha} • Preview environments are automatically destroyed when PRs are closed</sub>`;
