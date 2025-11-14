@@ -15,7 +15,7 @@ image_tag: pr-{PR_NUMBER}
 # App Runner instance configuration
 # Smaller resources for preview environments
 cpu: 512          # 0.5 vCPU
-memory: 512       # 0.5 GB
+memory: 1024       # 0.5 GB
 port: 3000
 
 # Auto-scaling configuration
@@ -32,4 +32,3 @@ environment_variables:
   NEXT_PUBLIC_NETWORK: testnet
   NEXT_PUBLIC_PREVIEW: "true"
   # Add more env vars as needed
-
