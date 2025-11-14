@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 env:
   # AWS Configuration
   AWS_REGION: eu-west-1
