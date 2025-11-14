@@ -70,3 +70,16 @@ resource "aws_apprunner_service" "frontend" {
   }
 }
 
+################################################################################
+# Custom Domain Association
+################################################################################
+
+resource "aws_apprunner_custom_domain_association" "frontend" {
+  count = local.env.enable_custom_domain ? 1 : 0
+
+  domain_name          = local.env.domain
+  service_arn          = aws_apprunner_service.frontend.arn
+  enable_www_subdomain = false
+
+  depends_on = [aws_apprunner_service.frontend]
+}

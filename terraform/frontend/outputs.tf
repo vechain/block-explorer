@@ -22,6 +22,11 @@ output "custom_domain_url" {
   value       = local.env.enable_custom_domain ? "https://${local.env.domain}" : "https://${aws_apprunner_service.frontend.service_url}"
 }
 
+output "custom_domain_status" {
+  description = "Status of custom domain association"
+  value       = local.env.enable_custom_domain ? try(aws_apprunner_custom_domain_association.frontend[0].status, "not_configured") : "disabled"
+}
+
 output "environment" {
   description = "Environment name"
   value       = local.env.environment
