@@ -73,6 +73,59 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Post initial PR comment (Building)
+        id: initial-comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
+            const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
+            
+            const body = `## Block Explorer – block-explorer-preview
+            
+            | Name | Status | Preview | Updated (UTC) |
+            |------|--------|---------|---------------|
+            | **block-explorer-preview** | 🔨 Building ([${commitSha}](${commitUrl})) | [Visit Preview →](https://pr-${prNumber}.block-explorer-preview.vechain.org) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
+            
+            ---
+            <sub>Built with commit ${commitSha} • Preview environments are automatically destroyed when PRs are closed</sub>`;
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const existingComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Block Explorer – block-explorer-preview')
+            );
+            
+            let commentId;
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: body
+              });
+              commentId = existingComment.id;
+            } else {
+              // Create new comment
+              const comment = await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+              commentId = comment.data.id;
+            }
+            
+            return commentId;
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -136,32 +189,25 @@ jobs:
           echo "custom_url=${CUSTOM_URL}" >> $GITHUB_OUTPUT
           echo "service_url=${SERVICE_URL}" >> $GITHUB_OUTPUT
 
-      - name: Comment on PR
+      - name: Update PR comment (Ready)
         uses: actions/github-script@v7
         with:
           script: |
             const customUrl = '${{ steps.outputs.outputs.custom_url }}';
             const serviceUrl = '${{ steps.outputs.outputs.service_url }}';
-            const imageTag = '${{ needs.build-and-push.outputs.image_tag }}';
             const prNumber = context.issue.number;
+            const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
+            const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
+            const previewUrl = customUrl || serviceUrl;
             
-            const body = `## 🚀 Preview Environment Deployed!
+            const body = `## Block Explorer – block-explorer-preview
             
-            Your preview environment is ready for testing.
-            
-            ### URLs
-            ${customUrl ? `**Custom Domain:** ${customUrl}` : ''}
-            **Service URL:** ${serviceUrl}
-            
-            ### Details
-            - **PR:** #${prNumber}
-            - **Image Tag:** \`${imageTag}\`
-            - **Workspace:** \`preview-pr-${prNumber}\`
-            
-            > ⚠️ This preview environment will be automatically destroyed when the PR is closed or merged.
+            | Name | Status | Preview | Updated (UTC) |
+            |------|--------|---------|---------------|
+            | **block-explorer-preview** | ✅ Ready ([${commitSha}](${commitUrl})) | [Visit Preview →](${previewUrl}) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
             
             ---
-            <sub>Deployed via GitHub Actions</sub>`;
+            <sub>Built with commit ${commitSha} • Preview environments are automatically destroyed when PRs are closed</sub>`;
             
             // Find existing comment
             const comments = await github.rest.issues.listComments({
@@ -172,7 +218,7 @@ jobs:
             
             const existingComment = comments.data.find(comment => 
               comment.user.type === 'Bot' && 
-              comment.body.includes('Preview Environment Deployed')
+              comment.body.includes('Block Explorer – block-explorer-preview')
             );
             
             if (existingComment) {
@@ -184,7 +230,7 @@ jobs:
                 body: body
               });
             } else {
-              // Create new comment
+              // Create new comment (shouldn't happen, but just in case)
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -193,7 +239,48 @@ jobs:
               });
             }
 
+      - name: Update PR comment on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
+            const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            
+            const body = `## Block Explorer – block-explorer-preview
+            
+            | Name | Status | Preview | Updated (UTC) |
+            |------|--------|---------|---------------|
+            | **block-explorer-preview** | ❌ Failed ([${commitSha}](${commitUrl})) | [View Logs →](${runUrl}) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
+            
+            ---
+            <sub>Build failed for commit ${commitSha} • [Check logs](${runUrl}) for details</sub>`;
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const existingComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Block Explorer – block-explorer-preview')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: body
+              });
+            }
+
       - name: Deployment summary
+        if: success()
         run: |
           echo "### Preview Environment Deployed! 🎉" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

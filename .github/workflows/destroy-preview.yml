@@ -71,31 +71,53 @@ jobs:
           WORKSPACE_NAME="preview-pr-${{ github.event.pull_request.number }}"
           rm -rf "terraform/environments/${WORKSPACE_NAME}"
 
-      - name: Comment on PR
+      - name: Update PR comment (Destroyed)
         if: steps.workspace.outputs.exists == 'true'
         uses: actions/github-script@v7
         with:
           script: |
             const prNumber = context.issue.number;
+            const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
+            const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
             
-            const body = `## 🗑️ Preview Environment Destroyed
+            const body = `## Block Explorer – block-explorer-preview
             
-            The preview environment for this PR has been cleaned up.
-            
-            ### Details
-            - **PR:** #${prNumber}
-            - **Workspace:** \`preview-pr-${prNumber}\`
-            - **Status:** Destroyed
+            | Name | Status | Preview | Updated (UTC) |
+            |------|--------|---------|---------------|
+            | **block-explorer-preview** | 🗑️ Destroyed ([${commitSha}](${commitUrl})) | Preview deleted | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
             
             ---
-            <sub>Destroyed via GitHub Actions</sub>`;
+            <sub>Preview environment destroyed after PR was ${context.payload.action}</sub>`;
             
-            await github.rest.issues.createComment({
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
-              body: body
             });
+            
+            const existingComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Block Explorer – block-explorer-preview')
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: body
+              });
+            } else {
+              // Create new comment if none exists
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
 
       - name: Destruction summary
         if: steps.workspace.outputs.exists == 'true'
