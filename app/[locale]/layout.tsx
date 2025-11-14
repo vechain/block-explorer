@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Navbar } from '@/components/navigation/NavBar'
 import { ChakraProvider } from '@/components/theme/provider'
-import { BackgroundWrapper } from '@/components/BackgroundWrapper'
 import type { Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
 import { QueryClientProvider } from '@/lib/query-client/provider'
@@ -31,51 +30,37 @@ export default async function RootLayout({
   const { locale } = await params
 
   return (
-    <html
-      lang={locale}
-      suppressHydrationWarning
-      style={{
-        margin: 0,
-        padding: 0,
-        height: '100%',
-        width: '100%',
-      }}
-    >
-      <body
-        className={inter.variable}
-        style={{
-          margin: 0,
-          padding: 0,
-          backgroundImage: 'url(/bg/Mobile.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center center',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'scroll',
-          minHeight: '100vh',
-          minWidth: '100vw',
-          height: 'auto',
-          width: '100%',
-        }}
-      >
-        <BackgroundWrapper />
+    <html lang={locale} suppressHydrationWarning>
+      <body className={inter.variable}>
         <Providers locale={locale}>
           <Box
+            as="main"
             minH="100vh"
-            minW="100vw"
-            position="relative"
-            w="100%"
-            h="auto"
+            bgImage={{
+              base: "url('/bg/Mobile.jpg')", 
+              md: "url('/bg/Desktop.jpg')",
+            }}
+            bgRepeat="no-repeat"
+            bgSize={{
+              base: 'auto 100%', 
+              md: 'cover',
+            }}
+            backgroundPosition="top center"
+            overflowX={{ base: 'auto', md: 'hidden' }}
+            overflowY="auto"
           >
             <PrereleaseBanner />
             <Container
-              maxWidth="1440px"
+              maxW="1440px"
               display="flex"
               flexDirection="column"
-              p={{ base: 4, md: 10 }}
-              w="100%"
+              px={10}
+              pt={10}
+              pb={8}
             >
               <Navbar />
-              <Flex mt={{ base: 4, md: 10 }} direction="column" flex={1}>
+
+              <Flex mt={10} direction="column" flex={1}>
                 {children}
               </Flex>
             </Container>
