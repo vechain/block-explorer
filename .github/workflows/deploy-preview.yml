@@ -33,7 +33,7 @@ jobs:
       pull-requests: write
     outputs:
       comment_id: ${{ steps.comment.outputs.comment_id }}
-    
+
     steps:
       - name: Post initial PR comment (Building)
         id: comment
@@ -86,7 +86,7 @@ jobs:
               });
               commentId = comment.data.id;
             }
-            
+
             console.log(`Comment ID: ${commentId}`);
             core.setOutput('comment_id', commentId);
 
@@ -96,7 +96,7 @@ jobs:
     outputs:
       image_tag: ${{ steps.meta.outputs.image_tag }}
       short_sha: ${{ steps.meta.outputs.short_sha }}
-    
+
     steps:
       - name: Generate metadata
         id: meta
@@ -208,7 +208,7 @@ jobs:
     if: always() && needs.pr-comment.result == 'success'
     permissions:
       pull-requests: write
-    
+
     steps:
       - name: Update PR comment with final status
         uses: actions/github-script@v7
@@ -219,12 +219,12 @@ jobs:
             const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const projectName = process.env.PROJECT_NAME;
-            
+
             const buildResult = '${{ needs.build-and-push.result }}';
             const deployResult = '${{ needs.deploy.result }}';
-            
+
             let body;
-            
+
             if (buildResult === 'failure') {
               // Build failed
               body = `## ${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview
