@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['@chakra-ui/react'],
   },
   images: { remotePatterns: [{ protocol: 'https', hostname: '**' }] },
+  output: 'standalone', // Required for Docker deployment
   webpack: config => {
     // Suppress webpack cache warnings
     config.infrastructureLogging = {
