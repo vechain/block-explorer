@@ -106,9 +106,9 @@ jobs:
     needs: [prepare-metadata]
     uses: ./.github/workflows/build-push-ecr.yml
     with:
-      ecr_repository: ${{ vars.ECR_REPOSITORY }}
+      ecr_repository: block-explorer
       image_tag: ${{ needs.prepare-metadata.outputs.image_tag }}
-      aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      aws_region: eu-west-1
     secrets:
       aws_role_arn: ${{ secrets.AWS_ACC_ROLE }}
 
