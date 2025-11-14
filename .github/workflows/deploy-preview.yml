@@ -39,7 +39,8 @@ jobs:
       - name: Generate image metadata
         id: meta
         run: |
-          IMAGE_TAG="pr-${{ github.event.pull_request.number }}"
+          SHORT_SHA=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
+          IMAGE_TAG="pr-${{ github.event.pull_request.number }}-${SHORT_SHA}"
           IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}"
           echo "tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
           echo "uri=${IMAGE_URI}" >> $GITHUB_OUTPUT
@@ -54,6 +55,9 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.uri }}
+          platforms: linux/amd64
+          provenance: false
+          sbom: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -141,6 +145,7 @@ jobs:
       - name: Create preview environment config
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
+          SHORT_SHA=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
           WORKSPACE_NAME="preview-pr-${PR_NUMBER}"
           
           # Create workspace directory if it doesn't exist
@@ -149,11 +154,9 @@ jobs:
           # Copy and customize the preview config
           cp terraform/environments/preview/preview.yaml.example "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
           
-          # Replace placeholders with actual PR number
+          # Replace placeholders with actual values
           sed -i "s/{PR_NUMBER}/${PR_NUMBER}/g" "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
-          
-          # Update image tag
-          sed -i "s/^image_tag:.*/image_tag: ${{ needs.build-and-push.outputs.image_tag }}/" "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
+          sed -i "s/{COMMIT_SHA}/${SHORT_SHA}/g" "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
           
           # Show the config for debugging
           echo "Generated config:"

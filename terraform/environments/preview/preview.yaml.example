@@ -10,7 +10,8 @@ domain: pr-{PR_NUMBER}.block-explorer-preview.vechain.org
 enable_custom_domain: true
 
 # Docker image configuration
-image_tag: pr-{PR_NUMBER}
+# GitHub Actions will set this to pr-{PR_NUMBER}-{COMMIT_SHA}
+image_tag: pr-{PR_NUMBER}-{COMMIT_SHA}
 
 # App Runner instance configuration
 # Smaller resources for preview environments
