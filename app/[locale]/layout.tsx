@@ -46,7 +46,6 @@ export default async function RootLayout({
             }}
             bgRepeat="no-repeat"
             overflowX={{ base: 'auto', md: 'hidden' }}
-            overflowY="auto"
           >
             <PrereleaseBanner />
             <Container
