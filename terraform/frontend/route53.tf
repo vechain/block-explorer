@@ -9,6 +9,5 @@ resource "aws_route53_record" "frontend" {
     type    = local.env.environment == "prod" ? "A" : "CNAME"
     ttl     = 30
     records = [aws_apprunner_service.frontend.service_url]
-
     depends_on = [aws_apprunner_service.frontend]
 }
