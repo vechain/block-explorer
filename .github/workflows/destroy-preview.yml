@@ -9,6 +9,14 @@ on:
 env:
   AWS_REGION: eu-west-1
   TERRAFORM_VERSION: 1.6.0
+  
+  # Project Configuration
+  PROJECT_NAME: block-explorer
+  
+  # Terraform Paths
+  TERRAFORM_DIR: terraform/frontend
+  TERRAFORM_ENV_DIR: terraform/environments
+  TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
 
 jobs:
   destroy:
@@ -38,12 +46,12 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        working-directory: terraform/frontend
+        working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
-          terraform init -backend-config=../environments/preview/backend.config
+          terraform init -backend-config=${{ env.TERRAFORM_BACKEND_CONFIG }}
 
       - name: Terraform Workspace Select
-        working-directory: terraform/frontend
+        working-directory: ${{ env.TERRAFORM_DIR }}
         id: workspace
         continue-on-error: true
         run: |
@@ -51,15 +59,31 @@ jobs:
           terraform workspace select ${WORKSPACE_NAME}
           echo "exists=true" >> $GITHUB_OUTPUT
 
+      - name: Recreate workspace config for destroy
+        if: steps.workspace.outputs.exists == 'true'
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          SHORT_SHA=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
+          WORKSPACE_NAME="preview-pr-${PR_NUMBER}"
+          
+          # Create workspace directory if it doesn't exist
+          mkdir -p "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}"
+          
+          # Copy and customize the preview config
+          cp "${{ env.TERRAFORM_ENV_DIR }}/preview/preview.yaml.example" "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
+          
+          echo "Recreated config for destroy:"
+          cat "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
+
       - name: Terraform Destroy
         if: steps.workspace.outputs.exists == 'true'
-        working-directory: terraform/frontend
+        working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
           terraform destroy -auto-approve
 
       - name: Delete Terraform Workspace
         if: steps.workspace.outputs.exists == 'true'
-        working-directory: terraform/frontend
+        working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
           WORKSPACE_NAME="preview-pr-${{ github.event.pull_request.number }}"
           terraform workspace select default
@@ -69,7 +93,7 @@ jobs:
         if: steps.workspace.outputs.exists == 'true'
         run: |
           WORKSPACE_NAME="preview-pr-${{ github.event.pull_request.number }}"
-          rm -rf "terraform/environments/${WORKSPACE_NAME}"
+          rm -rf "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}"
 
       - name: Update PR comment (Destroyed)
         if: steps.workspace.outputs.exists == 'true'
@@ -79,12 +103,13 @@ jobs:
             const prNumber = context.issue.number;
             const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
             const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
+            const projectName = process.env.PROJECT_NAME;
             
-            const body = `## Block Explorer – block-explorer-preview
+            const body = `## ${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview
             
             | Name | Status | Preview | Updated (UTC) |
             |------|--------|---------|---------------|
-            | **block-explorer-preview** | 🗑️ Destroyed ([${commitSha}](${commitUrl})) | Preview deleted | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
+            | **${projectName}-preview** | 🗑️ Destroyed ([${commitSha}](${commitUrl})) | Preview deleted | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
             
             ---
             <sub>Preview environment destroyed after PR was ${context.payload.action}</sub>`;
@@ -98,7 +123,7 @@ jobs:
             
             const existingComment = comments.data.find(comment => 
               comment.user.type === 'Bot' && 
-              comment.body.includes('Block Explorer – block-explorer-preview')
+              comment.body.includes(`${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview`)
             );
             
             if (existingComment) {
