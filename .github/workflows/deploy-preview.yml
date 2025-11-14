@@ -7,59 +7,30 @@ on:
       - main
 
 env:
+  # AWS Configuration
   AWS_REGION: eu-west-1
   ECR_REPOSITORY: block-explorer
   TERRAFORM_VERSION: 1.6.0
 
+  # Project Configuration
+  PROJECT_NAME: block-explorer
+  PREVIEW_DOMAIN_SUFFIX: block-explorer-preview.vechain.org
+
+  # Terraform Paths
+  TERRAFORM_DIR: terraform/frontend
+  TERRAFORM_ENV_DIR: terraform/environments
+  TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
+
 jobs:
   build-and-push:
-    name: Build and Push Docker Image
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    outputs:
-      image_tag: ${{ steps.meta.outputs.tag }}
-      image_uri: ${{ steps.meta.outputs.uri }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ACC_ROLE }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Generate image metadata
-        id: meta
-        run: |
-          SHORT_SHA=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
-          IMAGE_TAG="pr-${{ github.event.pull_request.number }}-${SHORT_SHA}"
-          IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}"
-          echo "tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          echo "uri=${IMAGE_URI}" >> $GITHUB_OUTPUT
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.uri }}
-          platforms: linux/amd64
-          provenance: false
-          sbom: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    uses: ./.github/workflows/build-push-ecr.yml
+    with:
+      ecr_repository: ${{ vars.ECR_REPOSITORY || 'block-explorer' }}
+      image_tag: pr-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+      aws_region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      tag_as_latest: false
+    secrets:
+      aws_role_arn: ${{ secrets.AWS_ACC_ROLE }}
 
   deploy:
     name: Deploy Preview Environment
@@ -85,16 +56,16 @@ jobs:
             const prNumber = context.issue.number;
             const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
             const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
-            const customDomain = `pr-${prNumber}.block-explorer-preview.vechain.org`;
+            const projectName = process.env.PROJECT_NAME;
 
-            const body = `## Block Explorer – block-explorer-preview
+            const body = `## ${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview
 
             | Name | Status | Preview | Updated (UTC) |
             |------|--------|---------|---------------|
-            | **block-explorer-preview** | 🔨 Building ([${commitSha}](${commitUrl})) | Deploying... | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
+            | **${projectName}-preview** | 🔨 Building ([${commitSha}](${commitUrl})) | Deploying... | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
 
             ---
-            <sub>Built with commit ${commitSha} • Preview environments are automatically destroyed when PRs are closed</sub>`;
+            <sub>Building with commit ${commitSha} • Preview environments are automatically destroyed when PRs are closed</sub>`;
 
             // Find existing comment
             const comments = await github.rest.issues.listComments({
@@ -105,7 +76,7 @@ jobs:
 
             const existingComment = comments.data.find(comment => 
               comment.user.type === 'Bot' && 
-              comment.body.includes('Block Explorer – block-explorer-preview')
+              comment.body.includes(`${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview`)
             );
 
             let commentId;
@@ -150,42 +121,42 @@ jobs:
           WORKSPACE_NAME="preview-pr-${PR_NUMBER}"
 
           # Create workspace directory if it doesn't exist
-          mkdir -p "terraform/environments/${WORKSPACE_NAME}"
+          mkdir -p "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}"
 
           # Copy and customize the preview config
-          cp terraform/environments/preview/preview.yaml.example "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
+          cp "${{ env.TERRAFORM_ENV_DIR }}/preview/preview.yaml.example" "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
 
           # Replace placeholders with actual values
-          sed -i "s/{PR_NUMBER}/${PR_NUMBER}/g" "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
-          sed -i "s/{COMMIT_SHA}/${SHORT_SHA}/g" "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
+          sed -i "s/{PR_NUMBER}/${PR_NUMBER}/g" "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
+          sed -i "s/{COMMIT_SHA}/${SHORT_SHA}/g" "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
 
           # Show the config for debugging
           echo "Generated config:"
-          cat "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
+          cat "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
 
       - name: Terraform Init
-        working-directory: terraform/frontend
+        working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
-          terraform init -backend-config=../environments/preview/backend.config
+          terraform init -backend-config=${{ env.TERRAFORM_BACKEND_CONFIG }}
 
       - name: Terraform Workspace
-        working-directory: terraform/frontend
+        working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
           WORKSPACE_NAME="preview-pr-${{ github.event.pull_request.number }}"
           terraform workspace select ${WORKSPACE_NAME} || terraform workspace new ${WORKSPACE_NAME}
 
       - name: Terraform Plan
-        working-directory: terraform/frontend
+        working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
           terraform plan -out=tfplan
 
       - name: Terraform Apply
-        working-directory: terraform/frontend
+        working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
           terraform apply -auto-approve tfplan
 
       - name: Get deployment URL
-        working-directory: terraform/frontend
+        working-directory: ${{ env.TERRAFORM_DIR }}
         id: outputs
         run: |
           CUSTOM_URL=$(terraform output -raw custom_domain_url || echo "")
@@ -205,16 +176,16 @@ jobs:
             const prNumber = context.issue.number;
             const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
             const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
-            const customDomain = `pr-${prNumber}.block-explorer-preview.vechain.org`;
+            const projectName = process.env.PROJECT_NAME;
 
-            let previewLinks = `[Custom Domain →](${customUrl}) • [App Runner URL →](${serviceUrl})`;
-            const statusNote = '\n\n> ⏱️ **Note:** Custom domain may take 5-10 minutes to activate on first deployment. Use App Runner URL in the meantime.';
+            let previewLinks = `[Custom Domain →](${customUrl})  • [Default URL →](${serviceUrl})`;
+            let statusNote = '\n\n> ⏱️ **Note:** Custom domain may take 5-10 minutes to activate on first deployment. Use App Runner URL in the meantime.';
 
-            const body = `## Block Explorer – block-explorer-preview
+            const body = `## ${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview
 
             | Name | Status | Preview | Updated (UTC) |
             |------|--------|---------|---------------|
-            | **block-explorer-preview** | ✅ Ready ([${commitSha}](${commitUrl})) | ${previewLinks} | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
+            | **${projectName}-preview** | ✅ Ready ([${commitSha}](${commitUrl})) | ${previewLinks} | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
             ${statusNote}
 
             ---
@@ -229,7 +200,7 @@ jobs:
 
             const existingComment = comments.data.find(comment => 
               comment.user.type === 'Bot' && 
-              comment.body.includes('Block Explorer – block-explorer-preview')
+              comment.body.includes(`${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview`)
             );
 
             if (existingComment) {
@@ -259,12 +230,13 @@ jobs:
             const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
             const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const projectName = process.env.PROJECT_NAME;
 
-            const body = `## Block Explorer – block-explorer-preview
+            const body = `## ${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview
 
             | Name | Status | Preview | Updated (UTC) |
             |------|--------|---------|---------------|
-            | **block-explorer-preview** | ❌ Failed ([${commitSha}](${commitUrl})) | [View Logs →](${runUrl}) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
+            | **${projectName}-preview** | ❌ Failed ([${commitSha}](${commitUrl})) | [View Logs →](${runUrl}) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
 
             ---
             <sub>Build failed for commit ${commitSha} • [Check logs](${runUrl}) for details</sub>`;
@@ -278,7 +250,7 @@ jobs:
 
             const existingComment = comments.data.find(comment => 
               comment.user.type === 'Bot' && 
-              comment.body.includes('Block Explorer – block-explorer-preview')
+              comment.body.includes(`${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview`)
             );
 
             if (existingComment) {
