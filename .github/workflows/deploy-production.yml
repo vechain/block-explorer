@@ -7,7 +7,7 @@ on:
     paths-ignore:
       - "**.md"
       - ".github/**"
-      - "!.github/workflows/deploy-production.yml"
+      - "!.github/workflows/deploy-prod.yml"
 
   workflow_dispatch:
     inputs:
@@ -23,7 +23,7 @@ on:
 env:
   AWS_REGION: eu-west-1
   ECR_REPOSITORY: block-explorer
-  ENVIRONMENT: production
+  ENVIRONMENT: prod
   TERRAFORM_VERSION: 1.6.0
 
 jobs:
@@ -45,7 +45,7 @@ jobs:
       id-token: write
       contents: read
     environment:
-      name: production
+      name: prod
       url: https://block-explorer.vechain.org
 
     steps:
@@ -64,21 +64,21 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
-      - name: Update production config with new image tag
+      - name: Update prod config with new image tag
         run: |
-          cd terraform/environments/production
-          sed -i "s/^image_tag:.*/image_tag: ${{ needs.build-and-push.outputs.image_tag }}/" production.yaml
-          cat production.yaml
+          cd terraform/environments/prod
+          sed -i "s/^image_tag:.*/image_tag: ${{ needs.build-and-push.outputs.tag }}/" prod.yaml
+          cat prod.yaml
 
       - name: Terraform Init
         working-directory: terraform/frontend
         run: |
-          terraform init -backend-config=../environments/production/backend.config
+          terraform init -backend-config=../environments/prod/backend.config
 
       - name: Terraform Workspace
         working-directory: terraform/frontend
         run: |
-          terraform workspace select production || terraform workspace new production
+          terraform workspace select prod
 
       - name: Terraform Plan
         working-directory: terraform/frontend
