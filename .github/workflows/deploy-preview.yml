@@ -85,28 +85,29 @@ jobs:
             const prNumber = context.issue.number;
             const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
             const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
-            
+            const customDomain = `pr-${prNumber}.block-explorer-preview.vechain.org`;
+
             const body = `## Block Explorer – block-explorer-preview
-            
+
             | Name | Status | Preview | Updated (UTC) |
             |------|--------|---------|---------------|
-            | **block-explorer-preview** | 🔨 Building ([${commitSha}](${commitUrl})) | [Visit Preview →](https://pr-${prNumber}.block-explorer-preview.vechain.org) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
-            
+            | **block-explorer-preview** | 🔨 Building ([${commitSha}](${commitUrl})) | Deploying... | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
+
             ---
             <sub>Built with commit ${commitSha} • Preview environments are automatically destroyed when PRs are closed</sub>`;
-            
+
             // Find existing comment
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
             });
-            
+
             const existingComment = comments.data.find(comment => 
               comment.user.type === 'Bot' && 
               comment.body.includes('Block Explorer – block-explorer-preview')
             );
-            
+
             let commentId;
             if (existingComment) {
               // Update existing comment
@@ -127,7 +128,7 @@ jobs:
               });
               commentId = comment.data.id;
             }
-            
+
             return commentId;
 
       - name: Configure AWS credentials
@@ -147,17 +148,17 @@ jobs:
           PR_NUMBER=${{ github.event.pull_request.number }}
           SHORT_SHA=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
           WORKSPACE_NAME="preview-pr-${PR_NUMBER}"
-          
+
           # Create workspace directory if it doesn't exist
           mkdir -p "terraform/environments/${WORKSPACE_NAME}"
-          
+
           # Copy and customize the preview config
           cp terraform/environments/preview/preview.yaml.example "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
-          
+
           # Replace placeholders with actual values
           sed -i "s/{PR_NUMBER}/${PR_NUMBER}/g" "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
           sed -i "s/{COMMIT_SHA}/${SHORT_SHA}/g" "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
-          
+
           # Show the config for debugging
           echo "Generated config:"
           cat "terraform/environments/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
@@ -189,8 +190,10 @@ jobs:
         run: |
           CUSTOM_URL=$(terraform output -raw custom_domain_url || echo "")
           SERVICE_URL=$(terraform output -raw service_url || echo "")
+          DOMAIN_STATUS=$(terraform output -raw custom_domain_status || echo "unknown")
           echo "custom_url=${CUSTOM_URL}" >> $GITHUB_OUTPUT
           echo "service_url=${SERVICE_URL}" >> $GITHUB_OUTPUT
+          echo "custom_domain_status=${DOMAIN_STATUS}" >> $GITHUB_OUTPUT
 
       - name: Update PR comment (Ready)
         uses: actions/github-script@v7
@@ -198,32 +201,37 @@ jobs:
           script: |
             const customUrl = '${{ steps.outputs.outputs.custom_url }}';
             const serviceUrl = '${{ steps.outputs.outputs.service_url }}';
+            const domainStatus = '${{ steps.outputs.outputs.custom_domain_status }}';
             const prNumber = context.issue.number;
             const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
             const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
-            const previewUrl = customUrl || serviceUrl;
-            
+            const customDomain = `pr-${prNumber}.block-explorer-preview.vechain.org`;
+
+            let previewLinks = `[Custom Domain →](${customUrl}) • [App Runner URL →](${serviceUrl})`;
+            const statusNote = '\n\n> ⏱️ **Note:** Custom domain may take 5-10 minutes to activate on first deployment. Use App Runner URL in the meantime.';
+
             const body = `## Block Explorer – block-explorer-preview
-            
+
             | Name | Status | Preview | Updated (UTC) |
             |------|--------|---------|---------------|
-            | **block-explorer-preview** | ✅ Ready ([${commitSha}](${commitUrl})) | [Visit Preview →](${serviceUrl}) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
-            
+            | **block-explorer-preview** | ✅ Ready ([${commitSha}](${commitUrl})) | ${previewLinks} | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
+            ${statusNote}
+
             ---
             <sub>Built with commit ${commitSha} • Preview environments are automatically destroyed when PRs are closed</sub>`;
-            
+
             // Find existing comment
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
             });
-            
+
             const existingComment = comments.data.find(comment => 
               comment.user.type === 'Bot' && 
               comment.body.includes('Block Explorer – block-explorer-preview')
             );
-            
+
             if (existingComment) {
               // Update existing comment
               await github.rest.issues.updateComment({
@@ -251,28 +259,28 @@ jobs:
             const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
             const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            
+
             const body = `## Block Explorer – block-explorer-preview
-            
+
             | Name | Status | Preview | Updated (UTC) |
             |------|--------|---------|---------------|
             | **block-explorer-preview** | ❌ Failed ([${commitSha}](${commitUrl})) | [View Logs →](${runUrl}) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
-            
+
             ---
             <sub>Build failed for commit ${commitSha} • [Check logs](${runUrl}) for details</sub>`;
-            
+
             // Find existing comment
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
             });
-            
+
             const existingComment = comments.data.find(comment => 
               comment.user.type === 'Bot' && 
               comment.body.includes('Block Explorer – block-explorer-preview')
             );
-            
+
             if (existingComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -294,4 +302,3 @@ jobs:
             echo "**Custom Domain:** ${{ steps.outputs.outputs.custom_url }}" >> $GITHUB_STEP_SUMMARY
           fi
           echo "**Service URL:** ${{ steps.outputs.outputs.service_url }}" >> $GITHUB_STEP_SUMMARY
-
