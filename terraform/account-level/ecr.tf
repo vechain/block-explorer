@@ -41,12 +41,12 @@ resource "aws_ecr_lifecycle_policy" "block_explorer" {
       },
       {
         rulePriority = 2
-        description  = "Keep last 10 preview images per PR"
+        description  = "Keep last 10 preview images"
         selection = {
           tagStatus     = "tagged"
           tagPrefixList = ["pr-"]
           countType     = "imageCountMoreThan"
-          countNumber   = 50
+          countNumber   = 10
         }
         action = {
           type = "expire"
@@ -54,12 +54,12 @@ resource "aws_ecr_lifecycle_policy" "block_explorer" {
       },
       {
         rulePriority = 3
-        description  = "Remove untagged images after 7 days"
+        description  = "Remove untagged images after 1 day"
         selection = {
           tagStatus   = "untagged"
           countType   = "sinceImagePushed"
           countUnit   = "days"
-          countNumber = 7
+          countNumber = 1
         }
         action = {
           type = "expire"
