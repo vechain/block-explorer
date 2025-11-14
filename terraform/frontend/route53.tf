@@ -12,6 +12,8 @@ resource "aws_route53_record" "preview_frontend" {
     depends_on = [aws_apprunner_service.frontend]
 }
 
+data "aws_apprunner_hosted_zone_id" "main" {}
+
 resource "aws_route53_record" "prod_frontend" {
     count = local.env.environment == "prod" ? 1 : 0
     zone_id = data.terraform_remote_state.account_level.outputs.block_explorer_public_zone_prod_id
@@ -19,7 +21,7 @@ resource "aws_route53_record" "prod_frontend" {
     type    = "A"
     alias {
         name    = aws_apprunner_service.frontend.service_url
-        zone_id = data.terraform_remote_state.account_level.outputs.block_explorer_public_zone_prod_id
+        zone_id = data.aws_apprunner_hosted_zone_id.main.id
         evaluate_target_health = true
     }
     depends_on = [aws_apprunner_service.frontend]
