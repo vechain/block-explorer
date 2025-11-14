@@ -14,12 +14,12 @@ image_tag: pr-{PR_NUMBER}
 
 # App Runner instance configuration
 # Smaller resources for preview environments
-cpu: 1024          # 1 vCPU
-memory: 2048       # 2 GB
+cpu: 512          # 0.5 vCPU
+memory: 512       # 0.5 GB
 port: 3000
 
 # Auto-scaling configuration
-min_size: 0        # Scale to zero when idle to save costs
+min_size: 1        # Minimum instances (App Runner requires at least 1)
 max_size: 2        # Maximum 2 instances
 max_concurrency: 100  # Max concurrent requests per instance
 

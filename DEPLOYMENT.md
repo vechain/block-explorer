@@ -284,21 +284,29 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 
 ## Cost Breakdown
 
+**Important Note**: AWS App Runner requires a minimum of 1 instance (`min_size: 1`). It doesn't support scaling to zero. However, you only pay for provisioned memory when idle (not CPU), making costs very low for inactive preview environments.
+
 ### Production (Monthly)
-- App Runner: $46 (1 vCPU, always warm)
+- App Runner: ~$25-30 (1 vCPU, 2GB RAM, 24/7)
 - ECR Storage: $1-2 per GB
 - Data Transfer: $0.09 per GB
-- **Total: ~$50/month**
+- **Total: ~$30-35/month**
 
 ### Preview Environments (Monthly per PR)
-- App Runner: $2-3 (scales to zero)
+- App Runner: ~$12-15 (1 vCPU, 2GB RAM, 1 instance minimum)
+- Costs are lower when idle (only memory provisioned, no CPU usage)
 - ECR Storage: Shared with production
-- **Total: ~$2-3/month per active preview**
+- **Total: ~$12-15/month per preview**
 
 ### Example with 5 Active PRs
-- Production: $50
-- 5 Previews: $15
-- **Total: ~$65/month**
+- Production: $35
+- 5 Previews: $70
+- **Total: ~$105/month**
+
+**Cost Optimization Tips**:
+- Delete preview environments promptly after PR merge (automated)
+- Use smaller instance sizes for previews (0.25 vCPU, 0.5GB RAM) if sufficient
+- Monitor idle previews and manually delete if needed
 
 ## Cleanup
 
