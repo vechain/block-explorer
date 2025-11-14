@@ -40,12 +40,11 @@ export default async function RootLayout({
               base: "url('/bg/Mobile.jpg')", 
               md: "url('/bg/Desktop.jpg')",
             }}
-            bgRepeat="no-repeat"
             bgSize={{
-              base: 'auto 100%', 
+              base: '100% 100%',
               md: 'cover',
             }}
-            backgroundPosition="top center"
+            bgRepeat="no-repeat"
             overflowX={{ base: 'auto', md: 'hidden' }}
             overflowY="auto"
           >
