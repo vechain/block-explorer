@@ -3,7 +3,7 @@ environment: prod
 region: eu-west-1
 
 # Domain configuration
-domain: block-explorer.vechain.org
+domain: prod.block-explorer.vechain.org
 enable_custom_domain: true
 
 # Docker image configuration
