@@ -1,5 +1,4 @@
 /**
- * Text style utilities for the design system
  * These can be used with Chakra UI components via the `textStyle` prop or spread directly
  */
 
