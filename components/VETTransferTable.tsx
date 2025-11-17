@@ -1,8 +1,8 @@
 import { Table } from '@chakra-ui/react'
-import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
-import { VETBalance } from '@/components/ui/TokenBalance'
+import { ErrorBoundary } from '@/components/ui-legacy/ErrorBoundary'
+import { VETBalance } from '@/components/ui-legacy/TokenBalance'
 import type { Transfer } from '@/lib/schemas'
-import { VnsBadgeOrAddressLink } from './ui/VnsBadge'
+import { VnsBadgeOrAddressLink } from './ui-legacy/VnsBadge'
 
 export const VETTransferTable = ({ transfers }: { transfers: Transfer[] }) => {
   return (
