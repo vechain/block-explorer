@@ -33,10 +33,21 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning>
       <body className={inter.variable}>
         <Providers locale={locale}>
-          <Box h="100vh">
+          <Box
+            as="main"
+            minH="100vh"
+            bgImage={{
+              base: "url('/bg/Mobile.jpg')",
+              md: "url('/bg/Desktop.jpg')",
+            }}
+            bgSize="100%"
+            overflowX="hidden"
+            // TODO: Update background color with theme once implemented
+            backgroundColor="#0B0C10">
             <PrereleaseBanner />
-            <Container maxWidth="1440px" display="flex" flexDirection="column" p={10}>
+            <Container maxW="1440px" display="flex" flexDirection="column" px={4} pt={2} pb={10}>
               <Navbar />
+
               <Flex mt={10} direction="column" flex={1}>
                 {children}
               </Flex>

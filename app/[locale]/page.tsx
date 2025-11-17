@@ -27,7 +27,7 @@ export default async function HomePage({
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Stack direction="column" gap={12}>
-        <Flex gap={4}>
+        <Flex gap={4} width="100%" overflowX="auto">
           <BlockUsage />
           <Stats />
         </Flex>
