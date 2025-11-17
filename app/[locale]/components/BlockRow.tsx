@@ -1,6 +1,6 @@
 import { Group, Skeleton, Text } from '@chakra-ui/react'
 import { motion } from 'motion/react'
-import { BlockLink } from '@/components/ui/Links'
+import { BlockLink } from '@/components/ui-legacy/Links'
 import type { ExpandedBlockDetail } from '@/lib/schemas'
 import { formatDateFromTimestamp } from '@/lib/utils/date'
 

@@ -1,7 +1,7 @@
 import { Stack } from '@chakra-ui/react'
 import { useState } from 'react'
 import { NoTransactions } from '@/components/NoResults'
-import { Pagination } from '@/components/ui/Pagination'
+import { Pagination } from '@/components/ui-legacy/Pagination'
 import type { AddressString } from '@/lib/schemas'
 import { useAccountTransactions } from '@/services/veworld-indexer/hooks'
 import { TransactionsTable } from './TransactionsTable'
