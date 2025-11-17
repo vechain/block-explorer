@@ -42,7 +42,6 @@ const config = defineConfig({
         'highlight-primary': { value: 'rgba(184, 166, 255, 1)' },
         'highlight-secondary': { value: 'rgba(231, 130, 255, 1)' },
         'highlight-tertiary': { value: 'rgba(56, 216, 153, 1)' },
-        // Keep existing color scales for backward compatibility
         gray: {
           50: { value: '#F9F9FA' },
           100: { value: '#F1F2F3' },
