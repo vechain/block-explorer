@@ -8,7 +8,7 @@ Shared infrastructure for Block Explorer that persists across all environments.
 - **Name**: `block-explorer`
 - **Purpose**: Stores Docker images for all environments
 - **Lifecycle Policy**: 
-  - Keeps last 30 production images (`prod-*`)
+  - Keeps last 30 production images (`v.*`)
   - Keeps last 10 preview images (`pr-*`)
   - Removes untagged images after 1 day
 

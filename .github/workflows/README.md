@@ -7,17 +7,29 @@ Automated CI/CD for Block Explorer using GitHub Actions and AWS App Runner.
 ### Production Deployment (`deploy-production.yml`)
 
 **Triggers:**
-- Push to `main` branch (excludes `**.md`, `.github/**` except this workflow)
-- Manual dispatch with `terraform_action` input (`apply`/`plan`)
+- Manual workflow dispatch only (no automatic deployments)
+
+**Required Inputs:**
+- `terraform_action`: Choose between `dry-run` (plan only) or `deploy` (apply)
+- Must be triggered from a version tag (format: `v.X.Y.Z`)
 
 **Jobs:**
-1. `prepare-metadata` - Generates SHORT_SHA and image tag
-2. `build-and-push` - Builds and pushes Docker image
-3. `deploy` - Deploys to App Runner via Terraform
+1. `validate-version-format` - Validates version tag format
+2. `check-existing-release` - Checks if release already exists
+3. `prepare-metadata` - Extracts version from tag
+4. `build-and-push` - Builds and pushes Docker image
+5. `deploy` - Deploys to App Runner via Terraform (if action is `deploy`)
 
-**Image Tag:** `prod-{short_sha}` (e.g., `prod-a1b2c3d`)
+**Image Tag:** `v.X.Y.Z` (e.g., `v.1.2.3`) - uses the version tag directly
 
 **Domain:** `https://block-explorer.vechain.org`
+
+**Deployment Process:**
+1. Create a version tag matching pattern `v.X.Y.Z`
+2. Go to Actions → Deploy to Production → Run workflow
+3. Select the version tag from dropdown
+4. Choose `dry-run` to preview changes or `deploy` to apply
+5. Monitor deployment progress
 
 ---
 
@@ -104,16 +116,20 @@ Automated CI/CD for Block Explorer using GitHub Actions and AWS App Runner.
 
 | Environment | Pattern | Example | Purpose |
 |-------------|---------|---------|---------|
-| Production | `prod-{short_sha}` | `prod-a1b2c3d` | 7-char commit SHA |
-| Preview | `pr-{number}-{short_sha}` | `pr-144-a1b2c3d` | Forces App Runner to pull new image |
+| Production | `v.X.Y.Z` | `v.1.2.3` | Semantic version tag |
+| Preview | `pr-{number}-{short_sha}` | `pr-144-a1b2c3d` | PR number + 7-char commit SHA |
 
-**Why SHORT_SHA?**
-- Unique per commit
-- Terraform detects changes
-- App Runner pulls latest image
+**Production Tags:**
+- Uses semantic versioning (`v.X.Y.Z`)
+- Must match an existing git tag
+- Immutable - each version deployed once
+- Provides clear release history
+
+**Preview Tags:**
+- Includes SHORT_SHA (7-char commit hash)
+- Unique per commit on each PR
+- Forces App Runner to pull new image
 - Prevents stale deployments
-
-**Note:** No `latest` tag is used (removed for consistency with original behavior)
 
 ---
 
@@ -221,8 +237,8 @@ concurrency:
 - **Auto-cleanup:** Destroyed when PR closes
 
 ### Image Lifecycle (ECR)
-- Keeps last 30 production images
-- Keeps last 10 preview images
+- Keeps last 30 production images (tagged `v.*`)
+- Keeps last 10 preview images (tagged `pr-*`)
 - Removes untagged images after 1 day
 
 ---
