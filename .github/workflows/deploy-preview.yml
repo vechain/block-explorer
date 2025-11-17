@@ -251,7 +251,7 @@ jobs:
               const serviceUrl = '${{ needs.deploy.outputs.service_url }}';
               
               let previewLinks = `[Custom Domain →](${customUrl})  • [Default URL →](${serviceUrl})`;
-              let statusNote = '\n\n> ⏱️ **Note:** Custom domain may take 5-10 minutes to activate on first deployment. Use App Runner URL in the meantime.';
+              let statusNote = '\n\n> ⏱️ **Note:** Custom domain may take 5-10 minutes to activate on first deployment. Use Default URL in the meantime.';
               
               body = `## ${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview
 
