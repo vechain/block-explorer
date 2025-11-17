@@ -1,7 +1,7 @@
 import { Table } from '@chakra-ui/react'
-import { TransactionLink } from '@/components/ui/Links'
-import { VETBalance } from '@/components/ui/TokenBalance'
-import { VnsBadgeOrAddressLink } from '@/components/ui/VnsBadge'
+import { TransactionLink } from '@/components/ui-legacy/Links'
+import { VETBalance } from '@/components/ui-legacy/TokenBalance'
+import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import type { Clause, TransactionId } from '@/lib/schemas'
 import { InputData } from './InputData'
 

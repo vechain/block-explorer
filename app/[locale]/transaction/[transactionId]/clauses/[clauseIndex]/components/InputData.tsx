@@ -1,6 +1,6 @@
 import { Card, Code as ChakraCode, Table, Text } from '@chakra-ui/react'
 import type { AbiParameter } from 'viem'
-import { Code } from '@/components/ui/Code'
+import { Code } from '@/components/ui-legacy/Code'
 import { type DecodedInputData, type DecodedInputDataArgs, useDecodeInputData } from '@/hooks/useDecodeInputData'
 import type { HexString } from '@/lib/schemas'
 
