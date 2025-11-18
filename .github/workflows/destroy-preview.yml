@@ -63,7 +63,6 @@ jobs:
         if: steps.workspace.outputs.exists == 'true'
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
-          SHORT_SHA=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
           WORKSPACE_NAME="preview-pr-${PR_NUMBER}"
           
           # Create workspace directory if it doesn't exist

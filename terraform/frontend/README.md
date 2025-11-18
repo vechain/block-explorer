@@ -30,13 +30,12 @@ AWS App Runner deployment for Block Explorer using Terraform workspaces.
 ### Preview Environments
 - **Trigger**: PR opened/updated
 - **Workflow**: `.github/workflows/deploy-preview.yml`
+- **Auto-Deployment**: Enabled for fast, automated updates on new commits
 - **Process**:
-  1. Post "Building" comment on PR
-  2. Build Docker image with tag `pr-{number}-{short_sha}`
-  3. Push to ECR
-  4. Generate environment config from template
-  5. Deploy via Terraform
-  6. Update PR comment with deployment status and URLs
+  - **First PR open**: Build image + create App Runner service via Terraform (~3-5 min)
+  - **Subsequent commits**: Build & push image - App Runner auto-deploys (~2-3 min)
+  - Post "Building" comment → Update to "Deploying" when complete
+- **Image Tag**: `pr-{number}` (constant per PR - enables auto-deployment)
 - **Cleanup**: Automatically destroyed when PR is closed (`.github/workflows/destroy-preview.yml`)
 - **Concurrency**: Only latest commit per PR deploys (older builds are cancelled)
 

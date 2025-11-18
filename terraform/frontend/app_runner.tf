@@ -44,7 +44,9 @@ resource "aws_apprunner_service" "frontend" {
       }
     }
 
-    auto_deployments_enabled = false # We'll handle deployments via GitHub Actions
+    # Auto-deploy from ECR for preview environments
+    # Production uses manual deployment for version control
+    auto_deployments_enabled = local.env.environment != "prod"
   }
 
   instance_configuration {

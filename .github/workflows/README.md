@@ -40,23 +40,30 @@ Automated CI/CD for Block Explorer using GitHub Actions and AWS App Runner.
 
 **Concurrency:** Only latest commit per PR (older builds cancelled)
 
-**Jobs:**
-1. `pr-comment` - Posts initial "Building" comment immediately
-2. `prepare-metadata` - Generates SHORT_SHA and image tag
-3. `build-and-push` - Builds and pushes Docker image
-4. `deploy` - Deploys to App Runner via Terraform
-5. `update-comment` - Updates PR comment with final status (always runs)
+**How It Works:**
+- **First PR open** (`opened`): Builds image + creates App Runner service via Terraform
+- **Subsequent commits** (`synchronize`): Builds and pushes new image - App Runner auto-deploys
+- **Auto-deployments**: App Runner detects new images with tag `pr-{number}` and automatically deploys them
 
-**Image Tag:** `pr-{number}-{short_sha}` (e.g., `pr-144-a1b2c3d`)
+**Jobs:**
+1. `pr-comment` - Posts initial "Building" comment
+2. `build-and-push` - Builds and pushes Docker image
+3. `setup-preview-infra` - Creates App Runner service (only on first open)
+4. `update-comment` - Updates PR comment with final status
+
+**Image Tag:** `pr-{number}` (e.g., `pr-144`)
 
 **Domain:** `https://pr-{number}.block-explorer-preview.vechain.org`
 
+**Performance:**
+- First deployment: ~3-5 minutes (infrastructure setup)
+- Subsequent deployments: ~2-3 minutes (auto-deploy only)
+
 **PR Comment Features:**
 - Single comment per PR (updates in-place, no spam)
-- Status icons: 🔨 Building → ✅ Ready / ❌ Failed → 🗑️ Destroyed
-- Shows both custom domain and default App Runner URL
+- Status icons: 🔨 Building → 🚀 Deploying / ❌ Failed → 🗑️ Destroyed
+- Shows custom domain URL
 - Includes commit link and UTC timestamp
-- Note about 5-10 min custom domain activation
 
 ---
 
@@ -114,22 +121,24 @@ Automated CI/CD for Block Explorer using GitHub Actions and AWS App Runner.
 
 ## Image Tagging Strategy
 
-| Environment | Pattern | Example | Purpose |
-|-------------|---------|---------|---------|
-| Production | `v.X.Y.Z` | `v.1.2.3` | Semantic version tag |
-| Preview | `pr-{number}-{short_sha}` | `pr-144-a1b2c3d` | PR number + 7-char commit SHA |
+| Environment | Pattern | Example | Purpose | Auto-Deploy |
+|-------------|---------|---------|---------|-------------|
+| Production | `v.X.Y.Z` | `v.1.2.3` | Semantic version tag | Disabled |
+| Preview | `pr-{number}` | `pr-144` | PR number only | Enabled |
 
 **Production Tags:**
 - Uses semantic versioning (`v.X.Y.Z`)
 - Must match an existing git tag
 - Immutable - each version deployed once
-- Provides clear release history
+- Manual deployment for version control
+- Auto-deployments **disabled** for explicit control
 
 **Preview Tags:**
-- Includes SHORT_SHA (7-char commit hash)
-- Unique per commit on each PR
-- Forces App Runner to pull new image
-- Prevents stale deployments
+- Uses only PR number (no commit SHA)
+- Same tag for all commits on a PR
+- Auto-deployments **enabled** - App Runner detects new images
+- Faster deployments (~60% reduction after first deploy)
+- App Runner automatically pulls and deploys new images with the same tag
 
 ---
 
