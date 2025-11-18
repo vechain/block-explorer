@@ -1,126 +1,274 @@
 # GitHub Actions Workflows
 
-This directory contains CI/CD workflows for the Block Explorer application.
+Automated CI/CD for Block Explorer using GitHub Actions and AWS App Runner.
 
 ## Workflows
 
-### 1. `deploy-production.yml`
-Deploys to production environment on push to `main` branch.
+### Production Deployment (`deploy-production.yml`)
 
 **Triggers:**
-- Push to `main` branch (excluding docs/workflow changes)
-- Manual workflow dispatch
+- Manual workflow dispatch only (no automatic deployments)
 
-**Process:**
-1. Builds Docker image with tag `prod-{short-sha}`
-2. Pushes to ECR
-3. Updates production Terraform config
-4. Deploys via App Runner
+**Required Inputs:**
+- `terraform_action`: Choose between `dry-run` (plan only) or `deploy` (apply)
+- Must be triggered from a version tag (format: `v.X.Y.Z`)
 
-**Environment:**
-- Production: `https://block-explorer.vechain.org`
+**Jobs:**
+1. `validate-version-format` - Validates version tag format
+2. `check-existing-release` - Checks if release already exists
+3. `prepare-metadata` - Extracts version from tag
+4. `build-and-push` - Builds and pushes Docker image
+5. `deploy` - Deploys to App Runner via Terraform (if action is `deploy`)
 
-### 2. `deploy-preview.yml`
-Creates/updates preview environments for pull requests.
+**Image Tag:** `v.X.Y.Z` (e.g., `v.1.2.3`) - uses the version tag directly
+
+**Domain:** `https://block-explorer.vechain.org`
+
+**Deployment Process:**
+1. Create a version tag matching pattern `v.X.Y.Z`
+2. Go to Actions → Deploy to Production → Run workflow
+3. Select the version tag from dropdown
+4. Choose `dry-run` to preview changes or `deploy` to apply
+5. Monitor deployment progress
+
+---
+
+### Preview Deployment (`deploy-preview.yml`)
 
 **Triggers:**
-- PR opened
-- PR synchronized (new commits)
-- PR reopened
+- PR opened/synchronized/reopened on `main` branch
 
-**Process:**
-1. Posts initial PR comment with "Building" status
-2. Builds Docker image with tag `pr-{number}-{short-sha}`
-3. Pushes to ECR (single platform image, no attestations)
-4. Creates/updates Terraform workspace for preview
-5. Deploys via App Runner
-6. Updates PR comment with "Ready" status and preview URL
+**Concurrency:** Only latest commit per PR (older builds cancelled)
 
-**Environment:**
-- Preview: `https://pr-{number}.block-explorer-preview.vechain.org`
+**Jobs:**
+1. `pr-comment` - Posts initial "Building" comment immediately
+2. `prepare-metadata` - Generates SHORT_SHA and image tag
+3. `build-and-push` - Builds and pushes Docker image
+4. `deploy` - Deploys to App Runner via Terraform
+5. `update-comment` - Updates PR comment with final status (always runs)
+
+**Image Tag:** `pr-{number}-{short_sha}` (e.g., `pr-144-a1b2c3d`)
+
+**Domain:** `https://pr-{number}.block-explorer-preview.vechain.org`
 
 **PR Comment Features:**
-- Single comment per PR (updates on each commit)
-- Shows build status (Building/Ready/Failed/Destroyed)
-- Links to commit and preview URL
-- Timestamps in UTC
-- Vercel-style table format
+- Single comment per PR (updates in-place, no spam)
+- Status icons: 🔨 Building → ✅ Ready / ❌ Failed → 🗑️ Destroyed
+- Shows both custom domain and default App Runner URL
+- Includes commit link and UTC timestamp
+- Note about 5-10 min custom domain activation
 
-### 3. `destroy-preview.yml`
-Destroys preview environments when PRs are closed/merged.
+---
+
+### Preview Cleanup (`destroy-preview.yml`)
 
 **Triggers:**
-- PR closed
-- PR merged
+- PR closed/merged
 
-**Process:**
-1. Destroys Terraform resources
-2. Deletes Terraform workspace
-3. Cleans up environment config
-4. Updates PR comment with "Destroyed" status
+**Security:** Only runs for same-repo PRs (not forks)
 
-### 4. `unit-test.yml`
-Runs unit tests on pull requests.
+**Jobs:**
+1. `destroy` - Runs `terraform destroy`, deletes workspace, cleans up config, updates PR comment
+
+**PR Comment:** Updates to "🗑️ Destroyed" status
+
+---
+
+### Unit Tests (`unit-test.yml`)
 
 **Triggers:**
 - PR to `main` branch
 
 **Process:**
-1. Sets up Node.js 20 and pnpm 9.15.4
-2. Installs dependencies
-3. Runs tests with `pnpm test`
-4. Uploads coverage report
+1. Setup Node.js 20 + pnpm 9.15.4
+2. Install dependencies
+3. Run `pnpm test`
+4. Upload coverage report
+
+---
+
+### Build & Push (Reusable) (`build-push-ecr.yml`)
+
+**Purpose:** Reusable workflow for building and pushing Docker images
+
+**Used By:** `deploy-production.yml`, `deploy-preview.yml`
+
+**Inputs:**
+- `ecr_repository` - ECR repository name
+- `image_tag` - Docker image tag
+- `aws_region` - AWS region
+- `dockerfile_path` - Path to Dockerfile (default: `./Dockerfile`)
+- `context_path` - Build context (default: `.`)
+
+**Outputs:**
+- `tag` - Image tag that was pushed
+- `uri` - Full URI of pushed image
+
+**Configuration:**
+- Platform: `linux/amd64` (single platform only)
+- Provenance: `false` (prevents manifest index)
+- SBOM: `false` (prevents attestations)
+- Cache: GitHub Actions cache
+
+---
 
 ## Image Tagging Strategy
 
-### Production
-- Pattern: `prod-{short-sha}`
-- Example: `prod-abc1234`
-- Also tagged as `latest`
+| Environment | Pattern | Example | Purpose |
+|-------------|---------|---------|---------|
+| Production | `v.X.Y.Z` | `v.1.2.3` | Semantic version tag |
+| Preview | `pr-{number}-{short_sha}` | `pr-144-a1b2c3d` | PR number + 7-char commit SHA |
 
-### Preview
-- Pattern: `pr-{number}-{short-sha}`
-- Example: `pr-123-abc1234`
-- **Why include commit SHA?** 
-  - Ensures unique tag per commit
-  - Forces App Runner to pull new image
-  - Terraform detects changes and updates service
+**Production Tags:**
+- Uses semantic versioning (`v.X.Y.Z`)
+- Must match an existing git tag
+- Immutable - each version deployed once
+- Provides clear release history
 
-## Docker Build Configuration
+**Preview Tags:**
+- Includes SHORT_SHA (7-char commit hash)
+- Unique per commit on each PR
+- Forces App Runner to pull new image
+- Prevents stale deployments
 
-All builds use the following settings:
-- **Platform:** `linux/amd64` (single platform)
-- **Provenance:** `false` (prevents multi-platform manifest)
-- **SBOM:** `false` (prevents attestation artifacts)
-- **Result:** Clean, single-platform image in ECR (no index)
+---
 
-## AWS Authentication
+## Authentication
 
-All workflows use OIDC authentication:
-- **Provider:** GitHub OIDC
-- **Role:** `${{ secrets.AWS_ACC_ROLE }}`
-- **Permissions:** `id-token: write`, `contents: read`, `pull-requests: write`
+**Method:** OpenID Connect (OIDC)
 
-## Secrets Required
+**AWS Role:** `${{ secrets.AWS_ACC_ROLE }}`
 
-Configure these in GitHub repository settings:
-- `AWS_ACC_ROLE` - ARN of IAM role with OIDC trust policy
+**Permissions Required:**
+```yaml
+permissions:
+  id-token: write      # OIDC token
+  contents: read       # Checkout code
+  pull-requests: write # Update PR comments
+```
 
-## Environment Variables
+---
 
-- `AWS_REGION`: `eu-west-1`
-- `ECR_REPOSITORY`: `block-explorer`
-- `TERRAFORM_VERSION`: `1.6.0`
+## Configuration
 
-## Terraform Backend
+### Secrets (Repository Settings)
 
-- **Production:** `block-explorer-terraform-state-prod`
-- **Previews:** `block-explorer-terraform-state-nonprod`
+| Secret | Description | Example |
+|--------|-------------|---------|
+| `AWS_ACC_ROLE` | IAM role ARN with OIDC trust | `arn:aws:iam::123456789:role/github-actions` |
 
-## Notes
+### Variables (Optional Repository Variables)
 
-- Preview environments automatically scale down when idle (min_size: 1)
-- Preview environments are destroyed automatically on PR close/merge
-- Each preview has isolated Terraform workspace
-- PR comments are updated in-place (not new comments per commit)
+| Variable | Default | Override |
+|----------|---------|----------|
+| `AWS_REGION` | `eu-west-1` | Set via repository variables |
+| `ECR_REPOSITORY` | `block-explorer` | Set via repository variables |
+
+### Environment Variables (Workflow-level)
+
+```yaml
+AWS_REGION: eu-west-1
+ECR_REPOSITORY: block-explorer
+TERRAFORM_VERSION: 1.6.0
+PROJECT_NAME: block-explorer
+PREVIEW_DOMAIN_SUFFIX: block-explorer-preview.vechain.org
+```
+
+---
+
+## Terraform State
+
+| Environment | Bucket | Key |
+|-------------|--------|-----|
+| Production | `vechain-terraform-state-prod` | `env:/production/frontend/terraform.tfstate` |
+| Previews | `vechain-terraform-state-nonprod` | `env:/preview-pr-{number}/frontend/terraform.tfstate` |
+
+**Workspaces:**
+- `production` - Production environment
+- `preview-pr-{number}` - One workspace per PR
+
+---
+
+## Preview Environment Lifecycle
+
+```
+PR Opened/Updated:
+  → Post "Building" comment
+  → Build Docker image
+  → Deploy to App Runner
+  → Update comment to "Ready" (with URLs)
+
+New Commit Pushed:
+  → Cancel in-progress build (concurrency control)
+  → Repeat deployment with new commit
+  → Update existing comment (no new comment)
+
+PR Closed/Merged:
+  → Destroy all resources
+  → Delete Terraform workspace
+  → Update comment to "Destroyed"
+```
+
+---
+
+## Concurrency Control
+
+**Configuration:**
+```yaml
+concurrency:
+  group: preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+```
+
+**Behavior:**
+- Prevents race conditions with Terraform
+- Cancels old builds when new commit pushed
+- Each PR has isolated concurrency group
+- Different PRs can deploy simultaneously
+
+---
+
+## Cost Optimization
+
+### Preview Environments
+- **Min instances:** 1 (App Runner requirement)
+- **Max instances:** 2
+- **CPU/Memory:** 512 MB / 1 GB (50% of production)
+- **Auto-cleanup:** Destroyed when PR closes
+
+### Image Lifecycle (ECR)
+- Keeps last 30 production images (tagged `v.*`)
+- Keeps last 10 preview images (tagged `pr-*`)
+- Removes untagged images after 1 day
+
+---
+
+## Troubleshooting
+
+### Build failures
+- Check Docker build logs in GitHub Actions
+- Verify `pnpm-lock.yaml` is compatible with pnpm 9.15.4
+- Ensure Dockerfile exists and is valid
+
+### Deployment failures
+- Check Terraform logs in GitHub Actions
+- Verify AWS credentials are valid
+- Check App Runner service logs in CloudWatch
+- Ensure environment config file is valid YAML
+
+### PR comment not updating
+- Verify `pull-requests: write` permission is set
+- Check that PR is from same repository (not fork)
+- Look for errors in `update-comment` job logs
+
+### Concurrent deployments
+- Concurrency control should prevent this
+- If multiple deploys run, check concurrency group configuration
+- Old builds should be cancelled automatically
+
+### Custom domain not activating
+- Wait 5-10 minutes after first deployment
+- Check Route53 validation records exist
+- Use default App Runner URL in the meantime
+- Verify ACM certificate is issued
 

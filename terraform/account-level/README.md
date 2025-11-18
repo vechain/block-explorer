@@ -1,25 +1,32 @@
 # Account-Level Infrastructure
 
-This directory contains Terraform configuration for shared infrastructure that persists across all environments.
+Shared infrastructure for Block Explorer that persists across all environments.
 
-## Resources Created
+## Resources
 
-- **ECR Repository**: Stores Docker images for all environments (production and previews)
-- **IAM Roles**: 
-  - Instance role for the App Runner service
-  - Access role for pulling images from ECR
-- **ACM Certificates**:
-  - Production certificate for `block-explorer-prod.vechain.org`
-  - Wildcard certificate for `*.block-explorer-preview.vechain.org`
+### ECR Repository
+- **Name**: `block-explorer`
+- **Purpose**: Stores Docker images for all environments
+- **Lifecycle Policy**: 
+  - Keeps last 30 production images (`v.*`)
+  - Keeps last 10 preview images (`pr-*`)
+  - Removes untagged images after 1 day
 
-## Prerequisites
+### IAM Roles
+- **Instance Role**: Grants the App Runner container permissions (CloudWatch Logs)
+- **Access Role**: Allows App Runner to pull images from ECR
 
-1. S3 backend must be created first (see `../s3-backend/`)
-2. Route53 hosted zone for `vechain.org` should exist
+### Route53 Hosted Zones
+- **Production**: `block-explorer.vechain.org`
+- **Preview**: `block-explorer-preview.vechain.org`
 
-## Usage
+### ACM Certificates
+- **Production**: `block-explorer.vechain.org` (DNS validated)
+- **Preview**: `*.block-explorer-preview.vechain.org` (wildcard, DNS validated)
 
-### Initial Setup
+## Deployment
+
+### First-Time Setup
 
 ```bash
 cd terraform/account-level
@@ -28,21 +35,26 @@ terraform plan
 terraform apply
 ```
 
-### Configuration
+### State Storage
 
-Update the following variables if needed:
+State is stored in S3 at `s3://vechain-terraform-state-prod/account-level/terraform.tfstate`
 
-- `route53_zone_id`: The hosted zone ID for vechain.org (required for DNS validation)
-- `create_route53_records`: Set to `false` if managing DNS outside of Terraform
+## Outputs
 
-### Outputs
+The following outputs are consumed by frontend infrastructure:
 
-After applying, this module outputs:
-- ECR repository URL (needed for building and pushing images)
-- IAM role ARNs (needed by frontend infrastructure)
-- Certificate ARNs (needed for custom domains in App Runner)
+| Output | Description |
+|--------|-------------|
+| `ecr_repository_url` | ECR repository URL for image pushes |
+| `block_explorer_public_zone_prod_id` | Route53 zone ID for production |
+| `block_explorer_public_zone_preview_id` | Route53 zone ID for previews |
+| `app_runner_instance_role_arn` | IAM role for App Runner instances |
+| `app_runner_access_role_arn` | IAM role for ECR access |
+| `prod_certificate_arn` | SSL certificate for production |
+| `preview_certificate_arn` | Wildcard SSL certificate for previews |
 
-## Note
+## Notes
 
-This infrastructure should be applied once and rarely changes. The state is stored in the production S3 bucket since these resources are shared across all environments.
-
+- This infrastructure is deployed **once** and rarely changes
+- All environments share these resources
+- Changes require manual deployment (not automated via CI/CD)

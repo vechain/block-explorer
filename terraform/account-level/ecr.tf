@@ -31,7 +31,7 @@ resource "aws_ecr_lifecycle_policy" "block_explorer" {
         description  = "Keep last 30 production images"
         selection = {
           tagStatus     = "tagged"
-          tagPrefixList = ["prod-"]
+          tagPrefixList = ["v."]
           countType     = "imageCountMoreThan"
           countNumber   = 30
         }
