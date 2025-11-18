@@ -40,6 +40,7 @@ export const useLatestBlocks = ({ count }: { count: number }) => {
     combine: queries => ({
       data: queries.map(query => query.data).filter(isExpandedBlockDetail),
       isLoading: queries.every(query => query.isLoading),
+      isPending: queries.every(query => query.isPending),
     }),
   })
 }
