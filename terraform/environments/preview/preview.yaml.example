@@ -15,8 +15,8 @@ image_tag: pr-{PR_NUMBER}-{COMMIT_SHA}
 
 # App Runner instance configuration
 # Smaller resources for preview environments
-cpu: 512          # 0.5 vCPU
-memory: 1024      # 0.5 GB
+cpu: 264
+memory: 512
 port: 3000
 
 # Auto-scaling configuration

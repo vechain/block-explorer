@@ -11,13 +11,13 @@ enable_custom_domain: true
 image_tag: latest
 
 # App Runner instance configuration
-cpu: 1024          # 1 vCPU
-memory: 2048       # 2 GB
+cpu: 512
+memory: 1024
 port: 3000
 
 # Auto-scaling configuration
-min_size: 1        # Always keep at least 1 instance running (no cold starts)
-max_size: 10       # Maximum 10 instances
+min_size: 1        # Minumum allowed by app runner
+max_size: 10
 max_concurrency: 100  # Max concurrent requests per instance
 
 # Health check
