@@ -1,6 +1,6 @@
 import { Box, Container, Flex } from '@chakra-ui/react'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Rubik } from 'next/font/google'
 import { Navbar } from '@/components/navigation/NavBar'
 import { ChakraProvider } from '@/components/theme/provider'
 import type { Locale } from '@/i18n/config'
@@ -8,10 +8,10 @@ import { TranslationsProvider } from '@/i18n/provider'
 import { QueryClientProvider } from '@/lib/query-client/provider'
 import { PrereleaseBanner } from './components/PrereleaseBanner'
 
-const inter = Inter({
+const rubik = Rubik({
   subsets: ['latin'],
-  variable: '--font-inter',
-  weight: ['400', '500', '600', '700'],
+  variable: '--font-rubik',
+  weight: ['400', '500', '600'],
 })
 
 export const metadata: Metadata = {
@@ -31,7 +31,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={inter.variable}>
+      <body className={rubik.variable}>
         <Providers locale={locale}>
           <Box
             as="main"
