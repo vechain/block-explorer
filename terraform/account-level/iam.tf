@@ -3,6 +3,7 @@
 ################################################################################
 
 # Instance Role - Used by the application container
+# Add policies here if frontend application needs to access AWS services (S3, DynamoDB, etc.)
 resource "aws_iam_role" "app_runner_instance_role" {
   name = "block-explorer-app-runner-instance-role"
 
@@ -22,27 +23,6 @@ resource "aws_iam_role" "app_runner_instance_role" {
   tags = {
     Name = "block-explorer-app-runner-instance-role"
   }
-}
-
-# Instance role policy - Add permissions here if the app needs to access AWS services
-resource "aws_iam_role_policy" "app_runner_instance_policy" {
-  name = "block-explorer-instance-policy"
-  role = aws_iam_role.app_runner_instance_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "arn:aws:logs:*:*:*"
-      }
-    ]
-  })
 }
 
 # Access Role - Used by App Runner to pull images from ECR
@@ -72,4 +52,3 @@ resource "aws_iam_role_policy_attachment" "app_runner_ecr_access" {
   role       = aws_iam_role.app_runner_access_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess"
 }
-
