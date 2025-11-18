@@ -11,10 +11,37 @@ const config = defineConfig({
   theme: {
     tokens: {
       fonts: {
-        heading: { value: `'Inter', sans-serif` },
-        body: { value: `'Inter', sans-serif` },
+        heading: { value: `var(--font-rubik), 'Rubik', sans-serif` },
+        body: { value: `var(--font-rubik), 'Rubik', sans-serif` },
       },
       colors: {
+        // Text colors
+        'text-primary': { value: 'rgba(238, 243, 247, 1)' },
+        'text-secondary': { value: 'rgba(195, 198, 200, 1)' },
+        'text-alt': { value: 'rgba(186, 196, 220, 1)' },
+        // Background colors
+        'bg-primary': { value: 'rgba(11, 12, 16, 1)' },
+        'bg-card-surface': { value: 'rgba(255, 255, 255, 0.06)' },
+        'bg-card-surface-hover': { value: 'rgba(255, 255, 255, 0.1)' },
+        'bg-card-surface-active': { value: 'rgba(255, 255, 255, 0.2)' },
+        'bg-surface-alt': { value: 'rgba(0, 0, 0, 0.2)' },
+        'bg-surface-alt-hover': { value: 'rgba(0, 0, 0, 0.4)' },
+        // Border colors
+        'border-surface': { value: 'rgba(255, 255, 255, 0.2)' },
+        // Blur colors
+        'blur-blue': { value: 'rgba(54, 24, 251, 1)' },
+        'blur-purple': { value: 'rgba(143, 66, 221, 1)' },
+        'blur-pink': { value: 'rgba(165, 12, 141, 1)' },
+        // Status colors
+        'success-surface': { value: 'rgba(16, 255, 161, 1)' },
+        'error-surface': { value: 'rgba(255, 138, 138, 0.2)' },
+        'error-text': { value: 'rgba(255, 138, 138, 1)' },
+        'pending-surface': { value: 'rgba(246, 255, 165, 0.2)' },
+        'pending-text': { value: 'rgba(246, 255, 165, 1)' },
+        // Highlight colors
+        'highlight-primary': { value: 'rgba(184, 166, 255, 1)' },
+        'highlight-secondary': { value: 'rgba(231, 130, 255, 1)' },
+        'highlight-tertiary': { value: 'rgba(56, 216, 153, 1)' },
         gray: {
           50: { value: '#F9F9FA' },
           100: { value: '#F1F2F3' },
@@ -93,6 +120,24 @@ const config = defineConfig({
         white: {
           value: '#fff',
         },
+      },
+      radii: {
+        xs: { value: '12px' },
+        s: { value: '16px' },
+        m: { value: '20px' },
+      },
+      fontSizes: {
+        'display-m-desktop': { value: '52px' },
+        'display-m-mobile': { value: '32px' },
+        'display-s': { value: '24px' },
+        'display-xs': { value: '20px' },
+        'body-l': { value: '16px' },
+        'body-m': { value: '14px' },
+        'body-s': { value: '12px' },
+      },
+      lineHeights: {
+        display: { value: '90%' },
+        body: { value: '150%' },
       },
     },
   },
