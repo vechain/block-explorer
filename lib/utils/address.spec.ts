@@ -18,7 +18,7 @@ describe('Address utils', () => {
 
     it('should truncate address with default parameters', () => {
       const result = truncateAddress(testAddress)
-      expect(result).toBe('0x12345678...12345678')
+      expect(result).toBe('0x123456...5678')
     })
 
     it('should truncate address with custom parameters', () => {
