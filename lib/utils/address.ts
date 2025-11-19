@@ -16,7 +16,7 @@ export const isZeroAddress = (address: AddressString): boolean => {
  * @param endLength - Number of characters to show at the end (default: 4)
  * @returns The truncated address string
  */
-export const truncateAddress = (address: string, startLength: number = 10, endLength: number = 8) => {
+export const truncateAddress = (address: string, startLength: number = 8, endLength: number = 4) => {
   const result = addressStringSchema.safeParse(address)
 
   if (!result.success) {

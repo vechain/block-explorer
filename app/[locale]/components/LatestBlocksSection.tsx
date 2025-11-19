@@ -1,38 +1,22 @@
 'use client'
 
-import { Heading, Stack } from '@chakra-ui/react'
-import { AnimatePresence } from 'motion/react'
-import { useTranslation } from 'react-i18next'
+import { Heading } from '@chakra-ui/react'
+import { Surface } from '@/components/ui/Surface'
+import { TableSkeleton } from '@/components/ui/Table'
 import { useLatestBlocks } from '@/services/thor/hooks'
-import { BlockRow, BlockRowSkeleton } from './BlockRow'
+import { LatestBlocksTable } from './LatestBlocksTable'
 
 const BLOCKS_TO_DISPLAY = 5
 
 export const LatestBlocksSection = () => {
-  const { t } = useTranslation()
-  const { data: latestBlocks, isLoading } = useLatestBlocks({ count: BLOCKS_TO_DISPLAY })
+  const { data: latestBlocks, isPending } = useLatestBlocks({ count: BLOCKS_TO_DISPLAY })
 
   return (
-    <Stack gap={10}>
-      <Heading as="h2" size="2xl" fontWeight="bold" color="fg">
-        {t('latest_blocks')}
+    <Surface>
+      <Heading as="h3" textStyle="displayXs">
+        Activity
       </Heading>
-
-      <Stack gap={2} alignItems="flex-start" width="100%">
-        {isLoading ? (
-          <LatestBlocksSkeleton />
-        ) : (
-          <AnimatePresence>
-            {latestBlocks.map(block => (
-              <BlockRow key={block.id} block={block} />
-            ))}
-          </AnimatePresence>
-        )}
-      </Stack>
-    </Stack>
+      {isPending ? <TableSkeleton /> : <LatestBlocksTable blocks={latestBlocks} />}
+    </Surface>
   )
-}
-
-const LatestBlocksSkeleton = () => {
-  return Array.from({ length: BLOCKS_TO_DISPLAY }).map((_, i) => <BlockRowSkeleton key={`${i}-${Date.now()}`} />)
 }

@@ -14,8 +14,10 @@ export default async function HomePage({
 }: {
   searchParams: Promise<{ network: NetworkName | undefined }>
 }) {
+  const networkName = (await searchParams).network || NetworkName.MAINNET
+
   const activeNetworkName = zodParse({
-    data: (await searchParams).network,
+    data: networkName,
     schema: z.enum(Object.values(NetworkName)),
     errorMessage: 'Invalid network name',
     fallbackData: NetworkName.MAINNET,

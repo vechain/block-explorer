@@ -1,6 +1,7 @@
 'use client'
 
 import { createSystem, defaultConfig, defineConfig } from '@chakra-ui/react'
+import { textStyles } from './text-styles'
 
 export enum ColorMode {
   LIGHT = 'light',
@@ -9,6 +10,7 @@ export enum ColorMode {
 
 const config = defineConfig({
   theme: {
+    textStyles,
     tokens: {
       fonts: {
         heading: { value: `var(--font-rubik), 'Rubik', sans-serif` },
@@ -22,6 +24,7 @@ const config = defineConfig({
         // Background colors
         'bg-primary': { value: 'rgba(11, 12, 16, 1)' },
         'bg-card-surface': { value: 'rgba(255, 255, 255, 0.06)' },
+        'bg-card-surface-2': { value: 'rgba(255, 255, 255, 0.1)' },
         'bg-card-surface-hover': { value: 'rgba(255, 255, 255, 0.1)' },
         'bg-card-surface-active': { value: 'rgba(255, 255, 255, 0.2)' },
         'bg-surface-alt': { value: 'rgba(0, 0, 0, 0.2)' },
@@ -123,8 +126,8 @@ const config = defineConfig({
       },
       radii: {
         xs: { value: '12px' },
-        s: { value: '16px' },
-        m: { value: '20px' },
+        sm: { value: '16px' },
+        md: { value: '20px' },
       },
       fontSizes: {
         'display-m-desktop': { value: '52px' },
