@@ -25,12 +25,14 @@ const config = defineConfig({
         'bg-primary': { value: 'rgba(11, 12, 16, 1)' },
         'bg-card-surface': { value: 'rgba(255, 255, 255, 0.06)' },
         'bg-card-surface-2': { value: 'rgba(255, 255, 255, 0.1)' },
+        'bg-card-surface-3': { value: 'rgba(255, 255, 255, 0.2)' },
         'bg-card-surface-hover': { value: 'rgba(255, 255, 255, 0.1)' },
         'bg-card-surface-active': { value: 'rgba(255, 255, 255, 0.2)' },
         'bg-surface-alt': { value: 'rgba(0, 0, 0, 0.2)' },
         'bg-surface-alt-hover': { value: 'rgba(0, 0, 0, 0.4)' },
         // Border colors
         'border-surface': { value: 'rgba(255, 255, 255, 0.2)' },
+        'border-surface-2': { value: 'rgba(255, 255, 255, 0.4)' },
         // Blur colors
         'blur-blue': { value: 'rgba(54, 24, 251, 1)' },
         'blur-purple': { value: 'rgba(143, 66, 221, 1)' },
