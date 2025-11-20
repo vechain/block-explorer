@@ -6,7 +6,6 @@ import { ChakraProvider } from '@/components/theme/provider'
 import type { Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
 import { QueryClientProvider } from '@/lib/query-client/provider'
-import { PrereleaseBanner } from './components/PrereleaseBanner'
 
 const rubik = Rubik({
   subsets: ['latin'],
@@ -15,9 +14,12 @@ const rubik = Rubik({
 })
 
 export const metadata: Metadata = {
-  title: 'VeChain Explorer',
-  description: 'VeChain Explorer',
-  icons: { icon: '/vechain.svg' },
+  title: {
+    template: '%s | VeChain Explorer',
+    default: 'VeChain Explorer',
+  },
+  description: "VeChain's block explorer",
+  icons: { icon: '/vechain-logo.png' },
 }
 
 export default async function RootLayout({
@@ -44,8 +46,7 @@ export default async function RootLayout({
             overflowX="hidden"
             // TODO: Update background color with theme once implemented
             backgroundColor="#0B0C10">
-            <PrereleaseBanner />
-            <Container maxW="1440px" display="flex" flexDirection="column" px={4} pt={2} pb={10}>
+            <Container maxW="1440px" display="flex" flexDirection="column" px={4} pt={{ base: 2, md: 10 }} pb={10}>
               <Navbar />
 
               <Flex mt={10} direction="column" flex={1}>
