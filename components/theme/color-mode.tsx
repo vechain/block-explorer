@@ -8,7 +8,7 @@ import { LuMoon, LuSun } from 'react-icons/lu'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { ColorMode } from './config'
 
-const useColorMode = () => {
+export const useColorMode = () => {
   const { resolvedTheme, setTheme, forcedTheme } = useTheme()
   const { colorMode: storeColorMode, setColorMode: setStoreColorMode } = useSettingsStore()
 

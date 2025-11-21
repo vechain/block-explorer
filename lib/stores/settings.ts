@@ -23,7 +23,7 @@ type SettingsStore = {
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     set => ({
-      colorMode: ColorMode.LIGHT,
+      colorMode: ColorMode.DARK,
       setColorMode: colorMode => set({ colorMode }),
       currency: Currency.USD,
       setCurrency: currency => set({ currency }),
