@@ -1,6 +1,7 @@
 import { Box, Container, Flex } from '@chakra-ui/react'
 import type { Metadata } from 'next'
 import { Rubik } from 'next/font/google'
+import { Footer } from '@/components/Footer'
 import { Header } from '@/components/navigation/Header'
 import { ChakraProvider } from '@/components/theme/provider'
 import type { Locale } from '@/i18n/config'
@@ -53,6 +54,8 @@ export default async function RootLayout({
               <Flex mt={10} direction="column" flex={1}>
                 {children}
               </Flex>
+
+              <Footer />
             </Container>
           </Box>
         </Providers>

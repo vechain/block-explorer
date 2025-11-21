@@ -1,6 +1,6 @@
 {
   "name": "block-explorer",
-  "version": "0.0.0",
+  "version": "1.5.1",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
