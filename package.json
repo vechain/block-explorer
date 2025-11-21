@@ -14,7 +14,8 @@
     "knip:fix": "knip --fix",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "validate": "pnpm build && pnpm test && pnpm lint && pnpm format && pnpm knip"
+    "validate": "pnpm build && pnpm test && pnpm lint && pnpm format && pnpm knip",
+    "prepare": "husky"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.26.0",
@@ -48,10 +49,18 @@
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.2",
+    "husky": "^9.1.7",
     "jsdom": "^26.1.0",
     "knip": "^5.63.0",
+    "lint-staged": "^16.2.7",
     "typescript": "^5.9.2",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,jsonc}": [
+      "biome format --write",
+      "biome check --write"
+    ]
   }
 }
