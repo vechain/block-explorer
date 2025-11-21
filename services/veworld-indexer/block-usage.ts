@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { type BlockUsageResponse, blockUsageResponseSchema } from '@/lib/schemas'
 import { apiClient } from '@/lib/api'
-import { zodParse } from '@/lib/utils/zod'
-import { useSettingsStore } from '@/lib/stores/settings'
 import type { NetworkName } from '@/lib/constants/network'
+import { type BlockUsageResponse, blockUsageResponseSchema } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
+import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from './index'
 
 export const blockUsageQueryOptions = (
@@ -14,7 +14,7 @@ export const blockUsageQueryOptions = (
 ) => {
   // Calculate time range in seconds
   const rangeSeconds = endTimestamp - startTimestamp
-  
+
   // Adjust refetch intervals based on time range
   const getRefetchInterval = (rangeSeconds: number) => {
     if (rangeSeconds <= 3600) {
