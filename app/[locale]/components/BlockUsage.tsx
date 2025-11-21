@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  Box,
   Button,
   createListCollection,
   Flex,
@@ -49,13 +50,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { Surface } from '@/components/ui/Surface'
 import type { BlockUsageData } from '@/lib/schemas'
 import { type BlockUsageDataPoint, transformBlockUsageData } from '@/lib/utils/block-usage'
 import { timeFormat } from '@/lib/utils/date'
 import { useBlockUsage } from '@/services/veworld-indexer/block-usage'
 
-const width = 1000
-const height = 400
+const chartHeight = '420px'
+const mainColor = '#E782FF'
 
 // Time range options based on API granularity rules (in seconds)
 const TIME_RANGES = {
@@ -87,10 +89,14 @@ export const BlockUsage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null) // User-selected specific date
   const [isLiveMode, setIsLiveMode] = useState(true) // Live mode updates with new blocks
 
-  const { blocksDataPoints, isLoading, selectedRangeConfig, currentPeriodStart, canGoBack, canGoForward } =
-    useBlockUsageChartData(selectedRange, timeOffset, selectedDate, isLiveMode)
+  const { blocksDataPoints, isLoading, currentPeriodStart, canGoBack, canGoForward } = useBlockUsageChartData(
+    selectedRange,
+    timeOffset,
+    selectedDate,
+    isLiveMode,
+  )
 
-  if (isLoading) return <Skeleton height={height} width={width} rounded="xl" />
+  if (isLoading) return <Skeleton height={chartHeight} rounded="xl" />
 
   const handleRangeChange = (newRange: TimeRangeKey) => {
     setSelectedRange(newRange)
@@ -274,18 +280,11 @@ export const BlockUsage = () => {
   }
 
   return (
-    <Stack flex={1} gap={4} bg="bg.muted" rounded="xl" p={8}>
-      <Flex justify="space-between" align="center" minH="48px">
-        <Flex align="center" gap={2}>
-          <Heading as="h2" size="2xl" fontWeight="bold" color="fg">
-            Block Usage
-          </Heading>
-          {isLiveMode && (
-            <Text fontSize="xs" color="green.500" fontWeight="medium">
-              ● LIVE
-            </Text>
-          )}
-        </Flex>
+    <Surface>
+      <Flex justify="space-between" align="center">
+        <Heading as="h2" textStyle="displayXs">
+          Block Usage
+        </Heading>
 
         <Flex align="center" gap={4} flexShrink={0}>
           {/* Time Navigation Controls */}
@@ -341,8 +340,10 @@ export const BlockUsage = () => {
         </Flex>
       </Flex>
 
-      <BlockUsageChart data={blocksDataPoints} selectedRange={selectedRange} />
-    </Stack>
+      <Surface>
+        <BlockUsageChart data={blocksDataPoints} selectedRange={selectedRange} />
+      </Surface>
+    </Surface>
   )
 }
 
@@ -425,46 +426,59 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
   }
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <AreaChart width={width} height={height} data={data} onClick={handleAreaClick}>
-        <defs>
-          <linearGradient id="gasUsedGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-        <XAxis
-          dataKey="timestamp"
-          interval={getXAxisInterval()}
-          textAnchor="middle"
-          tickLine={false}
-          tickFormatter={formatXAxis}
-          tick={{ style: { fontSize: '.7rem' } }}
-        />
-        <YAxis
-          unit="M"
-          dataKey="gasLimit"
-          tickFormatter={value => (Number(value) / 10 ** 6).toLocaleString()}
-          tick={{ style: { fontSize: '.8rem' } }}
-        />
+    <Box h={chartHeight}>
+      <ResponsiveContainer>
+        <AreaChart
+          style={{ height: chartHeight }}
+          margin={{
+            top: 8,
+            right: 8,
+            bottom: -8,
+            left: -16,
+          }}
+          data={data}
+          onClick={handleAreaClick}>
+          <defs>
+            <linearGradient id="gasUsedGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={mainColor} stopOpacity={0.8} />
+              <stop offset="95%" stopColor={mainColor} stopOpacity={0.1} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
+          <XAxis
+            dataKey="timestamp"
+            interval={getXAxisInterval()}
+            textAnchor="middle"
+            tickLine={false}
+            tickFormatter={formatXAxis}
+            tick={{ style: { fontSize: '.7rem' } }}
+            axisLine={false}
+          />
+          <YAxis
+            unit="M"
+            dataKey="gasLimit"
+            tickFormatter={value => (Number(value) / 10 ** 6).toLocaleString()}
+            tick={{ style: { fontSize: '.8rem' } }}
+            axisLine={false}
+          />
 
-        <Tooltip
-          contentStyle={{ fontSize: '.8rem' }}
-          content={(props: TooltipContentProps<number, string>) => (
-            <CustomTooltip {...props} selectedRange={selectedRange} />
-          )}
-        />
-        <Area
-          type="monotone"
-          dataKey="gasUsed"
-          stroke="#3b82f6"
-          strokeWidth={2}
-          fill="url(#gasUsedGradient)"
-          activeDot={{ r: 6, cursor: 'pointer' }}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
+          <Tooltip
+            contentStyle={{ fontSize: '.8rem' }}
+            content={(props: TooltipContentProps<number, string>) => (
+              <CustomTooltip {...props} selectedRange={selectedRange} />
+            )}
+          />
+          <Area
+            type="monotone"
+            dataKey="gasUsed"
+            stroke={mainColor}
+            strokeWidth={2}
+            fill="url(#gasUsedGradient)"
+            activeDot={{ r: 6, cursor: 'pointer' }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </Box>
   )
 }
 
