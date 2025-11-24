@@ -1,8 +1,9 @@
 import { Text } from '@chakra-ui/react'
 import { CiCircleCheck } from 'react-icons/ci'
 import { PiClockCountdown } from 'react-icons/pi'
+import { AgeText } from '@/components/ui/AgeText'
 import { BaseLink, CopyableAddressLink } from '@/components/ui/Links'
-import { AgeCell, type Column, DataTable } from '@/components/ui/Table'
+import { type Column, DataTable } from '@/components/ui/Table'
 import type { ExpandedBlockDetail } from '@/lib/schemas'
 
 export const LatestBlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] }) => {
@@ -11,7 +12,7 @@ export const LatestBlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] })
 
 const BlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] }) => {
   const columns: Column<(typeof rows)[number]>[] = [
-    { key: 'age', label: 'Age', Cell: AgeCell },
+    { key: 'age', label: 'Age', Cell: ({ value }) => <AgeText timestamp={value as number} /> },
     {
       key: 'blockNumber',
       label: 'ID',
