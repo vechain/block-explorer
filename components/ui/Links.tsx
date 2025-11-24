@@ -23,6 +23,20 @@ export const BaseLink = ({ children, href, ...props }: BaseLinkProps) => {
   )
 }
 
+interface AddressLinkProps extends Omit<BaseLinkProps, 'href'> {
+  address: AddressString
+  truncate?: boolean
+}
+
+export const AddressLink = ({ address, truncate = false, ...props }: AddressLinkProps) => {
+  return (
+    <BaseLink href={`/address/${address}`} {...props}>
+      {truncate ? truncateAddress(address) : address}
+    </BaseLink>
+  )
+}
+
+//************************* Copyable Links *************************//
 interface CopyableLinkProps extends BaseLinkProps {
   value: string
 }
