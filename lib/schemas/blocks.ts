@@ -22,7 +22,7 @@ export const expandedBlockDetailSchema = z.object({
   id: blockIdSchema,
   number: blockNumberSchema,
   parentID: blockIdSchema,
-  timestamp: z.number(),
+  timestamp: z.number().transform(timestamp => timestamp * 1000),
   size: z.number(),
   isFinalized: z.boolean(),
   transactions: z.array(transactionsDetailSchema),

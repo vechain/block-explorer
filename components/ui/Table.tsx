@@ -1,5 +1,5 @@
 import { Flex, Skeleton, type SkeletonProps, Table as TableChakra, Text, type TextProps } from '@chakra-ui/react'
-import { formatDistance } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import { HiOutlineBolt } from 'react-icons/hi2'
 import type { AddressString } from '@/lib/schemas'
 import { CopyableAddressLink } from './Links'
@@ -128,10 +128,12 @@ export const AddressCell = ({ value }: CellComponentProps) => {
 }
 
 export const AgeCell = ({ value }: CellComponentProps) => {
+  const timestamp = new Date(value as number)
+
   return (
     <Text as="span" color="highlight-secondary" display="flex" alignItems="center" textTransform="capitalize" gap={1}>
       <HiOutlineBolt size={16} />
-      {formatDistance(new Date(value as number), new Date(), { addSuffix: true })}
+      {formatDistanceToNow(timestamp, { includeSeconds: true })}
     </Text>
   )
 }

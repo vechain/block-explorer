@@ -4,7 +4,6 @@ import { PiClockCountdown } from 'react-icons/pi'
 import { BaseLink, CopyableAddressLink } from '@/components/ui/Links'
 import { AgeCell, type Column, DataTable } from '@/components/ui/Table'
 import type { ExpandedBlockDetail } from '@/lib/schemas'
-import { formatDateFromTimestamp } from '@/lib/utils/date'
 
 export const LatestBlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] }) => {
   return <BlocksTable blocks={blocks} />
@@ -34,7 +33,7 @@ const BlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] }) => {
   const rows = blocks.map(block => ({
     id: block.id,
     blockNumber: `#${block.number.toString()}`,
-    age: formatDateFromTimestamp(block.timestamp),
+    age: block.timestamp,
     block: block.number.toLocaleString(),
     signer: block.signer,
     txs: block.transactions.length,
