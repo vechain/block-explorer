@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge, Flex, Group, Heading, Stack, Table, Text } from '@chakra-ui/react'
+import { Flex, Group, Heading, Stack, Text } from '@chakra-ui/react'
 import { format } from 'date-fns'
 import { notFound } from 'next/navigation'
 import { use } from 'react'
@@ -12,6 +12,7 @@ import { AddressLink } from '@/components/ui/Links'
 import { Surface } from '@/components/ui/Surface'
 import { type BlockId, blockIdSchema } from '@/lib/schemas'
 import { useBlock } from '@/services/thor/hooks'
+import { TransactionsTable } from '../../components/TransactionsTable'
 import { BlockInsight } from '../components/BlockInsights'
 
 export default function BlockPage({ params }: { params: Promise<{ blockId: BlockId }> }) {
@@ -82,18 +83,7 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
         <Heading as="h2" textStyle="displayXs">
           Transactions
         </Heading>
-        <Table.ScrollArea my={12} borderWidth="1px" rounded="md">
-          <Table.Root size="md">
-            <Table.Body>
-              {items.map(item => (
-                <Table.Row key={item.name}>
-                  <Table.Cell>{item.name}</Table.Cell>
-                  <Table.Cell>{item.value}</Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Root>
-        </Table.ScrollArea>
+        <TransactionsTable transactions={block.transactions} />
       </Surface>
     </Stack>
   )
