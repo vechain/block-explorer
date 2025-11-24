@@ -9,6 +9,7 @@ import { GasUsed } from '@/components/GasUsed'
 import { SearchBar } from '@/components/navigation/SearchBar'
 import { Size } from '@/components/Size'
 import { DataCard } from '@/components/ui/DataCard'
+import { IDChip } from '@/components/ui/IDChip'
 import { AddressLink } from '@/components/ui/Links'
 import { Surface } from '@/components/ui/Surface'
 import { CopyableText } from '@/components/ui-legacy/CopyToClipBoard'
@@ -80,11 +81,14 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
       <SearchBar mt="16" />
 
       <Surface>
-        <Heading as="h2" textStyle="displayXs">
-          Block Details
-        </Heading>
+        <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
+          <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap" mb={{ base: '6', md: '0' }}>
+            Block Details
+          </Heading>
+          <IDChip value={block.id} />
+        </Flex>
 
-        <Flex alignItems="center" gap="5" flexDirection={{ base: 'column', md: 'row' }}>
+        <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
           {/* Date and time */}
           <DataCard icon={<LuCalendar />} title="Date time" tooltip="Information coming soon">
             <Group gap="1">
