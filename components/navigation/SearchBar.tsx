@@ -1,21 +1,20 @@
 'use client'
 
-import { Button, Field, Input, InputGroup } from '@chakra-ui/react'
+import { Center, Field, Flex, Input } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { LuSearch } from 'react-icons/lu'
 import { useSearch } from '@/hooks/useSearch'
 
 export const SearchBar = () => {
   const router = useRouter()
-  const { t } = useTranslation()
-  const { mutate: search, error } = useSearch()
+  const { mutate: search, error, reset } = useSearch()
   const [searchTerm, setSearchTerm] = useState<string>('')
 
   const handleSearch = () => {
+    if (!searchTerm.trim()) return
     search(searchTerm, {
-      onSuccess: data => {
+      onSuccess(data) {
         router.push(data.redirectTo)
       },
     })
@@ -27,29 +26,39 @@ export const SearchBar = () => {
   }
 
   return (
-    <Field.Root invalid={!!error} minW="300px">
-      <InputGroup
-        as="form"
-        onSubmit={handleSubmit}
-        endElement={
-          <Button size="xs" bg="primary.500" onClick={handleSearch}>
-            <LuSearch size="40px" color="white" />
-          </Button>
-        }
-        css={{
-          '& > div': { padding: '0', paddingRight: '4px' },
-          '& > button': { padding: '0' },
-        }}>
+    <Flex border="1px solid" borderColor="bg-card-surface-2" bg="bg-card-surface-2" rounded="full" p="2" gap="4">
+      <Center
+        bg="bg-card-surface-3"
+        border="1px solid"
+        borderColor="border-surface"
+        rounded="full"
+        cursor="pointer"
+        p="3"
+        onClick={handleSearch}>
+        <LuSearch size={20} color="white" />
+      </Center>
+      <Field.Root as="form" onSubmit={handleSubmit} invalid={!!error} flex="1" gap="0">
         <Input
+          px="0"
+          rounded="none"
           type="search"
-          name="search"
-          placeholder={t('search_placeholder')}
+          name="q"
+          h="full"
+          border="none"
+          placeholder="Search by ID, name or adress"
           variant="outline"
+          textStyle="bodyM"
+          focusVisibleRing="none"
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={e => {
+            setSearchTerm(e.target.value)
+            if (error) {
+              reset()
+            }
+          }}
         />
-      </InputGroup>
-      <Field.ErrorText>{error?.message}</Field.ErrorText>
-    </Field.Root>
+        <Field.ErrorText>{error?.message}</Field.ErrorText>
+      </Field.Root>
+    </Flex>
   )
 }

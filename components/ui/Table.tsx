@@ -65,22 +65,22 @@ export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: Data
 
       <TableChakra.Body
         css={{
-          '& td::first-of-type': {
+          '& td:first-of-type': {
             borderLeft: border,
           },
           '& td:last-child': {
             borderRight: border,
           },
-          '& tr::first-of-type td': {
+          '& tr:first-of-type td': {
             borderTop: border,
           },
-          '& tr::first-of-type td::first-of-type': {
+          '& tr:first-of-type td:first-of-type': {
             borderTopLeftRadius: 'var(--chakra-radii-lg)',
           },
-          '& tr::first-of-type td:last-child': {
+          '& tr:first-of-type td:last-child': {
             borderTopRightRadius: 'var(--chakra-radii-lg)',
           },
-          '& tr:last-child td::first-of-type': {
+          '& tr:last-child td:first-of-type': {
             borderBottomLeftRadius: 'var(--chakra-radii-lg)',
           },
           '& tr:last-child td:last-child': {

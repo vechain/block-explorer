@@ -1,4 +1,4 @@
-import { Box, Container, Flex } from '@chakra-ui/react'
+import { Box, Container } from '@chakra-ui/react'
 import type { Metadata } from 'next'
 import { Rubik } from 'next/font/google'
 import { Footer } from '@/components/Footer'
@@ -48,13 +48,9 @@ export default async function RootLayout({
             overflowX="hidden"
             // TODO: Update background color with theme once implemented
             backgroundColor="#0B0C10">
-            <Container maxW="1440px" display="flex" flexDirection="column" px={4} pt={{ base: 2, md: 10 }} pb={10}>
+            <Container maxW="1080px" display="flex" flexDirection="column" px={4} pt={{ base: 2, md: 10 }} pb={10}>
               <Header />
-
-              <Flex mt={10} direction="column" flex={1}>
-                {children}
-              </Flex>
-
+              {children}
               <Footer />
             </Container>
           </Box>
