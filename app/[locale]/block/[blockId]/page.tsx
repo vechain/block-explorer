@@ -1,13 +1,13 @@
 'use client'
-
+import { Badge, Flex, Heading, Stack, Table } from '@chakra-ui/react'
 import { Badge, Flex, Stack, Table } from '@chakra-ui/react'
 import { notFound } from 'next/navigation'
 import { use } from 'react'
 import { GasUsed } from '@/components/GasUsed'
+import { SearchBar } from '@/components/navigation/SearchBar'
 import { Size } from '@/components/Size'
-import { CopyableText, CopyToClipBoard } from '@/components/ui-legacy/CopyToClipBoard'
+import { Surface } from '@/components/ui/Surface'
 import { BlockLink, BlockTransactionsLink } from '@/components/ui-legacy/Links'
-import { Subtitle, Title } from '@/components/ui-legacy/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import { type BlockId, blockIdSchema } from '@/lib/schemas'
 import { formatDateFromTimestamp } from '@/lib/utils/date'
@@ -25,9 +25,9 @@ export default function BlockPage({ params }: { params: Promise<{ blockId: Block
 }
 
 const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
-  const { data: block, isLoading } = useBlock(blockId)
+  const { data: block, isPending } = useBlock(blockId)
 
-  if (isLoading) return <div>Loading...</div>
+  if (isPending) return <div>Loading...</div>
 
   if (!block) {
     notFound()
@@ -68,26 +68,38 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
   ]
 
   return (
-    <Stack>
-      <Title>Block</Title>
+    <Stack gap="8">
+      <SearchBar mt="16" />
+
+      <Surface>
+        <Heading as="h2" textStyle="displayXs">
+          Block Details
+        </Heading>
 
       <Flex alignItems="center" gap={2}>
         <Subtitle># {block.number.toLocaleString()}</Subtitle>
         <CopyToClipBoard value={block.number.toLocaleString()} />
       </Flex>
 
-      <Table.ScrollArea my={12} borderWidth="1px" rounded="md">
-        <Table.Root size="md">
-          <Table.Body>
-            {items.map(item => (
-              <Table.Row key={item.name}>
-                <Table.Cell>{item.name}</Table.Cell>
-                <Table.Cell>{item.value}</Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
-      </Table.ScrollArea>
+      </Surface>
+
+      <Surface>
+        <Heading as="h2" textStyle="displayXs">
+          Transactions
+        </Heading>
+        <Table.ScrollArea my={12} borderWidth="1px" rounded="md">
+          <Table.Root size="md">
+            <Table.Body>
+              {items.map(item => (
+                <Table.Row key={item.name}>
+                  <Table.Cell>{item.name}</Table.Cell>
+                  <Table.Cell>{item.value}</Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        </Table.ScrollArea>
+      </Surface>
     </Stack>
   )
 }

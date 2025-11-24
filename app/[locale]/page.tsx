@@ -28,7 +28,12 @@ export default async function HomePage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Heading as="h2" textStyle="displayM" textAlign="center" mt="12" mb="10">
+      <Heading
+        as="h2"
+        textStyle="displayM"
+        textAlign="center"
+        mt={{ base: '16', md: '12' }}
+        mb={{ base: '8', md: '10' }}>
         Insights & Metrics
       </Heading>
 
