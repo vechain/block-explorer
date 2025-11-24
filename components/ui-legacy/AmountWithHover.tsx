@@ -1,5 +1,5 @@
 import { Text } from '@chakra-ui/react'
-import { Tooltip } from '@/components/ui-legacy/Tooltip'
+import { Tooltip } from '@/components/ui/Tooltip'
 import type { HexString } from '@/lib/schemas'
 import { formatAmount } from '@/lib/utils/units'
 
