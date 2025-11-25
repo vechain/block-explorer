@@ -39,7 +39,8 @@ const config = defineConfig({
         'blur-purple': { value: 'rgba(143, 66, 221, 1)' },
         'blur-pink': { value: 'rgba(165, 12, 141, 1)' },
         // Status colors
-        'success-surface': { value: 'rgba(16, 255, 161, 1)' },
+        'success-text': { value: 'rgba(16, 255, 161, 1)' },
+        'success-surface': { value: 'rgba(16, 255, 161, 0.26)' },
         'error-surface': { value: 'rgba(255, 138, 138, 0.2)' },
         'error-text': { value: 'rgba(255, 138, 138, 1)' },
         'pending-surface': { value: 'rgba(246, 255, 165, 0.2)' },
