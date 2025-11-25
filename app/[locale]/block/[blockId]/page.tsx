@@ -2,9 +2,9 @@
 
 import { Flex, Group, Heading, Stack, Text } from '@chakra-ui/react'
 import { format } from 'date-fns'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { use } from 'react'
-import { LuCalendar, LuLink, LuSquareStack } from 'react-icons/lu'
 import { SearchBar } from '@/components/navigation/SearchBar'
 import { DataCard } from '@/components/ui/DataCard'
 import { IDChip } from '@/components/ui/IDChip'
@@ -51,7 +51,10 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
 
         <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
           {/* Date and time */}
-          <DataCard icon={<LuCalendar />} title="Date time" tooltip="Information coming soon">
+          <DataCard
+            icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
+            title="Date time"
+            tooltip="Information coming soon">
             <Group gap="1">
               <Text textStyle="bodyL">{formattedDate}</Text>
               <Text textStyle="bodyL" color="text-secondary">
@@ -61,17 +64,26 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
           </DataCard>
 
           {/* Clauses count */}
-          <DataCard icon={<LuSquareStack />} title="Total Clauses" tooltip="Information coming soon">
+          <DataCard
+            icon={<Image src="/icons/clause.svg" alt="Clauses" />}
+            title="Total Clauses"
+            tooltip="Information coming soon">
             <Text>{block.transactions.reduce((acc, tx) => acc + tx.clauses.length, 0)}</Text>
           </DataCard>
 
           {/* Block signer */}
-          <DataCard icon={<LuLink />} title="Block Signer" tooltip="Information coming soon">
+          <DataCard
+            icon={<Image src="/icons/link.svg" alt="Signer" />}
+            title="Block Signer"
+            tooltip="Information coming soon">
             <AddressLink address={block.signer} truncate />
           </DataCard>
 
           {/* Beneficiary */}
-          <DataCard icon={<LuLink />} title="Beneficiary" tooltip="Information coming soon">
+          <DataCard
+            icon={<Image src="/icons/link.svg" alt="Beneficiary" />}
+            title="Beneficiary"
+            tooltip="Information coming soon">
             <AddressLink address={block.beneficiary} truncate />
           </DataCard>
         </Flex>
