@@ -2,6 +2,7 @@ import { Badge, Flex, Grid, Heading, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { AgeText } from '@/components/ui/AgeText'
 import { DataCard } from '@/components/ui/DataCard'
+import { GasUsed } from '@/components/ui/GasFees'
 import { Surface } from '@/components/ui/Surface'
 import type { ExpandedBlock } from '@/lib/schemas'
 
@@ -99,20 +100,4 @@ const TxFeatures = ({ features }: { features: number | undefined }) => {
   }
 
   return null
-}
-
-const GasUsed = ({ gasUsed, gasLimit }: { gasUsed: number; gasLimit: number }) => {
-  const gasUsedRatio = (gasUsed / gasLimit) * 100
-
-  return (
-    <ProgressCircle.Root size="md" value={gasUsedRatio} color="teal">
-      <ProgressCircle.Circle css={{ '--thickness': '3px' }}>
-        <ProgressCircle.Track />
-        <ProgressCircle.Range strokeLinecap="round" stroke="highlight-secondary" />
-      </ProgressCircle.Circle>
-      <AbsoluteCenter>
-        <ProgressCircle.ValueText fontSize="xxs" color="text-primary" />
-      </AbsoluteCenter>
-    </ProgressCircle.Root>
-  )
 }
