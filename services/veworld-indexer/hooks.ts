@@ -13,6 +13,7 @@ import type {
   IndexerGetTransfersParams,
 } from './schemas'
 import { totalVetStakedQueryOptions } from './total-vet-staked'
+import { type TotalVetStakedRange, totalVetStakedHistoricQueryOptions } from './total-vet-staked-historic'
 import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
 import { contractTransactionsQueryOptions } from './transactions-contract'
@@ -26,6 +27,11 @@ export const useNftHolders = () => {
 export const useTotalVetStaked = () => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(totalVetStakedQueryOptions(activeNetwork.name))
+}
+
+export const useTotalVetStakedHistoric = (range: TotalVetStakedRange) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(totalVetStakedHistoricQueryOptions(activeNetwork.name, range))
 }
 
 export const useTotalVthoClaimed = () => {

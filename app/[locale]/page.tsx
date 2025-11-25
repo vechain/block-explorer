@@ -1,4 +1,4 @@
-import { Container, Heading, Stack } from '@chakra-ui/react'
+import { Container, Flex, Heading, Stack } from '@chakra-ui/react'
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import z from 'zod'
 import { SearchBar } from '@/components/navigation/SearchBar'
@@ -8,6 +8,7 @@ import { zodParse } from '@/lib/utils/zod'
 import { latestBlocksQueryOptions } from '@/services/thor/block'
 import { BlockUsage } from './components/BlockUsage'
 import { LatestBlocksSection } from './components/LatestBlocksSection'
+import { TotalStakedChart } from './components/TotalStakedChart'
 
 export default async function HomePage({
   searchParams,
@@ -39,6 +40,9 @@ export default async function HomePage({
       <Stack mt={{ base: 10, md: 16 }} gap={8}>
         <BlockUsage />
 
+        <Flex gap={4} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+          <TotalStakedChart />
+        </Flex>
         <LatestBlocksSection />
       </Stack>
     </HydrationBoundary>
