@@ -1,16 +1,11 @@
 import { Text } from '@chakra-ui/react'
-import { CiCircleCheck } from 'react-icons/ci'
-import { PiClockCountdown } from 'react-icons/pi'
+import Image from 'next/image'
 import { AgeText } from '@/components/ui/AgeText'
 import { BaseLink, CopyableAddressLink } from '@/components/ui/Links'
 import { type Column, DataTable } from '@/components/ui/Table'
-import type { ExpandedBlockDetail } from '@/lib/schemas'
+import type { CompressedBlock } from '@/lib/schemas'
 
-export const LatestBlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] }) => {
-  return <BlocksTable blocks={blocks} />
-}
-
-const BlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] }) => {
+export const BlocksTable = ({ blocks }: { blocks: CompressedBlock[] }) => {
   const columns: Column<(typeof rows)[number]>[] = [
     { key: 'age', label: 'Age', Cell: ({ value }) => <AgeText timestamp={value as number} /> },
     {
@@ -45,14 +40,14 @@ const BlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] }) => {
   return <DataTable columns={columns} rows={rows} />
 }
 
-export const GasUsedCell = ({ gasUsed, isFinalized }: { gasUsed: string; isFinalized: boolean }) => {
+const GasUsedCell = ({ gasUsed, isFinalized }: { gasUsed: string; isFinalized: boolean }) => {
   return (
     <Text color="text-secondary" display="flex" alignItems="center" gap={3}>
       {gasUsed.toLocaleString()}
       {isFinalized ? (
-        <CiCircleCheck size={16} color="var(--chakra-colors-success-surface)" />
+        <Image src="/icons/success.svg" alt="Finalized" width={16} height={16} />
       ) : (
-        <PiClockCountdown size={16} color="var(--chakra-colors-pending-text)" />
+        <Image src="/icons/pending.svg" style={{ stroke: 'red' }} alt="Pending" width={16} height={16} />
       )}
     </Text>
   )
