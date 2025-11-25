@@ -11,7 +11,7 @@ import { IDChip } from '@/components/ui/IDChip'
 import { AddressLink } from '@/components/ui/Links'
 import { Surface } from '@/components/ui/Surface'
 import { type BlockId, blockIdSchema } from '@/lib/schemas'
-import { useBlock } from '@/services/thor/hooks'
+import { useBlockExpanded } from '@/services/thor/hooks'
 import { TransactionsTable } from '../../components/TransactionsTable'
 import { BlockInsight } from '../components/BlockInsights'
 
@@ -26,7 +26,7 @@ export default function BlockPage({ params }: { params: Promise<{ blockId: Block
 }
 
 const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
-  const { data: block, isPending } = useBlock(blockId)
+  const { data: block, isPending } = useBlockExpanded(blockId)
 
   if (isPending) return <div>Loading...</div>
 

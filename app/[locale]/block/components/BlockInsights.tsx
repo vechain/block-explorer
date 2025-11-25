@@ -3,9 +3,9 @@ import { LuLink } from 'react-icons/lu'
 import { AgeText } from '@/components/ui/AgeText'
 import { DataCard } from '@/components/ui/DataCard'
 import { Surface } from '@/components/ui/Surface'
-import type { ExpandedBlockDetail } from '@/lib/schemas'
+import type { ExpandedBlock } from '@/lib/schemas'
 
-export const BlockInsight = ({ block }: { block: ExpandedBlockDetail }) => {
+export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   const blockInsights = [
     {
       label: 'Age',

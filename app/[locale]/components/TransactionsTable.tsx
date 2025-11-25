@@ -1,10 +1,10 @@
 import { Text } from '@chakra-ui/react'
 import { BaseLink, CopyableAddressLink } from '@/components/ui/Links'
 import { type Column, DataTable } from '@/components/ui/Table'
-import type { ExpandedBlockDetail } from '@/lib/schemas'
+import type { ExpandedBlock } from '@/lib/schemas'
 
 // TODO completed transacitons table once deisgn is completed
-export const TransactionsTable = ({ transactions }: { transactions: ExpandedBlockDetail['transactions'] }) => {
+export const TransactionsTable = ({ transactions }: { transactions: ExpandedBlock['transactions'] }) => {
   const columns: Column<(typeof rows)[number]>[] = [
     {
       key: 'ID',

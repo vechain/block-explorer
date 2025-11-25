@@ -5,7 +5,7 @@ import { SearchBar } from '@/components/navigation/SearchBar'
 import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
 import { zodParse } from '@/lib/utils/zod'
-import { latestBlocksQueryOptions } from '@/services/thor/block'
+import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { BlockUsage } from './components/BlockUsage'
 import { LatestBlocksSection } from './components/LatestBlocksSection'
 
@@ -24,7 +24,7 @@ export default async function HomePage({
   })
 
   const queryClient = getQueryClient()
-  await queryClient.prefetchQuery(latestBlocksQueryOptions(activeNetworkName, 10))
+  await queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName))
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

@@ -9,7 +9,7 @@ import { TransactionClausesLink, TransactionLink } from '@/components/ui-legacy/
 import { Subtitle, Title } from '@/components/ui-legacy/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import { type BlockId, blockIdSchema } from '@/lib/schemas'
-import { useBlock } from '@/services/thor/hooks'
+import { useBlockExpanded } from '@/services/thor/hooks'
 
 export default function BlockTransactionsPage({ params }: { params: Promise<{ blockId: BlockId }> }) {
   const { blockId } = use(params)
@@ -22,7 +22,7 @@ export default function BlockTransactionsPage({ params }: { params: Promise<{ bl
 }
 
 const BlockTransactionList = ({ blockId }: { blockId: BlockId }) => {
-  const { data: block, isLoading } = useBlock(blockId)
+  const { data: block, isLoading } = useBlockExpanded(blockId)
 
   if (isLoading) return <div>Loading...</div>
 
