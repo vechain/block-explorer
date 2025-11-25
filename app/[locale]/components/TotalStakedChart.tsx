@@ -35,35 +35,30 @@ export const TotalStakedChart = () => {
     [historicData],
   )
 
-  // Get the latest value for display - memoized
   const displayValue = useMemo(() => {
     const latestValue = chartData.length > 0 ? chartData[chartData.length - 1] : null
     return currentTotal?.total ?? (latestValue ? latestValue.value : 0n)
   }, [chartData, currentTotal?.total])
 
-  // Format the total staked amount to abbreviated form (e.g., 6B, 6.8B) - memoized
-  const formattedValue = useMemo(() => {
-    const formatTotalStakedAbbreviated = (amount: bigint) => {
-      const amountString = formatEther(amount)
-      const [intPart] = amountString.split('.')
-      const num = Number(intPart)
+  const formatAbbreviated = (amount: bigint) => {
+    const amountString = formatEther(amount)
+    const [intPart] = amountString.split('.')
+    const num = Number(intPart)
 
-      if (num >= 1_000_000_000) {
-        const billions = num / 1_000_000_000
-        return `${billions % 1 === 0 ? billions.toFixed(0) : billions.toFixed(1)}B`
-      }
-      if (num >= 1_000_000) {
-        const millions = num / 1_000_000
-        return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`
-      }
-      if (num >= 1_000) {
-        const thousands = num / 1_000
-        return `${thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)}K`
-      }
-      return num.toLocaleString()
+    if (num >= 1_000_000_000) {
+      const billions = num / 1_000_000_000
+      return `${billions % 1 === 0 ? billions.toFixed(0) : billions.toFixed(1)}B`
     }
-    return formatTotalStakedAbbreviated(displayValue)
-  }, [displayValue])
+    if (num >= 1_000_000) {
+      const millions = num / 1_000_000
+      return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`
+    }
+    if (num >= 1_000) {
+      const thousands = num / 1_000
+      return `${thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)}K`
+    }
+    return num.toLocaleString()
+  }
 
   if (isLoading) return <Skeleton height="274px" width="415px" rounded="md" />
 
@@ -76,6 +71,7 @@ export const TotalStakedChart = () => {
       borderRadius="md"
       borderWidth="1px"
       borderColor="border-surface"
+      backdropFilter="blur(32px)"
       p={5}>
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL" color="fg" fontWeight="normal">
@@ -142,7 +138,7 @@ export const TotalStakedChart = () => {
       </Flex>
 
       <Text textStyle="displayS" color="highlight-primary">
-        {formattedValue} VET
+        {formatAbbreviated(displayValue)} VET
       </Text>
 
       <TotalStakedChartVisualization data={chartData} />
@@ -166,8 +162,6 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
   const maxValue = values.length > 0 ? Math.max(...values) : 0
   const range = maxValue - minValue
 
-  // Add padding (5% of range) above and below to make the chart more readable
-  // If range is 0, use a small default padding
   const padding = range > 0 ? range * 0.05 : maxValue * 0.01
   const domainMin = Math.max(0, minValue - padding)
   const domainMax = maxValue + padding
@@ -214,7 +208,6 @@ const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>)
 
   const dataPoint = payload[0].payload as DataPoint
 
-  // Format the date and time for the data point
   const formatDateTime = (timestamp: number) => {
     const date = new Date(timestamp * 1000)
     return date.toLocaleString(undefined, {
@@ -226,7 +219,6 @@ const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>)
     })
   }
 
-  // Format VET amount
   const formatVetAmount = (value: bigint) => {
     const amountString = formatEther(value)
     const [intPart, decimalPart] = amountString.split('.')
