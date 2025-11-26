@@ -4,10 +4,6 @@ import type { FlexProps } from '@chakra-ui/react'
 import { Flex } from '@chakra-ui/react'
 import { forwardRef } from 'react'
 
-/**
- * Surface component - A card-like container with glassmorphism styling
- * Based on the theme's bg-card-surface tokens
- */
 export const Surface = forwardRef<HTMLDivElement, FlexProps>(({ children, ...props }, ref) => {
   return (
     <Flex

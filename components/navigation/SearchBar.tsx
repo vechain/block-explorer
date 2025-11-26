@@ -1,12 +1,13 @@
 'use client'
 
-import { Center, Field, Flex, Input } from '@chakra-ui/react'
+import { Field, Flex, type FlexProps, Input } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { LuSearch } from 'react-icons/lu'
 import { useSearch } from '@/hooks/useSearch'
+import { IconInCircle } from '../ui/IconInCircle'
 
-export const SearchBar = () => {
+export const SearchBar = (props: FlexProps) => {
   const router = useRouter()
   const { mutate: search, error, reset } = useSearch()
   const [searchTerm, setSearchTerm] = useState<string>('')
@@ -26,17 +27,15 @@ export const SearchBar = () => {
   }
 
   return (
-    <Flex border="1px solid" borderColor="bg-card-surface-2" bg="bg-card-surface-2" rounded="full" p="2" gap="4">
-      <Center
-        bg="bg-card-surface-3"
-        border="1px solid"
-        borderColor="border-surface"
-        rounded="full"
-        cursor="pointer"
-        p="3"
-        onClick={handleSearch}>
-        <LuSearch size={20} color="white" />
-      </Center>
+    <Flex
+      border="1px solid"
+      borderColor="bg-card-surface-2"
+      bg="bg-card-surface-2"
+      rounded="full"
+      p="2"
+      gap="4"
+      {...props}>
+      <IconInCircle icon={<LuSearch size={20} />} cursor="pointer" p="3" onClick={handleSearch} />
       <Field.Root as="form" onSubmit={handleSubmit} invalid={!!error} flex="1" gap="0">
         <Input
           px="0"

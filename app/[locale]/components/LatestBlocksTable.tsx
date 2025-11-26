@@ -1,10 +1,10 @@
 import { Text } from '@chakra-ui/react'
 import { CiCircleCheck } from 'react-icons/ci'
 import { PiClockCountdown } from 'react-icons/pi'
+import { AgeText } from '@/components/ui/AgeText'
 import { BaseLink, CopyableAddressLink } from '@/components/ui/Links'
-import { AgeCell, type Column, DataTable } from '@/components/ui/Table'
+import { type Column, DataTable } from '@/components/ui/Table'
 import type { ExpandedBlockDetail } from '@/lib/schemas'
-import { formatDateFromTimestamp } from '@/lib/utils/date'
 
 export const LatestBlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] }) => {
   return <BlocksTable blocks={blocks} />
@@ -12,7 +12,7 @@ export const LatestBlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] })
 
 const BlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] }) => {
   const columns: Column<(typeof rows)[number]>[] = [
-    { key: 'age', label: 'Age', Cell: AgeCell },
+    { key: 'age', label: 'Age', Cell: ({ value }) => <AgeText timestamp={value as number} /> },
     {
       key: 'blockNumber',
       label: 'ID',
@@ -34,7 +34,7 @@ const BlocksTable = ({ blocks }: { blocks: ExpandedBlockDetail[] }) => {
   const rows = blocks.map(block => ({
     id: block.id,
     blockNumber: `#${block.number.toString()}`,
-    age: formatDateFromTimestamp(block.timestamp),
+    age: block.timestamp,
     block: block.number.toLocaleString(),
     signer: block.signer,
     txs: block.transactions.length,
