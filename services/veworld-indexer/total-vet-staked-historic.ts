@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
+import { timestampSchema } from '@/lib/schemas/common'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 
@@ -31,7 +32,7 @@ const getTotalVetStakedHistoric = async ({
 
 const totalVetStakedHistoricSchema = z.array(
   z.object({
-    timestamp: z.number(),
+    timestamp: timestampSchema,
     value: z.string(),
   }),
 )

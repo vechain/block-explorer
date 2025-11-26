@@ -4,6 +4,7 @@ import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { memo, useMemo, useState } from 'react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, type TooltipContentProps, XAxis, YAxis } from 'recharts'
 import { formatEther } from 'viem'
+import { formatAbbreviated } from '@/lib/utils/units'
 import { useTotalVetStaked, useTotalVetStakedHistoric } from '@/services/veworld-indexer/hooks'
 import type { TotalVetStakedRange } from '@/services/veworld-indexer/total-vet-staked-historic'
 
@@ -35,30 +36,8 @@ export const TotalStakedChart = () => {
     [historicData],
   )
 
-  const displayValue = useMemo(() => {
-    const latestValue = chartData.length > 0 ? chartData[chartData.length - 1] : null
-    return currentTotal?.total ?? (latestValue ? latestValue.value : 0n)
-  }, [chartData, currentTotal?.total])
-
-  const formatAbbreviated = (amount: bigint) => {
-    const amountString = formatEther(amount)
-    const [intPart] = amountString.split('.')
-    const num = Number(intPart)
-
-    if (num >= 1_000_000_000) {
-      const billions = num / 1_000_000_000
-      return `${billions % 1 === 0 ? billions.toFixed(0) : billions.toFixed(1)}B`
-    }
-    if (num >= 1_000_000) {
-      const millions = num / 1_000_000
-      return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`
-    }
-    if (num >= 1_000) {
-      const thousands = num / 1_000
-      return `${thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)}K`
-    }
-    return num.toLocaleString()
-  }
+  const latestValue = chartData.length > 0 ? chartData[chartData.length - 1] : null
+  const displayValue = currentTotal?.total ?? (latestValue ? latestValue.value : 0n)
 
   if (isLoading) return <Skeleton height="274px" width="415px" rounded="md" />
 
@@ -74,7 +53,7 @@ export const TotalStakedChart = () => {
       backdropFilter="blur(32px)"
       p={5}>
       <Flex justify="space-between" align="center">
-        <Heading as="h3" textStyle="bodyL" color="fg" fontWeight="normal">
+        <Heading as="h3" textStyle="bodyL">
           Total Staked
         </Heading>
 
@@ -95,8 +74,7 @@ export const TotalStakedChart = () => {
             borderRadius="full"
             bg={selectedRange === '1-day' ? 'white' : 'transparent'}
             color={selectedRange === '1-day' ? 'bg-primary' : 'fg'}
-            fontSize="xs"
-            fontWeight="medium"
+            textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange('1-day')}
             transition="all 0.2s">
@@ -111,8 +89,7 @@ export const TotalStakedChart = () => {
             borderRadius="full"
             bg={selectedRange === '1-month' ? 'white' : 'transparent'}
             color={selectedRange === '1-month' ? 'bg-primary' : 'fg'}
-            fontSize="xs"
-            fontWeight="medium"
+            textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange('1-month')}
             transition="all 0.2s">
@@ -127,8 +104,7 @@ export const TotalStakedChart = () => {
             borderRadius="full"
             bg={selectedRange === '1-year' ? 'white' : 'transparent'}
             color={selectedRange === '1-year' ? 'bg-primary' : 'fg'}
-            fontSize="xs"
-            fontWeight="medium"
+            textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange('1-year')}
             transition="all 0.2s">
@@ -144,10 +120,10 @@ export const TotalStakedChart = () => {
       <TotalStakedChartVisualization data={chartData} />
 
       <Stack>
-        <Text fontSize="xs" color="text-secondary">
+        <Text textStyle="bodyS" color="text-secondary">
           Circulating Supply
         </Text>
-        <Text fontSize="md" fontWeight="semibold" color="fg">
+        <Text textStyle="bodyMSemibold" color="fg">
           1521251
         </Text>
       </Stack>
@@ -209,7 +185,7 @@ const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>)
   const dataPoint = payload[0].payload as DataPoint
 
   const formatDateTime = (timestamp: number) => {
-    const date = new Date(timestamp * 1000)
+    const date = new Date(timestamp)
     return date.toLocaleString(undefined, {
       month: 'short',
       day: 'numeric',
@@ -230,17 +206,13 @@ const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>)
   return (
     <Stack bg="bg" rounded="xl" p={4}>
       <Flex alignItems="center" gap={2}>
-        <Text fontSize="sm" fontWeight="bold">
-          Date & Time:
-        </Text>
-        <Text fontSize="sm">{formatDateTime(dataPoint.timestamp)}</Text>
+        <Text textStyle="bodyMSemibold">Date & Time:</Text>
+        <Text textStyle="bodyM">{formatDateTime(dataPoint.timestamp)}</Text>
       </Flex>
 
       <Flex alignItems="center" gap={2}>
-        <Text fontSize="sm" fontWeight="bold">
-          Total Staked:
-        </Text>
-        <Text fontSize="sm">{formatVetAmount(dataPoint.value)} VET</Text>
+        <Text textStyle="bodyMSemibold">Total Staked:</Text>
+        <Text textStyle="bodyM">{formatVetAmount(dataPoint.value)} VET</Text>
       </Flex>
     </Stack>
   )
