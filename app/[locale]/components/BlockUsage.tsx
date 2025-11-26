@@ -373,7 +373,7 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
 
   // Format X-axis labels based on the selected time range
   const formatXAxis = (timestamp: number) => {
-    const date = new Date(timestamp * 1000)
+    const date = new Date(timestamp)
 
     switch (selectedRange) {
       case 'hourly':
@@ -505,7 +505,7 @@ const CustomTooltip = ({
 
   // Format the date and time for the data point
   const formatDateTime = (timestamp: number) => {
-    const date = new Date(timestamp * 1000)
+    const date = new Date(timestamp)
     return date.toLocaleString(undefined, {
       month: 'short',
       day: 'numeric',

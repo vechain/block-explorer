@@ -1,5 +1,5 @@
 export const formatDateFromTimestamp = (timestamp: number) => {
-  return new Date(timestamp * 1000).toLocaleString('en-US', {
+  return new Date(timestamp).toLocaleString('en-US', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -12,7 +12,7 @@ export const formatDateFromTimestamp = (timestamp: number) => {
 
 export function timeFormat(timestamp: number): string {
   //* format timestamp to HH:MM:SS
-  const date = new Date(timestamp * 1000)
+  const date = new Date(timestamp)
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
   return `${hours}:${minutes}`

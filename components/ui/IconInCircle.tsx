@@ -1,5 +1,6 @@
 import { Center, type CenterProps } from '@chakra-ui/react'
-import React, { forwardRef } from 'react'
+import type React from 'react'
+import { forwardRef } from 'react'
 import type { IconBaseProps } from 'react-icons'
 
 interface IconInCircleProps extends CenterProps {
@@ -7,8 +8,6 @@ interface IconInCircleProps extends CenterProps {
 }
 
 export const IconInCircle = forwardRef<HTMLDivElement, IconInCircleProps>(({ icon, ...props }, ref) => {
-  const Icon = React.cloneElement(icon, icon.props)
-
   return (
     <Center
       ref={ref}
@@ -17,7 +16,7 @@ export const IconInCircle = forwardRef<HTMLDivElement, IconInCircleProps>(({ ico
       borderColor="border-surface-2"
       rounded="full"
       {...props}>
-      {Icon}
+      {icon}
     </Center>
   )
 })

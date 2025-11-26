@@ -34,10 +34,6 @@ export const TransactionLink = ({
   )
 }
 
-export const BlockTransactionsLink = ({ blockId, children }: { blockId: BlockId; children: React.ReactNode }) => {
-  return <BaseLink to={`/block/${blockId}/transactions`}>{children}</BaseLink>
-}
-
 export const TransactionClausesLink = ({
   transactionId,
   children,

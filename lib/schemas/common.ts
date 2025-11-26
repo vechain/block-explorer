@@ -1,3 +1,4 @@
+import { hexToBigInt } from 'viem'
 import z from 'zod'
 
 export const addressStringSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/, {
@@ -18,6 +19,10 @@ export const blockIdSchema = z.string().regex(/^0x[a-fA-F0-9]{64}$/, {
 }) as z.ZodType<`0x${string}`>
 
 export const blockNumberSchema = z.number()
+
+export const timestampSchema = z.number().transform(timestamp => timestamp * 1000)
+
+export const hexToBigIntSchema = hexStringSchema.transform(hex => hexToBigInt(hex)).pipe(z.bigint())
 
 export type AddressString = z.infer<typeof addressStringSchema>
 export type HexString = z.infer<typeof hexStringSchema>

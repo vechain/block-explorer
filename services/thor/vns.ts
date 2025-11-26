@@ -1,3 +1,4 @@
+import { queryOptions, skipToken } from '@tanstack/react-query'
 import { ABIFunction } from '@vechain/sdk-core'
 import { ThorClient } from '@vechain/sdk-network'
 import { z } from 'zod'
@@ -18,12 +19,12 @@ const VNS_FUNCTION_ABI_GET_ADDRESSES = new ABIFunction(
 
 const VNS_FUNCTION_ABI_GET_NAMES = new ABIFunction('function getNames(address[] addresses) returns (string[] names)')
 
-export const vnsNameQueryOptions = (networkName: NetworkName, address: AddressString) => ({
-  queryKey: [getVnsName.name, networkName, address],
-  queryFn: () => getVnsName({ networkName, address }),
-  staleTime: Infinity,
-  enabled: !!address,
-})
+export const vnsNameQueryOptions = (networkName: NetworkName, address: AddressString | undefined) =>
+  queryOptions({
+    queryKey: [getVnsName.name, networkName, address],
+    queryFn: address ? () => getVnsName({ networkName, address }) : skipToken,
+    staleTime: Infinity,
+  })
 
 const getVnsName = async ({
   networkName,

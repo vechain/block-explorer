@@ -1,5 +1,5 @@
 import z from 'zod'
-import { addressStringSchema, hexStringSchema } from './common'
+import { addressStringSchema, hexStringSchema, hexToBigIntSchema } from './common'
 
 export enum EventType {
   RAW = 'raw',
@@ -15,7 +15,7 @@ export const rawEventSchema = z.object({
 export const transferSchema = z.object({
   sender: addressStringSchema,
   recipient: addressStringSchema,
-  amount: hexStringSchema,
+  amount: hexToBigIntSchema,
 })
 
 export type Transfer = z.infer<typeof transferSchema>
