@@ -29,6 +29,7 @@ const config = defineConfig({
         'bg-card-surface-hover': { value: 'rgba(255, 255, 255, 0.1)' },
         'bg-card-surface-active': { value: 'rgba(255, 255, 255, 0.2)' },
         'bg-surface-alt': { value: 'rgba(0, 0, 0, 0.2)' },
+        'bg-surface-alt-1': { value: 'rgba(0, 0, 0, 0.1)' },
         'bg-surface-alt-hover': { value: 'rgba(0, 0, 0, 0.4)' },
         // Border colors
         'border-surface': { value: 'rgba(255, 255, 255, 0.2)' },

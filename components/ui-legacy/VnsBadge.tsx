@@ -1,8 +1,8 @@
 import { Badge, Text } from '@chakra-ui/react'
 import type { AddressString } from '@/lib/schemas'
 import { useVnsName } from '@/services/thor/hooks'
+import { Tooltip } from '../ui/Tooltip'
 import { AddressLink, CopyableLink } from './Links'
-import { Tooltip } from './Tooltip'
 
 export const VnsBadgeOrAddressLink = ({
   address,

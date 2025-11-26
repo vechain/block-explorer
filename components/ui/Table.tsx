@@ -1,6 +1,4 @@
 import { Flex, Skeleton, type SkeletonProps, Table as TableChakra, Text, type TextProps } from '@chakra-ui/react'
-import { formatDistance } from 'date-fns'
-import { HiOutlineBolt } from 'react-icons/hi2'
 import type { AddressString } from '@/lib/schemas'
 import { CopyableAddressLink } from './Links'
 
@@ -125,15 +123,6 @@ export const TableSkeleton = (props: SkeletonProps) => {
 
 export const AddressCell = ({ value }: CellComponentProps) => {
   return <CopyableAddressLink address={value as AddressString} />
-}
-
-export const AgeCell = ({ value }: CellComponentProps) => {
-  return (
-    <Text as="span" color="highlight-secondary" display="flex" alignItems="center" textTransform="capitalize" gap={1}>
-      <HiOutlineBolt size={16} />
-      {formatDistance(new Date(value as number), new Date(), { addSuffix: true })}
-    </Text>
-  )
 }
 
 export const AppendIconCell = ({ value, icon }: { icon: React.ReactNode } & CellComponentProps) => {
