@@ -5,7 +5,11 @@ import { timestampSchema } from '@/lib/schemas/common'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 
-export type TotalVetStakedRange = '1-day' | '1-month' | '1-year'
+export enum TotalVetStakedRange {
+  DAY = '1-day',
+  MONTH = '1-month',
+  YEAR = '1-year',
+}
 
 export const totalVetStakedHistoricQueryOptions = (networkName: NetworkName, range: TotalVetStakedRange) => ({
   queryKey: [getTotalVetStakedHistoric.name, networkName, range],

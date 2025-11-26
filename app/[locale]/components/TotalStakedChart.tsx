@@ -1,12 +1,13 @@
 'use client'
 
 import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { format } from 'date-fns'
 import { memo, useMemo, useState } from 'react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, type TooltipContentProps, XAxis, YAxis } from 'recharts'
 import { formatEther } from 'viem'
-import { formatAbbreviated } from '@/lib/utils/units'
+import { formatAbbreviated, formatAmount } from '@/lib/utils/units'
 import { useTotalVetStaked, useTotalVetStakedHistoric } from '@/services/veworld-indexer/hooks'
-import type { TotalVetStakedRange } from '@/services/veworld-indexer/total-vet-staked-historic'
+import { TotalVetStakedRange } from '@/services/veworld-indexer/total-vet-staked-historic'
 
 const chartHeight = 100
 
@@ -17,7 +18,7 @@ type DataPoint = {
 }
 
 export const TotalStakedChart = () => {
-  const [selectedRange, setSelectedRange] = useState<TotalVetStakedRange>('1-day')
+  const [selectedRange, setSelectedRange] = useState<TotalVetStakedRange>(TotalVetStakedRange.DAY)
   const { data: historicData, isLoading } = useTotalVetStakedHistoric(selectedRange)
   const { data: currentTotal } = useTotalVetStaked()
 
@@ -72,11 +73,11 @@ export const TotalStakedChart = () => {
             px={3}
             py={1}
             borderRadius="full"
-            bg={selectedRange === '1-day' ? 'white' : 'transparent'}
-            color={selectedRange === '1-day' ? 'bg-primary' : 'fg'}
+            bg={selectedRange === TotalVetStakedRange.DAY ? 'white' : 'transparent'}
+            color={selectedRange === TotalVetStakedRange.DAY ? 'bg-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
-            onClick={() => setSelectedRange('1-day')}
+            onClick={() => setSelectedRange(TotalVetStakedRange.DAY)}
             transition="all 0.2s">
             1D
           </Flex>
@@ -87,11 +88,11 @@ export const TotalStakedChart = () => {
             px={3}
             py={1}
             borderRadius="full"
-            bg={selectedRange === '1-month' ? 'white' : 'transparent'}
-            color={selectedRange === '1-month' ? 'bg-primary' : 'fg'}
+            bg={selectedRange === TotalVetStakedRange.MONTH ? 'white' : 'transparent'}
+            color={selectedRange === TotalVetStakedRange.MONTH ? 'bg-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
-            onClick={() => setSelectedRange('1-month')}
+            onClick={() => setSelectedRange(TotalVetStakedRange.MONTH)}
             transition="all 0.2s">
             1M
           </Flex>
@@ -102,11 +103,11 @@ export const TotalStakedChart = () => {
             px={3}
             py={1}
             borderRadius="full"
-            bg={selectedRange === '1-year' ? 'white' : 'transparent'}
-            color={selectedRange === '1-year' ? 'bg-primary' : 'fg'}
+            bg={selectedRange === TotalVetStakedRange.YEAR ? 'white' : 'transparent'}
+            color={selectedRange === TotalVetStakedRange.YEAR ? 'bg-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
-            onClick={() => setSelectedRange('1-year')}
+            onClick={() => setSelectedRange(TotalVetStakedRange.YEAR)}
             transition="all 0.2s">
             1Y
           </Flex>
@@ -164,7 +165,7 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
           <Area
             type="monotone"
             dataKey="formattedValue"
-            stroke="rgba(184, 166, 255, 1)"
+            stroke="var(--chakra-colors-highlight-primary)"
             strokeWidth={2}
             fill="none"
             activeDot={{ r: 6, cursor: 'pointer' }}
@@ -184,35 +185,21 @@ const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>)
 
   const dataPoint = payload[0].payload as DataPoint
 
-  const formatDateTime = (timestamp: number) => {
-    const date = new Date(timestamp)
-    return date.toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    })
-  }
-
-  const formatVetAmount = (value: bigint) => {
-    const amountString = formatEther(value)
-    const [intPart, decimalPart] = amountString.split('.')
-    const formattedInt = Number(intPart).toLocaleString()
-    const formattedDecimal = decimalPart ? decimalPart.substring(0, 4).replace(/0+$/, '') : ''
-    return formattedDecimal ? `${formattedInt}.${formattedDecimal}` : formattedInt
-  }
+  const [formatted] = formatAmount({ amount: dataPoint.value })
+  const [intPart, decimalPart] = formatted.split('.')
+  const formattedInt = Number(intPart).toLocaleString()
+  const formattedVetAmount = decimalPart ? `${formattedInt}.${decimalPart}` : formattedInt
 
   return (
     <Stack bg="bg" rounded="xl" p={4}>
       <Flex alignItems="center" gap={2}>
         <Text textStyle="bodyMSemibold">Date & Time:</Text>
-        <Text textStyle="bodyM">{formatDateTime(dataPoint.timestamp)}</Text>
+        <Text textStyle="bodyM">{format(new Date(dataPoint.timestamp), 'MMM d, yyyy h:mm a')}</Text>
       </Flex>
 
       <Flex alignItems="center" gap={2}>
         <Text textStyle="bodyMSemibold">Total Staked:</Text>
-        <Text textStyle="bodyM">{formatVetAmount(dataPoint.value)} VET</Text>
+        <Text textStyle="bodyM">{formattedVetAmount} VET</Text>
       </Flex>
     </Stack>
   )
