@@ -32,7 +32,7 @@ const Logo = () => {
   )
 }
 
-export const NavigationMenu = () => {
+const NavigationMenu = () => {
   return (
     <Flex
       flex={{ base: 1, md: 0 }}

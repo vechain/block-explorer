@@ -1,10 +1,9 @@
 'use client'
 
-import type { FlexProps } from '@chakra-ui/react'
-import { Flex, Group, Text } from '@chakra-ui/react'
+import { Flex, type FlexProps, Group, Text } from '@chakra-ui/react'
+import Image from 'next/image'
 import React, { forwardRef } from 'react'
 import type { IconBaseProps } from 'react-icons'
-import { LuInfo } from 'react-icons/lu'
 import { IconInCircle } from './IconInCircle'
 import { Tooltip } from './Tooltip'
 
@@ -16,15 +15,15 @@ interface DataCardProps extends FlexProps {
 
 export const DataCard = forwardRef<HTMLDivElement, DataCardProps>(
   ({ children, icon, title, tooltip, ...props }, ref) => {
-    const Icon = React.cloneElement(icon, icon.props)
+    const Icon = React.cloneElement(icon, { ...icon.props, width: 12, height: 12 })
 
     return (
       <Flex
         ref={ref}
         flexDirection="column"
         flex="1"
+        justifyContent="space-between"
         alignSelf="stretch"
-        // w={{ base: 'full', md:'auto' }}
         gap={6}
         bg="bg-surface-alt-1"
         color="text-primary"
@@ -42,25 +41,8 @@ export const DataCard = forwardRef<HTMLDivElement, DataCardProps>(
             </Text>
           </Group>
           {tooltip && (
-            <Tooltip
-              showArrow
-              positioning={{ placement: 'top' }}
-              contentProps={{
-                css: {
-                  '--tooltip-bg': 'colors.gray.800',
-                  // TODO fix arrow styling
-                  // '--arrow-background': 'red.500',
-                  color: 'text-primary',
-                  textStyle: 'bodyM',
-                  px: '2',
-                  py: '3',
-                  maxW: '200px',
-                  borderRadius: 'xs',
-                  borderColor: 'colors.gray.700',
-                },
-              }}
-              content={tooltip}>
-              <LuInfo size={16} />
+            <Tooltip content={tooltip}>
+              <Image src="/icons/info.svg" alt="Info" width={16} height={16} />
             </Tooltip>
           )}
         </Flex>

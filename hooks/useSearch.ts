@@ -3,7 +3,7 @@ import type { Network } from '@/lib/constants/network'
 import { addressStringSchema, blockRevisionSchema, hexStringSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getAccount } from '@/services/thor/account'
-import { getBlock } from '@/services/thor/block'
+import { getBlockCompressed } from '@/services/thor/block'
 import { getTransaction } from '@/services/thor/transaction'
 import { getVnsAddress } from '@/services/thor/vns'
 
@@ -38,7 +38,7 @@ const search = async ({
   const result = blockRevisionSchema.safeParse(searchTerm)
   const isBlock = result.success
   if (isBlock) {
-    const block = await getBlock({ networkName: activeNetwork.name, revision: result.data })
+    const block = await getBlockCompressed({ networkName: activeNetwork.name, revision: result.data })
     if (block) {
       return {
         redirectTo: `/block/${block.id}`,

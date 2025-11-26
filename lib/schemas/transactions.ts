@@ -1,11 +1,19 @@
 import z from 'zod'
-import { addressStringSchema, blockIdSchema, blockNumberSchema, hexStringSchema, transactionIdSchema } from './common'
+import {
+  addressStringSchema,
+  blockIdSchema,
+  blockNumberSchema,
+  hexStringSchema,
+  hexToBigIntSchema,
+  timestampSchema,
+  transactionIdSchema,
+} from './common'
 import { rawEventSchema, transferSchema } from './events'
 
 export const clauseSchema = z.object({
   to: addressStringSchema.nullable().optional(),
-  value: hexStringSchema, // string | number
-  data: hexStringSchema, // string
+  value: hexToBigIntSchema,
+  data: hexStringSchema,
   comment: z.string().nullable().optional(),
   abi: z.string().nullable().optional(),
 })
@@ -13,7 +21,7 @@ export const clauseSchema = z.object({
 export const transactionMetaSchema = z.object({
   blockID: blockIdSchema,
   blockNumber: blockNumberSchema,
-  blockTimestamp: z.number(),
+  blockTimestamp: timestampSchema,
   txID: transactionIdSchema.optional(),
   txOrigin: addressStringSchema.nullable().optional(),
 })
@@ -28,9 +36,9 @@ export const baseTransactionSchema = z.object({
   blockRef: hexStringSchema,
   expiration: z.number(),
   clauses: z.array(clauseSchema),
-  gas: z.number(), // string | number
+  gas: z.coerce.bigint(),
   dependsOn: transactionIdSchema.nullable().optional(),
-  nonce: hexStringSchema, // string | number
+  nonce: hexStringSchema,
   reserved: z
     .object({
       features: z.number().nullable().optional(),
@@ -41,8 +49,8 @@ export const baseTransactionSchema = z.object({
 })
 
 export const dynamicFeeTransactionFieldsSchema = z.object({
-  maxFeePerGas: hexStringSchema, // string | number
-  maxPriorityFeePerGas: hexStringSchema, // string | number
+  maxFeePerGas: hexToBigIntSchema,
+  maxPriorityFeePerGas: hexToBigIntSchema,
 })
 
 export const legacyTransactionFieldsSchema = z.object({
@@ -71,20 +79,15 @@ export const outputSchema = z.object({
 })
 
 export const transactionReceiptSchema = z.object({
-  gasUsed: z.number(),
+  gasUsed: z.coerce.bigint(),
   gasPayer: addressStringSchema,
-  paid: hexStringSchema,
-  reward: hexStringSchema,
+  paid: hexToBigIntSchema,
+  reward: hexToBigIntSchema,
   reverted: z.boolean(),
   outputs: z.array(outputSchema),
   meta: transactionMetaSchema,
-  maxFeePerGas: hexStringSchema.nullable().optional(),
-  maxPriorityFeePerGas: hexStringSchema.nullable().optional(),
 })
 
-export type DynamicFeeTransaction = z.infer<typeof dynamicFeeTransactionSchema>
-export type LegacyTransaction = z.infer<typeof legacyTransactionSchema>
 export type Transaction = z.infer<typeof transactionSchema>
 export type TransactionReceipt = z.infer<typeof transactionReceiptSchema>
-export type BaseTransaction = z.infer<typeof baseTransactionSchema>
 export type Clause = z.infer<typeof clauseSchema>

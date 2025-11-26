@@ -1,11 +1,12 @@
-import { AbsoluteCenter, Badge, Flex, Grid, Heading, ProgressCircle, Text } from '@chakra-ui/react'
-import { LuLink } from 'react-icons/lu'
+import { Badge, Flex, Grid, Heading, Text } from '@chakra-ui/react'
+import Image from 'next/image'
 import { AgeText } from '@/components/ui/AgeText'
 import { DataCard } from '@/components/ui/DataCard'
+import { GasUsed } from '@/components/ui/GasFees'
 import { Surface } from '@/components/ui/Surface'
-import type { ExpandedBlockDetail } from '@/lib/schemas'
+import type { ExpandedBlock } from '@/lib/schemas'
 
-export const BlockInsight = ({ block }: { block: ExpandedBlockDetail }) => {
+export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   const blockInsights = [
     {
       label: 'Age',
@@ -58,18 +59,29 @@ export const BlockInsight = ({ block }: { block: ExpandedBlockDetail }) => {
           ))}
         </Flex>
         <Grid templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }} flex="1" alignSelf="stretch" gap="4">
-          {/* TODO: Add icons to data cards */}
-          {/* TODO: Add relevant data to data cards */}
-          <DataCard icon={<LuLink />} title="VTHO Paid" tooltip="Information coming soon">
+          {/* //TODO: Add relevant data to data cards */}
+          <DataCard
+            icon={<Image src="/icons/coin.svg" alt="VTHO Paid" />}
+            title="VTHO Paid"
+            tooltip="Information coming soon">
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
-          <DataCard icon={<LuLink />} title="VTHO Burned" tooltip="Information coming soon">
+          <DataCard
+            icon={<Image src="/icons/flash.svg" alt="VTHO Burned" />}
+            title="VTHO Burned"
+            tooltip="Information coming soon">
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
-          <DataCard icon={<LuLink />} title="VTHO Rewarded" tooltip="Information coming soon">
+          <DataCard
+            icon={<Image src="/icons/reward.svg" alt="VTHO Rewarded" />}
+            title="VTHO Rewarded"
+            tooltip="Information coming soon">
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
-          <DataCard icon={<LuLink />} title="CO2e emitted" tooltip="Information coming soon">
+          <DataCard
+            icon={<Image src="/icons/co2e.svg" alt="CO2 emitted" />}
+            title="CO2e emitted"
+            tooltip="Information coming soon">
             <Text>{'123.456'} g</Text>
           </DataCard>
         </Grid>
@@ -88,20 +100,4 @@ const TxFeatures = ({ features }: { features: number | undefined }) => {
   }
 
   return null
-}
-
-const GasUsed = ({ gasUsed, gasLimit }: { gasUsed: number; gasLimit: number }) => {
-  const gasUsedRatio = (gasUsed / gasLimit) * 100
-
-  return (
-    <ProgressCircle.Root size="md" value={gasUsedRatio} color="teal">
-      <ProgressCircle.Circle css={{ '--thickness': '3px' }}>
-        <ProgressCircle.Track />
-        <ProgressCircle.Range strokeLinecap="round" stroke="highlight-secondary" />
-      </ProgressCircle.Circle>
-      <AbsoluteCenter>
-        <ProgressCircle.ValueText fontSize="xxs" color="text-primary" />
-      </AbsoluteCenter>
-    </ProgressCircle.Root>
-  )
 }

@@ -1,10 +1,9 @@
 import { Flex, Skeleton, type SkeletonProps, Table as TableChakra, Text, type TextProps } from '@chakra-ui/react'
 import type { AddressString } from '@/lib/schemas'
-import { CopyableAddressLink } from './Links'
 
 type CellValue = string | number | AddressString | boolean
 
-export type TableRow = {
+type TableRow = {
   id: string
   [key: string]: CellValue
 }
@@ -30,7 +29,7 @@ export type Column<T extends TableRow = TableRow> = {
   Cell?: React.ComponentType<CellComponentProps<T>>
 }
 
-export type DataTableProps<T extends TableRow = TableRow> = {
+type DataTableProps<T extends TableRow = TableRow> = {
   columns: Column<T>[]
   rows: T[]
 }
@@ -120,10 +119,6 @@ export const TableSkeleton = (props: SkeletonProps) => {
 /**
  * Cell components
  */
-
-export const AddressCell = ({ value }: CellComponentProps) => {
-  return <CopyableAddressLink address={value as AddressString} />
-}
 
 export const AppendIconCell = ({ value, icon }: { icon: React.ReactNode } & CellComponentProps) => {
   return (
