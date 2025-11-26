@@ -71,7 +71,7 @@ export const legacyBaseFeePerGasQueryOptions = (networkName: NetworkName) =>
     queryFn: () => getLegacyBaseGasPrice({ networkName }),
   })
 
-export const getLegacyBaseGasPrice = async ({ networkName }: { networkName: NetworkName }) => {
+const getLegacyBaseGasPrice = async ({ networkName }: { networkName: NetworkName }) => {
   const thorClient = getThorClient(networkName)
   const legacyBaseGasPrice = await thorClient.transactions.getLegacyBaseGasPrice()
 

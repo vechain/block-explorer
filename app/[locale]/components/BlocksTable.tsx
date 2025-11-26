@@ -1,8 +1,7 @@
-import { Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { AgeText } from '@/components/ui/AgeText'
 import { BaseLink, CopyableAddressLink } from '@/components/ui/Links'
-import { type Column, DataTable } from '@/components/ui/Table'
+import { AppendIconCell, type CellComponentProps, type Column, DataTable } from '@/components/ui/Table'
 import type { CompressedBlock } from '@/lib/schemas'
 
 export const BlocksTable = ({ blocks }: { blocks: CompressedBlock[] }) => {
@@ -22,7 +21,7 @@ export const BlocksTable = ({ blocks }: { blocks: CompressedBlock[] }) => {
     {
       key: 'gasUsed',
       label: 'Gas Used',
-      Cell: ({ row }) => <GasUsedCell gasUsed={row.gasUsed} isFinalized={row.isFinalized} />,
+      Cell: GasUsedCell,
     },
   ]
 
@@ -40,15 +39,12 @@ export const BlocksTable = ({ blocks }: { blocks: CompressedBlock[] }) => {
   return <DataTable columns={columns} rows={rows} />
 }
 
-const GasUsedCell = ({ gasUsed, isFinalized }: { gasUsed: string; isFinalized: boolean }) => {
-  return (
-    <Text color="text-secondary" display="flex" alignItems="center" gap={3}>
-      {gasUsed.toLocaleString()}
-      {isFinalized ? (
-        <Image src="/icons/success.svg" alt="Finalized" width={16} height={16} />
-      ) : (
-        <Image src="/icons/pending.svg" style={{ stroke: 'red' }} alt="Pending" width={16} height={16} />
-      )}
-    </Text>
+const GasUsedCell = (props: CellComponentProps) => {
+  const icon = props.row.isFinalized ? (
+    <Image src="/icons/success.svg" alt="Finalized" width={16} height={16} />
+  ) : (
+    <Image src="/icons/pending.svg" style={{ stroke: 'red' }} alt="Pending" width={16} height={16} />
   )
+
+  return <AppendIconCell icon={icon} {...props} />
 }

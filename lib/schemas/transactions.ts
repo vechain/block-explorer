@@ -88,9 +88,6 @@ export const transactionReceiptSchema = z.object({
   meta: transactionMetaSchema,
 })
 
-export type DynamicFeeTransaction = z.infer<typeof dynamicFeeTransactionSchema>
-export type LegacyTransaction = z.infer<typeof legacyTransactionSchema>
 export type Transaction = z.infer<typeof transactionSchema>
 export type TransactionReceipt = z.infer<typeof transactionReceiptSchema>
-export type BaseTransaction = z.infer<typeof baseTransactionSchema>
 export type Clause = z.infer<typeof clauseSchema>

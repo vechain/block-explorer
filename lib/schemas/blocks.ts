@@ -70,7 +70,7 @@ export const blockExpandedSchema = z.object({
   com: z.boolean(),
 })
 
-export const blockRevisionEnumSchema = z.enum({
+const blockRevisionEnumSchema = z.enum({
   BEST: 'best',
   NEXT: 'next',
   FINALIZED: 'finalized',
@@ -85,7 +85,7 @@ export const blockRevisionSchema = z.union([
 ])
 
 // Block usage schema for indexer endpoint
-export const blockUsageDataSchema = z.object({
+const blockUsageDataSchema = z.object({
   blockId: blockIdSchema,
   blockNumber: blockNumberSchema,
   blockTimestamp: timestampSchema,

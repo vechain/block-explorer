@@ -6,7 +6,7 @@ import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from './index'
 
-export const blockUsageQueryOptions = (
+const blockUsageQueryOptions = (
   networkName: NetworkName,
   startTimestamp: number,
   endTimestamp: number,

@@ -14,7 +14,7 @@ import { vnsNameQueryOptions } from './vns'
 /**
  * Block hooks
  */
-export const useBestBlockCompressed = () => {
+const useBestBlockCompressed = () => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
 }

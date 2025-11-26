@@ -4,7 +4,7 @@ import type { AddressString } from '@/lib/schemas'
 import { truncateAddress } from '@/lib/utils/address'
 import { CopyToClipBoard } from './CopyToClipBoard'
 
-export interface BaseLinkProps extends Omit<ChakraLinkProps, 'href'> {
+interface BaseLinkProps extends Omit<ChakraLinkProps, 'href'> {
   href: NextLinkProps['href']
 }
 
@@ -41,7 +41,7 @@ interface CopyableLinkProps extends BaseLinkProps {
   value: string
 }
 
-export const CopyableLink = ({ href, value, children, ...props }: CopyableLinkProps) => {
+const CopyableLink = ({ href, value, children, ...props }: CopyableLinkProps) => {
   return (
     <Flex gap={2} alignItems="center" w="fit-content">
       <BaseLink href={href} {...props}>
