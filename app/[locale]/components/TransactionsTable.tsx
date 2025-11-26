@@ -23,9 +23,9 @@ export const TransactionsTable = ({ transactions }: { transactions: ExpandedBloc
       Cell: ({ row }) => <CopyableAddressLink truncate address={row.origin} />,
     },
     {
-      key: 'signer',
-      label: 'Signer',
-      Cell: ({ row }) => <CopyableAddressLink truncate address={row.signer} />,
+      key: 'gasPayer',
+      label: 'Gas payer',
+      Cell: ({ row }) => <CopyableAddressLink truncate address={row.gasPayer} />,
     },
     { key: 'clauses', label: 'Clauses' },
     { key: 'gas', label: 'Gas' },
@@ -34,7 +34,7 @@ export const TransactionsTable = ({ transactions }: { transactions: ExpandedBloc
   const rows = transactions.map(transaction => ({
     id: transaction.id,
     origin: transaction.origin,
-    signer: transaction.origin,
+    gasPayer: transaction.gasPayer,
     clauses: transaction.clauses.length,
   }))
 
