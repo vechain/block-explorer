@@ -4,7 +4,7 @@ import type { FlexProps } from '@chakra-ui/react'
 import { Flex } from '@chakra-ui/react'
 import { forwardRef } from 'react'
 
-export const Surface = forwardRef<HTMLDivElement, FlexProps>(({ children, ...props }, ref) => {
+export const Surface = forwardRef<HTMLDivElement, FlexProps>((props, ref) => {
   return (
     <Flex
       ref={ref}
@@ -18,9 +18,8 @@ export const Surface = forwardRef<HTMLDivElement, FlexProps>(({ children, ...pro
       borderColor="border-surface"
       py={5}
       px={4}
-      {...props}>
-      {children}
-    </Flex>
+      {...props}
+    />
   )
 })
 
