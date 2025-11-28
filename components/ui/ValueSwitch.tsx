@@ -1,53 +1,60 @@
 import { Box, Flex, type FlexProps, Text } from '@chakra-ui/react'
 import { motion } from 'motion/react'
 
-interface ValueSwitchProps<T> extends Omit<FlexProps, 'onChange'> {
-  values: T[]
-  activeValue: T
-  onChange: (value: T) => void
+interface ValueSwitchProps extends Omit<FlexProps, 'onChange'> {
+  values: string[]
+  layoutId: string
+  activeValue: string
+  onChange: (value: string) => void
 }
 
-export const ValueSwitch = <T,>({ values, activeValue, onChange, ...props }: ValueSwitchProps<T>) => {
+export const ValueSwitch = ({ values, layoutId, activeValue, onChange, ...props }: ValueSwitchProps) => {
   return (
     <Flex
       gap={1}
       alignItems="center"
       bg="bg-surface-alt-hover"
-      p={2}
+      p={1}
       rounded="full"
-      textStyle="bodyMSemibold"
+      textTransform="capitalize"
+      border="0.5px solid var(--chakra-colors-border-surface)"
       w="fit-content"
-      border="0.5px solid var(--chakra-colors-border-surface-3)"
       {...props}>
       {values.map(value => (
-        <Item key={String(value)} value={value} activeValue={activeValue} onChange={onChange} />
+        <Item key={String(value)} value={value} layoutId={layoutId} activeValue={activeValue} onChange={onChange} />
       ))}
     </Flex>
   )
 }
 
-const Item = <T,>({ value, activeValue, onChange }: { value: T; activeValue: T; onChange: (value: T) => void }) => {
+const Item = ({
+  value,
+  layoutId,
+  activeValue,
+  onChange,
+}: {
+  value: string
+  layoutId: string
+  activeValue: string
+  onChange: (value: string) => void
+}) => {
   const isActive = value === activeValue
 
   return (
-    <Box p={2} cursor="pointer" position="relative" onClick={() => onChange(value)}>
+    <Flex p={2} cursor="pointer" position="relative" onClick={() => onChange(value)}>
       {isActive && (
-        <MotionBox
-          position="absolute"
-          layoutId="pill"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          bg="white"
-          color="bg-primary"
-          rounded="full"
-        />
+        <MotionBox position="absolute" layoutId={layoutId} inset="0" bg="white" color="bg-primary" rounded="full" />
       )}
-      <Text as="span" position="relative" color={isActive ? 'bg-primary' : 'text-primary'} textTransform="capitalize">
-        {String(value)}
+
+      <Text
+        as="span"
+        position="relative"
+        color={isActive ? 'bg-primary' : 'text-primary'}
+        textStyle={isActive ? 'bodyMSemibold' : 'bodyM'}
+        lineHeight="1">
+        {String(value.replace(/-/g, ' '))}
       </Text>
-    </Box>
+    </Flex>
   )
 }
 
