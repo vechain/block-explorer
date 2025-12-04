@@ -29,44 +29,15 @@ type DataPoint = BlockUsageDataPoint
 
 export const BlockUsage = () => {
   const [selectedRange, setSelectedRange] = useState<TimeRangeKey>('hourly')
-  const [timeOffset, setTimeOffset] = useState(0) // Number of periods to go back in time
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null) // User-selected specific date
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date()) // User-selected specific date
   const [isLiveMode, setIsLiveMode] = useState(true) // Live mode updates with new blocks
 
-  const { blocksDataPoints, isLoading, canGoBack, canGoForward } = useBlockUsageChartData(
-    selectedRange,
-    timeOffset,
-    selectedDate,
-    isLiveMode,
-  )
-
-  // Calculate the date to display in the date picker
-  // If we have a selectedDate, use it; otherwise calculate from offset
-  const displayDate =
-    selectedDate ||
-    (() => {
-      const now = new Date()
-      const rangeConfig = TIME_RANGES[selectedRange]
-
-      if (selectedRange === 'all' || !rangeConfig.sub) {
-        return now
-      }
-
-      // For hourly in live mode (offset = 0), show current time
-      if (selectedRange === 'hourly' && timeOffset === 0) {
-        return now
-      }
-
-      // Otherwise, calculate the offset date
-      return rangeConfig.sub(now, timeOffset)
-    })()
+  const { blocksDataPoints, isLoading, canGoBack, canGoForward } = useBlockUsageChartData(selectedRange, selectedDate)
 
   if (isLoading) return <Skeleton height={chartHeight} rounded="xl" />
 
   const handleRangeChange = (newRange: TimeRangeKey) => {
     setSelectedRange(newRange)
-    setTimeOffset(0) // Reset to current time when changing ranges
-    setSelectedDate(null) // Clear selected date when changing ranges
 
     // Exit live mode when changing from default hourly view
     if (newRange !== 'hourly') {
@@ -75,24 +46,15 @@ export const BlockUsage = () => {
   }
 
   const handleResetToNow = () => {
-    setTimeOffset(0)
-    setSelectedDate(null) // Clear selected date when resetting
+    setSelectedDate(new Date())
     setSelectedRange('hourly') // Reset to default hourly view
     setIsLiveMode(true) // Re-enable live mode
   }
 
   const handleNavigateBack = () => {
-    if (selectedDate) {
-      // If we have a selected date, move it back by one period using date-fns
-      const rangeConfig = TIME_RANGES[selectedRange]
-      if (rangeConfig.sub) {
-        const newDate = rangeConfig.sub(selectedDate, 1)
-        setSelectedDate(newDate)
-      }
-    } else {
-      // If using offset, increment it
-      setTimeOffset(prev => prev + 1)
-    }
+    const rangeConfig = TIME_RANGES[selectedRange]
+    const newDate = rangeConfig.sub(selectedDate, 1)
+    setSelectedDate(newDate)
     setIsLiveMode(false) // Exit live mode
   }
 
@@ -109,9 +71,6 @@ export const BlockUsage = () => {
           setSelectedDate(newDate)
         }
       }
-    } else if (timeOffset > 0) {
-      // If using offset, decrement it
-      setTimeOffset(prev => prev - 1)
     }
   }
 
@@ -153,7 +112,6 @@ export const BlockUsage = () => {
 
     // Set the selected date - the hook will handle calculating the right block range
     setSelectedDate(newSelectedDate)
-    setTimeOffset(0) // Reset offset when selecting a specific date
     setIsLiveMode(false) // Exit live mode when selecting a specific date
   }
 
@@ -166,7 +124,7 @@ export const BlockUsage = () => {
 
         <BlockUsageControls
           selectedRange={selectedRange}
-          selectedDate={displayDate}
+          selectedDate={selectedDate}
           canGoBack={canGoBack}
           canGoForward={canGoForward}
           onRangeChange={handleRangeChange}
@@ -394,14 +352,9 @@ const CustomTooltip = ({
   )
 }
 
-const useBlockUsageChartData = (
-  selectedRange: TimeRangeKey,
-  timeOffset: number = 0,
-  selectedDate: Date | null = null,
-  isLiveMode: boolean = true,
-) => {
+const useBlockUsageChartData = (range: TimeRangeKey, date: Date, isLiveMode: boolean = true) => {
   // Get the selected range configuration
-  const selectedRangeConfig = TIME_RANGES[selectedRange]
+  const selectedRangeConfig = TIME_RANGES[range]
 
   // VeChain genesis timestamp
   const GENESIS_TIMESTAMP = 1530316800
@@ -410,80 +363,42 @@ const useBlockUsageChartData = (
   let startTimestamp: number = GENESIS_TIMESTAMP
   let endTimestamp: number = getUnixTime(now)
 
-  if (selectedDate) {
-    // When a specific date is selected, use date-fns to calculate exact period boundaries
-    if (selectedRange === 'all') {
-      startTimestamp = GENESIS_TIMESTAMP
-      endTimestamp = getUnixTime(now)
-    } else {
-      const rangeConfig = TIME_RANGES[selectedRange]
-      const periodStart = rangeConfig.startOf!(selectedDate)
-      const periodEnd = rangeConfig.endOf!(selectedDate)
-
-      startTimestamp = getUnixTime(periodStart)
-      endTimestamp = Math.min(getUnixTime(periodEnd), getUnixTime(now))
-    }
+  // When a specific date is selected, use date-fns to calculate exact period boundaries
+  if (range === 'all') {
+    startTimestamp = GENESIS_TIMESTAMP
+    endTimestamp = getUnixTime(now)
   } else {
-    // Use the offset-based calculation when no specific date is selected
-    if (selectedRange === 'all') {
-      // All time - from genesis to now
-      startTimestamp = GENESIS_TIMESTAMP
-      endTimestamp = getUnixTime(now)
-    } else {
-      // Calculate period boundaries using date-fns based on offset
-      const rangeConfig = TIME_RANGES[selectedRange]
-      let periodStart: Date
-      let periodEnd: Date
+    const rangeConfig = TIME_RANGES[range]
+    const periodStart = rangeConfig.startOf!(date)
+    const periodEnd = rangeConfig.endOf!(date)
 
-      // For hourly in live mode (offset = 0), show past hour from now
-      // For offset > 0, show complete hours
-      if (selectedRange === 'hourly' && timeOffset === 0) {
-        periodEnd = now
-        periodStart = rangeConfig.sub!(now, 1)
-      } else {
-        const offsetDate = rangeConfig.sub!(now, timeOffset)
-        periodEnd = rangeConfig.endOf!(offsetDate)
-        periodStart = rangeConfig.startOf!(offsetDate)
-      }
-
-      startTimestamp = getUnixTime(periodStart)
-      endTimestamp = getUnixTime(periodEnd)
-    }
+    startTimestamp = getUnixTime(periodStart)
+    endTimestamp = Math.min(getUnixTime(periodEnd), getUnixTime(now))
   }
 
   // Calculate buffer needed before startTimestamp to get the baseline record
   // This ensures we have a previous record to calculate the first data point in our range
-  const getBufferSeconds = (range: TimeRangeKey): number => {
-    switch (range) {
-      case 'hourly':
-        // Returns all blocks, need 1 block buffer (~10 seconds)
-        return 10
-      case 'daily':
-        // Returns hourly, need 1 hour buffer
-        return 3600
-      case 'weekly':
-        // Returns daily, need 1 day buffer
-        return 86400
-      case 'monthly':
-        // Returns weekly, need 1 week buffer
-        return 604800
-      case 'yearly':
-        // Returns monthly, need ~1 month buffer (30 days)
-        return 2592000
-      case 'all':
-        // All time view returns monthly, need ~1 month buffer
-        return 2592000
+  const getBufferSeconds = (startTimestamp: number, endTimestamp: number): number => {
+    const rangeSeconds = endTimestamp - startTimestamp
+    if (rangeSeconds <= 4000) {
+      return 10
+    } else if (rangeSeconds <= 700000) {
+      return 1800
+    } else if (rangeSeconds <= 35000000) {
+      return 43200
+    } else {
+      return 1296000
     }
   }
 
-  const bufferSeconds = getBufferSeconds(selectedRange)
+  const bufferSeconds = getBufferSeconds(startTimestamp, endTimestamp)
   const adjustedStartTimestamp = Math.max(GENESIS_TIMESTAMP, startTimestamp - bufferSeconds)
 
   // Calculate navigation constraints
   // Can always go back unless we're literally at genesis
   const canGoBack = true
   // Can go forward if we have an offset or selected date (meaning we're not at current time)
-  const canGoForward = timeOffset > 0 || selectedDate !== null
+  const canGoForward = date !== now
 
   // Fetch block usage data from indexer with buffered start timestamp
   // In live mode, enable refetching; in historical mode, disable it
