@@ -9,7 +9,7 @@ const appVersion = rawVersion.replace(/^v\./, '')
 export const Footer = () => {
   return (
     <Text as="footer" fontSize="body-s" color="text-secondary" textAlign="center" mt={8}>
-      v{appVersion}
+      {appVersion}
     </Text>
   )
 }
