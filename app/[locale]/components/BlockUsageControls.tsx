@@ -1,16 +1,75 @@
 'use client'
 
 import { Button, createListCollection, Flex, IconButton, Input, Portal, Select } from '@chakra-ui/react'
+import {
+  addDays,
+  addHours,
+  addMonths,
+  addWeeks,
+  addYears,
+  endOfDay,
+  endOfHour,
+  endOfMonth,
+  endOfWeek,
+  endOfYear,
+  startOfDay,
+  startOfHour,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+  subDays,
+  subHours,
+  subMonths,
+  subWeeks,
+  subYears,
+} from 'date-fns'
 import { LuChevronLeft, LuChevronRight, LuRotateCcw } from 'react-icons/lu'
 
-// Time range options based on API granularity rules (in seconds)
+// Time range configuration using date-fns functions
 export const TIME_RANGES = {
-  hourly: { label: 'Hourly', seconds: 3600 }, // 1 hour
-  daily: { label: 'Daily', seconds: 86400 }, // 1 day
-  weekly: { label: 'Weekly', seconds: 604800 }, // 1 week
-  monthly: { label: 'Monthly', seconds: 2592000 }, // 30 days
-  yearly: { label: 'Yearly', seconds: 31536000 }, // 365 days
-  all: { label: 'All Time', seconds: 0 }, // Special case - from genesis to now
+  hourly: {
+    label: 'Hourly',
+    startOf: startOfHour,
+    endOf: endOfHour,
+    add: addHours,
+    sub: subHours,
+  },
+  daily: {
+    label: 'Daily',
+    startOf: startOfDay,
+    endOf: endOfDay,
+    add: addDays,
+    sub: subDays,
+  },
+  weekly: {
+    label: 'Weekly',
+    startOf: startOfWeek,
+    endOf: endOfWeek,
+    add: addWeeks,
+    sub: subWeeks,
+  },
+  monthly: {
+    label: 'Monthly',
+    startOf: startOfMonth,
+    endOf: endOfMonth,
+    add: addMonths,
+    sub: subMonths,
+  },
+  yearly: {
+    label: 'Yearly',
+    startOf: startOfYear,
+    endOf: endOfYear,
+    add: addYears,
+    sub: subYears,
+  },
+  all: {
+    label: 'All Time',
+    // Special case - from genesis to now, no functions needed
+    startOf: null,
+    endOf: null,
+    add: null,
+    sub: null,
+  },
 } as const
 
 export type TimeRangeKey = keyof typeof TIME_RANGES
@@ -26,7 +85,7 @@ const timeRangeCollection = createListCollection<TimeRangeItem>({
 
 export interface BlockUsageControlsProps {
   selectedRange: TimeRangeKey
-  currentPeriodStart: number | null
+  selectedDate: Date | null
   canGoBack: boolean
   canGoForward: boolean
   onRangeChange: (newRange: TimeRangeKey) => void
@@ -38,7 +97,7 @@ export interface BlockUsageControlsProps {
 
 export const BlockUsageControls = ({
   selectedRange,
-  currentPeriodStart,
+  selectedDate,
   canGoBack,
   canGoForward,
   onRangeChange,
@@ -49,26 +108,24 @@ export const BlockUsageControls = ({
 }: BlockUsageControlsProps) => {
   // Format date for the date input based on selected range
   const getDateInputValue = () => {
-    if (!currentPeriodStart) return ''
-
-    const date = new Date(currentPeriodStart)
+    if (!selectedDate) return ''
 
     // For yearly view, use year picker
     if (selectedRange === 'yearly') {
-      return date.getFullYear().toString()
+      return selectedDate.getFullYear().toString()
     }
 
     // For monthly view, use month picker
     if (selectedRange === 'monthly') {
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = selectedDate.getFullYear()
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0')
       return `${year}-${month}`
     }
 
     // For all other views, use date picker (format in local timezone)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
+    const year = selectedDate.getFullYear()
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0')
+    const day = String(selectedDate.getDate()).padStart(2, '0')
     return `${year}-${month}-${day}`
   }
 
@@ -83,7 +140,7 @@ export const BlockUsageControls = ({
           placeholder: 'Year',
           min: 2018,
           max: now.getFullYear(),
-          value: currentPeriodStart ? new Date(currentPeriodStart).getFullYear() : '',
+          value: getDateInputValue(),
           onChange: onDateChange,
         }
       case 'monthly':

@@ -1,29 +1,7 @@
 'use client'
 
 import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
-import {
-  addDays,
-  addHours,
-  addMonths,
-  addWeeks,
-  addYears,
-  endOfDay,
-  endOfHour,
-  endOfMonth,
-  endOfWeek,
-  endOfYear,
-  getUnixTime,
-  startOfDay,
-  startOfHour,
-  startOfMonth,
-  startOfWeek,
-  startOfYear,
-  subDays,
-  subHours,
-  subMonths,
-  subWeeks,
-  subYears,
-} from 'date-fns'
+import { getUnixTime } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import {
@@ -55,12 +33,33 @@ export const BlockUsage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null) // User-selected specific date
   const [isLiveMode, setIsLiveMode] = useState(true) // Live mode updates with new blocks
 
-  const { blocksDataPoints, isLoading, currentPeriodStart, canGoBack, canGoForward } = useBlockUsageChartData(
+  const { blocksDataPoints, isLoading, canGoBack, canGoForward } = useBlockUsageChartData(
     selectedRange,
     timeOffset,
     selectedDate,
     isLiveMode,
   )
+
+  // Calculate the date to display in the date picker
+  // If we have a selectedDate, use it; otherwise calculate from offset
+  const displayDate =
+    selectedDate ||
+    (() => {
+      const now = new Date()
+      const rangeConfig = TIME_RANGES[selectedRange]
+
+      if (selectedRange === 'all' || !rangeConfig.sub) {
+        return now
+      }
+
+      // For hourly in live mode (offset = 0), show current time
+      if (selectedRange === 'hourly' && timeOffset === 0) {
+        return now
+      }
+
+      // Otherwise, calculate the offset date
+      return rangeConfig.sub(now, timeOffset)
+    })()
 
   if (isLoading) return <Skeleton height={chartHeight} rounded="xl" />
 
@@ -84,28 +83,12 @@ export const BlockUsage = () => {
 
   const handleNavigateBack = () => {
     if (selectedDate) {
-      // If we have a selected date, move it back by one period
-      let newDate: Date
-      switch (selectedRange) {
-        case 'hourly':
-          newDate = subHours(selectedDate, 1)
-          break
-        case 'daily':
-          newDate = subDays(selectedDate, 1)
-          break
-        case 'weekly':
-          newDate = subWeeks(selectedDate, 1)
-          break
-        case 'monthly':
-          newDate = subMonths(selectedDate, 1)
-          break
-        case 'yearly':
-          newDate = subYears(selectedDate, 1)
-          break
-        default:
-          return
+      // If we have a selected date, move it back by one period using date-fns
+      const rangeConfig = TIME_RANGES[selectedRange]
+      if (rangeConfig.sub) {
+        const newDate = rangeConfig.sub(selectedDate, 1)
+        setSelectedDate(newDate)
       }
-      setSelectedDate(newDate)
     } else {
       // If using offset, increment it
       setTimeOffset(prev => prev + 1)
@@ -115,33 +98,16 @@ export const BlockUsage = () => {
 
   const handleNavigateForward = () => {
     if (selectedDate) {
-      // If we have a selected date, move it forward by one period
-      let newDate: Date
-      const now = new Date()
+      // If we have a selected date, move it forward by one period using date-fns
+      const rangeConfig = TIME_RANGES[selectedRange]
+      if (rangeConfig.add) {
+        const newDate = rangeConfig.add(selectedDate, 1)
+        const now = new Date()
 
-      switch (selectedRange) {
-        case 'hourly':
-          newDate = addHours(selectedDate, 1) // Add 1 hour
-          break
-        case 'daily':
-          newDate = addDays(selectedDate, 1) // Add 1 day
-          break
-        case 'weekly':
-          newDate = addWeeks(selectedDate, 1) // Add 1 week
-          break
-        case 'monthly':
-          newDate = addMonths(selectedDate, 1) // Add 1 month
-          break
-        case 'yearly':
-          newDate = addYears(selectedDate, 1) // Add 1 year
-          break
-        default:
-          return
-      }
-
-      // Don't go beyond current time
-      if (newDate <= now) {
-        setSelectedDate(newDate)
+        // Don't go beyond current time
+        if (newDate <= now) {
+          setSelectedDate(newDate)
+        }
       }
     } else if (timeOffset > 0) {
       // If using offset, decrement it
@@ -167,11 +133,11 @@ export const BlockUsage = () => {
     }
     // Parse date in local timezone to avoid UTC conversion issues
     else if (selectedRange === 'monthly' && selectedDateStr.match(/^\d{4}-\d{2}$/)) {
-      // Month format: YYYY-MM
+      // Month format: YYYY-MM (month is 1-indexed in the string, 0-indexed in Date constructor)
       const [year, month] = selectedDateStr.split('-').map(Number)
       newSelectedDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
     } else if (selectedDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      // Date format: YYYY-MM-DD
+      // Date format: YYYY-MM-DD (month is 1-indexed in the string, 0-indexed in Date constructor)
       const [year, month, day] = selectedDateStr.split('-').map(Number)
       newSelectedDate = new Date(year, month - 1, day, 0, 0, 0, 0)
     } else {
@@ -200,7 +166,7 @@ export const BlockUsage = () => {
 
         <BlockUsageControls
           selectedRange={selectedRange}
-          currentPeriodStart={currentPeriodStart}
+          selectedDate={displayDate}
           canGoBack={canGoBack}
           canGoForward={canGoForward}
           onRangeChange={handleRangeChange}
@@ -446,82 +412,38 @@ const useBlockUsageChartData = (
 
   if (selectedDate) {
     // When a specific date is selected, use date-fns to calculate exact period boundaries
-    let periodStart: Date
-    let periodEnd: Date
+    if (selectedRange === 'all') {
+      startTimestamp = GENESIS_TIMESTAMP
+      endTimestamp = getUnixTime(now)
+    } else {
+      const rangeConfig = TIME_RANGES[selectedRange]
+      const periodStart = rangeConfig.startOf!(selectedDate)
+      const periodEnd = rangeConfig.endOf!(selectedDate)
 
-    switch (selectedRange) {
-      case 'hourly':
-        periodStart = startOfHour(selectedDate)
-        periodEnd = endOfHour(selectedDate)
-        break
-      case 'daily':
-        periodStart = startOfDay(selectedDate)
-        periodEnd = endOfDay(selectedDate)
-        break
-      case 'weekly':
-        periodStart = startOfWeek(selectedDate)
-        periodEnd = endOfWeek(selectedDate)
-        break
-      case 'monthly':
-        periodStart = startOfMonth(selectedDate)
-        periodEnd = endOfMonth(selectedDate)
-        break
-      case 'yearly':
-        periodStart = startOfYear(selectedDate)
-        periodEnd = endOfYear(selectedDate)
-        break
-      case 'all':
-        startTimestamp = GENESIS_TIMESTAMP
-        endTimestamp = getUnixTime(now)
-        break
-    }
-
-    if (selectedRange !== 'all') {
-      startTimestamp = getUnixTime(periodStart!)
-      endTimestamp = Math.min(getUnixTime(periodEnd!), getUnixTime(now))
+      startTimestamp = getUnixTime(periodStart)
+      endTimestamp = Math.min(getUnixTime(periodEnd), getUnixTime(now))
     }
   } else {
     // Use the offset-based calculation when no specific date is selected
-    let periodStart: Date
-    let periodEnd: Date
-
     if (selectedRange === 'all') {
       // All time - from genesis to now
       startTimestamp = GENESIS_TIMESTAMP
       endTimestamp = getUnixTime(now)
     } else {
       // Calculate period boundaries using date-fns based on offset
-      switch (selectedRange) {
-        case 'hourly':
-          // For hourly in live mode (offset = 0), show past hour from now
-          // For offset > 0, show complete hours
-          if (timeOffset === 0) {
-            periodEnd = now
-            periodStart = subHours(now, 1)
-          } else {
-            periodEnd = endOfHour(subHours(now, timeOffset))
-            periodStart = startOfHour(subHours(now, timeOffset))
-          }
-          break
-        case 'daily':
-          periodEnd = endOfDay(subDays(now, timeOffset))
-          periodStart = startOfDay(subDays(now, timeOffset))
-          break
-        case 'weekly':
-          periodEnd = endOfWeek(subWeeks(now, timeOffset))
-          periodStart = startOfWeek(subWeeks(now, timeOffset))
-          break
-        case 'monthly':
-          periodEnd = endOfMonth(subMonths(now, timeOffset))
-          periodStart = startOfMonth(subMonths(now, timeOffset))
-          break
-        case 'yearly':
-          periodEnd = endOfYear(subYears(now, timeOffset))
-          periodStart = startOfYear(subYears(now, timeOffset))
-          break
-        default:
-          periodEnd = now
-          periodStart = now
+      const rangeConfig = TIME_RANGES[selectedRange]
+      let periodStart: Date
+      let periodEnd: Date
+
+      // For hourly in live mode (offset = 0), show past hour from now
+      // For offset > 0, show complete hours
+      if (selectedRange === 'hourly' && timeOffset === 0) {
+        periodEnd = now
+        periodStart = rangeConfig.sub!(now, 1)
+      } else {
+        const offsetDate = rangeConfig.sub!(now, timeOffset)
+        periodEnd = rangeConfig.endOf!(offsetDate)
+        periodStart = rangeConfig.startOf!(offsetDate)
       }
 
       startTimestamp = getUnixTime(periodStart)
@@ -531,27 +453,30 @@ const useBlockUsageChartData = (
 
   // Calculate buffer needed before startTimestamp to get the baseline record
   // This ensures we have a previous record to calculate the first data point in our range
-  const getBufferSeconds = (rangeSeconds: number) => {
-    if (rangeSeconds <= 3600) {
-      // ≤ 1 hour - returns all blocks, need 1 block buffer (~10 seconds)
-      return 10
-    } else if (rangeSeconds <= 604800) {
-      // ≤ 1 week - returns hourly, need 1 hour buffer
-      return 3600
-    } else if (rangeSeconds <= 2592000) {
-      // ≤ 1 month - returns daily, need 1 day buffer
-      return 86400
-    } else if (rangeSeconds <= 31536000) {
-      // ≤ 1 year - returns weekly, need 1 week buffer
-      return 604800
-    } else {
-      // > 1 year - returns monthly, need ~1 month buffer
-      return 2592000
+  const getBufferSeconds = (range: TimeRangeKey): number => {
+    switch (range) {
+      case 'hourly':
+        // Returns all blocks, need 1 block buffer (~10 seconds)
+        return 10
+      case 'daily':
+        // Returns hourly, need 1 hour buffer
+        return 3600
+      case 'weekly':
+        // Returns daily, need 1 day buffer
+        return 86400
+      case 'monthly':
+        // Returns weekly, need 1 week buffer
+        return 604800
+      case 'yearly':
+        // Returns monthly, need ~1 month buffer (30 days)
+        return 2592000
+      case 'all':
+        // All time view returns monthly, need ~1 month buffer
+        return 2592000
     }
   }
 
-  const rangeSeconds = selectedRangeConfig.seconds || endTimestamp - startTimestamp
-  const bufferSeconds = getBufferSeconds(rangeSeconds)
+  const bufferSeconds = getBufferSeconds(selectedRange)
   const adjustedStartTimestamp = Math.max(GENESIS_TIMESTAMP, startTimestamp - bufferSeconds)
 
   // Calculate navigation constraints
@@ -570,8 +495,5 @@ const useBlockUsageChartData = (
   // Filter to only include data points within the requested range (exclude buffer)
   const blocksDataPoints = allDataPoints.filter(point => point.timestamp >= startTimestamp)
 
-  // Calculate the current period start timestamp for the date picker
-  const currentPeriodStart = blocksDataPoints.length > 0 ? blocksDataPoints[0].timestamp : null
-
-  return { blocksDataPoints, selectedRangeConfig, currentPeriodStart, canGoBack, canGoForward, ...rest }
+  return { blocksDataPoints, selectedRangeConfig, canGoBack, canGoForward, ...rest }
 }
