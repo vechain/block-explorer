@@ -129,6 +129,18 @@ export const BlockUsageControls = ({
     return `${year}-${month}-${day}`
   }
 
+  // Get the appropriate input width based on range
+  const getDateInputWidth = () => {
+    switch (selectedRange) {
+      case 'yearly':
+        return '100px' // Narrower for just a year number
+      case 'monthly':
+        return '160px' // Wider to accommodate "December 2024"
+      default:
+        return '140px' // Default width for date inputs
+    }
+  }
+
   // Get the appropriate input type and attributes based on range
   const getDateInputProps = () => {
     const now = new Date()
@@ -174,7 +186,7 @@ export const BlockUsageControls = ({
             <LuChevronLeft />
           </IconButton>
 
-          <Input {...getDateInputProps()} size="sm" width="140px" />
+          <Input {...getDateInputProps()} size="sm" width={getDateInputWidth()} />
 
           <IconButton
             aria-label="Go forward one period"
