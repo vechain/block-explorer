@@ -64,11 +64,11 @@ export const TIME_RANGES = {
   },
   all: {
     label: 'All Time',
-    // Special case - from genesis to now, no functions needed
-    startOf: null,
-    endOf: null,
-    add: null,
-    sub: null,
+    // Special case - from genesis to now, use identity/no-op functions for consistency
+    startOf: (date: Date) => date,
+    endOf: (date: Date) => date,
+    add: (date: Date) => date,
+    sub: (date: Date) => date,
   },
 } as const
 
