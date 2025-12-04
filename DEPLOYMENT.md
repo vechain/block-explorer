@@ -6,7 +6,7 @@ This document provides a comprehensive guide for deploying the Block Explorer ap
 
 The infrastructure consists of:
 
-- **Production Environment**: Single permanent App Runner service at `block-explorer-prod.vechain.org`
+- **Production Environment**: Single permanent App Runner service at `block-explorer.vechain.org`
 - **Preview Environments**: Ephemeral services at `pr-{number}.block-explorer-preview.vechain.org`
 - **Terraform Workspaces**: Separate workspace for production and each preview
 - **State Management**: S3 buckets with DynamoDB locking
@@ -24,37 +24,52 @@ The infrastructure consists of:
 
 2. **Tools Required**:
    - AWS CLI configured
-   - Terraform >= 1.0
+   - Terraform >= 1.6.0
    - Docker
    - Node.js 20.17.0 (for local development)
-   - pnpm 8.x
+   - pnpm 9.x
 
 3. **GitHub Repository Secrets**:
-   - `AWS_ACCESS_KEY_ID`
-   - `AWS_SECRET_ACCESS_KEY`
+   - `AWS_ACC_ROLE` - IAM role ARN with OIDC trust for GitHub Actions
+   - `VECHAINCI_SSH_PRIVATE_KEYS` - Deploy key for semantic versioning
+
+## Versioning Strategy
+
+### Automated Semantic Versioning
+
+This project uses **automated semantic versioning** via GitHub Actions. Version numbers are managed entirely through git tags and are **never stored in `package.json`**.
+
+**How it works:**
+
+1. When you open a PR, you must add one of these labels:
+   - `increment:major` - Breaking changes (1.x.x → 2.0.0)
+   - `increment:minor` - New features (1.1.x → 1.2.0)
+   - `increment:patch` - Bug fixes (1.1.1 → 1.1.2)
+
+2. The `validate-version-label.yml` workflow ensures every PR has a valid label
+
+3. When a PR is merged to `main`, the `codebase-versioning.yml` workflow:
+   - Reads the PR label
+   - Calculates the next version number
+   - Creates and pushes a new git tag (e.g., `v.1.2.3`)
+
+4. The version is injected at build time via the `NEXT_PUBLIC_APP_VERSION` environment variable
+
+**Note:** The `package.json` version is set to `0.0.0-dev` and is **not used** for versioning. The real version comes from git tags.
+
+### Version Display
+
+The application version displayed in the UI is:
+- **Production/Preview**: The git tag or image tag passed at build time (e.g., `v.1.2.3`, or `pr-175-718a160`)
+- **Local Development**: Falls back to `package.json` version (`0.0.0-dev`)
 
 ## Initial Infrastructure Setup
 
-### Step 1: Create S3 Backend
+### Step 1: Deploy Account-Level Infrastructure
 
 ```bash
-cd terraform/s3-backend
-terraform init
-terraform plan
-terraform apply
-```
-
-**Created Resources**:
-- `block-explorer-terraform-state-prod` - Production state bucket
-- `block-explorer-terraform-state-nonprod` - Non-prod state bucket
-- `block-explorer-terraform-lock-prod` - Production lock table
-- `block-explorer-terraform-lock-nonprod` - Non-prod lock table
-
-### Step 2: Deploy Account-Level Infrastructure
-
-```bash
-cd ../account-level
-terraform init
+cd terraform/account-level
+terraform init --backend-config="../environments/<env-name>"
 terraform apply
 ```
 
@@ -62,64 +77,57 @@ terraform apply
 - ECR repository for Docker images
 - IAM roles for App Runner
 - ACM certificates (production + wildcard for previews)
+- Route53 hosted zone configuration
 
 **Important**: Save the outputs from this step:
 ```bash
 terraform output
 ```
 
-You'll need:
-- `ecr_repository_url`
-- `app_runner_instance_role_arn`
-- `app_runner_access_role_arn`
-
-### Step 3: Configure Route53 (if needed)
-
-If you're managing DNS with Terraform:
-
-1. Update `terraform/account-level/route53.tf` with your Route53 zone ID
-2. Set `create_route53_records = true`
-3. Reapply: `terraform apply`
-
-Otherwise, manually create DNS records in your DNS provider.
-
 ## Production Deployment
 
 ### Automated (Recommended)
 
-Simply push to the `main` branch:
+Production deployments are triggered manually via workflow dispatch from a version tag:
 
-```bash
-git push origin main
-```
+1. **Ensure your changes are merged to `main`** with the appropriate version label
+2. **Wait for the version tag** to be created automatically (e.g., `v.1.5.0`)
+3. **Go to Actions → Deploy to Production → Run workflow**
+4. **Select the version tag** from the "Use workflow from" dropdown
+5. **Choose action**:
+   - `dry-run` - Preview changes without deploying
+   - `deploy` - Apply changes to production
+6. **Monitor deployment** progress in the workflow logs
 
-The `deploy-production` GitHub Actions workflow will:
-1. Build Docker image
-2. Push to ECR with tag `prod-{sha}`
-3. Update production config
-4. Deploy via Terraform
+The workflow will:
+1. Validate the version tag format (`v.X.Y.Z`)
+2. Build Docker image with the version tag
+3. Push to ECR with tag `v.X.Y.Z`
+4. Update production config
+5. Deploy via Terraform
+6. Create a GitHub Release (if new version)
 
-### Manual Deployment
+### Manual Deployment (Not Recommended)
 
 ```bash
 # 1. Get AWS ECR credentials
 aws ecr get-login-password --region eu-west-1 | \
   docker login --username AWS --password-stdin <ECR_URL>
 
-# 2. Build and push image
-docker build -t block-explorer .
-IMAGE_TAG="prod-$(git rev-parse --short HEAD)"
-docker tag block-explorer:latest <ECR_URL>/block-explorer:${IMAGE_TAG}
-docker push <ECR_URL>/block-explorer:${IMAGE_TAG}
+# 2. Build and push image (use the version tag)
+VERSION_TAG="v.1.5.0"
+docker build -t block-explorer --build-arg NEXT_PUBLIC_APP_VERSION=${VERSION_TAG} .
+docker tag block-explorer:latest <ECR_URL>/block-explorer:${VERSION_TAG}
+docker push <ECR_URL>/block-explorer:${VERSION_TAG}
 
 # 3. Update config
-cd terraform/environments/production
-sed -i "s/^image_tag:.*/image_tag: ${IMAGE_TAG}/" production.yaml
+cd terraform/environments/prod
+sed -i "s/^image_tag:.*/image_tag: ${VERSION_TAG}/" prod.yaml
 
 # 4. Deploy
 cd ../../frontend
-terraform init -backend-config=../environments/production/backend.config
-terraform workspace select production || terraform workspace new production
+terraform init -backend-config=../environments/prod/backend.config
+terraform workspace select prod
 terraform plan
 terraform apply
 ```
@@ -129,30 +137,36 @@ terraform apply
 ### Automated (Recommended)
 
 Preview environments are automatically created when you:
-1. Open a pull request
+1. Open a pull request to `main`
 2. Push new commits to an existing PR
 
 The preview URL will be posted as a comment on the PR.
 
-### Manual Preview Deployment
+**Image Tag Format**: `pr-{number}-{short_sha}` (e.g., `pr-144-a1b2c3d`)
+
+**Domain**: `https://pr-{number}.block-explorer-preview.vechain.org`
+
+### Manual Preview Deployment (Not Recommended)
 
 ```bash
 PR_NUMBER=123
+SHORT_SHA=$(git rev-parse --short HEAD)
 
 # 1. Build and push image
 aws ecr get-login-password --region eu-west-1 | \
   docker login --username AWS --password-stdin <ECR_URL>
 
-docker build -t block-explorer .
-docker tag block-explorer:latest <ECR_URL>/block-explorer:pr-${PR_NUMBER}
-docker push <ECR_URL>/block-explorer:pr-${PR_NUMBER}
+IMAGE_TAG="pr-${PR_NUMBER}-${SHORT_SHA}"
+docker build -t block-explorer --build-arg NEXT_PUBLIC_APP_VERSION=${IMAGE_TAG} .
+docker tag block-explorer:latest <ECR_URL>/block-explorer:${IMAGE_TAG}
+docker push <ECR_URL>/block-explorer:${IMAGE_TAG}
 
 # 2. Create config
 mkdir -p terraform/environments/preview-pr-${PR_NUMBER}
 cp terraform/environments/preview/preview.yaml.example \
    terraform/environments/preview-pr-${PR_NUMBER}/preview-pr-${PR_NUMBER}.yaml
 
-# Edit the file and replace {PR_NUMBER} with ${PR_NUMBER}
+# Edit the file and replace {PR_NUMBER} with actual number
 sed -i "s/{PR_NUMBER}/${PR_NUMBER}/g" \
   terraform/environments/preview-pr-${PR_NUMBER}/preview-pr-${PR_NUMBER}.yaml
 
@@ -194,7 +208,7 @@ rm -rf ../environments/preview-pr-${PR_NUMBER}
 
 ### Production Config
 
-File: `terraform/environments/production/production.yaml`
+File: `terraform/environments/prod/prod.yaml`
 
 Key settings:
 - `min_size: 1` - Always warm, no cold starts
@@ -206,9 +220,9 @@ Key settings:
 File: `terraform/environments/preview/preview.yaml.example`
 
 Key settings:
-- `min_size: 0` - Scale to zero when idle (cost savings)
+- `min_size: 1` - App Runner requires minimum 1 instance
 - `max_size: 2` - Maximum 2 instances
-- `cpu: 1024` / `memory: 2048` - Same as production
+- `cpu: 512` / `memory: 1024` - 0.5 vCPU, 1 GB RAM (smaller than prod)
 
 ## Monitoring
 
@@ -216,7 +230,7 @@ Key settings:
 
 View logs for production:
 ```bash
-aws logs tail /aws/apprunner/production-block-explorer/*/application --follow
+aws logs tail /aws/apprunner/prod-block-explorer/*/application --follow
 ```
 
 View logs for preview:
@@ -247,6 +261,7 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 1. Check the workflow logs in GitHub Actions
 2. Test build locally: `docker build -t block-explorer .`
 3. Verify `next.config.ts` has `output: 'standalone'`
+4. Check pnpm-lock.yaml is compatible with pnpm 9.15.4
 
 ### Service Won't Start
 
@@ -282,6 +297,17 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 2. Create if missing: `terraform workspace new <name>`
 3. Ensure correct backend config: `-backend-config=../environments/<env>/backend.config`
 
+### Version Label Missing
+
+**Issue**: PR checks fail with "missing version label"
+
+**Solution**:
+1. Add one of the required labels to your PR:
+   - `increment:patch` - for bug fixes
+   - `increment:minor` - for new features
+   - `increment:major` - for breaking changes
+2. Re-run the check
+
 ## Cost Breakdown
 
 **Important Note**: AWS App Runner requires a minimum of 1 instance (`min_size: 1`). It doesn't support scaling to zero. However, you only pay for provisioned memory when idle (not CPU), making costs very low for inactive preview environments.
@@ -293,7 +319,7 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 - **Total: ~$30-35/month**
 
 ### Preview Environments (Monthly per PR)
-- App Runner: ~$12-15 (1 vCPU, 2GB RAM, 1 instance minimum)
+- App Runner: ~$12-15 (0.5 vCPU, 1GB RAM, 1 instance minimum)
 - Costs are lower when idle (only memory provisioned, no CPU usage)
 - ECR Storage: Shared with production
 - **Total: ~$12-15/month per preview**
@@ -305,7 +331,7 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 
 **Cost Optimization Tips**:
 - Delete preview environments promptly after PR merge (automated)
-- Use smaller instance sizes for previews (0.25 vCPU, 0.5GB RAM) if sufficient
+- Preview environments use smaller instance sizes (50% of production)
 - Monitor idle previews and manually delete if needed
 
 ## Cleanup
@@ -332,8 +358,8 @@ done
 
 ```bash
 cd terraform/frontend
-terraform init -backend-config=../environments/production/backend.config
-terraform workspace select production
+terraform init -backend-config=../environments/prod/backend.config
+terraform workspace select prod
 terraform destroy
 ```
 
@@ -347,20 +373,16 @@ cd terraform/frontend
 # 2. Delete account-level resources
 cd ../account-level
 terraform destroy
-
-# 3. Delete S3 backend (WARNING: This deletes all state!)
-cd ../s3-backend
-terraform destroy
 ```
 
 ## Best Practices
 
 1. **Always use feature branches** and create PRs to test changes in preview environments
-2. **Review preview environments** before merging to production
-3. **Monitor costs** in AWS Cost Explorer, especially for preview environments
-4. **Clean up old images** in ECR regularly (automated via lifecycle policy)
-5. **Use semantic versioning** for production image tags
-6. **Test locally** before pushing: `docker build . && docker run -p 3000:3000 <image>`
+2. **Add version labels to PRs** - required for CI to pass and for versioning
+3. **Review preview environments** before merging to production
+4. **Deploy to production from version tags** - never deploy untagged commits
+5. **Monitor costs** in AWS Cost Explorer, especially for preview environments
+6. **Clean up old images** in ECR regularly (automated via lifecycle policy)
 
 ## Security Considerations
 
@@ -369,6 +391,26 @@ terraform destroy
 3. **Network Security**: App Runner services are public by default; use WAF for additional protection
 4. **Image Scanning**: ECR automatic scanning is enabled for vulnerability detection
 5. **HTTPS Only**: All traffic is encrypted via HTTPS (App Runner default)
+6. **OIDC Authentication**: GitHub Actions uses OpenID Connect (no long-lived credentials)
+
+## Image Tagging Strategy
+
+| Environment | Pattern | Example | Purpose |
+|-------------|---------|---------|---------|
+| Production | `v.X.Y.Z` | `v.1.2.3` | Semantic version tag |
+| Preview | `pr-{number}-{short_sha}` | `pr-144-a1b2c3d` | PR number + commit SHA |
+
+**Production Tags:**
+- Uses semantic versioning (`v.X.Y.Z`)
+- Created automatically when PRs are merged
+- Immutable - each version deployed once
+- Provides clear release history
+
+**Preview Tags:**
+- Includes SHORT_SHA (7-char commit hash)
+- Unique per commit on each PR
+- Forces App Runner to pull new image
+- Prevents stale deployments
 
 ## Support
 
@@ -384,4 +426,4 @@ For issues or questions:
 - [Terraform Documentation](https://www.terraform.io/docs)
 - [Next.js Deployment](https://nextjs.org/docs/deployment)
 - [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
-
+- [Semantic Versioning](https://semver.org/)
