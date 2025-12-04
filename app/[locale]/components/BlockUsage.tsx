@@ -125,7 +125,7 @@ export const BlockUsage = () => {
     if (selectedRange === 'yearly' && selectedDateStr.match(/^\d{4}$/)) {
       const year = parseInt(selectedDateStr)
       const now = new Date()
-      if (year && year >= 2018 && year <= now.getFullYear()) {
+      if (!isNaN(year) && year >= 2018 && year <= now.getFullYear()) {
         newSelectedDate = new Date(`${year}-01-01T00:00:00`)
       } else {
         return // Invalid year
