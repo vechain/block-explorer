@@ -14,7 +14,11 @@ RUN corepack enable && \
 # Copy source code
 COPY . .
 
+# Build arguments
+ARG NEXT_PUBLIC_APP_VERSION
+
 # Set environment variables for build
+ENV NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION}
 ENV NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL=https://api.gateway-proxy.vechain.org
 ENV B32_URL=https://b32.vecha.in
 ENV NEXT_PUBLIC_COIN_API_URL=https://coin-api.veworld.vechain.org
