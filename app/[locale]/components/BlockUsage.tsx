@@ -1,19 +1,6 @@
 'use client'
 
-import {
-  Box,
-  Button,
-  createListCollection,
-  Flex,
-  Heading,
-  IconButton,
-  Input,
-  Portal,
-  Select,
-  Skeleton,
-  Stack,
-  Text,
-} from '@chakra-ui/react'
+import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import {
   addDays,
   addHours,
@@ -39,7 +26,6 @@ import {
 } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { LuChevronLeft, LuChevronRight, LuRotateCcw } from 'react-icons/lu'
 import {
   Area,
   AreaChart,
@@ -55,30 +41,10 @@ import type { BlockUsageData } from '@/lib/schemas'
 import { type BlockUsageDataPoint, transformBlockUsageData } from '@/lib/utils/block-usage'
 import { timeFormat } from '@/lib/utils/date'
 import { useBlockUsage } from '@/services/veworld-indexer/block-usage'
+import { BlockUsageControls, TIME_RANGES, type TimeRangeKey } from './BlockUsageControls'
 
 const chartHeight = '420px'
 const mainColor = '#E782FF'
-
-// Time range options based on API granularity rules (in seconds)
-const TIME_RANGES = {
-  hourly: { label: 'Hourly', seconds: 3600 }, // 1 hour
-  daily: { label: 'Daily', seconds: 86400 }, // 1 day
-  weekly: { label: 'Weekly', seconds: 604800 }, // 1 week
-  monthly: { label: 'Monthly', seconds: 2592000 }, // 30 days
-  yearly: { label: 'Yearly', seconds: 31536000 }, // 365 days
-  all: { label: 'All Time', seconds: 0 }, // Special case - from genesis to now
-} as const
-
-type TimeRangeKey = keyof typeof TIME_RANGES
-
-type TimeRangeItem = { label: string; value: TimeRangeKey }
-
-const timeRangeCollection = createListCollection<TimeRangeItem>({
-  items: Object.entries(TIME_RANGES).map(([key, config]) => ({
-    label: config.label,
-    value: key as TimeRangeKey,
-  })),
-})
 
 // Use the type from the utility file
 type DataPoint = BlockUsageDataPoint
@@ -189,8 +155,18 @@ export const BlockUsage = () => {
 
     let newSelectedDate: Date
 
+    // Handle year input for yearly range
+    if (selectedRange === 'yearly' && selectedDateStr.match(/^\d{4}$/)) {
+      const year = parseInt(selectedDateStr)
+      const now = new Date()
+      if (year && year >= 2018 && year <= now.getFullYear()) {
+        newSelectedDate = new Date(`${year}-01-01T00:00:00`)
+      } else {
+        return // Invalid year
+      }
+    }
     // Parse date in local timezone to avoid UTC conversion issues
-    if (selectedRange === 'monthly' && selectedDateStr.match(/^\d{4}-\d{2}$/)) {
+    else if (selectedRange === 'monthly' && selectedDateStr.match(/^\d{4}-\d{2}$/)) {
       // Month format: YYYY-MM
       const [year, month] = selectedDateStr.split('-').map(Number)
       newSelectedDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
@@ -215,70 +191,6 @@ export const BlockUsage = () => {
     setIsLiveMode(false) // Exit live mode when selecting a specific date
   }
 
-  // Format date for the date input based on selected range
-  const getDateInputValue = () => {
-    if (!currentPeriodStart) return ''
-
-    const date = new Date(currentPeriodStart * 1000)
-
-    // For yearly view, use year picker
-    if (selectedRange === 'yearly') {
-      return date.getFullYear().toString()
-    }
-
-    // For monthly view, use month picker
-    if (selectedRange === 'monthly') {
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      return `${year}-${month}`
-    }
-
-    // For all other views, use date picker (format in local timezone)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
-
-  // Get the appropriate input type and attributes based on range
-  const getDateInputProps = () => {
-    const now = new Date()
-
-    switch (selectedRange) {
-      case 'yearly':
-        return {
-          type: 'number' as const,
-          placeholder: 'Year',
-          min: 2018,
-          max: now.getFullYear(),
-          value: currentPeriodStart ? new Date(currentPeriodStart * 1000).getFullYear() : '',
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-            const year = parseInt(e.target.value)
-            if (year && year >= 2018 && year <= now.getFullYear()) {
-              const newSelectedDate = new Date(`${year}-01-01T00:00:00`)
-              setSelectedDate(newSelectedDate)
-              setTimeOffset(0)
-              setIsLiveMode(false)
-            }
-          },
-        }
-      case 'monthly':
-        return {
-          type: 'month' as const,
-          value: getDateInputValue(),
-          max: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`,
-          onChange: handleDateChange,
-        }
-      default:
-        return {
-          type: 'date' as const,
-          value: getDateInputValue(),
-          max: now.toISOString().split('T')[0],
-          onChange: handleDateChange,
-        }
-    }
-  }
-
   return (
     <Surface>
       <Flex justify="space-between" align="center">
@@ -286,58 +198,17 @@ export const BlockUsage = () => {
           Block Usage
         </Heading>
 
-        <Flex align="center" gap={4} flexShrink={0}>
-          {/* Time Navigation Controls */}
-          {selectedRange !== 'all' && (
-            <Flex align="center" gap={2}>
-              <IconButton
-                aria-label="Go back one period"
-                size="sm"
-                variant="outline"
-                onClick={handleNavigateBack}
-                disabled={!canGoBack}>
-                <LuChevronLeft />
-              </IconButton>
-
-              <Input {...getDateInputProps()} size="sm" width="140px" />
-
-              <IconButton
-                aria-label="Go forward one period"
-                size="sm"
-                variant="outline"
-                onClick={handleNavigateForward}
-                disabled={!canGoForward}>
-                <LuChevronRight />
-              </IconButton>
-
-              <Button size="sm" variant="outline" onClick={handleResetToNow}>
-                <LuRotateCcw />
-                Now
-              </Button>
-            </Flex>
-          )}
-
-          <Select.Root
-            collection={timeRangeCollection}
-            value={[selectedRange]}
-            onValueChange={details => handleRangeChange(details.value[0] as TimeRangeKey)}
-            width="200px">
-            <Select.Trigger bg="bg">
-              <Select.ValueText placeholder="Select time range" />
-            </Select.Trigger>
-            <Portal>
-              <Select.Positioner>
-                <Select.Content>
-                  {timeRangeCollection.items.map(item => (
-                    <Select.Item key={item.value} item={item}>
-                      {item.label}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select.Positioner>
-            </Portal>
-          </Select.Root>
-        </Flex>
+        <BlockUsageControls
+          selectedRange={selectedRange}
+          currentPeriodStart={currentPeriodStart}
+          canGoBack={canGoBack}
+          canGoForward={canGoForward}
+          onRangeChange={handleRangeChange}
+          onNavigateBack={handleNavigateBack}
+          onNavigateForward={handleNavigateForward}
+          onResetToNow={handleResetToNow}
+          onDateChange={handleDateChange}
+        />
       </Flex>
 
       <Surface>
