@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, createListCollection, Flex, IconButton, Input, Portal, Select } from '@chakra-ui/react'
+import { Box, Button, createListCollection, Flex, IconButton, Input, Portal, Select } from '@chakra-ui/react'
 import {
   addDays,
   addHours,
@@ -23,7 +23,7 @@ import {
   subWeeks,
   subYears,
 } from 'date-fns'
-import { LuChevronLeft, LuChevronRight, LuRotateCcw } from 'react-icons/lu'
+import { LuChevronLeft, LuChevronRight, LuClock, LuRotateCcw } from 'react-icons/lu'
 
 // Time range configuration using date-fns functions
 export const TIME_RANGES = {
@@ -93,6 +93,7 @@ export interface BlockUsageControlsProps {
   onNavigateForward: () => void
   onResetToNow: () => void
   onDateChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  onHourChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
 
 export const BlockUsageControls = ({
@@ -105,6 +106,7 @@ export const BlockUsageControls = ({
   onNavigateForward,
   onResetToNow,
   onDateChange,
+  onHourChange,
 }: BlockUsageControlsProps) => {
   // Format date for the date input based on selected range
   const getDateInputValue = () => {
@@ -127,6 +129,12 @@ export const BlockUsageControls = ({
     const month = String(selectedDate.getMonth() + 1).padStart(2, '0')
     const day = String(selectedDate.getDate()).padStart(2, '0')
     return `${year}-${month}-${day}`
+  }
+
+  // Get hour value for hourly view
+  const getHourInputValue = () => {
+    if (!selectedDate) return '0'
+    return String(selectedDate.getHours()).padStart(2, '0')
   }
 
   // Get the appropriate input width based on range
@@ -173,10 +181,10 @@ export const BlockUsageControls = ({
   }
 
   return (
-    <Flex align="center" gap={4} flexShrink={0}>
+    <Flex align="center" gap={2} flexShrink={0} flexWrap={{ base: 'wrap', md: 'nowrap' }} flex={{ base: '1', md: '0' }}>
       {/* Time Navigation Controls */}
       {selectedRange !== 'all' && (
-        <Flex align="center" gap={2}>
+        <>
           <IconButton
             aria-label="Go back one period"
             size="sm"
@@ -186,7 +194,51 @@ export const BlockUsageControls = ({
             <LuChevronLeft />
           </IconButton>
 
-          <Input {...getDateInputProps()} size="sm" width={getDateInputWidth()} />
+          {selectedRange === 'hourly' ? (
+            <Flex align="center" gap={1} flexWrap="nowrap">
+              <Input
+                type="date"
+                value={getDateInputValue()}
+                max={new Date().toISOString().split('T')[0]}
+                onChange={onDateChange}
+                size="sm"
+                width={{ base: '130px', sm: '140px' }}
+              />
+              <Box position="relative" width={{ base: '75px', sm: '85px' }} flexShrink={0}>
+                <Input
+                  type="number"
+                  value={getHourInputValue()}
+                  min={0}
+                  max={23}
+                  onChange={onHourChange}
+                  size="sm"
+                  paddingRight="32px"
+                  placeholder="Hr"
+                  css={{
+                    '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
+                      WebkitAppearance: 'none',
+                      margin: 0,
+                    },
+                    '&[type=number]': {
+                      MozAppearance: 'textfield',
+                    },
+                  }}
+                />
+                <Box
+                  position="absolute"
+                  right="8px"
+                  top="50%"
+                  transform="translateY(-50%)"
+                  pointerEvents="none"
+                  zIndex={1}
+                  color="fg.muted">
+                  <LuClock size={16} />
+                </Box>
+              </Box>
+            </Flex>
+          ) : (
+            <Input {...getDateInputProps()} size="sm" width={getDateInputWidth()} />
+          )}
 
           <IconButton
             aria-label="Go forward one period"
@@ -201,7 +253,7 @@ export const BlockUsageControls = ({
             <LuRotateCcw />
             Now
           </Button>
-        </Flex>
+        </>
       )}
 
       <Select.Root
@@ -210,7 +262,7 @@ export const BlockUsageControls = ({
         onValueChange={details => onRangeChange(details.value[0] as TimeRangeKey)}
         size="sm"
         variant="outline"
-        width="140px">
+        width={'100px'}>
         <Select.Trigger>
           <Select.ValueText placeholder="Select time range" />
         </Select.Trigger>

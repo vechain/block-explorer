@@ -100,7 +100,13 @@ export const BlockUsage = () => {
     } else if (selectedDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
       // Date format: YYYY-MM-DD (month is 1-indexed in the string, 0-indexed in Date constructor)
       const [year, month, day] = selectedDateStr.split('-').map(Number)
-      newSelectedDate = new Date(year, month - 1, day, 0, 0, 0, 0)
+      // For hourly view, preserve the current hour when changing date
+      if (selectedRange === 'hourly') {
+        const currentHour = selectedDate.getHours()
+        newSelectedDate = new Date(year, month - 1, day, currentHour, 0, 0, 0)
+      } else {
+        newSelectedDate = new Date(year, month - 1, day, 0, 0, 0, 0)
+      }
     } else {
       return // Invalid format
     }
@@ -117,9 +123,35 @@ export const BlockUsage = () => {
     setIsLiveMode(false) // Exit live mode when selecting a specific date
   }
 
+  const handleHourChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const hourStr = event.target.value
+    if (!hourStr) return
+
+    const hour = parseInt(hourStr)
+    if (isNaN(hour) || hour < 0 || hour > 23) return
+
+    // Create new date with the selected hour
+    const newSelectedDate = new Date(selectedDate)
+    newSelectedDate.setHours(hour, 0, 0, 0)
+
+    const now = new Date()
+
+    // Validate the selected date
+    if (newSelectedDate > now) {
+      return // Future date
+    }
+
+    setSelectedDate(newSelectedDate)
+    setIsLiveMode(false) // Exit live mode when selecting a specific hour
+  }
+
   return (
     <Surface>
-      <Flex justify="space-between" align="center">
+      <Stack
+        direction={{ base: 'column', md: 'row' }}
+        justify="space-between"
+        align={{ base: 'flex-start', md: 'center' }}
+        gap={4}>
         <Heading as="h2" textStyle="displayXs">
           Block Usage
         </Heading>
@@ -134,8 +166,9 @@ export const BlockUsage = () => {
           onNavigateForward={handleNavigateForward}
           onResetToNow={handleResetToNow}
           onDateChange={handleDateChange}
+          onHourChange={handleHourChange}
         />
-      </Flex>
+      </Stack>
 
       <Surface>
         <BlockUsageChart data={blocksDataPoints} selectedRange={selectedRange} />
