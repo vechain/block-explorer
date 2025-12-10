@@ -3,7 +3,7 @@
 import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { getUnixTime } from 'date-fns'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -32,9 +32,11 @@ export const BlockUsage = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date()) // User-selected specific date
   const [isLiveMode, setIsLiveMode] = useState(true) // Live mode updates with new blocks
 
-  const { blocksDataPoints, isLoading, canGoBack, canGoForward } = useBlockUsageChartData(selectedRange, selectedDate)
-
-  if (isLoading) return <Skeleton height={chartHeight} rounded="xl" />
+  const { blocksDataPoints, isLoading, canGoBack, canGoForward } = useBlockUsageChartData(
+    selectedRange,
+    selectedDate,
+    isLiveMode,
+  )
 
   const handleRangeChange = (newRange: TimeRangeKey) => {
     setSelectedRange(newRange)
@@ -405,10 +407,13 @@ const useBlockUsageChartData = (range: TimeRangeKey, date: Date, isLiveMode: boo
   const { data: cumulativeData = [], ...rest } = useBlockUsage(adjustedStartTimestamp, endTimestamp, isLiveMode)
 
   // Transform cumulative data to per-block values
-  const allDataPoints = transformBlockUsageData(cumulativeData as BlockUsageData[])
+  const allDataPoints = useMemo(() => transformBlockUsageData(cumulativeData as BlockUsageData[]), [cumulativeData])
 
   // Filter to only include data points within the requested range (exclude buffer)
-  const blocksDataPoints = allDataPoints.filter(point => point.timestamp >= startTimestamp)
+  const blocksDataPoints = useMemo(
+    () => allDataPoints.filter(point => point.timestamp >= startTimestamp),
+    [allDataPoints, startTimestamp],
+  )
 
   return { blocksDataPoints, selectedRangeConfig, canGoBack, canGoForward, ...rest }
 }
