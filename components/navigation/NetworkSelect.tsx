@@ -32,11 +32,12 @@ export const NetworkSelect = () => {
     <Flex
       gap={1}
       alignItems="center"
+      border="1px solid"
+      borderColor="bg-card-surface-2"
       bg="bg-card-surface-2"
       p={1.5}
       rounded="full"
       textStyle="bodyMSemibold"
-      border="1px solid var(--chakra-colors-border-surface-2)"
       onClick={handleNetworkToggle}
       cursor="pointer">
       <NetworkItem

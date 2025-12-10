@@ -7,13 +7,17 @@ import { FiArrowUpRight, FiMenu } from 'react-icons/fi'
 import { useColorMode } from '../theme/color-mode'
 import { MotionBox } from '../ui/MotionBox'
 import { NetworkSelect } from './NetworkSelect'
+import { SearchBar } from './SearchBar'
 
 export const Header = () => {
   useColorMode()
   return (
-    <Flex as="header" justify="space-between" align="center" py={{ base: 0, md: 4 }}>
+    <Flex as="header" justify="space-between" align="center" py={{ base: 0, md: 4 }} gap={6}>
       <Box hideBelow="md">
         <Logo />
+      </Box>
+      <Box hideBelow="md" flex={1}>
+        <SearchBar />
       </Box>
       <NavigationMenu />
     </Flex>
@@ -48,18 +52,9 @@ const NavigationMenu = () => {
       <Box hideFrom="md" display="flex" alignItems="center" gap={2}>
         <Logo />
       </Box>
-      <Box hideBelow="md">
-        <Link href="https://inspector.vecha.in/" target="_blank" rel="noopener noreferrer">
-          <Flex gap={2} alignItems="center" justifyContent="center" p={4}>
-            <Text fontSize="body-m" whiteSpace="nowrap">
-              Inspect tool
-            </Text>
-            <FiArrowUpRight width={16} height={16} />
-          </Flex>
-        </Link>
-      </Box>
+
       <NetworkSelect />
-      <Box hideFrom="md">
+      <Box>
         <Box position="relative">
           <Box
             as="button"
@@ -85,6 +80,8 @@ const NavigationMenu = () => {
               position="absolute"
               right={0}
               mt={2}
+              border="1px solid"
+              borderColor="bg-card-surface-2"
               bg="bg-card-surface-2"
               borderRadius="md"
               boxShadow="lg"
