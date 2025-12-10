@@ -16,14 +16,17 @@ import { ValueSwitch } from '@/components/ui/ValueSwitch'
 import { type Transaction, type TransactionId, type TransactionReceipt, transactionIdSchema } from '@/lib/schemas'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/hooks'
 
-type View = 'transaction' | 'clauses'
+enum TransactionDetailsView {
+  TRANSACTION = 'transaction',
+  CLAUSES = 'clauses',
+}
 
 export default function TransactionPage({
   params,
   searchParams,
 }: {
   params: Promise<{ transactionId: TransactionId }>
-  searchParams: Promise<{ view: View }>
+  searchParams: Promise<{ view: TransactionDetailsView }>
 }) {
   const { transactionId } = use(params)
   const { view } = use(searchParams)
@@ -43,7 +46,7 @@ export default function TransactionPage({
     notFound()
   }
 
-  const handleViewChange = (view: View) => {
+  const handleViewChange = (view: TransactionDetailsView) => {
     router.replace(`/transaction/${transaction.id}?view=${view}`, { scroll: false })
   }
 
@@ -57,13 +60,13 @@ export default function TransactionPage({
 const TransactionDetails = ({
   transaction,
   receipt,
-  view = 'transaction',
+  view = TransactionDetailsView.TRANSACTION,
   onViewChange,
 }: {
-  view: View
+  view: TransactionDetailsView
   transaction: Transaction
   receipt: TransactionReceipt | null
-  onViewChange: (view: View) => void
+  onViewChange: (view: TransactionDetailsView) => void
 }) => {
   return (
     <Stack gap="8">
@@ -113,7 +116,12 @@ const TransactionDetails = ({
           </DataCard>
         </Flex>
 
-        <ValueSwitch values={['transaction', 'clauses']} activeValue={view} onChange={onViewChange} />
+        <ValueSwitch
+          layoutId="transaction-view"
+          values={['transaction', 'clauses']}
+          activeValue={view}
+          onChange={value => onViewChange(value as TransactionDetailsView)}
+        />
 
         <TransactionViews transaction={transaction} receipt={receipt} view={view} />
       </Surface>

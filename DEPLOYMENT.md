@@ -10,6 +10,7 @@ The infrastructure consists of:
 - **Preview Environments**: Ephemeral services at `pr-{number}.block-explorer-preview.vechain.org`
 - **Terraform Workspaces**: Separate workspace for production and each preview
 - **State Management**: S3 buckets with DynamoDB locking
+- **Shared Auto Scaling**: Account-level auto scaling configurations (avoids AWS quota limits)
 
 ## Prerequisites
 
@@ -78,6 +79,7 @@ terraform apply
 - IAM roles for App Runner
 - ACM certificates (production + wildcard for previews)
 - Route53 hosted zone configuration
+- Shared auto scaling configurations (production + preview)
 
 **Important**: Save the outputs from this step:
 ```bash
@@ -211,18 +213,37 @@ rm -rf ../environments/preview-pr-${PR_NUMBER}
 File: `terraform/environments/prod/prod.yaml`
 
 Key settings:
-- `min_size: 1` - Always warm, no cold starts
-- `max_size: 10` - Scale up to 10 instances under load
-- `cpu: 1024` / `memory: 2048` - 1 vCPU, 2 GB RAM
+- `cpu: 512` / `memory: 1024` - 0.5 vCPU, 1 GB RAM
+- `port: 3000` - Application port
+- `health_check_path: /` - Health check endpoint
 
 ### Preview Config
 
 File: `terraform/environments/preview/preview.yaml.example`
 
 Key settings:
-- `min_size: 1` - App Runner requires minimum 1 instance
-- `max_size: 2` - Maximum 2 instances
-- `cpu: 512` / `memory: 1024` - 0.5 vCPU, 1 GB RAM (smaller than prod)
+- `cpu: 256` / `memory: 512` - 0.25 vCPU, 0.5 GB RAM (smaller than prod)
+- `port: 3000` - Application port
+- `health_check_path: /` - Health check endpoint
+
+### Auto Scaling Configuration
+
+Auto scaling is managed at the **account level** (`terraform/account-level/autoscaling.tf`), not per-environment. This is required because [AWS limits accounts to 10 unique auto scaling configuration names](https://docs.aws.amazon.com/apprunner/latest/dg/manage-autoscaling.html).
+
+| Config | Min Size | Max Size | Max Concurrency |
+|--------|----------|----------|-----------------|
+| `block-explorer-prod` | 1 | 10 | 100 |
+| `block-explorer-preview` | 1 | 2 | 100 |
+
+All preview environments share the same `block-explorer-preview` auto scaling configuration.
+
+**To modify auto scaling settings:**
+```bash
+cd terraform/account-level
+# Edit autoscaling.tf
+terraform plan
+terraform apply
+```
 
 ## Monitoring
 
