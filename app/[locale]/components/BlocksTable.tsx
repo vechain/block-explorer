@@ -43,7 +43,7 @@ const GasUsedCell = (props: CellComponentProps) => {
   const icon = props.row.isFinalized ? (
     <Image src="/icons/success.svg" alt="Finalized" width={16} height={16} />
   ) : (
-    <Image src="/icons/pending.svg" style={{ stroke: 'red' }} alt="Pending" width={16} height={16} />
+    <Image src="/icons/pending.svg" alt="Pending" width={16} height={16} />
   )
 
   return <AppendIconCell icon={icon} {...props} />
