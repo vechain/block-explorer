@@ -8,7 +8,7 @@ import * as abi from '@/lib/schemas/abi'
 import { zodParse } from '@/lib/utils/zod'
 import { useAbi } from '@/services/b32'
 
-type InputData = {
+export type InputData = {
   raw: HexString
   decoded?: DecodedInputData
 }

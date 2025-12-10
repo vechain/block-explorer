@@ -61,7 +61,7 @@ const NetworkItem = ({
       {isActive && (
         <MotionBox
           position="absolute"
-          layoutId="pill"
+          layoutId="network"
           top={0}
           left={0}
           right={0}
