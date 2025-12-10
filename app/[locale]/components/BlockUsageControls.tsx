@@ -208,8 +208,10 @@ export const BlockUsageControls = ({
         collection={timeRangeCollection}
         value={[selectedRange]}
         onValueChange={details => onRangeChange(details.value[0] as TimeRangeKey)}
-        width="200px">
-        <Select.Trigger bg="bg">
+        size="sm"
+        variant="outline"
+        width="140px">
+        <Select.Trigger>
           <Select.ValueText placeholder="Select time range" />
         </Select.Trigger>
         <Portal>
