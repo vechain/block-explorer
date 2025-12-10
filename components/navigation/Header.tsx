@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { FiArrowUpRight, FiMenu } from 'react-icons/fi'
 import { useColorMode } from '../theme/color-mode'
+import { MotionBox } from '../ui/MotionBox'
 import { NetworkSelect } from './NetworkSelect'
 
 export const Header = () => {
@@ -72,7 +73,15 @@ const NavigationMenu = () => {
             <FiMenu size={20} />
           </Box>
           {isMenuOpen && (
-            <Box
+            <MotionBox
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              initial={{
+                opacity: 0,
+                y: -10,
+              }}
               position="absolute"
               right={0}
               mt={2}
@@ -90,7 +99,7 @@ const NavigationMenu = () => {
                   <FiArrowUpRight width={16} height={16} />
                 </Flex>
               </Link>
-            </Box>
+            </MotionBox>
           )}
         </Box>
       </Box>
