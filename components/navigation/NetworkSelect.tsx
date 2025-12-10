@@ -1,9 +1,10 @@
 import { Box, Flex, Text } from '@chakra-ui/react'
 import { useQueryClient } from '@tanstack/react-query'
-import { motion } from 'motion/react'
 import { NETWORKS, NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getThorClient } from '@/services/thor/client'
+import { MotionBox } from '../ui/MotionBox'
+import { MotionText } from '../ui/MotionText'
 
 export const NetworkSelect = () => {
   const { setActiveNetwork, activeNetwork } = useSettingsStore()
@@ -75,16 +76,14 @@ const NetworkItem = ({
           rounded="full"
         />
       )}
-      <Text
+      <MotionText
         as="span"
         position="relative"
-        color={isActive ? 'bg-primary' : 'text-primary'}
+        animate={{ color: isActive ? 'var(--chakra-colors-bg-primary)' : 'var(--chakra-colors-text-primary)' }}
         textTransform="capitalize"
         fontSize={{ base: 'body-s', md: 'body-m' }}>
         {networkName}
-      </Text>
+      </MotionText>
     </Box>
   )
 }
-
-const MotionBox = motion.create(Box)
