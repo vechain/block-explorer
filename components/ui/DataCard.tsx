@@ -11,11 +11,12 @@ interface DataCardProps extends FlexProps {
   icon: React.ReactElement<IconBaseProps>
   title: string
   tooltip?: string
+  iconSize?: number | string
 }
 
 export const DataCard = forwardRef<HTMLDivElement, DataCardProps>(
-  ({ children, icon, title, tooltip, ...props }, ref) => {
-    const Icon = React.cloneElement(icon, { ...icon.props, width: 12, height: 12 })
+  ({ children, icon, title, tooltip, iconSize = 12, ...props }, ref) => {
+    const Icon = React.cloneElement(icon, { ...icon.props, width: iconSize, height: iconSize })
 
     return (
       <Flex
