@@ -8,6 +8,7 @@ import { zodParse } from '@/lib/utils/zod'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { ActivitySection } from './components/ActivitySection'
 import { BlockUsage } from './components/BlockUsage'
+import { PriceCards } from './components/PriceCards'
 import { TotalStakedChart } from './components/TotalStakedChart'
 
 export default async function HomePage({
@@ -34,6 +35,7 @@ export default async function HomePage({
       </Container>
 
       <Stack mt={8} gap={8}>
+        <PriceCards />
         <BlockUsage />
 
         <Flex gap={4} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
