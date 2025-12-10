@@ -2,18 +2,15 @@
 # App Runner Service
 ################################################################################
 
-# Auto-scaling configuration
-resource "aws_apprunner_auto_scaling_configuration_version" "frontend" {
-  auto_scaling_configuration_name = "${local.env.environment}-block-explorer"
+# Auto-scaling configuration is managed at the account level to avoid hitting
+# the 10 unique configuration name quota. We reference the shared configurations
+# based on the environment type (prod vs preview).
+#
+# See: terraform/account-level/autoscaling.tf
 
-  max_concurrency = local.env.max_concurrency
-  min_size        = local.env.min_size
-  max_size        = local.env.max_size
-
-  tags = {
-    Name        = "${local.env.environment}-block-explorer"
-    Environment = local.env.environment
-  }
+locals {
+  # Use production config for "prod" environment, otherwise use shared preview config
+  autoscaling_config_arn = local.env.environment == "prod" ? data.terraform_remote_state.account_level.outputs.autoscaling_config_prod_arn : data.terraform_remote_state.account_level.outputs.autoscaling_config_preview_arn
 }
 
 # App Runner Service
@@ -53,7 +50,7 @@ resource "aws_apprunner_service" "frontend" {
     instance_role_arn = data.terraform_remote_state.account_level.outputs.app_runner_instance_role_arn
   }
 
-  auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.frontend.arn
+  auto_scaling_configuration_arn = local.autoscaling_config_arn
 
   health_check_configuration {
     protocol            = "HTTP"
