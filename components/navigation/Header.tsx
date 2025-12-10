@@ -39,11 +39,8 @@ const NavigationMenu = () => {
       justifyContent={{ base: 'space-between', md: 'flex-end' }}
       gap={4}
       alignItems="center"
-      bg="bg-card-surface-2"
       px={4}
-      py={2}
-      rounded="full"
-      border="0.5px solid var(--chakra-colors-border-surface-2)">
+      py={2}>
       <Box hideFrom="md">
         <Logo />
       </Box>

@@ -24,15 +24,22 @@ export const NetworkSelect = () => {
     queryClient.invalidateQueries()
   }
 
+  const handleNetworkToggle = () => {
+    const newNetworkName = activeNetwork.name === NetworkName.MAINNET ? NetworkName.TESTNET : NetworkName.MAINNET
+    handleNetworkChange(newNetworkName)
+  }
+
   return (
     <Flex
       gap={1}
       alignItems="center"
-      bg="bg-card-surface-3"
-      p={2}
+      bg="bg-card-surface-2"
+      p={1.5}
       rounded="full"
       textStyle="bodyMSemibold"
-      border="0.5px solid var(--chakra-colors-border-surface-2)">
+      border="1px solid var(--chakra-colors-border-surface-2)"
+      onClick={handleNetworkToggle}
+      cursor="pointer">
       <NetworkItem
         networkName={NetworkName.MAINNET}
         isActive={activeNetwork.name === NetworkName.MAINNET}
@@ -50,14 +57,13 @@ export const NetworkSelect = () => {
 const NetworkItem = ({
   networkName,
   isActive,
-  onNetworkChange,
 }: {
   networkName: NetworkName
   isActive: boolean
   onNetworkChange: (network: NetworkName) => void
 }) => {
   return (
-    <Box py={2} px={3} cursor="pointer" position="relative" onClick={() => onNetworkChange(networkName)}>
+    <Box py={{ base: 1, md: 2 }} px={{ base: 2, md: 4 }} cursor="pointer" position="relative">
       {isActive && (
         <MotionBox
           position="absolute"
@@ -71,7 +77,12 @@ const NetworkItem = ({
           rounded="full"
         />
       )}
-      <Text as="span" position="relative" color={isActive ? 'bg-primary' : 'text-primary'} textTransform="capitalize">
+      <Text
+        as="span"
+        position="relative"
+        color={isActive ? 'bg-primary' : 'text-primary'}
+        textTransform="capitalize"
+        fontSize={{ base: 'body-s', md: 'body-m' }}>
         {networkName}
       </Text>
     </Box>
