@@ -32,10 +32,10 @@ export const SearchBar = (props: FlexProps) => {
       borderColor="bg-card-surface-2"
       bg="bg-card-surface-2"
       rounded="full"
-      p="2"
+      p="3.5"
       gap="4"
       {...props}>
-      <IconInCircle icon={<LuSearch size={20} />} cursor="pointer" p="3" onClick={handleSearch} />
+      <LuSearch size={20} color="text-primary" onClick={handleSearch} />
       <Field.Root as="form" onSubmit={handleSubmit} invalid={!!error} flex="1" gap="0">
         <Input
           px="0"

@@ -1,11 +1,10 @@
-'use client'
-
 import { Box, Flex, Text } from '@chakra-ui/react'
 import { useQueryClient } from '@tanstack/react-query'
-import { motion } from 'motion/react'
 import { NETWORKS, NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getThorClient } from '@/services/thor/client'
+import { MotionBox } from '../ui/MotionBox'
+import { MotionText } from '../ui/MotionText'
 
 export const NetworkSelect = () => {
   const { setActiveNetwork, activeNetwork } = useSettingsStore()
@@ -24,15 +23,23 @@ export const NetworkSelect = () => {
     queryClient.invalidateQueries()
   }
 
+  const handleNetworkToggle = () => {
+    const newNetworkName = activeNetwork.name === NetworkName.MAINNET ? NetworkName.TESTNET : NetworkName.MAINNET
+    handleNetworkChange(newNetworkName)
+  }
+
   return (
     <Flex
       gap={1}
       alignItems="center"
-      bg="bg-card-surface-3"
-      p={2}
+      border="1px solid"
+      borderColor="bg-card-surface-2"
+      bg="bg-card-surface-2"
+      p={1.5}
       rounded="full"
       textStyle="bodyMSemibold"
-      border="0.5px solid var(--chakra-colors-border-surface-2)">
+      onClick={handleNetworkToggle}
+      cursor="pointer">
       <NetworkItem
         networkName={NetworkName.MAINNET}
         isActive={activeNetwork.name === NetworkName.MAINNET}
@@ -50,18 +57,17 @@ export const NetworkSelect = () => {
 const NetworkItem = ({
   networkName,
   isActive,
-  onNetworkChange,
 }: {
   networkName: NetworkName
   isActive: boolean
   onNetworkChange: (network: NetworkName) => void
 }) => {
   return (
-    <Box py={2} px={3} cursor="pointer" position="relative" onClick={() => onNetworkChange(networkName)}>
+    <Box py={{ base: 1, md: 2 }} px={{ base: 2, md: 4 }} cursor="pointer" position="relative">
       {isActive && (
         <MotionBox
           position="absolute"
-          layoutId="pill"
+          layoutId="network"
           top={0}
           left={0}
           right={0}
@@ -71,11 +77,14 @@ const NetworkItem = ({
           rounded="full"
         />
       )}
-      <Text as="span" position="relative" color={isActive ? 'bg-primary' : 'text-primary'} textTransform="capitalize">
+      <MotionText
+        as="span"
+        position="relative"
+        animate={{ color: isActive ? 'var(--chakra-colors-bg-primary)' : 'var(--chakra-colors-text-primary)' }}
+        textTransform="capitalize"
+        fontSize={{ base: 'body-s', md: 'body-m' }}>
         {networkName}
-      </Text>
+      </MotionText>
     </Box>
   )
 }
-
-const MotionBox = motion.create(Box)

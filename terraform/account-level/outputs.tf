@@ -42,3 +42,13 @@ output "preview_certificate_arn" {
   value       = aws_acm_certificate.preview_wildcard.arn
 }
 
+output "autoscaling_config_prod_arn" {
+  description = "ARN of the production auto scaling configuration"
+  value       = aws_apprunner_auto_scaling_configuration_version.prod.arn
+}
+
+output "autoscaling_config_preview_arn" {
+  description = "ARN of the shared preview auto scaling configuration"
+  value       = aws_apprunner_auto_scaling_configuration_version.preview.arn
+}
+

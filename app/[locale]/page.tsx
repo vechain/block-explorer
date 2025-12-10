@@ -8,6 +8,7 @@ import { zodParse } from '@/lib/utils/zod'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { ActivitySection } from './components/ActivitySection'
 import { BlockUsage } from './components/BlockUsage'
+import { PriceCards } from './components/PriceCards'
 import { TotalStakedChart } from './components/TotalStakedChart'
 
 export default async function HomePage({
@@ -29,20 +30,12 @@ export default async function HomePage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Heading
-        as="h2"
-        textStyle="displayM"
-        textAlign="center"
-        mt={{ base: '16', md: '12' }}
-        mb={{ base: '8', md: '10' }}>
-        Insights & Metrics
-      </Heading>
-
-      <Container p="0" maxW={{ md: '60%' }}>
+      <Container p="0" mt={4} maxW={{ md: '60%' }} hideFrom={'md'}>
         <SearchBar />
       </Container>
 
-      <Stack mt={{ base: 10, md: 16 }} gap={8}>
+      <Stack mt={8} gap={8}>
+        <PriceCards />
         <BlockUsage />
 
         <Flex gap={4} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
