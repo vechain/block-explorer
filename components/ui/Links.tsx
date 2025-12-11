@@ -41,7 +41,7 @@ interface CopyableLinkProps extends BaseLinkProps {
   value: string
 }
 
-const CopyableLink = ({ href, value, children, ...props }: CopyableLinkProps) => {
+export const CopyableLink = ({ href, value, children, ...props }: CopyableLinkProps) => {
   return (
     <Flex gap={2} alignItems="center" w="fit-content">
       <BaseLink href={href} {...props}>
