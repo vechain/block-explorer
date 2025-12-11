@@ -37,7 +37,7 @@ export const blockCompressedSchema = z.object({
   txsFeatures: z.number().optional(),
   gasUsed: z.coerce.bigint(),
   gasLimit: z.coerce.bigint(),
-  baseFeePerGas: hexToBigIntSchema,
+  baseFeePerGas: hexToBigIntSchema.optional(),
   signer: addressStringSchema,
   beneficiary: addressStringSchema,
   txsRoot: hexStringSchema,
@@ -59,7 +59,7 @@ export const blockExpandedSchema = z.object({
   txsFeatures: z.number().optional(),
   gasUsed: z.coerce.bigint(),
   gasLimit: z.coerce.bigint(),
-  baseFeePerGas: hexToBigIntSchema,
+  baseFeePerGas: hexToBigIntSchema.optional(),
   signer: addressStringSchema,
   beneficiary: addressStringSchema,
   txsRoot: hexStringSchema,
@@ -70,16 +70,11 @@ export const blockExpandedSchema = z.object({
   com: z.boolean(),
 })
 
-const blockRevisionEnumSchema = z.enum({
-  BEST: 'best',
-  NEXT: 'next',
-  FINALIZED: 'finalized',
-  JUSTIFIED: 'justified',
-})
+const blockRevisionEnumSchema = z.enum(['best', 'next', 'finalized', 'justified'])
 
 export const blockRevisionSchema = z.union([
   blockRevisionEnumSchema,
-  z.coerce.number().int().positive().max(100000000),
+  z.coerce.number().int().min(0).max(100000000),
   blockNumberSchema,
   blockIdSchema,
 ])
