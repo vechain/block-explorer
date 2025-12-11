@@ -2,15 +2,6 @@ name: Deploy to Production
 
 on:
   workflow_dispatch:
-    inputs:
-      terraform_action:
-        description: "Terraform action to perform"
-        required: true
-        default: "deploy"
-        type: choice
-        options:
-          - dry-run
-          - deploy
 
 env:
   AWS_REGION: eu-west-1
@@ -114,13 +105,13 @@ jobs:
           terraform plan -out=tfplan
 
       - name: Terraform Apply
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action == 'deploy')
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch')
         working-directory: terraform/frontend
         run: |
           terraform apply -auto-approve tfplan
 
       - name: Get deployment URL
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action == 'deploy')
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch')
         working-directory: terraform/frontend
         id: outputs
         run: |
@@ -130,7 +121,7 @@ jobs:
           echo "service_url=${SERVICE_URL}" >> $GITHUB_OUTPUT
 
       - name: Deployment summary
-        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.terraform_action == 'deploy')
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch')
         run: |
           echo "### Production Deployment Complete! 🚀" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
