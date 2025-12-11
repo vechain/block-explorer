@@ -1,5 +1,12 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import type { AddressString, BlockId, BlockRevision, CompressedBlock, TransactionId } from '@/lib/schemas'
+import type {
+  AddressString,
+  BlockId,
+  BlockRevision,
+  CompressedBlock,
+  ExpandedBlock,
+  TransactionId,
+} from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { accountQueryOptions } from './account'
 import {
@@ -44,7 +51,36 @@ export const useLatestBlocksCompressed = ({ count }: { count: number }) => {
   })
 }
 
+export const useLatestBlocksExpanded = ({ count }: { count: number }) => {
+  const { activeNetwork } = useSettingsStore()
+  const { data: bestBlock } = useBestBlockCompressed()
+
+  const bestBlockNumber = bestBlock?.number ?? count
+
+  const queries = []
+
+  for (let i = 0; i < count; i++) {
+    const revision = bestBlockNumber - i
+    if (revision > 0) {
+      queries.push(blockExpandedQueryOptions(activeNetwork.name, revision))
+    }
+  }
+
+  return useQueries({
+    queries,
+    combine: queries => ({
+      data: queries.map(query => query.data).filter(isExpandedBlock),
+      isLoading: queries.every(query => query.isLoading),
+      isPending: queries.every(query => query.isPending),
+    }),
+  })
+}
+
 const isCompressedBlock = (block: unknown): block is CompressedBlock => {
+  return Boolean(block)
+}
+
+const isExpandedBlock = (block: unknown): block is ExpandedBlock => {
   return Boolean(block)
 }
 export const useBlockExpanded = (revision: BlockRevision | undefined) => {
