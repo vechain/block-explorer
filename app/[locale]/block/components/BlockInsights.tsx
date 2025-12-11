@@ -3,11 +3,20 @@ import Image from 'next/image'
 import { AgeText } from '@/components/ui/AgeText'
 import { DataCard } from '@/components/ui/DataCard'
 import { GasUsed } from '@/components/ui/GasFees'
+import { CopyableLink } from '@/components/ui/Links'
 import { Surface } from '@/components/ui/Surface'
 import type { ExpandedBlock } from '@/lib/schemas'
 
 export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   const blockInsights = [
+    {
+      label: 'Block',
+      value: (
+        <CopyableLink href={`/block/${block.id}`} value={block.number.toString()}>
+          {`#${block.number.toString()}`}
+        </CopyableLink>
+      ),
+    },
     {
       label: 'Age',
       value: <AgeText timestamp={block.timestamp} />,

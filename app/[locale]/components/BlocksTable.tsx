@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { AgeText } from '@/components/ui/AgeText'
-import { BaseLink, CopyableAddressLink } from '@/components/ui/Links'
+import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
 import { AppendIconCell, type CellComponentProps, type Column, DataTable } from '@/components/ui/Table'
 import type { ExpandedBlock } from '@/lib/schemas'
 
@@ -9,8 +9,12 @@ export const BlocksTable = ({ blocks }: { blocks: ExpandedBlock[] }) => {
     { key: 'age', label: 'Age', Cell: ({ value }) => <AgeText timestamp={value as number} /> },
     {
       key: 'blockNumber',
-      label: 'ID',
-      Cell: ({ row }) => <BaseLink href={`/block/${row.id}`}>{row.blockNumber}</BaseLink>,
+      label: 'Block',
+      Cell: ({ row }) => (
+        <CopyableLink href={`/block/${row.id}`} value={row.blockNumberRaw}>
+          {row.blockNumber}
+        </CopyableLink>
+      ),
     },
     {
       key: 'signer',
@@ -30,6 +34,7 @@ export const BlocksTable = ({ blocks }: { blocks: ExpandedBlock[] }) => {
     return {
       id: block.id,
       blockNumber: `#${block.number.toString()}`,
+      blockNumberRaw: block.number.toString(),
       age: block.timestamp,
       block: block.number.toLocaleString(),
       signer: block.signer,
