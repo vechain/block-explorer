@@ -16,6 +16,7 @@ export const SearchBar = (props: FlexProps) => {
     if (!searchTerm.trim()) return
     search(searchTerm, {
       onSuccess(data) {
+        setSearchTerm('') // Clear the search input on successful search
         router.push(data.redirectTo)
       },
     })
@@ -44,7 +45,7 @@ export const SearchBar = (props: FlexProps) => {
           name="q"
           h="full"
           border="none"
-          placeholder="Search by ID, name or adress"
+          placeholder="Search for blocks, transactions or accounts"
           variant="outline"
           textStyle="bodyM"
           focusVisibleRing="none"
