@@ -27,7 +27,9 @@ export const TransactionsTable = ({
         delegator={tx.gasPayer.toLowerCase() === address.toLowerCase() ? null : tx.gasPayer}
       />
     ),
-    clauses: <TransactionClausesLink transactionId={tx.id}>{`${tx.clauses.length} Clauses`}</TransactionClausesLink>,
+    clauses: (
+      <TransactionClausesLink transactionId={tx.id}>{`${tx.clauses?.length ?? 0} Clauses`}</TransactionClausesLink>
+    ),
   }))
 
   return (
