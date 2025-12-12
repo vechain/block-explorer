@@ -70,7 +70,7 @@ export const blockExpandedSchema = z.object({
   com: z.boolean(),
 })
 
-const blockRevisionEnumSchema = z.enum(['best', 'next', 'finalized', 'justified'])
+const blockRevisionEnumSchema = z.enum(['best', 'next', 'finalized', 'justified'] as const)
 
 export const blockRevisionSchema = z.union([
   blockRevisionEnumSchema,

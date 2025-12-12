@@ -168,7 +168,7 @@ const search = async ({
   activeNetwork: Network
 }): Promise<{ redirectTo: string }> => {
   const normalizedTerm = normalizeSearchTerm(searchTerm)
-  const searchType = identifySearchTermType(searchTerm)
+  const searchType = identifySearchTermType(normalizedTerm)
   const handler = searchHandlers[searchType]
   return handler(normalizedTerm, activeNetwork)
 }

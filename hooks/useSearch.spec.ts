@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { identifySearchTermType, normalizeSearchTerm, SearchTermType } from './useSearch'
 
 // Mock the external dependencies
