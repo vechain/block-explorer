@@ -3,7 +3,7 @@
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { getUnixTime } from 'date-fns'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -15,7 +15,6 @@ import {
   YAxis,
 } from 'recharts'
 import { Surface } from '@/components/ui/Surface'
-import { useIsMobile } from '@/hooks/useIsMobile'
 import type { BlockUsageData } from '@/lib/schemas'
 import { type BlockUsageDataPoint, transformBlockUsageData } from '@/lib/utils/block-usage'
 import { timeFormat } from '@/lib/utils/date'
@@ -173,65 +172,68 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
     }
   }
 
-  // Helper function to get ordinal suffix for day
-  const getOrdinalSuffix = (day: number) => {
-    if (day > 3 && day < 21) return 'th'
-    switch (day % 10) {
-      case 1:
-        return 'st'
-      case 2:
-        return 'nd'
-      case 3:
-        return 'rd'
-      default:
-        return 'th'
-    }
-  }
-
   // Format X-axis labels based on the selected time range
-  const formatXAxis = (timestamp: number) => {
-    const date = new Date(timestamp)
+  const formatXAxis = useCallback(
+    (timestamp: number) => {
+      // Helper function to get ordinal suffix for day
+      const getOrdinalSuffix = (day: number) => {
+        if (day > 3 && day < 21) return 'th'
+        switch (day % 10) {
+          case 1:
+            return 'st'
+          case 2:
+            return 'nd'
+          case 3:
+            return 'rd'
+          default:
+            return 'th'
+        }
+      }
 
-    switch (selectedRange) {
-      case 'hourly':
-        // For hourly view, show time with minutes
-        return date.toLocaleTimeString(undefined, {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        })
-      case 'daily':
-        // For daily view, show time only
-        return date.toLocaleTimeString(undefined, {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        })
-      case 'weekly': {
-        // For weekly view, show month and day with ordinal
-        const weekDay = date.getDate()
-        const weekMonth = date.toLocaleDateString(undefined, { month: 'short' })
-        return `${weekMonth} ${weekDay}${getOrdinalSuffix(weekDay)}`
+      const date = new Date(timestamp)
+
+      switch (selectedRange) {
+        case 'hourly':
+          // For hourly view, show time with minutes
+          return date.toLocaleTimeString(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          })
+        case 'daily':
+          // For daily view, show time only
+          return date.toLocaleTimeString(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          })
+        case 'weekly': {
+          // For weekly view, show month and day with ordinal
+          const weekDay = date.getDate()
+          const weekMonth = date.toLocaleDateString(undefined, { month: 'short' })
+          return `${weekMonth} ${weekDay}${getOrdinalSuffix(weekDay)}`
+        }
+        case 'monthly': {
+          // For monthly view, show month and day with ordinal
+          const day = date.getDate()
+          const month = date.toLocaleDateString(undefined, { month: 'short' })
+          return `${month} ${day}${getOrdinalSuffix(day)}`
+        }
+        case 'yearly':
+          // For yearly view, show month and year
+          return date.toLocaleDateString(undefined, {
+            month: 'short',
+            year: 'numeric',
+          })
+        case 'all':
+          // For all-time view, show year only
+          return date.getFullYear().toString()
+        default:
+          return timeFormat(timestamp)
       }
-      case 'monthly': {
-        // For monthly view, show month and day with ordinal
-        const day = date.getDate()
-        const month = date.toLocaleDateString(undefined, { month: 'short' })
-        return `${month} ${day}${getOrdinalSuffix(day)}`
-      }
-      case 'yearly':
-        // For yearly view, show month and year
-        return date.toLocaleDateString(undefined, {
-          month: 'short',
-          year: 'numeric',
-        })
-      case 'all':
-        // For all-time view, show year only
-        return date.getFullYear().toString()
-      default:
-        return timeFormat(timestamp)
-    }
-  }
+    },
+    [selectedRange],
+  )
 
   return (
     <Box h={chartHeight}>
@@ -411,7 +413,7 @@ const useBlockUsageChartData = (range: TimeRangeKey, date: Date, isLiveMode: boo
   // Can always go back unless we're literally at genesis
   const canGoBack = true
   // Can go forward if we have an offset or selected date (meaning we're not at current time)
-  const canGoForward = date !== now
+  const canGoForward = date.getTime() !== now.getTime()
 
   // Fetch block usage data from indexer with buffered start timestamp
   // In live mode, enable refetching; in historical mode, disable it
