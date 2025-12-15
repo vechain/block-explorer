@@ -3,6 +3,7 @@
 import { createListCollection, Portal, Select } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { type TimeRangeKey, timeRangeCollection } from '../../../constants'
+import type { TranslationKey } from '@/i18n/types'
 
 interface TimeRangeSelectProps {
   selectedRange: TimeRangeKey
@@ -14,7 +15,7 @@ export const TimeRangeSelect = ({ selectedRange, onRangeChange }: TimeRangeSelec
   const translatedTimeRanges = createListCollection<{ label: string; value: TimeRangeKey }>({
     items: timeRangeCollection.items.map(item => ({
       ...item,
-      label: t(item.label),
+      label: t(item.label as TranslationKey),
     })),
   })
   return (

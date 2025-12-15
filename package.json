@@ -18,7 +18,9 @@
     "test:watch": "vitest --watch",
     "validate": "pnpm build && pnpm test && pnpm lint && pnpm format:check",
     "prepare": "husky",
-    "translate": "dotenv -e .env npx translo-cli@latest"
+    "translate": "dotenv -e .env npx translo-cli@latest",
+    "ts-check": "tsc -p tsconfig.json --noEmit",
+    "ts-check:staged": "node scripts/ts-check-staged.mjs"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.26.0",
@@ -70,11 +72,13 @@
     "vitest": "^3.2.4"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
+    "*.{ts,tsx}": [
+      "pnpm -s ts-check:staged"
     ],
-    "*.{json,jsonc,md,css,scss}": [
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ],
+    "*.{js,jsx,ts,tsx,json,jsonc,md,css,scss}": [
       "prettier --write"
     ]
   }
