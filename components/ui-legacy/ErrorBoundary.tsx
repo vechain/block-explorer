@@ -1,6 +1,7 @@
 'use client'
 
 import { Button, EmptyState, Group } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import { type ErrorInfo, useState } from 'react'
 import {
   type ErrorBoundaryPropsWithComponent,
@@ -25,16 +26,16 @@ export const ErrorBoundary = (props: ErrorBoundaryProps) => {
 
 const DefaultFallbackComponent = ({ error }: { error: Error }) => {
   const [showErrorDetails, setShowErrorDetails] = useState(false)
-
+  const { t } = useTranslation()
   return (
     <EmptyState.Root size="sm">
       <EmptyState.Content>
         <Group>
           <BiErrorCircle color="red" />
-          <EmptyState.Title>Something went wrong 😬</EmptyState.Title>
+          <EmptyState.Title>{t('Something went wrong 😬')}</EmptyState.Title>
         </Group>
         <Button variant="ghost" size="xs" onClick={() => setShowErrorDetails(s => !s)}>
-          {showErrorDetails ? 'Hide' : 'Show'} details
+          {showErrorDetails ? t('Hide') : t('Show')} {t('details')}
         </Button>
         {showErrorDetails && <EmptyState.Description>{error.message}</EmptyState.Description>}
       </EmptyState.Content>

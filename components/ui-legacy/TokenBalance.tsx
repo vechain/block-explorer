@@ -23,7 +23,7 @@ const TokenBalance = ({
 }) => {
   return (
     <Flex alignItems="center" gap={2}>
-      {imgSrc && <Image src={imgSrc} boxSize="24px" />}
+      {imgSrc && <Image src={imgSrc} alt={`${symbol} token`} boxSize="24px" />}
       <AmountWithHover amount={balance} decimals={decimals} />
       <Text>{symbol}</Text>
     </Flex>

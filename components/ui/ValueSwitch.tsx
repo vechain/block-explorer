@@ -19,7 +19,8 @@ export const ValueSwitch = ({ values, layoutId, activeValue, onChange, ...props 
       textTransform="capitalize"
       border="0.5px solid var(--chakra-colors-border-surface)"
       w="fit-content"
-      {...props}>
+      {...props}
+    >
       {values.map(value => (
         <Item key={String(value)} value={value} layoutId={layoutId} activeValue={activeValue} onChange={onChange} />
       ))}
@@ -51,7 +52,8 @@ const Item = ({
         position="relative"
         color={isActive ? 'bg-primary' : 'text-primary'}
         textStyle={isActive ? 'bodyMSemibold' : 'bodyM'}
-        lineHeight="1">
+        lineHeight="1"
+      >
         {String(value.replace(/-/g, ' '))}
       </Text>
     </Flex>

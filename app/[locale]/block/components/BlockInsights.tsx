@@ -1,5 +1,8 @@
+'use client'
+
 import { Badge, Flex, Grid, Heading, Text } from '@chakra-ui/react'
 import Image from 'next/image'
+import { useTranslation } from 'react-i18next'
 import { AgeText } from '@/components/ui/AgeText'
 import { DataCard } from '@/components/ui/DataCard'
 import { GasUsed } from '@/components/ui/GasFees'
@@ -8,9 +11,11 @@ import { Surface } from '@/components/ui/Surface'
 import type { ExpandedBlock } from '@/lib/schemas'
 
 export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
+  const { t } = useTranslation()
+
   const blockInsights = [
     {
-      label: 'Block',
+      label: t('Block'),
       value: (
         <CopyableLink href={`/block/${block.id}`} value={block.number.toString()}>
           {`#${block.number.toString()}`}
@@ -18,23 +23,23 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
       ),
     },
     {
-      label: 'Age',
+      label: t('Age'),
       value: <AgeText timestamp={block.timestamp} />,
     },
     {
-      label: 'Features',
+      label: t('Features'),
       value: <TxFeatures features={block.txsFeatures} />,
     },
     {
-      label: 'Gas Used',
+      label: t('Gas Used'),
       value: <GasUsed gasUsed={block.gasUsed} gasLimit={block.gasLimit} />,
     },
     {
-      label: 'Block Finality',
-      value: block.isFinalized ? 'Finalized' : 'Finalizing',
+      label: t('Block Finality'),
+      value: block.isFinalized ? t('Finalized') : t('Finalizing'),
     },
     {
-      label: 'Transactions',
+      label: t('Transactions'),
       value: block.transactions.length.toLocaleString(),
     },
   ]
@@ -42,7 +47,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   return (
     <Surface bg="bg-surface-alt" borderColor="transparent">
       <Heading as="h2" textStyle="displayXs">
-        Block Insights
+        {t('Block Insights')}
       </Heading>
       <Flex alignItems="center" flexDirection={{ base: 'column', md: 'row' }} gap="4">
         <Flex
@@ -52,7 +57,8 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
           rounded="md"
           border="1px solid"
           textStyle="bodyM"
-          borderColor="border-surface">
+          borderColor="border-surface"
+        >
           {blockInsights.map(insight => (
             <Flex
               key={insight.label}
@@ -61,7 +67,8 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
               flex="1"
               alignItems="center"
               borderBottom="1px solid var(--chakra-colors-border-surface)"
-              css={{ '&:last-child': { borderBottom: 'none' } }}>
+              css={{ '&:last-child': { borderBottom: 'none' } }}
+            >
               <Text width="130px">{insight.label}</Text>
               {insight.value}
             </Flex>
@@ -71,27 +78,33 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
           {/* //TODO: Add relevant data to data cards */}
           <DataCard
             icon={<Image src="/icons/coin.svg" alt="VTHO Paid" />}
-            title="VTHO Paid"
-            tooltip="Information coming soon">
+            title={t('VTHO Paid')}
+            tooltip={t('Information coming soon')}
+          >
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
           <DataCard
             icon={<Image src="/icons/flash.svg" alt="VTHO Burned" />}
-            title="VTHO Burned"
-            tooltip="Information coming soon">
+            title={t('VTHO Burned')}
+            tooltip={t('Information coming soon')}
+          >
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
           <DataCard
             icon={<Image src="/icons/reward.svg" alt="VTHO Rewarded" />}
-            title="VTHO Rewarded"
-            tooltip="Information coming soon">
+            title={t('VTHO Rewarded')}
+            tooltip={t('Information coming soon')}
+          >
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
           <DataCard
             icon={<Image src="/icons/co2e.svg" alt="CO2 emitted" />}
-            title="CO2e emitted"
-            tooltip="Information coming soon">
-            <Text>{'123.456'} g</Text>
+            title={t('CO2e emitted')}
+            tooltip={t('Information coming soon')}
+          >
+            <Text>
+              {'123.456'} {t('g')}
+            </Text>
           </DataCard>
         </Grid>
       </Flex>
@@ -100,10 +113,12 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
 }
 
 const TxFeatures = ({ features }: { features: number | undefined }) => {
+  const { t } = useTranslation()
+
   if (features === 1) {
     return (
       <Badge textStyle="bodyS" rounded="8px" variant="subtle" px="2" py="1" size="sm" bg="bg-surface-alt">
-        VIP-191 - Fee delegation
+        {t('VIP-191 - Fee delegation')}
       </Badge>
     )
   }

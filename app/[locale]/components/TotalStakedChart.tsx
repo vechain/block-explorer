@@ -3,6 +3,7 @@
 import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { format } from 'date-fns'
 import { memo, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, type TooltipContentProps, XAxis, YAxis } from 'recharts'
 import { formatEther } from 'viem'
 import { formatAbbreviated, formatAmount } from '@/lib/utils/units'
@@ -18,6 +19,7 @@ type DataPoint = {
 }
 
 export const TotalStakedChart = () => {
+  const { t } = useTranslation()
   const [selectedRange, setSelectedRange] = useState<TotalVetStakedRange>(TotalVetStakedRange.DAY)
   const { data: historicData, isLoading } = useTotalVetStakedHistoric(selectedRange)
   const { data: currentTotal } = useTotalVetStaked()
@@ -52,10 +54,11 @@ export const TotalStakedChart = () => {
       borderWidth="1px"
       borderColor="border-surface"
       backdropFilter="blur(32px)"
-      p={5}>
+      p={5}
+    >
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL">
-          Total Staked
+          {t('Total Staked')}
         </Heading>
 
         <Flex
@@ -65,7 +68,8 @@ export const TotalStakedChart = () => {
           borderRadius="full"
           borderWidth="0.5px"
           borderColor="border-surface"
-          p="4px">
+          p="4px"
+        >
           <Flex
             as="button"
             align="center"
@@ -78,8 +82,9 @@ export const TotalStakedChart = () => {
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.DAY)}
-            transition="all 0.2s">
-            1D
+            transition="all 0.2s"
+          >
+            {t('1D')}
           </Flex>
           <Flex
             as="button"
@@ -93,8 +98,9 @@ export const TotalStakedChart = () => {
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.MONTH)}
-            transition="all 0.2s">
-            1M
+            transition="all 0.2s"
+          >
+            {t('1M')}
           </Flex>
           <Flex
             as="button"
@@ -108,8 +114,9 @@ export const TotalStakedChart = () => {
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.YEAR)}
-            transition="all 0.2s">
-            1Y
+            transition="all 0.2s"
+          >
+            {t('1Y')}
           </Flex>
         </Flex>
       </Flex>
@@ -122,7 +129,7 @@ export const TotalStakedChart = () => {
 
       <Stack>
         <Text textStyle="bodyS" color="text-secondary">
-          Circulating Supply
+          {t('Circulating Supply')}
         </Text>
         <Text textStyle="bodyMSemibold" color="fg">
           1521251
@@ -154,7 +161,8 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
             right: 0,
             bottom: 0,
             left: 0,
-          }}>
+          }}
+        >
           <XAxis dataKey="timestamp" hide={true} />
           <YAxis dataKey="formattedValue" domain={[domainMin, domainMax]} hide={true} />
 
@@ -179,6 +187,7 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
 TotalStakedChartVisualization.displayName = 'TotalStakedChartVisualization'
 
 const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>) => {
+  const { t } = useTranslation()
   const isVisible = active && payload && payload.length > 0
 
   if (!isVisible) return null
@@ -193,12 +202,12 @@ const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>)
   return (
     <Stack bg="bg" rounded="xl" p={4}>
       <Flex alignItems="center" gap={2}>
-        <Text textStyle="bodyMSemibold">Date & Time:</Text>
+        <Text textStyle="bodyMSemibold">{t('Date & Time')}:</Text>
         <Text textStyle="bodyM">{format(new Date(dataPoint.timestamp), 'MMM d, yyyy h:mm a')}</Text>
       </Flex>
 
       <Flex alignItems="center" gap={2}>
-        <Text textStyle="bodyMSemibold">Total Staked:</Text>
+        <Text textStyle="bodyMSemibold">{t('Total Staked')}:</Text>
         <Text textStyle="bodyM">{formattedVetAmount} VET</Text>
       </Flex>
     </Stack>

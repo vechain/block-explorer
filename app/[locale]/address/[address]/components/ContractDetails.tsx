@@ -10,8 +10,10 @@ import type { Account } from '@/lib/schemas'
 import { useVnsName } from '@/services/thor/hooks'
 import { AccountTransfersTab } from './AccountTransfersTab'
 import { ContractTransactionsTab } from './ContractTransactionsTab'
+import { useTranslation } from 'react-i18next'
 
 export const ContractDetails = ({ account }: { account: Account }) => {
+  const { t } = useTranslation()
   const { data: vnsName } = useVnsName(account.address)
   const { currentTab, handleTabChange } = useTabs('transactions')
 
@@ -23,7 +25,7 @@ export const ContractDetails = ({ account }: { account: Account }) => {
 
   return (
     <Stack flex={1}>
-      <Title>Contract Details</Title>
+      <Title>{t('Contract Details')}</Title>
       <Flex alignItems="center" gap={2}>
         <Subtitle>{account.address}</Subtitle>
         <CopyToClipBoard value={account.address} />
@@ -46,11 +48,11 @@ export const ContractDetails = ({ account }: { account: Account }) => {
         <Tabs.List bg="bg.muted" rounded="l3">
           <Tabs.Trigger value="transactions">
             <LuArrowLeftRight />
-            Transactions
+            {t('Transactions')}
           </Tabs.Trigger>
           <Tabs.Trigger value="transfers">
             <TbTransfer />
-            Transfers
+            {t('Transfers')}
           </Tabs.Trigger>
           <Tabs.Indicator rounded="l2" />
         </Tabs.List>

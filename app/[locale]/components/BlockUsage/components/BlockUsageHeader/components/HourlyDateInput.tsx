@@ -55,7 +55,8 @@ export const HourlyDateInput = ({
           transform="translateY(-50%)"
           pointerEvents="none"
           zIndex={1}
-          color="fg.muted">
+          color="fg.muted"
+        >
           <LuClock size={16} />
         </Box>
       </Box>

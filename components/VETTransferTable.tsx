@@ -1,18 +1,20 @@
 import { Table } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from '@/components/ui-legacy/ErrorBoundary'
 import { VETBalance } from '@/components/ui-legacy/TokenBalance'
 import type { Transfer } from '@/lib/schemas'
 import { VnsBadgeOrAddressLink } from './ui-legacy/VnsBadge'
 
 export const VETTransferTable = ({ transfers }: { transfers: Transfer[] }) => {
+  const { t } = useTranslation()
   return (
     <Table.ScrollArea borderWidth="1px" rounded="md">
       <Table.Root size="md">
         <Table.Header>
           <Table.Row bg="bg.subtle">
-            <Table.ColumnHeader>From</Table.ColumnHeader>
-            <Table.ColumnHeader>To</Table.ColumnHeader>
-            <Table.ColumnHeader>Amount</Table.ColumnHeader>
+            <Table.ColumnHeader>{t('From')}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t('To')}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t('Amount')}</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>

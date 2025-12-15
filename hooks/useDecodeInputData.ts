@@ -63,7 +63,7 @@ const parseInputData = ({
             decoded: result,
           }
         }
-      } catch (_error) {
+      } catch {
         return rawDataObject
       }
     }

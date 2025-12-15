@@ -39,7 +39,8 @@ export const VnsBadge = ({
           border="1px dashed"
           borderColor="blue.solid"
           color="blue.solid"
-          boxShadow="none">
+          boxShadow="none"
+        >
           <Text as="span" maxW="150px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
             {vnsName}
           </Text>

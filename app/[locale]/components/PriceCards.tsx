@@ -1,6 +1,7 @@
 'use client'
 
 import { Circle, Flex, HStack, Icon, Image, Skeleton, Text, VStack } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import { LuTrendingDown, LuTrendingUp } from 'react-icons/lu'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { usePriceList } from '@/services/coin-api/hooks'
@@ -27,6 +28,7 @@ const getDailyChangePercent = (prices?: { price: number }[]) => {
 }
 
 export const PriceCards = () => {
+  const { t } = useTranslation()
   const { data: priceList, isLoading: priceListLoading } = usePriceList()
 
   const { data: vetDailyPrices, isLoading: vetDailyLoading } = useTokenDailyPrices('vechain', 'usd')
@@ -47,24 +49,25 @@ export const PriceCards = () => {
         },
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
-      }}>
+      }}
+    >
       <TokenPriceCard
         token="VET"
-        label="VET Price"
+        label={t('VET Price')}
         price={priceList?.vet.usd}
         changePercent={getDailyChangePercent(vetDailyPrices)}
         isLoading={priceListLoading || !priceList || vetDailyLoading}
       />
       <TokenPriceCard
         token="VTHO"
-        label="VTHO Price"
+        label={t('VTHO Price')}
         price={priceList?.vtho.usd}
         changePercent={getDailyChangePercent(vthoDailyPrices)}
         isLoading={priceListLoading || !priceList || vthoDailyLoading}
       />
       <TokenPriceCard
         token="B3TR"
-        label="B3TR Price"
+        label={t('B3TR Price')}
         price={priceList?.b3tr.usd}
         changePercent={getDailyChangePercent(b3trDailyPrices)}
         isLoading={priceListLoading || !priceList || b3trDailyLoading}
@@ -94,7 +97,8 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
       borderColor="bg-card-surface-2"
       py={5}
       px={4}
-      gap={6}>
+      gap={6}
+    >
       <Flex alignItems="center" justifyContent="space-between" gap={2}>
         <Circle bg="bg-card-surface-2" borderWidth="1px" borderColor="bg-card-surface-2" rounded="full">
           <Image src={`/tokens/${token}.svg`} alt={`${token} token`} width={6} height={6} rounded="full" />
@@ -114,7 +118,8 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
               bg={changePercent >= 0 ? 'success-surface' : 'error-surface'}
               py={0.5}
               px={2}
-              borderRadius="full">
+              borderRadius="full"
+            >
               <Icon as={changePercent >= 0 ? LuTrendingUp : LuTrendingDown} /> {formatChangePercent(changePercent)}
             </Text>
           )}

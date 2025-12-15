@@ -1,15 +1,20 @@
+'use client'
+
 import Image from 'next/image'
+import { useTranslation } from 'react-i18next'
 import { AgeText } from '@/components/ui/AgeText'
 import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
 import { AppendIconCell, type CellComponentProps, type Column, DataTable } from '@/components/ui/Table'
 import type { ExpandedBlock } from '@/lib/schemas'
 
 export const BlocksTable = ({ blocks }: { blocks: ExpandedBlock[] }) => {
+  const { t } = useTranslation()
+
   const columns: Column<(typeof rows)[number]>[] = [
-    { key: 'age', label: 'Age', Cell: ({ value }) => <AgeText timestamp={value as number} /> },
+    { key: 'age', label: t('Age'), Cell: ({ value }) => <AgeText timestamp={value as number} /> },
     {
       key: 'blockNumber',
-      label: 'Block',
+      label: t('Block'),
       Cell: ({ row }) => (
         <CopyableLink href={`/block/${row.id}`} value={row.blockNumberRaw}>
           {row.blockNumber}
@@ -18,13 +23,13 @@ export const BlocksTable = ({ blocks }: { blocks: ExpandedBlock[] }) => {
     },
     {
       key: 'signer',
-      label: 'Signer',
+      label: t('Signer'),
       Cell: ({ row }) => <CopyableAddressLink truncate address={row.signer} />,
     },
-    { key: 'txs/clauses', label: 'Txs/Clauses' },
+    { key: 'txs/clauses', label: t('Txs/Clauses') },
     {
       key: 'gasUsed',
-      label: 'Gas Used',
+      label: t('Gas Used'),
       Cell: GasUsedCell,
     },
   ]

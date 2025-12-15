@@ -21,6 +21,7 @@ import {
   transactionIdSchema,
 } from '@/lib/schemas'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/hooks'
+import { useTranslation } from 'react-i18next'
 import { ClauseDetailsTable } from './components/ClauseDetailsTable'
 import { EventList } from './components/EventList'
 
@@ -70,7 +71,7 @@ const ClausePageContent = ({
 }) => {
   const router = useRouter()
   const { currentTab, handleTabChange } = useTabs('details')
-
+  const { t } = useTranslation()
   const clause = tx.clauses[clauseIndex]
   const output = receipt.outputs[clauseIndex] ?? {
     events: [],
@@ -84,9 +85,9 @@ const ClausePageContent = ({
   return (
     <Stack gap="4">
       <Group alignItems="baseline" gap="4">
-        <Title>Clause details</Title>
+        <Title>{t('Clause details')}</Title>
         <Subtitle>
-          {(clauseIndex + 1).toLocaleString()} of {tx.clauses.length}
+          {(clauseIndex + 1).toLocaleString()} {t('of')} {tx.clauses.length}
         </Subtitle>
       </Group>
 
@@ -94,19 +95,19 @@ const ClausePageContent = ({
         <Tabs.List bg="bg.muted" rounded="l3">
           <Tabs.Trigger value="details">
             <LuInfo />
-            Details
+            {t('Details')}
           </Tabs.Trigger>
           <Tabs.Trigger value="events" disabled={!hasEvents}>
             <AiOutlineWechat />
-            Events
+            {t('Events')}
           </Tabs.Trigger>
           <Tabs.Trigger value="transfers" disabled={!hasTransfers}>
             <TbTransfer />
-            VET Transfers
+            {t('VET Transfers')}
           </Tabs.Trigger>
           <Tabs.Trigger value="contract-creation" disabled={!output.contractAddress}>
             <VscNewFile />
-            Contract created
+            {t('Contract created')}
           </Tabs.Trigger>
           <Tabs.Indicator rounded="l2" />
         </Tabs.List>
@@ -137,9 +138,11 @@ const ClausePageContent = ({
 }
 
 const CreatedContract = ({ address }: { address: AddressString }) => {
+  const { t } = useTranslation()
+
   return (
     <Group gap={2}>
-      <Text fontWeight="bold">Created contract address</Text>
+      <Text fontWeight="bold">{t('Created contract address')}</Text>
       <VnsBadgeOrAddressLink address={address} />
     </Group>
   )

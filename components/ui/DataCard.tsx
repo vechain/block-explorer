@@ -33,7 +33,8 @@ export const DataCard = forwardRef<HTMLDivElement, DataCardProps>(
         borderColor="bg-card-surface-2"
         py={5}
         px={4}
-        {...props}>
+        {...props}
+      >
         <Flex alignItems="center" justifyContent="space-between">
           <Group>
             <IconInCircle icon={Icon} p="1" />

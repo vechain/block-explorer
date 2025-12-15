@@ -1,5 +1,8 @@
+'use client'
+
 import { Box, Grid, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { InputData as InputDataType } from '@/hooks/useDecodeInputData'
 import { type DecodedInputData, useDecodeInputData } from '@/hooks/useDecodeInputData'
 import type { HexString } from '@/lib/schemas'
@@ -45,10 +48,12 @@ const InputDataViews = ({ inputData, activeView }: { inputData: InputDataType; a
 }
 
 const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: DecodedInputData | undefined }) => {
+  const { t } = useTranslation()
+
   if (!decodedInputData) {
     return (
       <BorderedSurface>
-        <Text>No ABI found</Text>
+        <Text>{t('No ABI found')}</Text>
       </BorderedSurface>
     )
   }
@@ -63,10 +68,10 @@ const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: Decoded
       <Box textAlign="center">
         <Grid templateColumns={templateColumns} p="4">
           <Text>#</Text>
-          <Text>Name</Text>
-          <Text>Type</Text>
+          <Text>{t('Name')}</Text>
+          <Text>{t('Type')}</Text>
           <Text textAlign="left" pl="4">
-            Data
+            {t('Data')}
           </Text>
         </Grid>
 
@@ -77,7 +82,8 @@ const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: Decoded
               templateColumns={templateColumns}
               p="4"
               borderBottomWidth={index < decodedInputData.inputs.length - 1 ? '1px' : '0'}
-              borderColor="border-surface">
+              borderColor="border-surface"
+            >
               <Text>{index}</Text>
               <Text>{input.name}</Text>
               <Text>{input.type}</Text>

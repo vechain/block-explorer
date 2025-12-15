@@ -7,6 +7,7 @@ import type * as abi from '@/lib/schemas/abi'
 import { AddressLink } from './ui/Links'
 import { BorderedSurface, SurfaceAlt } from './ui/Surface'
 import { ValueSwitch } from './ui/ValueSwitch'
+import { useTranslation } from 'react-i18next'
 
 enum EventView {
   RAW = 'raw',
@@ -22,6 +23,8 @@ export const EventsList = ({ clauseIndex, eventLogs }: { clauseIndex: number; ev
 }
 
 const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: number; eventLog: RawEvent }) => {
+  const { t } = useTranslation()
+
   const { event, isLoading } = useDecodeEvent(eventLog)
   const isMobile = useBreakpointValue({ base: true, md: false })
 
@@ -42,7 +45,7 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
       <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap">
         <BorderedSurface display="flex" alignItems="center" gap="2" rounded="full" whiteSpace="nowrap">
           <Text># {index}</Text>
-          <Text>emitter</Text>
+          <Text>{t('emitter')}</Text>
           <AddressLink address={event.raw.address} truncate={isMobile} />
         </BorderedSurface>
         <ValueSwitch
@@ -69,6 +72,7 @@ const EventViews = ({ event, activeView }: { event: ParsedEvent; activeView: Eve
 
 const RawEventCard = ({ event }: { event: RawEvent }) => {
   const firstColumnWidth = '140px'
+  const { t } = useTranslation()
 
   return (
     <ScrollArea.Root size="sm" variant="hover">
@@ -78,10 +82,11 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
             templateColumns={`${firstColumnWidth} 30px 1fr`}
             p="4"
             borderBottomWidth="1px"
-            borderColor="border-surface">
+            borderColor="border-surface"
+          >
             {event.topics.map((topic, index) => (
               <>
-                {index === 0 ? <Text>Topic</Text> : <br />}
+                {index === 0 ? <Text>{t('Topic')}</Text> : <br />}
                 <Text>[{index}]</Text>
                 <Text>{topic}</Text>
               </>
@@ -89,7 +94,7 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
           </Grid>
 
           <Grid templateColumns={`${firstColumnWidth} 1fr`} p="4">
-            <Text>Data</Text>
+            <Text>{t('Data')}</Text>
             <Text>{event.data}</Text>
           </Grid>
         </ScrollArea.Content>
@@ -100,10 +105,12 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
 }
 
 const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
+  const { t } = useTranslation()
+
   if (!event) {
     return (
       <BorderedSurface>
-        <Text>No ABI found</Text>
+        <Text>{t('No ABI found')}</Text>
       </BorderedSurface>
     )
   }
@@ -117,14 +124,16 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
 }
 
 const DecodedEventArgsTable = ({ inputs, args }: { inputs: abi.AbiEventParameter[]; args: DecodedEventArgs }) => {
+  const { t } = useTranslation()
+
   return (
     <Box textAlign="center">
       <Grid templateColumns="60px 160px 160px 1fr" p="4">
         <Text>#</Text>
-        <Text>Name</Text>
-        <Text>Type</Text>
+        <Text>{t('Name')}</Text>
+        <Text>{t('Type')}</Text>
         <Text textAlign="left" pl="4">
-          Data
+          {t('Data')}
         </Text>
       </Grid>
 
@@ -135,12 +144,13 @@ const DecodedEventArgsTable = ({ inputs, args }: { inputs: abi.AbiEventParameter
             templateColumns="60px 160px 160px 1fr"
             p="4"
             borderBottomWidth={index < inputs.length - 1 ? '1px' : '0'}
-            borderColor="border-surface">
+            borderColor="border-surface"
+          >
             <Text>{index}</Text>
             <Text>{input.name}</Text>
             <Flex gap="1">
               <Text>{input.type}</Text>
-              {input.indexed && <Text fontSize="xs">indexed</Text>}
+              {input.indexed && <Text fontSize="xs">{t('indexed')}</Text>}
             </Flex>
 
             <Text textAlign="left" pl="4">

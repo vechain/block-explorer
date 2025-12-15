@@ -1,4 +1,4 @@
-import { Box, Flex, Text } from '@chakra-ui/react'
+import { Box, Flex } from '@chakra-ui/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { NETWORKS, NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -39,7 +39,8 @@ export const NetworkSelect = () => {
       rounded="full"
       textStyle="bodyMSemibold"
       onClick={handleNetworkToggle}
-      cursor="pointer">
+      cursor="pointer"
+    >
       <NetworkItem
         networkName={NetworkName.MAINNET}
         isActive={activeNetwork.name === NetworkName.MAINNET}
@@ -82,7 +83,8 @@ const NetworkItem = ({
         position="relative"
         animate={{ color: isActive ? 'var(--chakra-colors-bg-primary)' : 'var(--chakra-colors-text-primary)' }}
         textTransform="capitalize"
-        fontSize={{ base: 'body-s', md: 'body-m' }}>
+        fontSize={{ base: 'body-s', md: 'body-m' }}
+      >
         {networkName}
       </MotionText>
     </Box>

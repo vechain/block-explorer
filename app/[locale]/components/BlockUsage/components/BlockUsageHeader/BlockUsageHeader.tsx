@@ -1,6 +1,7 @@
 'use client'
 
 import { Flex, Heading, HStack, Stack } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import type { TimeRangeKey } from '../../constants'
 import { NavigationControls } from './components/NavigationControls'
 import { NowButton } from './components/NowButton'
@@ -31,15 +32,18 @@ export const BlockUsageHeader = ({
   onDateChange,
   onHourChange,
 }: BlockUsageHeaderProps) => {
+  const { t } = useTranslation()
+
   return (
     <Stack
       direction={{ base: 'column', md: 'row' }}
       justify="space-between"
       align={{ base: 'flex-start', md: 'center' }}
-      gap={4}>
+      gap={4}
+    >
       <HStack justify="space-between" align="center" w={{ base: '100%', md: 'auto' }}>
         <Heading as="h2" textStyle="displayXs">
-          Block Usage
+          {t('Block Usage')}
         </Heading>
         <Flex gap={2} hideFrom="md">
           <TimeRangeSelect selectedRange={selectedRange} onRangeChange={onRangeChange} />
@@ -59,7 +63,6 @@ export const BlockUsageHeader = ({
             onHourChange={onHourChange}
           />
         )}
-
         <Flex gap={2} hideBelow="md">
           <TimeRangeSelect selectedRange={selectedRange} onRangeChange={onRangeChange} />
           <NowButton onClick={onResetToNow} />

@@ -1,6 +1,7 @@
 'use client'
 
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import { getUnixTime } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { useCallback, useMemo, useState } from 'react'
@@ -96,9 +97,9 @@ export const BlockUsage = () => {
 
     // Handle year input for yearly range
     if (selectedRange === 'yearly' && selectedDateStr.match(/^\d{4}$/)) {
-      const year = parseInt(selectedDateStr)
+      const year = parseInt(selectedDateStr, 10)
       const now = new Date()
-      if (!isNaN(year) && year >= 2018 && year <= now.getFullYear()) {
+      if (!Number.isNaN(year) && year >= 2018 && year <= now.getFullYear()) {
         newSelectedDate = new Date(`${year}-01-01T00:00:00`)
       } else {
         return // Invalid year
@@ -126,7 +127,7 @@ export const BlockUsage = () => {
     const now = new Date()
 
     // Validate the selected date
-    if (isNaN(newSelectedDate.getTime()) || newSelectedDate > now) {
+    if (Number.isNaN(newSelectedDate.getTime()) || newSelectedDate > now) {
       return // Invalid date or future date
     }
 
@@ -139,8 +140,8 @@ export const BlockUsage = () => {
     const hourStr = event.target.value
     if (!hourStr) return
 
-    const hour = parseInt(hourStr)
-    if (isNaN(hour) || hour < 0 || hour > 23) return
+    const hour = parseInt(hourStr, 10)
+    if (Number.isNaN(hour) || hour < 0 || hour > 23) return
 
     // Create new date with the selected hour
     const newSelectedDate = new Date(selectedDate)
@@ -181,10 +182,18 @@ export const BlockUsage = () => {
 const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedRange: TimeRangeKey }) => {
   const router = useRouter()
 
-  const handleAreaClick = (data: any) => {
-    if (data?.activePayload?.[0]?.payload?.id) {
-      router.push(`/block/${data.activePayload[0].payload.id}`)
-    }
+  type AreaClickEvent = {
+    activePayload?: Array<{
+      payload?: {
+        id?: string | number
+      }
+    }>
+  }
+
+  const handleAreaClick = (data: unknown) => {
+    const id = (data as AreaClickEvent | null)?.activePayload?.[0]?.payload?.id
+    if (id === undefined || id === null) return
+    router.push(`/block/${id}`)
   }
 
   // Format X-axis labels based on the selected time range
@@ -247,7 +256,8 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
             left: -16,
           }}
           data={data}
-          onClick={handleAreaClick}>
+          onClick={handleAreaClick}
+        >
           <defs>
             <linearGradient id="gasUsedGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={mainColor} stopOpacity={0.8} />
@@ -298,6 +308,7 @@ const CustomTooltip = ({
   selectedRange,
 }: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey }) => {
   const isVisible = active && payload.length > 0
+  const { t } = useTranslation()
 
   if (!isVisible) return null
 
@@ -307,10 +318,10 @@ const CustomTooltip = ({
   const isAggregated = selectedRange !== 'hourly'
 
   const labels = {
-    identifier: 'Date & Time',
-    gasUsed: isAggregated ? 'Avg Gas Used/Block' : 'Gas Used',
-    gasLimit: isAggregated ? 'Avg Gas Limit/Block' : 'Gas Limit',
-    usage: isAggregated ? 'Avg Usage' : 'Usage',
+    identifier: t('Date & Time'),
+    gasUsed: isAggregated ? t('Avg Gas Used/Block') : t('Gas Used'),
+    gasLimit: isAggregated ? t('Avg Gas Limit/Block') : t('Gas Limit'),
+    usage: isAggregated ? t('Avg Usage') : t('Usage'),
   }
 
   // Format the date and time for the data point
@@ -330,33 +341,29 @@ const CustomTooltip = ({
       {selectedRange === 'hourly' && (
         <Flex alignItems="center" gap={2}>
           <Text fontSize="sm" fontWeight="bold">
-            Block Number:
+            {t('Block Number')}:
           </Text>
           <Text fontSize="sm">{dataPoint.number.toLocaleString()}</Text>
         </Flex>
       )}
-
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
           {labels.identifier}:
         </Text>
         <Text fontSize="sm">{formatDateTime(dataPoint.timestamp)}</Text>
       </Flex>
-
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
           {labels.gasUsed}:
         </Text>
         <Text fontSize="sm">{Math.round(dataPoint.gasUsed).toLocaleString()}</Text>
       </Flex>
-
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
           {labels.gasLimit}:
         </Text>
         <Text fontSize="sm">{Math.round(dataPoint.gasLimit).toLocaleString()}</Text>
       </Flex>
-
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
           {labels.usage}:
@@ -384,8 +391,8 @@ const useBlockUsageChartData = (range: TimeRangeKey, date: Date, isLiveMode: boo
     endTimestamp = getUnixTime(now)
   } else {
     const rangeConfig = TIME_RANGES[range]
-    const periodStart = rangeConfig.startOf!(date)
-    const periodEnd = rangeConfig.endOf!(date)
+    const periodStart = rangeConfig.startOf?.(date)
+    const periodEnd = rangeConfig.endOf?.(date)
 
     startTimestamp = getUnixTime(periodStart)
     endTimestamp = Math.min(getUnixTime(periodEnd), getUnixTime(now))

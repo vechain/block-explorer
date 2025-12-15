@@ -111,7 +111,8 @@ export const NavigationControls = ({
         size="sm"
         variant="outline"
         onClick={onNavigateBack}
-        disabled={!canGoBack}>
+        disabled={!canGoBack}
+      >
         <LuChevronLeft />
       </IconButton>
 
@@ -136,7 +137,8 @@ export const NavigationControls = ({
         size="sm"
         variant="outline"
         onClick={onNavigateForward}
-        disabled={!canGoForward}>
+        disabled={!canGoForward}
+      >
         <LuChevronRight />
       </IconButton>
     </>

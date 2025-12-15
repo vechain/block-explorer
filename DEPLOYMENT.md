@@ -61,6 +61,7 @@ This project uses **automated semantic versioning** via GitHub Actions. Version 
 ### Version Display
 
 The application version displayed in the UI is:
+
 - **Production/Preview**: The git tag or image tag passed at build time (e.g., `v.1.2.3`, or `pr-175-718a160`)
 - **Local Development**: Falls back to `package.json` version (`0.0.0-dev`)
 
@@ -75,6 +76,7 @@ terraform apply
 ```
 
 **Created Resources**:
+
 - ECR repository for Docker images
 - IAM roles for App Runner
 - ACM certificates (production + wildcard for previews)
@@ -82,6 +84,7 @@ terraform apply
 - Shared auto scaling configurations (production + preview)
 
 **Important**: Save the outputs from this step:
+
 ```bash
 terraform output
 ```
@@ -102,6 +105,7 @@ Production deployments are triggered manually via workflow dispatch from a versi
 6. **Monitor deployment** progress in the workflow logs
 
 The workflow will:
+
 1. Validate the version tag format (`v.X.Y.Z`)
 2. Build Docker image with the version tag
 3. Push to ECR with tag `v.X.Y.Z`
@@ -139,6 +143,7 @@ terraform apply
 ### Automated (Recommended)
 
 Preview environments are automatically created when you:
+
 1. Open a pull request to `main`
 2. Push new commits to an existing PR
 
@@ -187,6 +192,7 @@ terraform output custom_domain_url
 ### Automated
 
 Preview environments are automatically destroyed when:
+
 - The pull request is closed
 - The pull request is merged
 
@@ -213,6 +219,7 @@ rm -rf ../environments/preview-pr-${PR_NUMBER}
 File: `terraform/environments/prod/prod.yaml`
 
 Key settings:
+
 - `cpu: 512` / `memory: 1024` - 0.5 vCPU, 1 GB RAM
 - `port: 3000` - Application port
 - `health_check_path: /` - Health check endpoint
@@ -222,6 +229,7 @@ Key settings:
 File: `terraform/environments/preview/preview.yaml.example`
 
 Key settings:
+
 - `cpu: 256` / `memory: 512` - 0.25 vCPU, 0.5 GB RAM (smaller than prod)
 - `port: 3000` - Application port
 - `health_check_path: /` - Health check endpoint
@@ -230,14 +238,15 @@ Key settings:
 
 Auto scaling is managed at the **account level** (`terraform/account-level/autoscaling.tf`), not per-environment. This is required because [AWS limits accounts to 10 unique auto scaling configuration names](https://docs.aws.amazon.com/apprunner/latest/dg/manage-autoscaling.html).
 
-| Config | Min Size | Max Size | Max Concurrency |
-|--------|----------|----------|-----------------|
-| `block-explorer-prod` | 1 | 10 | 100 |
-| `block-explorer-preview` | 1 | 2 | 100 |
+| Config                   | Min Size | Max Size | Max Concurrency |
+| ------------------------ | -------- | -------- | --------------- |
+| `block-explorer-prod`    | 1        | 10       | 100             |
+| `block-explorer-preview` | 1        | 2        | 100             |
 
 All preview environments share the same `block-explorer-preview` auto scaling configuration.
 
 **To modify auto scaling settings:**
+
 ```bash
 cd terraform/account-level
 # Edit autoscaling.tf
@@ -250,11 +259,13 @@ terraform apply
 ### CloudWatch Logs
 
 View logs for production:
+
 ```bash
 aws logs tail /aws/apprunner/prod-block-explorer/*/application --follow
 ```
 
 View logs for preview:
+
 ```bash
 PR_NUMBER=123
 aws logs tail /aws/apprunner/preview-pr-${PR_NUMBER}-block-explorer/*/application --follow
@@ -263,11 +274,13 @@ aws logs tail /aws/apprunner/preview-pr-${PR_NUMBER}-block-explorer/*/applicatio
 ### Service Status
 
 Check App Runner service status:
+
 ```bash
 aws apprunner list-services --region eu-west-1
 ```
 
 Get service details:
+
 ```bash
 aws apprunner describe-service --service-arn <SERVICE_ARN>
 ```
@@ -279,6 +292,7 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 **Issue**: Docker build fails in GitHub Actions
 
 **Solution**:
+
 1. Check the workflow logs in GitHub Actions
 2. Test build locally: `docker build -t block-explorer .`
 3. Verify `next.config.ts` has `output: 'standalone'`
@@ -289,6 +303,7 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 **Issue**: App Runner service fails to start
 
 **Solutions**:
+
 1. Check CloudWatch Logs for errors
 2. Verify the Docker image starts locally:
    ```bash
@@ -301,6 +316,7 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 **Issue**: Custom domain shows certificate errors
 
 **Solutions**:
+
 1. Verify certificate is validated in ACM console
 2. Check DNS records in Route53
 3. Wait for DNS propagation (up to 48 hours)
@@ -314,6 +330,7 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 **Issue**: Cannot switch workspaces or workspace doesn't exist
 
 **Solutions**:
+
 1. List workspaces: `terraform workspace list`
 2. Create if missing: `terraform workspace new <name>`
 3. Ensure correct backend config: `-backend-config=../environments/<env>/backend.config`
@@ -323,6 +340,7 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 **Issue**: PR checks fail with "missing version label"
 
 **Solution**:
+
 1. Add one of the required labels to your PR:
    - `increment:patch` - for bug fixes
    - `increment:minor` - for new features
@@ -334,23 +352,27 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 **Important Note**: AWS App Runner requires a minimum of 1 instance (`min_size: 1`). It doesn't support scaling to zero. However, you only pay for provisioned memory when idle (not CPU), making costs very low for inactive preview environments.
 
 ### Production (Monthly)
+
 - App Runner: ~$25-30 (1 vCPU, 2GB RAM, 24/7)
 - ECR Storage: $1-2 per GB
 - Data Transfer: $0.09 per GB
 - **Total: ~$30-35/month**
 
 ### Preview Environments (Monthly per PR)
+
 - App Runner: ~$12-15 (0.5 vCPU, 1GB RAM, 1 instance minimum)
 - Costs are lower when idle (only memory provisioned, no CPU usage)
 - ECR Storage: Shared with production
 - **Total: ~$12-15/month per preview**
 
 ### Example with 5 Active PRs
+
 - Production: $35
 - 5 Previews: $70
 - **Total: ~$105/month**
 
 **Cost Optimization Tips**:
+
 - Delete preview environments promptly after PR merge (automated)
 - Preview environments use smaller instance sizes (50% of production)
 - Monitor idle previews and manually delete if needed
@@ -416,18 +438,20 @@ terraform destroy
 
 ## Image Tagging Strategy
 
-| Environment | Pattern | Example | Purpose |
-|-------------|---------|---------|---------|
-| Production | `v.X.Y.Z` | `v.1.2.3` | Semantic version tag |
-| Preview | `pr-{number}-{short_sha}` | `pr-144-a1b2c3d` | PR number + commit SHA |
+| Environment | Pattern                   | Example          | Purpose                |
+| ----------- | ------------------------- | ---------------- | ---------------------- |
+| Production  | `v.X.Y.Z`                 | `v.1.2.3`        | Semantic version tag   |
+| Preview     | `pr-{number}-{short_sha}` | `pr-144-a1b2c3d` | PR number + commit SHA |
 
 **Production Tags:**
+
 - Uses semantic versioning (`v.X.Y.Z`)
 - Created automatically when PRs are merged
 - Immutable - each version deployed once
 - Provides clear release history
 
 **Preview Tags:**
+
 - Includes SHORT_SHA (7-char commit hash)
 - Unique per commit on each PR
 - Forces App Runner to pull new image
@@ -436,6 +460,7 @@ terraform destroy
 ## Support
 
 For issues or questions:
+
 1. Check CloudWatch Logs first
 2. Review GitHub Actions workflow logs
 3. Consult AWS App Runner documentation

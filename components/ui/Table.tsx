@@ -44,7 +44,8 @@ export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: Data
       borderCollapse="separate"
       borderSpacing={0}
       tableLayout="auto"
-      textStyle="bodyM">
+      textStyle="bodyM"
+    >
       <TableChakra.Header>
         <TableChakra.Row bg="transparent">
           {columns.map(column => (
@@ -53,7 +54,8 @@ export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: Data
               border="none"
               whiteSpace="nowrap"
               textAlign="center"
-              color="text-primary">
+              color="text-primary"
+            >
               {column.label}
             </TableChakra.ColumnHeader>
           ))}
@@ -86,7 +88,8 @@ export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: Data
           '& tr:nth-of-type(odd)': {
             background: 'var(--chakra-colors-bg-card-surface)',
           },
-        }}>
+        }}
+      >
         {rows.map(row => (
           <TableChakra.Row key={row.id} height="fit-content" bg="bg-card-surface-2">
             {columns.map(column => (
@@ -95,7 +98,8 @@ export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: Data
                 whiteSpace="nowrap"
                 borderBottom={border}
                 p={4}
-                textAlign="center">
+                textAlign="center"
+              >
                 <Flex justifyContent="center">
                   {column.Cell ? (
                     <column.Cell value={row[column.key]} row={row} columnKey={column.key} />

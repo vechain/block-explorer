@@ -17,7 +17,8 @@ export const BaseLink = ({ children, href, ...props }: BaseLinkProps) => {
       textUnderlineOffset="1px"
       maxWidth="full"
       _focus={{ outline: 'none' }}
-      {...props}>
+      {...props}
+    >
       <Link href={href}>{children}</Link>
     </ChakraLink>
   )
