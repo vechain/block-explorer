@@ -33,7 +33,7 @@ const Logo = () => {
   return (
     <Link href="/">
       <Flex gap={2} alignItems="end">
-        <Image src="/vechain-light.svg" h={{ base: '18px', md: '30px' }} w="auto" />
+        <Image src="/vechain-light.svg" alt="VeChain logo" h={{ base: '18px', md: '30px' }} w="auto" />
 
         <Text fontSize="10px" color="white" textTransform="uppercase" userSelect="none">
           Explorer
@@ -64,7 +64,8 @@ const NavigationMenu = () => {
         gap={{ base: 2, md: 4 }}
         alignItems="center"
         py={2}
-        position="relative">
+        position="relative"
+      >
         <Box hideFrom="md" display="flex" alignItems="center" gap={2}>
           <Logo />
         </Box>
@@ -80,7 +81,8 @@ const NavigationMenu = () => {
               cursor="pointer"
               borderRadius="full"
               border="1px solid var(--chakra-colors-border-surface-2)"
-              p={2}>
+              p={2}
+            >
               <FiMenu size={20} />
             </Box>
             {isMenuOpen && (
@@ -105,7 +107,8 @@ const NavigationMenu = () => {
                 py={2}
                 px={3}
                 zIndex={10}
-                minW="160px">
+                minW="160px"
+              >
                 <Link href="https://inspector.vecha.in/" target="_blank" rel="noopener noreferrer">
                   <Flex gap={2} alignItems="center" py={1}>
                     <Text fontSize="body-m" whiteSpace="nowrap">
@@ -122,7 +125,8 @@ const NavigationMenu = () => {
                   borderTopWidth="1px"
                   borderColor="border-surface"
                   mt={2}
-                  pt={2}>
+                  pt={2}
+                >
                   <Flex gap={2} alignItems="center" py={1}>
                     <Text fontSize="body-m" whiteSpace="nowrap">
                       {currentLanguage.flag}

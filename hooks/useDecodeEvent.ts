@@ -61,7 +61,7 @@ const parseEvent = (abi: Abi | undefined, rawEvent: RawEvent): ParsedEvent => {
             decoded,
           }
         }
-      } catch (_error) {
+      } catch {
         return parsedRawEvent
       }
     }
@@ -90,8 +90,8 @@ const parsedRawEventSchema = z.object({
   raw: rawEventSchema,
 })
 
-const parsedEventSchema = z.discriminatedUnion('type', [parsedDecodedEventSchema, parsedRawEventSchema])
+const _parsedEventSchema = z.discriminatedUnion('type', [parsedDecodedEventSchema, parsedRawEventSchema])
 
-export type ParsedEvent = z.infer<typeof parsedEventSchema>
+export type ParsedEvent = z.infer<typeof _parsedEventSchema>
 export type DecodedEventArgs = z.infer<typeof decodedEventSchema.shape.args>
 export type DecodedEvent = z.infer<typeof decodedEventSchema>
