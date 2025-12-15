@@ -87,7 +87,8 @@ const TransactionDetails = ({
           <DataCard
             icon={<Image src="/icons/block-number.svg" alt="Block Number" />}
             title={t('Block Number')}
-            tooltip="Information coming soon">
+            tooltip="Information coming soon"
+          >
             <BaseLink href={`/block/${transaction.meta.blockID}`}>
               {transaction.meta.blockNumber.toLocaleString()}
             </BaseLink>
@@ -97,7 +98,8 @@ const TransactionDetails = ({
           <DataCard
             icon={<Image src="/icons/clause.svg" alt="Clauses" />}
             title={t('Total Clauses')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <Text>{transaction.clauses.length}</Text>
           </DataCard>
 
@@ -105,7 +107,8 @@ const TransactionDetails = ({
           <DataCard
             icon={<Image src="/icons/reward.svg" alt="Rewards" />}
             title={t('Rewards')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             {receipt ? <VETBalance balance={receipt.reward} /> : <Text>-</Text>}
           </DataCard>
 
@@ -113,7 +116,8 @@ const TransactionDetails = ({
           <DataCard
             icon={<Image src="/icons/link.svg" alt="Origin" />}
             title={t('Origin')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <AddressLink address={transaction.origin} truncate />
           </DataCard>
         </Flex>

@@ -44,7 +44,8 @@ export const LanguageModal = ({ isOpen, onClose }: LanguageModalProps) => {
             w={{ base: '100vw', md: '90vw' }}
             maxH={{ base: '85vh', md: 'unset' }}
             overflow="hidden"
-            p={0}>
+            p={0}
+          >
             <Dialog.Header p={4} borderBottomWidth="1px" borderColor="border-surface">
               <Flex justify="space-between" align="center">
                 <Flex align="center" gap={2}>
@@ -80,7 +81,8 @@ export const LanguageModal = ({ isOpen, onClose }: LanguageModalProps) => {
                       transition="background 0.2s"
                       borderBottomWidth="1px"
                       borderColor="border-surface"
-                      css={{ '&:last-child': { borderBottom: 'none' } }}>
+                      css={{ '&:last-child': { borderBottom: 'none' } }}
+                    >
                       <Flex justify="space-between" align="center">
                         <Flex align="center" gap={3}>
                           <Text fontSize="xl">{langInfo.flag}</Text>

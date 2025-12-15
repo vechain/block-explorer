@@ -255,7 +255,8 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
             left: -16,
           }}
           data={data}
-          onClick={handleAreaClick}>
+          onClick={handleAreaClick}
+        >
           <defs>
             <linearGradient id="gasUsedGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={mainColor} stopOpacity={0.8} />

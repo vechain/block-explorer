@@ -49,7 +49,8 @@ export const PriceCards = () => {
         },
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
-      }}>
+      }}
+    >
       <TokenPriceCard
         token="VET"
         label={t('VET Price')}
@@ -96,7 +97,8 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
       borderColor="bg-card-surface-2"
       py={5}
       px={4}
-      gap={6}>
+      gap={6}
+    >
       <Flex alignItems="center" justifyContent="space-between" gap={2}>
         <Circle bg="bg-card-surface-2" borderWidth="1px" borderColor="bg-card-surface-2" rounded="full">
           <Image src={`/tokens/${token}.svg`} alt={`${token} token`} width={6} height={6} rounded="full" />
@@ -116,7 +118,8 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
               bg={changePercent >= 0 ? 'success-surface' : 'error-surface'}
               py={0.5}
               px={2}
-              borderRadius="full">
+              borderRadius="full"
+            >
               <Icon as={changePercent >= 0 ? LuTrendingUp : LuTrendingDown} /> {formatChangePercent(changePercent)}
             </Text>
           )}

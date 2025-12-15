@@ -55,7 +55,8 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
           <DataCard
             icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
             title={t('Date time')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <Group gap="1">
               <Text textStyle="bodyL">{formattedDate}</Text>
               <Text textStyle="bodyL" color="text-secondary">
@@ -68,7 +69,8 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
           <DataCard
             icon={<Image src="/icons/clause.svg" alt="Clauses" />}
             title={t('Total Clauses')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <Text>{block.transactions.reduce((acc, tx) => acc + tx.clauses.length, 0)}</Text>
           </DataCard>
 
@@ -76,7 +78,8 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
           <DataCard
             icon={<Image src="/icons/link.svg" alt="Signer" />}
             title={t('Block Signer')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <AddressLink address={block.signer} truncate />
           </DataCard>
 
@@ -84,7 +87,8 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
           <DataCard
             icon={<Image src="/icons/link.svg" alt="Beneficiary" />}
             title={t('Beneficiary')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <AddressLink address={block.beneficiary} truncate />
           </DataCard>
         </Flex>

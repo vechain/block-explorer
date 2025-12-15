@@ -22,7 +22,8 @@ export const IDChip = forwardRef<HTMLDivElement, IDChipProps>(({ value, ...props
       borderColor="border-surface"
       textStyle="bodyS"
       maxW="full"
-      {...props}>
+      {...props}
+    >
       <Text color="text-alt" maxWidth="full" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
         {value}
       </Text>

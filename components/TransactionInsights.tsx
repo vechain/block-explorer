@@ -64,7 +64,8 @@ export const TransactionInsight = ({
           rounded="md"
           border="1px solid"
           textStyle="bodyM"
-          borderColor="border-surface">
+          borderColor="border-surface"
+        >
           {transactionInsights.map(insight => (
             <Flex
               key={insight.label}
@@ -73,7 +74,8 @@ export const TransactionInsight = ({
               flex="1"
               alignItems="center"
               borderBottom="1px solid var(--chakra-colors-border-surface)"
-              css={{ '&:last-child': { borderBottom: 'none' } }}>
+              css={{ '&:last-child': { borderBottom: 'none' } }}
+            >
               <Text width="130px">{insight.label}</Text>
               {insight.value}
             </Flex>
@@ -85,7 +87,8 @@ export const TransactionInsight = ({
             <DataCard
               icon={<Image src="/icons/clause.svg" alt="Total transfers" />}
               title={t('Total transfers')}
-              tooltip={t('Information coming soon')}>
+              tooltip={t('Information coming soon')}
+            >
               <Text textStyle="bodyL">{'123.456'} BT3R</Text>
               <Flex justifyContent="space-between" gap="2">
                 {/* //TODO: Handle transfers here. For now, this is just a placeholder */}
@@ -99,7 +102,8 @@ export const TransactionInsight = ({
           <DataCard
             icon={<Image src="/icons/clock.svg" alt="Expiration" />}
             title={t('Expiration')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <Text>
               {transaction.expiration.toLocaleString()} {t('Blocks')}
             </Text>
@@ -108,7 +112,8 @@ export const TransactionInsight = ({
           <DataCard
             icon={<Image src="/icons/link.svg" alt="Chain Tag" />}
             title={t('Chain Tag')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <Text>{transaction.chainTag.toLocaleString()}</Text>
           </DataCard>
         </Grid>

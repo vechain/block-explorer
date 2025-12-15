@@ -57,7 +57,8 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
           rounded="md"
           border="1px solid"
           textStyle="bodyM"
-          borderColor="border-surface">
+          borderColor="border-surface"
+        >
           {blockInsights.map(insight => (
             <Flex
               key={insight.label}
@@ -66,7 +67,8 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
               flex="1"
               alignItems="center"
               borderBottom="1px solid var(--chakra-colors-border-surface)"
-              css={{ '&:last-child': { borderBottom: 'none' } }}>
+              css={{ '&:last-child': { borderBottom: 'none' } }}
+            >
               <Text width="130px">{insight.label}</Text>
               {insight.value}
             </Flex>
@@ -77,25 +79,29 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
           <DataCard
             icon={<Image src="/icons/coin.svg" alt="VTHO Paid" />}
             title={t('VTHO Paid')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
           <DataCard
             icon={<Image src="/icons/flash.svg" alt="VTHO Burned" />}
             title={t('VTHO Burned')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
           <DataCard
             icon={<Image src="/icons/reward.svg" alt="VTHO Rewarded" />}
             title={t('VTHO Rewarded')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
           <DataCard
             icon={<Image src="/icons/co2e.svg" alt="CO2 emitted" />}
             title={t('CO2e emitted')}
-            tooltip={t('Information coming soon')}>
+            tooltip={t('Information coming soon')}
+          >
             <Text>{'123.456'} g</Text>
           </DataCard>
         </Grid>

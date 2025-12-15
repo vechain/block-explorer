@@ -82,7 +82,8 @@ const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: Decoded
               templateColumns={templateColumns}
               p="4"
               borderBottomWidth={index < decodedInputData.inputs.length - 1 ? '1px' : '0'}
-              borderColor="border-surface">
+              borderColor="border-surface"
+            >
               <Text>{index}</Text>
               <Text>{input.name}</Text>
               <Text>{input.type}</Text>

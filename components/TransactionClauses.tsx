@@ -34,7 +34,8 @@ export function TransactionClauses({
           px="4"
           py="5"
           border="none"
-          bg={index % 2 === 0 ? 'bg-card-surface-2' : 'bg-card-surface'}>
+          bg={index % 2 === 0 ? 'bg-card-surface-2' : 'bg-card-surface'}
+        >
           <Flex>
             <Accordion.ItemTrigger p="0" justifyContent="space-between" cursor="pointer">
               <Flex alignItems="center" gap={{ base: '2', md: '5' }}>

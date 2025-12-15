@@ -15,7 +15,8 @@ export const IconInCircle = forwardRef<HTMLDivElement, IconInCircleProps>(({ ico
       border="1px solid"
       borderColor="border-surface-2"
       rounded="full"
-      {...props}>
+      {...props}
+    >
       {icon}
     </Center>
   )

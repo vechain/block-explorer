@@ -48,7 +48,8 @@ export default async function RootLayout({
             bgRepeat="no-repeat"
             overflowX="hidden"
             // TODO: Update background color with theme once implemented
-            backgroundColor="#0B0C10">
+            backgroundColor="#0B0C10"
+          >
             <Container
               maxW="1080px"
               display="flex"
@@ -56,7 +57,8 @@ export default async function RootLayout({
               px={4}
               pt={{ base: 2, md: 10 }}
               pb={10}
-              mx="auto">
+              mx="auto"
+            >
               <Header />
               {children}
               <Footer />

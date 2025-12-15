@@ -36,7 +36,8 @@ export const SearchBar = (props: FlexProps) => {
       rounded="full"
       p="3.5"
       gap="4"
-      {...props}>
+      {...props}
+    >
       <LuSearch size={20} color="text-primary" onClick={handleSearch} />
       <Field.Root as="form" onSubmit={handleSubmit} invalid={!!error} flex="1" gap="0">
         <Input

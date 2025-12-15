@@ -39,7 +39,8 @@ export const BlockUsageHeader = ({
       direction={{ base: 'column', md: 'row' }}
       justify="space-between"
       align={{ base: 'flex-start', md: 'center' }}
-      gap={4}>
+      gap={4}
+    >
       <HStack justify="space-between" align="center" w={{ base: '100%', md: 'auto' }}>
         <Heading as="h2" textStyle="displayXs">
           {t('Block Usage')}

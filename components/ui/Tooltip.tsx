@@ -34,7 +34,8 @@ export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(function T
               borderRadius: 'xs',
               borderColor: 'colors.gray.700',
             }}
-            {...contentProps}>
+            {...contentProps}
+          >
             <ChakraTooltip.Arrow>
               <ChakraTooltip.ArrowTip />
             </ChakraTooltip.Arrow>

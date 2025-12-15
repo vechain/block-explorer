@@ -78,7 +78,8 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
             templateColumns={`${firstColumnWidth} 30px 1fr`}
             p="4"
             borderBottomWidth="1px"
-            borderColor="border-surface">
+            borderColor="border-surface"
+          >
             {event.topics.map((topic, index) => (
               <>
                 {index === 0 ? <Text>Topic</Text> : <br />}
@@ -135,7 +136,8 @@ const DecodedEventArgsTable = ({ inputs, args }: { inputs: abi.AbiEventParameter
             templateColumns="60px 160px 160px 1fr"
             p="4"
             borderBottomWidth={index < inputs.length - 1 ? '1px' : '0'}
-            borderColor="border-surface">
+            borderColor="border-surface"
+          >
             <Text>{index}</Text>
             <Text>{input.name}</Text>
             <Flex gap="1">

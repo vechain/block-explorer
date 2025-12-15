@@ -24,7 +24,8 @@ export const TimeRangeSelect = ({ selectedRange, onRangeChange }: TimeRangeSelec
       onValueChange={details => onRangeChange(details.value[0] as TimeRangeKey)}
       size="sm"
       variant="outline"
-      width={'100px'}>
+      width={'100px'}
+    >
       <Select.Trigger>
         <Select.ValueText placeholder="Select time range" />
       </Select.Trigger>

@@ -54,7 +54,8 @@ export const TotalStakedChart = () => {
       borderWidth="1px"
       borderColor="border-surface"
       backdropFilter="blur(32px)"
-      p={5}>
+      p={5}
+    >
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL">
           {t('Total Staked')}
@@ -67,7 +68,8 @@ export const TotalStakedChart = () => {
           borderRadius="full"
           borderWidth="0.5px"
           borderColor="border-surface"
-          p="4px">
+          p="4px"
+        >
           <Flex
             as="button"
             align="center"
@@ -80,7 +82,8 @@ export const TotalStakedChart = () => {
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.DAY)}
-            transition="all 0.2s">
+            transition="all 0.2s"
+          >
             {t('1D')}
           </Flex>
           <Flex
@@ -95,7 +98,8 @@ export const TotalStakedChart = () => {
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.MONTH)}
-            transition="all 0.2s">
+            transition="all 0.2s"
+          >
             {t('1M')}
           </Flex>
           <Flex
@@ -110,7 +114,8 @@ export const TotalStakedChart = () => {
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.YEAR)}
-            transition="all 0.2s">
+            transition="all 0.2s"
+          >
             {t('1Y')}
           </Flex>
         </Flex>
@@ -156,7 +161,8 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
             right: 0,
             bottom: 0,
             left: 0,
-          }}>
+          }}
+        >
           <XAxis dataKey="timestamp" hide={true} />
           <YAxis dataKey="formattedValue" domain={[domainMin, domainMax]} hide={true} />
 
