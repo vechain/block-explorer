@@ -15,6 +15,7 @@ import {
   YAxis,
 } from 'recharts'
 import { Surface } from '@/components/ui/Surface'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import type { BlockUsageData } from '@/lib/schemas'
 import { type BlockUsageDataPoint, transformBlockUsageData } from '@/lib/utils/block-usage'
 import { timeFormat } from '@/lib/utils/date'
@@ -165,6 +166,7 @@ export const BlockUsage = () => {
 
 const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedRange: TimeRangeKey }) => {
   const router = useRouter()
+  const isMobile = useIsMobile()
 
   const handleAreaClick = (data: any) => {
     if (data?.activePayload?.[0]?.payload?.id) {
@@ -232,15 +234,6 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
     }
   }
 
-  // Calculate appropriate interval based on data length
-  const getXAxisInterval = () => {
-    const dataLength = data.length
-    if (dataLength <= 20) return 0 // Show all labels for small datasets
-    if (dataLength <= 50) return Math.floor(dataLength / 10)
-    if (dataLength <= 100) return Math.floor(dataLength / 8)
-    return Math.floor(dataLength / 10)
-  }
-
   return (
     <Box h={chartHeight}>
       <ResponsiveContainer>
@@ -263,7 +256,7 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
           <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
           <XAxis
             dataKey="timestamp"
-            interval={getXAxisInterval()}
+            interval={'equidistantPreserveStart'}
             textAnchor="middle"
             tickLine={false}
             tickFormatter={formatXAxis}
