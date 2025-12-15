@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { type BlockUsageResponse, blockUsageResponseSchema } from '@/lib/schemas'
@@ -42,6 +42,7 @@ const blockUsageQueryOptions = (
     queryFn: () => getBlockUsage({ networkName, startTimestamp, endTimestamp }),
     staleTime: isLiveMode ? getRefetchInterval(rangeSeconds) : Infinity,
     refetchInterval: refetchInterval,
+    placeholderData: keepPreviousData,
   }
 }
 

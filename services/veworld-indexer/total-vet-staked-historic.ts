@@ -1,3 +1,4 @@
+import { keepPreviousData } from '@tanstack/react-query'
 import { z } from 'zod'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
@@ -14,6 +15,7 @@ export enum TotalVetStakedRange {
 export const totalVetStakedHistoricQueryOptions = (networkName: NetworkName, range: TotalVetStakedRange) => ({
   queryKey: [getTotalVetStakedHistoric.name, networkName, range],
   queryFn: () => getTotalVetStakedHistoric({ networkName, range }),
+  placeholderData: keepPreviousData,
 })
 
 const getTotalVetStakedHistoric = async ({
