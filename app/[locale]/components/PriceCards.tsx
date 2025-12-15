@@ -1,6 +1,7 @@
 'use client'
 
 import { Circle, Flex, HStack, Icon, Image, Skeleton, Text, VStack } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import { LuTrendingDown, LuTrendingUp } from 'react-icons/lu'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { usePriceList } from '@/services/coin-api/hooks'
@@ -27,6 +28,7 @@ const getDailyChangePercent = (prices?: { price: number }[]) => {
 }
 
 export const PriceCards = () => {
+  const { t } = useTranslation()
   const { data: priceList, isLoading: priceListLoading } = usePriceList()
 
   const { data: vetDailyPrices, isLoading: vetDailyLoading } = useTokenDailyPrices('vechain', 'usd')
@@ -50,21 +52,21 @@ export const PriceCards = () => {
       }}>
       <TokenPriceCard
         token="VET"
-        label="VET Price"
+        label={t('VET Price')}
         price={priceList?.vet.usd}
         changePercent={getDailyChangePercent(vetDailyPrices)}
         isLoading={priceListLoading || !priceList || vetDailyLoading}
       />
       <TokenPriceCard
         token="VTHO"
-        label="VTHO Price"
+        label={t('VTHO Price')}
         price={priceList?.vtho.usd}
         changePercent={getDailyChangePercent(vthoDailyPrices)}
         isLoading={priceListLoading || !priceList || vthoDailyLoading}
       />
       <TokenPriceCard
         token="B3TR"
-        label="B3TR Price"
+        label={t('B3TR Price')}
         price={priceList?.b3tr.usd}
         changePercent={getDailyChangePercent(b3trDailyPrices)}
         isLoading={priceListLoading || !priceList || b3trDailyLoading}

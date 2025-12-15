@@ -3,11 +3,12 @@
 import { Field, Flex, type FlexProps, Input } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { LuSearch } from 'react-icons/lu'
 import { useSearch } from '@/hooks/useSearch'
-import { IconInCircle } from '../ui/IconInCircle'
 
 export const SearchBar = (props: FlexProps) => {
+  const { t } = useTranslation()
   const router = useRouter()
   const { mutate: search, error, reset } = useSearch()
   const [searchTerm, setSearchTerm] = useState<string>('')
@@ -45,7 +46,7 @@ export const SearchBar = (props: FlexProps) => {
           name="q"
           h="full"
           border="none"
-          placeholder="Search for blocks, transactions or accounts"
+          placeholder={t('Search for blocks, transactions or accounts')}
           variant="outline"
           textStyle="bodyM"
           focusVisibleRing="none"

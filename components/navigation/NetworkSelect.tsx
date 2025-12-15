@@ -1,4 +1,4 @@
-import { Box, Flex, Text } from '@chakra-ui/react'
+import { Box, Flex } from '@chakra-ui/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { NETWORKS, NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'

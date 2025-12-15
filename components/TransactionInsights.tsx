@@ -2,6 +2,7 @@
 
 import { Flex, Grid, GridItem, Heading, Text } from '@chakra-ui/react'
 import Image from 'next/image'
+import { useTranslation } from 'react-i18next'
 import { AgeText } from '@/components/ui/AgeText'
 import { DataCard } from '@/components/ui/DataCard'
 import { AddressLink } from '@/components/ui/Links'
@@ -17,6 +18,7 @@ export const TransactionInsight = ({
   transaction: Transaction
   receipt: TransactionReceipt | null
 }) => {
+  const { t } = useTranslation()
   const status = receipt ? (receipt.reverted ? 'reverted' : 'success') : 'pending'
   const gasUsed = receipt?.gasUsed ?? BigInt(0)
   const gasLimit = transaction.gas
@@ -25,23 +27,23 @@ export const TransactionInsight = ({
 
   const transactionInsights = [
     {
-      label: 'Age',
+      label: t('Age'),
       value: <AgeText timestamp={transaction.meta.blockTimestamp} />,
     },
     {
-      label: 'Gas Fee',
+      label: t('Gas Fee'),
       value: <TxGasFees gasFees={gasFees} />,
     },
     {
-      label: 'Gas Used',
+      label: t('Gas Used'),
       value: <GasUsed gasUsed={gasUsed} gasLimit={gasLimit} />,
     },
     {
-      label: 'Fee Paid',
+      label: t('Fee Paid'),
       value: <TxFeePaid gasFees={gasFees} />,
     },
     {
-      label: 'Size',
+      label: t('Size'),
       value: `${transaction.size.toLocaleString()} B`,
     },
   ]
@@ -50,7 +52,7 @@ export const TransactionInsight = ({
     <Surface bg="bg-surface-alt" borderColor="transparent">
       <Flex alignItems="center" justifyContent="space-between">
         <Heading as="h2" textStyle="displayXs">
-          Transaction Insights
+          {t('Transaction Insights')}
         </Heading>
         <StatusBadge status={status} />
       </Flex>
@@ -82,8 +84,8 @@ export const TransactionInsight = ({
           <GridItem colSpan={{ base: 1, md: 2 }} display="flex">
             <DataCard
               icon={<Image src="/icons/clause.svg" alt="Total transfers" />}
-              title="Total transfers"
-              tooltip="Information coming soon">
+              title={t('Total transfers')}
+              tooltip={t('Information coming soon')}>
               <Text textStyle="bodyL">{'123.456'} BT3R</Text>
               <Flex justifyContent="space-between" gap="2">
                 {/* //TODO: Handle transfers here. For now, this is just a placeholder */}
@@ -96,15 +98,17 @@ export const TransactionInsight = ({
 
           <DataCard
             icon={<Image src="/icons/clock.svg" alt="Expiration" />}
-            title="Expiration"
-            tooltip="Information coming soon">
-            <Text>{transaction.expiration.toLocaleString()} Blocks</Text>
+            title={t('Expiration')}
+            tooltip={t('Information coming soon')}>
+            <Text>
+              {transaction.expiration.toLocaleString()} {t('Blocks')}
+            </Text>
           </DataCard>
 
           <DataCard
             icon={<Image src="/icons/link.svg" alt="Chain Tag" />}
-            title="Chain Tag"
-            tooltip="Information coming soon">
+            title={t('Chain Tag')}
+            tooltip={t('Information coming soon')}>
             <Text>{transaction.chainTag.toLocaleString()}</Text>
           </DataCard>
         </Grid>

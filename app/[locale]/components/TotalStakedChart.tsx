@@ -3,6 +3,7 @@
 import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { format } from 'date-fns'
 import { memo, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, type TooltipContentProps, XAxis, YAxis } from 'recharts'
 import { formatEther } from 'viem'
 import { formatAbbreviated, formatAmount } from '@/lib/utils/units'
@@ -18,6 +19,7 @@ type DataPoint = {
 }
 
 export const TotalStakedChart = () => {
+  const { t } = useTranslation()
   const [selectedRange, setSelectedRange] = useState<TotalVetStakedRange>(TotalVetStakedRange.DAY)
   const { data: historicData, isLoading } = useTotalVetStakedHistoric(selectedRange)
   const { data: currentTotal } = useTotalVetStaked()
@@ -55,7 +57,7 @@ export const TotalStakedChart = () => {
       p={5}>
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL">
-          Total Staked
+          {t('Total Staked')}
         </Heading>
 
         <Flex
@@ -122,7 +124,7 @@ export const TotalStakedChart = () => {
 
       <Stack>
         <Text textStyle="bodyS" color="text-secondary">
-          Circulating Supply
+          {t('Circulating Supply')}
         </Text>
         <Text textStyle="bodyMSemibold" color="fg">
           1521251
@@ -179,6 +181,7 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
 TotalStakedChartVisualization.displayName = 'TotalStakedChartVisualization'
 
 const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>) => {
+  const { t } = useTranslation()
   const isVisible = active && payload && payload.length > 0
 
   if (!isVisible) return null
@@ -193,12 +196,12 @@ const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>)
   return (
     <Stack bg="bg" rounded="xl" p={4}>
       <Flex alignItems="center" gap={2}>
-        <Text textStyle="bodyMSemibold">Date & Time:</Text>
+        <Text textStyle="bodyMSemibold">{t('Date & Time')}:</Text>
         <Text textStyle="bodyM">{format(new Date(dataPoint.timestamp), 'MMM d, yyyy h:mm a')}</Text>
       </Flex>
 
       <Flex alignItems="center" gap={2}>
-        <Text textStyle="bodyMSemibold">Total Staked:</Text>
+        <Text textStyle="bodyMSemibold">{t('Total Staked')}:</Text>
         <Text textStyle="bodyM">{formattedVetAmount} VET</Text>
       </Flex>
     </Stack>

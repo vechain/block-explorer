@@ -1,6 +1,7 @@
 'use client'
 
 import { Heading } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import { Surface } from '@/components/ui/Surface'
 import { TableSkeleton } from '@/components/ui/Table'
 import { useLatestBlocksExpanded } from '@/services/thor/hooks'
@@ -9,12 +10,13 @@ import { BlocksTable } from './BlocksTable'
 const BLOCKS_TO_DISPLAY = 5
 
 export const ActivitySection = () => {
+  const { t } = useTranslation()
   const { data: latestBlocks, isPending } = useLatestBlocksExpanded({ count: BLOCKS_TO_DISPLAY })
 
   return (
     <Surface>
       <Heading as="h3" textStyle="displayXs">
-        Activity
+        {t('Activity')}
       </Heading>
       {isPending ? <TableSkeleton /> : <BlocksTable blocks={latestBlocks} />}
     </Surface>
