@@ -11,7 +11,7 @@ export const NowButton = ({ onClick }: NowButtonProps) => {
   return (
     <Button size="sm" variant="outline" onClick={onClick}>
       <LuRotateCcw />
-      Now
+      Reset
     </Button>
   )
 }

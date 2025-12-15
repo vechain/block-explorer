@@ -42,8 +42,8 @@ export const BlockUsageHeader = ({
           Block Usage
         </Heading>
         <Flex gap={2} hideFrom="md">
-          {selectedRange !== 'all' && <NowButton onClick={onResetToNow} />}
           <TimeRangeSelect selectedRange={selectedRange} onRangeChange={onRangeChange} />
+          <NowButton onClick={onResetToNow} />
         </Flex>
       </HStack>
       <HStack align="center" gap={2} flexShrink={0} flex={{ base: '1', md: '0' }}>
@@ -61,8 +61,8 @@ export const BlockUsageHeader = ({
         )}
 
         <Flex gap={2} hideBelow="md">
-          {selectedRange !== 'all' && <NowButton onClick={onResetToNow} />}
           <TimeRangeSelect selectedRange={selectedRange} onRangeChange={onRangeChange} />
+          <NowButton onClick={onResetToNow} />
         </Flex>
       </HStack>
     </Stack>

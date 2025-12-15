@@ -166,7 +166,6 @@ export const BlockUsage = () => {
 
 const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedRange: TimeRangeKey }) => {
   const router = useRouter()
-  const isMobile = useIsMobile()
 
   const handleAreaClick = (data: any) => {
     if (data?.activePayload?.[0]?.payload?.id) {
