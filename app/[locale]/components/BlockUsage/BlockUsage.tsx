@@ -28,6 +28,21 @@ const mainColor = '#E782FF'
 // Use the type from the utility file
 type DataPoint = BlockUsageDataPoint
 
+// Helper function to get ordinal suffix for day
+const getOrdinalSuffix = (day: number) => {
+  if (day > 3 && day < 21) return 'th'
+  switch (day % 10) {
+    case 1:
+      return 'st'
+    case 2:
+      return 'nd'
+    case 3:
+      return 'rd'
+    default:
+      return 'th'
+  }
+}
+
 export const BlockUsage = () => {
   const [selectedRange, setSelectedRange] = useState<TimeRangeKey>('hourly')
   const [selectedDate, setSelectedDate] = useState<Date>(new Date()) // User-selected specific date
@@ -175,21 +190,6 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
   // Format X-axis labels based on the selected time range
   const formatXAxis = useCallback(
     (timestamp: number) => {
-      // Helper function to get ordinal suffix for day
-      const getOrdinalSuffix = (day: number) => {
-        if (day > 3 && day < 21) return 'th'
-        switch (day % 10) {
-          case 1:
-            return 'st'
-          case 2:
-            return 'nd'
-          case 3:
-            return 'rd'
-          default:
-            return 'th'
-        }
-      }
-
       const date = new Date(timestamp)
 
       switch (selectedRange) {
