@@ -1,9 +1,9 @@
 'use client'
 
-import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { getUnixTime } from 'date-fns'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -15,11 +15,13 @@ import {
   YAxis,
 } from 'recharts'
 import { Surface } from '@/components/ui/Surface'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import type { BlockUsageData } from '@/lib/schemas'
 import { type BlockUsageDataPoint, transformBlockUsageData } from '@/lib/utils/block-usage'
 import { timeFormat } from '@/lib/utils/date'
 import { useBlockUsage } from '@/services/veworld-indexer/block-usage'
-import { BlockUsageControls, TIME_RANGES, type TimeRangeKey } from './BlockUsageControls'
+import { BlockUsageHeader } from './components/BlockUsageHeader/BlockUsageHeader'
+import { TIME_RANGES, type TimeRangeKey } from './constants'
 
 const chartHeight = '420px'
 const mainColor = '#E782FF'
@@ -32,9 +34,7 @@ export const BlockUsage = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date()) // User-selected specific date
   const [isLiveMode, setIsLiveMode] = useState(true) // Live mode updates with new blocks
 
-  const { blocksDataPoints, isLoading, canGoBack, canGoForward } = useBlockUsageChartData(selectedRange, selectedDate)
-
-  if (isLoading) return <Skeleton height={chartHeight} rounded="xl" />
+  const { blocksDataPoints, canGoBack, canGoForward } = useBlockUsageChartData(selectedRange, selectedDate, isLiveMode)
 
   const handleRangeChange = (newRange: TimeRangeKey) => {
     setSelectedRange(newRange)
@@ -98,7 +98,13 @@ export const BlockUsage = () => {
     } else if (selectedDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
       // Date format: YYYY-MM-DD (month is 1-indexed in the string, 0-indexed in Date constructor)
       const [year, month, day] = selectedDateStr.split('-').map(Number)
-      newSelectedDate = new Date(year, month - 1, day, 0, 0, 0, 0)
+      // For hourly view, preserve the current hour when changing date
+      if (selectedRange === 'hourly') {
+        const currentHour = selectedDate.getHours()
+        newSelectedDate = new Date(year, month - 1, day, currentHour, 0, 0, 0)
+      } else {
+        newSelectedDate = new Date(year, month - 1, day, 0, 0, 0, 0)
+      }
     } else {
       return // Invalid format
     }
@@ -115,26 +121,42 @@ export const BlockUsage = () => {
     setIsLiveMode(false) // Exit live mode when selecting a specific date
   }
 
+  const handleHourChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const hourStr = event.target.value
+    if (!hourStr) return
+
+    const hour = parseInt(hourStr)
+    if (isNaN(hour) || hour < 0 || hour > 23) return
+
+    // Create new date with the selected hour
+    const newSelectedDate = new Date(selectedDate)
+    newSelectedDate.setHours(hour, 0, 0, 0)
+
+    const now = new Date()
+
+    // Validate the selected date
+    if (newSelectedDate > now) {
+      return // Future date
+    }
+
+    setSelectedDate(newSelectedDate)
+    setIsLiveMode(false) // Exit live mode when selecting a specific hour
+  }
+
   return (
     <Surface>
-      <Flex justify="space-between" align="center">
-        <Heading as="h2" textStyle="displayXs">
-          Block Usage
-        </Heading>
-
-        <BlockUsageControls
-          selectedRange={selectedRange}
-          selectedDate={selectedDate}
-          canGoBack={canGoBack}
-          canGoForward={canGoForward}
-          onRangeChange={handleRangeChange}
-          onNavigateBack={handleNavigateBack}
-          onNavigateForward={handleNavigateForward}
-          onResetToNow={handleResetToNow}
-          onDateChange={handleDateChange}
-        />
-      </Flex>
-
+      <BlockUsageHeader
+        selectedRange={selectedRange}
+        selectedDate={selectedDate}
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        onRangeChange={handleRangeChange}
+        onNavigateBack={handleNavigateBack}
+        onNavigateForward={handleNavigateForward}
+        onResetToNow={handleResetToNow}
+        onDateChange={handleDateChange}
+        onHourChange={handleHourChange}
+      />
       <Surface>
         <BlockUsageChart data={blocksDataPoints} selectedRange={selectedRange} />
       </Surface>
@@ -211,15 +233,6 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
     }
   }
 
-  // Calculate appropriate interval based on data length
-  const getXAxisInterval = () => {
-    const dataLength = data.length
-    if (dataLength <= 20) return 0 // Show all labels for small datasets
-    if (dataLength <= 50) return Math.floor(dataLength / 10)
-    if (dataLength <= 100) return Math.floor(dataLength / 8)
-    return Math.floor(dataLength / 10)
-  }
-
   return (
     <Box h={chartHeight}>
       <ResponsiveContainer>
@@ -242,7 +255,7 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
           <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
           <XAxis
             dataKey="timestamp"
-            interval={getXAxisInterval()}
+            interval={'equidistantPreserveStart'}
             textAnchor="middle"
             tickLine={false}
             tickFormatter={formatXAxis}
@@ -405,10 +418,13 @@ const useBlockUsageChartData = (range: TimeRangeKey, date: Date, isLiveMode: boo
   const { data: cumulativeData = [], ...rest } = useBlockUsage(adjustedStartTimestamp, endTimestamp, isLiveMode)
 
   // Transform cumulative data to per-block values
-  const allDataPoints = transformBlockUsageData(cumulativeData as BlockUsageData[])
+  const allDataPoints = useMemo(() => transformBlockUsageData(cumulativeData as BlockUsageData[]), [cumulativeData])
 
   // Filter to only include data points within the requested range (exclude buffer)
-  const blocksDataPoints = allDataPoints.filter(point => point.timestamp >= startTimestamp)
+  const blocksDataPoints = useMemo(
+    () => allDataPoints.filter(point => point.timestamp >= startTimestamp),
+    [allDataPoints, startTimestamp],
+  )
 
   return { blocksDataPoints, selectedRangeConfig, canGoBack, canGoForward, ...rest }
 }
