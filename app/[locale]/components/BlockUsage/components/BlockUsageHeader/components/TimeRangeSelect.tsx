@@ -1,6 +1,7 @@
 'use client'
 
-import { Portal, Select } from '@chakra-ui/react'
+import { createListCollection, Portal, Select } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import { type TimeRangeKey, timeRangeCollection } from '../../../constants'
 
 interface TimeRangeSelectProps {
@@ -9,9 +10,16 @@ interface TimeRangeSelectProps {
 }
 
 export const TimeRangeSelect = ({ selectedRange, onRangeChange }: TimeRangeSelectProps) => {
+  const { t } = useTranslation()
+  const translatedTimeRanges = createListCollection<{ label: string; value: TimeRangeKey }>({
+    items: timeRangeCollection.items.map(item => ({
+      ...item,
+      label: t(item.label),
+    })),
+  })
   return (
     <Select.Root
-      collection={timeRangeCollection}
+      collection={translatedTimeRanges}
       value={[selectedRange]}
       onValueChange={details => onRangeChange(details.value[0] as TimeRangeKey)}
       size="sm"
@@ -23,7 +31,7 @@ export const TimeRangeSelect = ({ selectedRange, onRangeChange }: TimeRangeSelec
       <Portal>
         <Select.Positioner>
           <Select.Content>
-            {timeRangeCollection.items.map(item => (
+            {translatedTimeRanges.items.map(item => (
               <Select.Item key={item.value} item={item}>
                 {item.label}
               </Select.Item>

@@ -29,15 +29,21 @@ export const LanguageModal = ({ isOpen, onClose }: LanguageModalProps) => {
     <Dialog.Root open={isOpen} onOpenChange={details => !details.open && onClose()}>
       <Portal>
         <Dialog.Backdrop bg="blackAlpha.600" />
-        <Dialog.Positioner>
+        <Dialog.Positioner alignItems={{ base: 'flex-end', md: 'center' }} px={{ base: 0, md: 4 }}>
           <Dialog.Content
+            mb={{ base: 0, md: 'inherit' }}
             bg="bg-card-surface-2"
             backdropFilter="blur(32px)"
-            borderRadius="xl"
+            borderTopLeftRadius={{ base: '2xl', md: 'xl' }}
+            borderTopRightRadius={{ base: '2xl', md: 'xl' }}
+            borderBottomLeftRadius={{ base: 0, md: 'xl' }}
+            borderBottomRightRadius={{ base: 0, md: 'xl' }}
             borderWidth="1px"
             borderColor="border-surface"
-            maxW="400px"
-            w="90vw"
+            maxW={{ base: '100vw', md: '400px' }}
+            w={{ base: '100vw', md: '90vw' }}
+            maxH={{ base: '85vh', md: 'unset' }}
+            overflow="hidden"
             p={0}>
             <Dialog.Header p={4} borderBottomWidth="1px" borderColor="border-surface">
               <Flex justify="space-between" align="center">
@@ -48,14 +54,14 @@ export const LanguageModal = ({ isOpen, onClose }: LanguageModalProps) => {
                   </Dialog.Title>
                 </Flex>
                 <Dialog.CloseTrigger asChild>
-                  <Button variant="ghost" size="sm" p={1} onClick={onClose}>
+                  <Button variant="ghost" size="sm" minW="44px" minH="44px" p={1} onClick={onClose}>
                     <LuX size={20} />
                   </Button>
                 </Dialog.CloseTrigger>
               </Flex>
             </Dialog.Header>
 
-            <Dialog.Body p={0} maxH="50vh" overflow="auto">
+            <Dialog.Body p={0} maxH={{ base: '70vh', md: '50vh' }} overflow="auto">
               <VStack gap={0} align="stretch">
                 {i18nConfig.locales.map(locale => {
                   const isActive = locale === currentLocale

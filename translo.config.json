@@ -58,7 +58,9 @@
       "VTHO": "VTHO",
       "B3TR": "B3TR",
       "VeChain": "VeChain",
-      "vechain": "vechain"
+      "vechain": "vechain",
+      "mainnet": "mainnet",
+      "testnet": "testnet"
     },
     "it": {
       "maturity": "maturazione"

@@ -6,7 +6,6 @@ import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiArrowUpRight, FiMenu } from 'react-icons/fi'
-import { LuGlobe } from 'react-icons/lu'
 import { i18nConfig, type Locale } from '@/i18n/config'
 import { languageNames } from '@/i18n/utils'
 import { useColorMode } from '../theme/color-mode'
@@ -125,9 +124,11 @@ const NavigationMenu = () => {
                   mt={2}
                   pt={2}>
                   <Flex gap={2} alignItems="center" py={1}>
-                    <LuGlobe size={16} />
                     <Text fontSize="body-m" whiteSpace="nowrap">
-                      {currentLanguage.flag} {currentLanguage.native}
+                      {currentLanguage.flag}
+                    </Text>
+                    <Text fontSize="body-m" whiteSpace="nowrap">
+                      {currentLanguage.native}
                     </Text>
                   </Flex>
                 </Box>

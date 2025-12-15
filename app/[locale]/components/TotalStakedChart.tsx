@@ -81,7 +81,7 @@ export const TotalStakedChart = () => {
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.DAY)}
             transition="all 0.2s">
-            1D
+            {t('1D')}
           </Flex>
           <Flex
             as="button"
@@ -96,7 +96,7 @@ export const TotalStakedChart = () => {
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.MONTH)}
             transition="all 0.2s">
-            1M
+            {t('1M')}
           </Flex>
           <Flex
             as="button"
@@ -111,7 +111,7 @@ export const TotalStakedChart = () => {
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.YEAR)}
             transition="all 0.2s">
-            1Y
+            {t('1Y')}
           </Flex>
         </Flex>
       </Flex>
