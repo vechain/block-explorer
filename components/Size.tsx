@@ -1,5 +1,11 @@
 import { Text } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 
 export const Size = ({ size }: { size: number }) => {
-  return <Text>{size.toLocaleString()} Bytes</Text>
+  const { t } = useTranslation()
+  return (
+    <Text>
+      {size.toLocaleString()} {t('Bytes')}
+    </Text>
+  )
 }

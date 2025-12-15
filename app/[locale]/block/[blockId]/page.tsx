@@ -98,7 +98,7 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
 
       <Surface>
         <Heading as="h2" textStyle="displayXs">
-          Transactions
+          {t('Transactions')}
         </Heading>
         <TransactionsTable transactions={block.transactions} />
       </Surface>

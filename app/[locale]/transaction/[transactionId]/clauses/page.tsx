@@ -10,6 +10,7 @@ import { Subtitle, Title } from '@/components/ui-legacy/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import { type TransactionId, transactionIdSchema } from '@/lib/schemas'
 import { useTransaction } from '@/services/thor/hooks'
+import { useTranslation } from 'react-i18next'
 
 export default function TransactionClausesPage({ params }: { params: Promise<{ transactionId: TransactionId }> }) {
   const { transactionId } = use(params)
@@ -23,6 +24,7 @@ export default function TransactionClausesPage({ params }: { params: Promise<{ t
 
 const TransactionClauseList = ({ transactionId }: { transactionId: TransactionId }) => {
   const { data: transaction, isLoading } = useTransaction(transactionId)
+  const { t } = useTranslation()
 
   if (isLoading) return <div>Loading...</div>
 
@@ -39,17 +41,19 @@ const TransactionClauseList = ({ transactionId }: { transactionId: TransactionId
 
   return (
     <Stack>
-      <Title>Clauses</Title>
-      <Subtitle>Transaction {transaction.id}</Subtitle>
+      <Title>{t('Clauses')}</Title>
+      <Subtitle>
+        {t('Transaction')} {transaction.id}
+      </Subtitle>
 
       <Table.ScrollArea my={12} borderWidth="1px" rounded="md">
         <Table.Root size="md">
           <Table.Header>
             <Table.Row bg="bg.subtle">
-              <Table.ColumnHeader>Index</Table.ColumnHeader>
-              <Table.ColumnHeader>To</Table.ColumnHeader>
-              <Table.ColumnHeader>Value</Table.ColumnHeader>
-              <Table.ColumnHeader>Data</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('Index')}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('To')}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('Value')}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('Data')}</Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
 

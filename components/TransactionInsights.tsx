@@ -89,7 +89,9 @@ export const TransactionInsight = ({
               title={t('Total transfers')}
               tooltip={t('Information coming soon')}
             >
-              <Text textStyle="bodyL">{'123.456'} BT3R</Text>
+              <Text textStyle="bodyL">
+                {'123.456'} {t('B3TR')}
+              </Text>
               <Flex justifyContent="space-between" gap="2">
                 {/* //TODO: Handle transfers here. For now, this is just a placeholder */}
                 <AddressLink address={transaction.origin} truncate />

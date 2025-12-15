@@ -7,7 +7,7 @@
     "plugin:react-hooks/recommended",
     "prettier"
   ],
-  "plugins": ["@typescript-eslint", "react", "react-hooks"],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "i18next"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": "latest",
@@ -27,7 +27,20 @@
       }
     ],
     "@typescript-eslint/no-explicit-any": "error",
-    "no-console": ["error", { "allow": ["group", "groupEnd", "warn", "error"] }]
+    "no-console": ["error", { "allow": ["group", "groupEnd", "warn", "error"] }],
+    "i18next/no-literal-string": [
+      "error",
+      {
+        "mode": "jsx-text-only",
+        "jsx-attributes": {
+          "include": [],
+          "exclude": [
+            //all attributes
+            "*"
+          ]
+        }
+      }
+    ]
   },
   "settings": {
     "react": {

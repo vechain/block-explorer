@@ -4,6 +4,7 @@ import { VETBalance } from '@/components/ui-legacy/TokenBalance'
 import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import type { Clause, TransactionId } from '@/lib/schemas'
 import { InputData } from './InputData'
+import { useTranslation } from 'react-i18next'
 
 export const ClauseDetailsTable = ({
   clause,
@@ -14,15 +15,16 @@ export const ClauseDetailsTable = ({
   txId: TransactionId
   clauseIndex: number
 }) => {
+  const { t } = useTranslation()
   const items = [
     {
-      name: 'Transaction',
+      name: t('Transaction'),
       value: <TransactionLink transactionId={txId}>{txId}</TransactionLink>,
     },
-    { name: 'Index', value: `# ${clauseIndex.toLocaleString()}` },
-    { name: 'To', value: clause.to ? <VnsBadgeOrAddressLink address={clause.to} /> : 'N/A' },
-    { name: 'Value', value: <VETBalance balance={clause.value} /> },
-    { name: 'Input data', value: <InputData rawData={clause.data} /> },
+    { name: t('Index'), value: `# ${clauseIndex.toLocaleString()}` },
+    { name: t('To'), value: clause.to ? <VnsBadgeOrAddressLink address={clause.to} /> : 'N/A' },
+    { name: t('Value'), value: <VETBalance balance={clause.value} /> },
+    { name: t('Input data'), value: <InputData rawData={clause.data} /> },
   ]
 
   return (

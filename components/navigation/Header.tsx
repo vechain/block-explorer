@@ -30,13 +30,14 @@ export const Header = () => {
 }
 
 const Logo = () => {
+  const { t } = useTranslation()
   return (
     <Link href="/">
       <Flex gap={2} alignItems="end">
         <Image src="/vechain-light.svg" alt="VeChain logo" h={{ base: '18px', md: '30px' }} w="auto" />
 
         <Text fontSize="10px" color="white" textTransform="uppercase" userSelect="none">
-          Explorer
+          {t('Explorer')}
         </Text>
       </Flex>
     </Link>

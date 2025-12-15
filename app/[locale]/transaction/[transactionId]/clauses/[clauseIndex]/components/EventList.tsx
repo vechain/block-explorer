@@ -6,6 +6,7 @@ import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import { type DecodedEvent, type DecodedEventArgs, useDecodeEvent } from '@/hooks/useDecodeEvent'
 import { EventType, type RawEvent } from '@/lib/schemas'
 import type * as abi from '@/lib/schemas/abi'
+import { useTranslation } from 'react-i18next'
 
 export const EventList = ({ eventLogs }: { eventLogs: RawEvent[] }) => {
   return (
@@ -20,6 +21,7 @@ export const EventList = ({ eventLogs }: { eventLogs: RawEvent[] }) => {
 }
 
 const EventCard = ({ eventLog }: { eventLog: RawEvent }) => {
+  const { t } = useTranslation()
   const { event, isLoading } = useDecodeEvent(eventLog)
 
   const [showDecoded, setShowDecoded] = useState(true)
@@ -40,13 +42,13 @@ const EventCard = ({ eventLog }: { eventLog: RawEvent }) => {
         <Flex justifyContent="flex-end">
           {isDecoded ? (
             <Switch.Root checked={showDecoded} onCheckedChange={details => setShowDecoded(details.checked)}>
-              <Switch.Label>Decode</Switch.Label>
+              <Switch.Label>{t('Decode')}</Switch.Label>
               <Switch.HiddenInput />
               <Switch.Control />
             </Switch.Root>
           ) : (
             <Text fontSize="sm" color="fg.muted">
-              No ABI found
+              {t('No ABI found')}
             </Text>
           )}
         </Flex>
@@ -58,18 +60,20 @@ const EventCard = ({ eventLog }: { eventLog: RawEvent }) => {
 }
 
 const RawEventCard = ({ event }: { event: RawEvent }) => {
+  const { t } = useTranslation()
+
   return (
     <Card.Body color="fg.muted">
       <DataList.Root orientation="horizontal">
         <DataList.Item>
-          <DataList.ItemLabel fontWeight="bold">Address</DataList.ItemLabel>
+          <DataList.ItemLabel fontWeight="bold">{t('Address')}</DataList.ItemLabel>
           <DataList.ItemValue>
             <VnsBadgeOrAddressLink address={event.address} />
           </DataList.ItemValue>
         </DataList.Item>
 
         <DataList.Item alignItems="flex-start">
-          <DataList.ItemLabel fontWeight="bold">Topics</DataList.ItemLabel>
+          <DataList.ItemLabel fontWeight="bold">{t('Topics')}</DataList.ItemLabel>
           <DataList.ItemValue>
             <List.Root as="ol" listStylePosition="inside">
               {event.topics.map((topic, i) => (
@@ -82,7 +86,7 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
         </DataList.Item>
 
         <DataList.Item alignItems="flex-start">
-          <DataList.ItemLabel fontWeight="bold">Data</DataList.ItemLabel>
+          <DataList.ItemLabel fontWeight="bold">{t('Data')}</DataList.ItemLabel>
           <DataList.ItemValue>
             <Code>{event.data}</Code>
           </DataList.ItemValue>
@@ -93,18 +97,20 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
 }
 
 const DecodedEventCard = ({ event }: { event: DecodedEvent }) => {
+  const { t } = useTranslation()
+
   return (
     <Card.Body color="fg.muted">
       <Stack gap={2}>
         <DataList.Root orientation="horizontal">
           <DataList.Item>
-            <DataList.ItemLabel fontWeight="bold">Address</DataList.ItemLabel>
+            <DataList.ItemLabel fontWeight="bold">{t('Address')}</DataList.ItemLabel>
             <DataList.ItemValue>
               <VnsBadgeOrAddressLink address={event.address} />
             </DataList.ItemValue>
           </DataList.Item>
           <DataList.Item>
-            <DataList.ItemLabel fontWeight="bold">Name</DataList.ItemLabel>
+            <DataList.ItemLabel fontWeight="bold">{t('Name')}</DataList.ItemLabel>
             <DataList.ItemValue>
               <Text fontWeight="bold">{event.signature}</Text>
             </DataList.ItemValue>
@@ -118,6 +124,8 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent }) => {
 }
 
 const DecodedEventArgsTable = ({ inputs, args }: { inputs: abi.AbiEventParameter[]; args: DecodedEventArgs }) => {
+  const { t } = useTranslation()
+
   return (
     <Table.Root size="sm">
       <Table.Body>
@@ -132,7 +140,7 @@ const DecodedEventArgsTable = ({ inputs, args }: { inputs: abi.AbiEventParameter
               </Text>
               {input.indexed && (
                 <Badge colorPalette="cyan" size="xs">
-                  Indexed
+                  {t('Indexed')}
                 </Badge>
               )}
             </Table.Cell>

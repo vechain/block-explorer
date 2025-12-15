@@ -1,6 +1,7 @@
 'use client'
 
 import { Box, Flex, Stack, Text } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import { getUnixTime } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { useCallback, useMemo, useState } from 'react'
@@ -307,6 +308,7 @@ const CustomTooltip = ({
   selectedRange,
 }: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey }) => {
   const isVisible = active && payload.length > 0
+  const { t } = useTranslation()
 
   if (!isVisible) return null
 
@@ -316,10 +318,10 @@ const CustomTooltip = ({
   const isAggregated = selectedRange !== 'hourly'
 
   const labels = {
-    identifier: 'Date & Time',
-    gasUsed: isAggregated ? 'Avg Gas Used/Block' : 'Gas Used',
-    gasLimit: isAggregated ? 'Avg Gas Limit/Block' : 'Gas Limit',
-    usage: isAggregated ? 'Avg Usage' : 'Usage',
+    identifier: t('Date & Time'),
+    gasUsed: isAggregated ? t('Avg Gas Used/Block') : t('Gas Used'),
+    gasLimit: isAggregated ? t('Avg Gas Limit/Block') : t('Gas Limit'),
+    usage: isAggregated ? t('Avg Usage') : t('Usage'),
   }
 
   // Format the date and time for the data point
@@ -339,33 +341,29 @@ const CustomTooltip = ({
       {selectedRange === 'hourly' && (
         <Flex alignItems="center" gap={2}>
           <Text fontSize="sm" fontWeight="bold">
-            Block Number:
+            {t('Block Number')}:
           </Text>
           <Text fontSize="sm">{dataPoint.number.toLocaleString()}</Text>
         </Flex>
       )}
-
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
           {labels.identifier}:
         </Text>
         <Text fontSize="sm">{formatDateTime(dataPoint.timestamp)}</Text>
       </Flex>
-
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
           {labels.gasUsed}:
         </Text>
         <Text fontSize="sm">{Math.round(dataPoint.gasUsed).toLocaleString()}</Text>
       </Flex>
-
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
           {labels.gasLimit}:
         </Text>
         <Text fontSize="sm">{Math.round(dataPoint.gasLimit).toLocaleString()}</Text>
       </Flex>
-
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
           {labels.usage}:

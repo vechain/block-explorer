@@ -10,6 +10,7 @@ import { Subtitle, Title } from '@/components/ui-legacy/Typography'
 import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import { type BlockId, blockIdSchema } from '@/lib/schemas'
 import { useBlockExpanded } from '@/services/thor/hooks'
+import { useTranslation } from 'react-i18next'
 
 export default function BlockTransactionsPage({ params }: { params: Promise<{ blockId: BlockId }> }) {
   const { blockId } = use(params)
@@ -23,6 +24,7 @@ export default function BlockTransactionsPage({ params }: { params: Promise<{ bl
 
 const BlockTransactionList = ({ blockId }: { blockId: BlockId }) => {
   const { data: block, isLoading } = useBlockExpanded(blockId)
+  const { t } = useTranslation()
 
   if (isLoading) return <div>Loading...</div>
 
@@ -41,18 +43,20 @@ const BlockTransactionList = ({ blockId }: { blockId: BlockId }) => {
 
   return (
     <Stack>
-      <Title>Transactions</Title>
-      <Subtitle>Block #{block.number.toLocaleString()}</Subtitle>
+      <Title>{t('Transactions')}</Title>
+      <Subtitle>
+        {t('Block')} #{block.number.toLocaleString()}
+      </Subtitle>
 
       <Table.ScrollArea my={12} borderWidth="1px" rounded="md">
         <Table.Root size="md">
           <Table.Header>
             <Table.Row bg="bg.subtle">
-              <Table.ColumnHeader>ID</Table.ColumnHeader>
-              <Table.ColumnHeader>Status</Table.ColumnHeader>
-              <Table.ColumnHeader>Origin</Table.ColumnHeader>
-              <Table.ColumnHeader>Clauses</Table.ColumnHeader>
-              <Table.ColumnHeader>Paid</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('ID')}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('Status')}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('Origin')}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('Clauses')}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('Paid')}</Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
 

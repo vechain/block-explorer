@@ -3,19 +3,21 @@ import type { AbiParameter } from 'viem'
 import { Code } from '@/components/ui-legacy/Code'
 import { type DecodedInputData, type DecodedInputDataArgs, useDecodeInputData } from '@/hooks/useDecodeInputData'
 import type { HexString } from '@/lib/schemas'
+import { useTranslation } from 'react-i18next'
 
 export const InputData = ({ rawData }: { rawData: HexString }) => {
   const { data } = useDecodeInputData(rawData)
-
   return data.decoded ? <CardDecodedInputData inputData={data.decoded} /> : <Code>{data.raw}</Code>
 }
 
 const CardDecodedInputData = ({ inputData }: { inputData: DecodedInputData }) => {
+  const { t } = useTranslation()
+
   return (
     <Card.Root>
       <Card.Body>
         <Text fontSize="md" mb="8">
-          Function : <ChakraCode color="fg.info">{inputData.signature}</ChakraCode>
+          {t('Function')}: <ChakraCode color="fg.info">{inputData.signature}</ChakraCode>
         </Text>
         <DecodedInputDataArgsTable inputs={inputData.inputs} args={inputData.args} />
       </Card.Body>

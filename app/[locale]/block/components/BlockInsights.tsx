@@ -102,7 +102,9 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
             title={t('CO2e emitted')}
             tooltip={t('Information coming soon')}
           >
-            <Text>{'123.456'} g</Text>
+            <Text>
+              {'123.456'} {t('g')}
+            </Text>
           </DataCard>
         </Grid>
       </Flex>

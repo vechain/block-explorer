@@ -14,10 +14,12 @@ import { isNotNullish } from '@/lib/type-predicates'
 import { type Erc20, useErc20Contracts } from '@/services/thor/tokens/erc20'
 import { useAccountTransfers } from '@/services/veworld-indexer/hooks'
 import type { IndexerTransfer } from '@/services/veworld-indexer/schemas'
+import { useTranslation } from 'react-i18next'
 
 const PAGE_SIZE = 30
 
 export const AccountTransfersTab = ({ address }: { address: AddressString }) => {
+  const { t } = useTranslation()
   const [page, setPage] = useState(0)
   const { data: transfers, isLoading } = useAccountTransfers({
     params: { address, page, size: PAGE_SIZE },
@@ -39,12 +41,12 @@ export const AccountTransfersTab = ({ address }: { address: AddressString }) => 
         <Table.Root size="md" borderWidth="1px" rounded="md">
           <Table.Header>
             <Table.Row bg="bg.subtle">
-              <Table.ColumnHeader>Tx ID</Table.ColumnHeader>
-              <Table.ColumnHeader>From</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('Tx ID')}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('From')}</Table.ColumnHeader>
               <Table.ColumnHeader></Table.ColumnHeader>
-              <Table.ColumnHeader>To</Table.ColumnHeader>
-              <Table.ColumnHeader>Amount</Table.ColumnHeader>
-              <Table.ColumnHeader>Token</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('To')}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('Amount')}</Table.ColumnHeader>
+              <Table.ColumnHeader>{t('Token')}</Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
