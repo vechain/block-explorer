@@ -5,6 +5,7 @@ import Image from 'next/image'
 
 import { notFound, useRouter } from 'next/navigation'
 import { use } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SearchBar } from '@/components/navigation/SearchBar'
 import { TransactionViews } from '@/components/TransactionViews'
 import { VETBalance } from '@/components/ui/Balance'
@@ -68,6 +69,7 @@ const TransactionDetails = ({
   receipt: TransactionReceipt | null
   onViewChange: (view: TransactionDetailsView) => void
 }) => {
+  const { t } = useTranslation()
   return (
     <Stack gap="8">
       <SearchBar mt="16" />
@@ -75,7 +77,7 @@ const TransactionDetails = ({
       <Surface>
         <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
           <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap" mb={{ base: '6', md: '0' }}>
-            Transaction
+            {t('Transaction')}
           </Heading>
           <IDChip value={transaction.id} />
         </Flex>
@@ -84,7 +86,7 @@ const TransactionDetails = ({
           {/* Date and time */}
           <DataCard
             icon={<Image src="/icons/block-number.svg" alt="Block Number" />}
-            title="Block Number"
+            title={t('Block Number')}
             tooltip="Information coming soon">
             <BaseLink href={`/block/${transaction.meta.blockID}`}>
               {transaction.meta.blockNumber.toLocaleString()}
@@ -94,24 +96,24 @@ const TransactionDetails = ({
           {/* Clauses count */}
           <DataCard
             icon={<Image src="/icons/clause.svg" alt="Clauses" />}
-            title="Total Clauses"
-            tooltip="Information coming soon">
+            title={t('Total Clauses')}
+            tooltip={t('Information coming soon')}>
             <Text>{transaction.clauses.length}</Text>
           </DataCard>
 
           {/* Beneficiary */}
           <DataCard
             icon={<Image src="/icons/reward.svg" alt="Rewards" />}
-            title="Rewards"
-            tooltip="Information coming soon">
+            title={t('Rewards')}
+            tooltip={t('Information coming soon')}>
             {receipt ? <VETBalance balance={receipt.reward} /> : <Text>-</Text>}
           </DataCard>
 
           {/* Block signer */}
           <DataCard
             icon={<Image src="/icons/link.svg" alt="Origin" />}
-            title="Origin"
-            tooltip="Information coming soon">
+            title={t('Origin')}
+            tooltip={t('Information coming soon')}>
             <AddressLink address={transaction.origin} truncate />
           </DataCard>
         </Flex>
