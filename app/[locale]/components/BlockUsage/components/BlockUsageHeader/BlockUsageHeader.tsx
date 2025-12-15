@@ -62,7 +62,6 @@ export const BlockUsageHeader = ({
             onHourChange={onHourChange}
           />
         )}
-
         <Flex gap={2} hideBelow="md">
           <TimeRangeSelect selectedRange={selectedRange} onRangeChange={onRangeChange} />
           <NowButton onClick={onResetToNow} />

@@ -96,9 +96,9 @@ export const BlockUsage = () => {
 
     // Handle year input for yearly range
     if (selectedRange === 'yearly' && selectedDateStr.match(/^\d{4}$/)) {
-      const year = parseInt(selectedDateStr)
+      const year = parseInt(selectedDateStr, 10)
       const now = new Date()
-      if (!isNaN(year) && year >= 2018 && year <= now.getFullYear()) {
+      if (!Number.isNaN(year) && year >= 2018 && year <= now.getFullYear()) {
         newSelectedDate = new Date(`${year}-01-01T00:00:00`)
       } else {
         return // Invalid year
@@ -126,7 +126,7 @@ export const BlockUsage = () => {
     const now = new Date()
 
     // Validate the selected date
-    if (isNaN(newSelectedDate.getTime()) || newSelectedDate > now) {
+    if (Number.isNaN(newSelectedDate.getTime()) || newSelectedDate > now) {
       return // Invalid date or future date
     }
 
@@ -139,8 +139,8 @@ export const BlockUsage = () => {
     const hourStr = event.target.value
     if (!hourStr) return
 
-    const hour = parseInt(hourStr)
-    if (isNaN(hour) || hour < 0 || hour > 23) return
+    const hour = parseInt(hourStr, 10)
+    if (Number.isNaN(hour) || hour < 0 || hour > 23) return
 
     // Create new date with the selected hour
     const newSelectedDate = new Date(selectedDate)
@@ -181,10 +181,18 @@ export const BlockUsage = () => {
 const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedRange: TimeRangeKey }) => {
   const router = useRouter()
 
-  const handleAreaClick = (data: any) => {
-    if (data?.activePayload?.[0]?.payload?.id) {
-      router.push(`/block/${data.activePayload[0].payload.id}`)
-    }
+  type AreaClickEvent = {
+    activePayload?: Array<{
+      payload?: {
+        id?: string | number
+      }
+    }>
+  }
+
+  const handleAreaClick = (data: unknown) => {
+    const id = (data as AreaClickEvent | null)?.activePayload?.[0]?.payload?.id
+    if (id === undefined || id === null) return
+    router.push(`/block/${id}`)
   }
 
   // Format X-axis labels based on the selected time range
@@ -384,8 +392,8 @@ const useBlockUsageChartData = (range: TimeRangeKey, date: Date, isLiveMode: boo
     endTimestamp = getUnixTime(now)
   } else {
     const rangeConfig = TIME_RANGES[range]
-    const periodStart = rangeConfig.startOf!(date)
-    const periodEnd = rangeConfig.endOf!(date)
+    const periodStart = rangeConfig.startOf?.(date)
+    const periodEnd = rangeConfig.endOf?.(date)
 
     startTimestamp = getUnixTime(periodStart)
     endTimestamp = Math.min(getUnixTime(periodEnd), getUnixTime(now))
