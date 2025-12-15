@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Box, Flex, Stack, Text } from '@chakra-ui/react'
 import { getUnixTime } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -19,7 +19,8 @@ import type { BlockUsageData } from '@/lib/schemas'
 import { type BlockUsageDataPoint, transformBlockUsageData } from '@/lib/utils/block-usage'
 import { timeFormat } from '@/lib/utils/date'
 import { useBlockUsage } from '@/services/veworld-indexer/block-usage'
-import { BlockUsageControls, TIME_RANGES, type TimeRangeKey } from './BlockUsageControls'
+import { BlockUsageHeader } from './components/BlockUsageHeader/BlockUsageHeader'
+import { TIME_RANGES, type TimeRangeKey } from './constants'
 
 const chartHeight = '420px'
 const mainColor = '#E782FF'
@@ -32,11 +33,7 @@ export const BlockUsage = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date()) // User-selected specific date
   const [isLiveMode, setIsLiveMode] = useState(true) // Live mode updates with new blocks
 
-  const { blocksDataPoints, isLoading, canGoBack, canGoForward } = useBlockUsageChartData(
-    selectedRange,
-    selectedDate,
-    isLiveMode,
-  )
+  const { blocksDataPoints, canGoBack, canGoForward } = useBlockUsageChartData(selectedRange, selectedDate, isLiveMode)
 
   const handleRangeChange = (newRange: TimeRangeKey) => {
     setSelectedRange(newRange)
@@ -147,29 +144,18 @@ export const BlockUsage = () => {
 
   return (
     <Surface>
-      <Stack
-        direction={{ base: 'column', md: 'row' }}
-        justify="space-between"
-        align={{ base: 'flex-start', md: 'center' }}
-        gap={4}>
-        <Heading as="h2" textStyle="displayXs">
-          Block Usage
-        </Heading>
-
-        <BlockUsageControls
-          selectedRange={selectedRange}
-          selectedDate={selectedDate}
-          canGoBack={canGoBack}
-          canGoForward={canGoForward}
-          onRangeChange={handleRangeChange}
-          onNavigateBack={handleNavigateBack}
-          onNavigateForward={handleNavigateForward}
-          onResetToNow={handleResetToNow}
-          onDateChange={handleDateChange}
-          onHourChange={handleHourChange}
-        />
-      </Stack>
-
+      <BlockUsageHeader
+        selectedRange={selectedRange}
+        selectedDate={selectedDate}
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        onRangeChange={handleRangeChange}
+        onNavigateBack={handleNavigateBack}
+        onNavigateForward={handleNavigateForward}
+        onResetToNow={handleResetToNow}
+        onDateChange={handleDateChange}
+        onHourChange={handleHourChange}
+      />
       <Surface>
         <BlockUsageChart data={blocksDataPoints} selectedRange={selectedRange} />
       </Surface>
