@@ -1,23 +1,27 @@
 import Image from 'next/image'
 import { AgeText } from '@/components/ui/AgeText'
-import { BaseLink, CopyableAddressLink } from '@/components/ui/Links'
+import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
 import { AppendIconCell, type CellComponentProps, type Column, DataTable } from '@/components/ui/Table'
-import type { CompressedBlock } from '@/lib/schemas'
+import type { ExpandedBlock } from '@/lib/schemas'
 
-export const BlocksTable = ({ blocks }: { blocks: CompressedBlock[] }) => {
+export const BlocksTable = ({ blocks }: { blocks: ExpandedBlock[] }) => {
   const columns: Column<(typeof rows)[number]>[] = [
     { key: 'age', label: 'Age', Cell: ({ value }) => <AgeText timestamp={value as number} /> },
     {
       key: 'blockNumber',
-      label: 'ID',
-      Cell: ({ row }) => <BaseLink href={`/block/${row.id}`}>{row.blockNumber}</BaseLink>,
+      label: 'Block',
+      Cell: ({ row }) => (
+        <CopyableLink href={`/block/${row.id}`} value={row.blockNumberRaw}>
+          {row.blockNumber}
+        </CopyableLink>
+      ),
     },
     {
       key: 'signer',
       label: 'Signer',
       Cell: ({ row }) => <CopyableAddressLink truncate address={row.signer} />,
     },
-    { key: 'txs', label: 'Txs' },
+    { key: 'txs/clauses', label: 'Txs/Clauses' },
     {
       key: 'gasUsed',
       label: 'Gas Used',
@@ -25,16 +29,20 @@ export const BlocksTable = ({ blocks }: { blocks: CompressedBlock[] }) => {
     },
   ]
 
-  const rows = blocks.map(block => ({
-    id: block.id,
-    blockNumber: `#${block.number.toString()}`,
-    age: block.timestamp,
-    block: block.number.toLocaleString(),
-    signer: block.signer,
-    txs: block.transactions.length,
-    gasUsed: block.gasUsed.toLocaleString(),
-    isFinalized: block.isFinalized,
-  }))
+  const rows = blocks.map(block => {
+    const totalClauses = block.transactions.reduce((sum, tx) => sum + tx.clauses.length, 0)
+    return {
+      id: block.id,
+      blockNumber: `#${block.number.toString()}`,
+      blockNumberRaw: block.number.toString(),
+      age: block.timestamp,
+      block: block.number.toLocaleString(),
+      signer: block.signer,
+      'txs/clauses': `${block.transactions.length}/${totalClauses}`,
+      gasUsed: block.gasUsed.toLocaleString(),
+      isFinalized: block.isFinalized,
+    }
+  })
 
   return <DataTable columns={columns} rows={rows} />
 }
