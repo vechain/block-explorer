@@ -64,7 +64,7 @@ export const Footer = () => {
                   {'VeVote'} <FiExternalLink />
                 </Link>
                 <Link href="https://support.vechain.org/" {...linkProps}>
-                  {'Support Center'} <FiExternalLink />
+                  {t('Support Center')} <FiExternalLink />
                 </Link>
               </VStack>
             </HStack>
