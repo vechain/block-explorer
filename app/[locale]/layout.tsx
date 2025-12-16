@@ -1,7 +1,7 @@
 import { Box, Container } from '@chakra-ui/react'
 import type { Metadata } from 'next'
 import { Rubik } from 'next/font/google'
-import { Footer } from '@/components/Footer'
+import { Footer } from '@/components/Footer/Footer'
 import { Header } from '@/components/navigation/Header'
 import { ChakraProvider } from '@/components/theme/provider'
 import type { Locale } from '@/i18n/config'
@@ -38,7 +38,7 @@ export default async function RootLayout({
         <Providers locale={locale}>
           <Box
             as="main"
-            minH="100vh"
+            h="100vh"
             bgImage={{
               base: "url('/bg/Mobile.jpg')",
               md: "url('/bg/Desktop.jpg')",
@@ -46,9 +46,10 @@ export default async function RootLayout({
             color="text-primary"
             bgSize="100%"
             bgRepeat="no-repeat"
-            overflowX="hidden"
             // TODO: Update background color with theme once implemented
             backgroundColor="#0B0C10"
+            overflowY="auto"
+            overflowX="hidden"
           >
             <Container
               maxW="1080px"
@@ -61,8 +62,8 @@ export default async function RootLayout({
             >
               <Header />
               {children}
-              <Footer />
             </Container>
+            <Footer />
           </Box>
         </Providers>
       </body>

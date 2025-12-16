@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Image, Text } from '@chakra-ui/react'
+import { Box, Flex, Text } from '@chakra-ui/react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useState } from 'react'
@@ -13,6 +13,7 @@ import { MotionBox } from '../ui/MotionBox'
 import { LanguageModal } from './LanguageModal'
 import { NetworkSelect } from './NetworkSelect'
 import { SearchBar } from './SearchBar'
+import { Logo } from '../Logo'
 
 export const Header = () => {
   useColorMode()
@@ -26,21 +27,6 @@ export const Header = () => {
       </Box>
       <NavigationMenu />
     </Flex>
-  )
-}
-
-const Logo = () => {
-  const { t } = useTranslation()
-  return (
-    <Link href="/">
-      <Flex gap={2} alignItems="end">
-        <Image src="/vechain-light.svg" alt="VeChain logo" h={{ base: '18px', md: '30px' }} w="auto" />
-
-        <Text fontSize="10px" color="white" textTransform="uppercase" userSelect="none">
-          {t('Explorer')}
-        </Text>
-      </Flex>
-    </Link>
   )
 }
 
