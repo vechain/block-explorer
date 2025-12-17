@@ -1,8 +1,10 @@
+import { keepPreviousData } from '@tanstack/react-query'
 import { z } from 'zod'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
+import { indexerResponseSchema } from './schemas'
 
 export enum AccountTimeFrame {
   DAY = 'DAY',
@@ -12,10 +14,32 @@ export enum AccountTimeFrame {
   ALL = 'ALL',
 }
 
+const accountTotalSchema = z.object({
+  total: z.number(),
+  timeFrame: z.nativeEnum(AccountTimeFrame),
+  dayOfMonth: z.number().nullable().optional(),
+  weekOfYear: z.number().nullable().optional(),
+  month: z.number().nullable().optional(),
+  year: z.number().nullable().optional(),
+})
+
+const accountTotalsResponseSchema = indexerResponseSchema(accountTotalSchema)
+
+export type AccountTotal = z.infer<typeof accountTotalSchema>
+export type AccountTotalsResponse = z.infer<typeof accountTotalsResponseSchema>
+
 export const accountTotalsQueryOptions = (networkName: NetworkName, timeFrame: AccountTimeFrame) => ({
   queryKey: [getAccountTotals.name, networkName, timeFrame],
   queryFn: () => getAccountTotals({ networkName, timeFrame }),
-  refetchInterval: 5 * 1000,
+  refetchInterval: 60 * 1000, // Refetch every 60 seconds
+  placeholderData: keepPreviousData, // Prevent UI flickering during refetches
+  retry: (failureCount: number, error: Error) => {
+    if (failureCount < 3 && (error as Error)?.message?.includes('fetch')) {
+      return true
+    }
+    return false
+  },
+  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff, max 30s
 })
 
 const getAccountTotals = async ({
@@ -38,22 +62,3 @@ const getAccountTotals = async ({
     errorMessage: 'Invalid account totals response from VeWorld Indexer',
   })
 }
-
-const accountTotalSchema = z.object({
-  total: z.number(),
-  timeFrame: z.nativeEnum(AccountTimeFrame),
-  dayOfMonth: z.number().nullable().optional(),
-  weekOfYear: z.number().nullable().optional(),
-  month: z.number().nullable().optional(),
-  year: z.number().nullable().optional(),
-})
-
-const accountTotalsResponseSchema = z.object({
-  data: z.array(accountTotalSchema),
-  pagination: z.object({
-    hasNext: z.boolean(),
-  }),
-})
-
-export type AccountTotal = z.infer<typeof accountTotalSchema>
-export type AccountTotalsResponse = z.infer<typeof accountTotalsResponseSchema>

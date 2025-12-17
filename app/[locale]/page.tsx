@@ -39,7 +39,7 @@ export default async function HomePage({
         <PriceCards />
         <BlockUsage />
 
-        <Flex gap={2} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+        <Flex gap={4} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
           <TotalStakedChart />
           <GeneralInformationCard />
         </Flex>
