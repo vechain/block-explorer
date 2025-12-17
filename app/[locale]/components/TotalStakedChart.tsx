@@ -10,7 +10,7 @@ import { formatAbbreviated, formatAmount } from '@/lib/utils/units'
 import { useTotalVetStaked, useTotalVetStakedHistoric } from '@/services/veworld-indexer/hooks'
 import { TotalVetStakedRange } from '@/services/veworld-indexer/total-vet-staked-historic'
 
-const chartHeight = 100
+const chartHeight = 140
 
 type DataPoint = {
   timestamp: number
@@ -126,15 +126,6 @@ export const TotalStakedChart = () => {
       </Text>
 
       <TotalStakedChartVisualization data={chartData} />
-
-      <Stack>
-        <Text textStyle="bodyS" color="text-secondary">
-          {t('Circulating Supply')}
-        </Text>
-        <Text textStyle="bodyMSemibold" color="fg">
-          1521251
-        </Text>
-      </Stack>
     </Stack>
   )
 }
