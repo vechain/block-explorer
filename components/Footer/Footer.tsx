@@ -18,7 +18,7 @@ export const Footer = () => {
   }
   return (
     <VStack gap={0} mt={{ base: -10, md: -40 }}>
-      <Image src={'/footer-image.png'} alt="footer-image" />
+      <Image src={'/footer-image.webp'} alt="footer-image" />
       <Box bg="#0B0C10" pt={{ base: 20, md: 20 }} pb={{ base: 36, md: 20 }} width="100%">
         <Container maxW="container.lg">
           <Flex

@@ -40,8 +40,8 @@ export default async function RootLayout({
             as="main"
             h="100vh"
             bgImage={{
-              base: "url('/bg/Mobile.jpg')",
-              md: "url('/bg/Desktop.jpg')",
+              base: "url('/bg/Mobile.webp')",
+              md: "url('/bg/Desktop.webp')",
             }}
             color="text-primary"
             bgSize="100%"
