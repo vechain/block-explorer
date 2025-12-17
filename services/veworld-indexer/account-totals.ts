@@ -31,7 +31,7 @@ export type AccountTotalsResponse = z.infer<typeof accountTotalsResponseSchema>
 export const accountTotalsQueryOptions = (networkName: NetworkName, timeFrame: AccountTimeFrame) => ({
   queryKey: [getAccountTotals.name, networkName, timeFrame],
   queryFn: () => getAccountTotals({ networkName, timeFrame }),
-  refetchInterval: 60 * 1000, // Refetch every 60 seconds
+  refetchInterval: 5 * 1000, // Refetch every 5 seconds
   placeholderData: keepPreviousData, // Prevent UI flickering during refetches
   retry: (failureCount: number, error: Error) => {
     if (failureCount < 3 && (error as Error)?.message?.includes('fetch')) {
