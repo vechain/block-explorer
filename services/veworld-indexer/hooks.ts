@@ -19,6 +19,7 @@ import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
 import { contractTransactionsQueryOptions } from './transactions-contract'
 import { accountTransfersQueryOptions } from './transfers'
+import { getAllValidatorsCount, ValidatorStatus } from './validators'
 
 export const useNftHolders = () => {
   const { activeNetwork } = useSettingsStore()
@@ -71,3 +72,22 @@ export const useAccountErc721 = ({ params }: { params: IndexerGetErc721Params })
   const { activeNetwork } = useSettingsStore()
   return useQuery(accountErc721TokensQueryOptions(activeNetwork.name, params))
 }
+
+export const useValidatorsCount = (status?: ValidatorStatus) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery({
+    queryKey: ['validatorsCount', activeNetwork.name, status],
+    queryFn: () => getAllValidatorsCount(activeNetwork.name, status),
+    refetchInterval: 60 * 1000, // Refetch every 60 seconds
+    retry: (failureCount: number, error: Error) => {
+      // Retry up to 3 times for network errors
+      if (failureCount < 3 && error?.message?.includes('fetch')) {
+        return true
+      }
+      return false
+    },
+    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff with 30s max
+  })
+}
+
+export { ValidatorStatus }

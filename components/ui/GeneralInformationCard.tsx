@@ -2,20 +2,26 @@
 
 import { Flex, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import { AccountTimeFrame, useAccountTotals } from '@/services/veworld-indexer/hooks'
+import {
+  AccountTimeFrame,
+  useAccountTotals,
+  useValidatorsCount,
+  ValidatorStatus,
+} from '@/services/veworld-indexer/hooks'
 
-const VALIDATORS = 101
 const USERS_STAKING = 11773
 
 export const GeneralInformationCard = () => {
   const { t } = useTranslation()
   const { data: accountTotalsData, isLoading: isLoadingAccounts } = useAccountTotals(AccountTimeFrame.ALL)
+  const { data: validatorsCount, isLoading: isLoadingValidators } = useValidatorsCount(ValidatorStatus.ACTIVE)
 
   const formatNumber = (num: number): string => {
     return num.toLocaleString('en-US')
   }
 
   const totalAccounts = accountTotalsData?.data?.[0]?.total ?? 0
+  const validators = validatorsCount ?? 0
 
   return (
     <Flex
@@ -47,9 +53,13 @@ export const GeneralInformationCard = () => {
           <Text textStyle="bodyM" color="text-secondary">
             {t('Validators')}
           </Text>
-          <Text textStyle="displayS" color="text-primary">
-            {formatNumber(VALIDATORS)}
-          </Text>
+          {isLoadingValidators ? (
+            <Skeleton height="24px" width="120px" />
+          ) : (
+            <Text textStyle="displayS" color="text-primary">
+              {formatNumber(validators)}
+            </Text>
+          )}
         </Stack>
 
         <Stack>
