@@ -9,7 +9,7 @@ import {
   ValidatorStatus,
 } from '@/services/veworld-indexer/hooks'
 
-const USERS_STAKING = 11773
+const USERS_STAKING = 0 // TODO: Implement hook to fetch users staking count
 
 export const GeneralInformationCard = () => {
   const { t } = useTranslation()
