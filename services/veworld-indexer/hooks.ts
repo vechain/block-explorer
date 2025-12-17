@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { accountTotalsQueryOptions, AccountTimeFrame } from './account-totals'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
 import { nftHoldersQueryOptions } from './nft-holders'
 import { accountErc721TokensQueryOptions } from './nfts'
@@ -38,6 +39,13 @@ export const useTotalVthoClaimed = () => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(totalVthoClaimedQueryOptions(activeNetwork.name))
 }
+
+export const useAccountTotals = (timeFrame: AccountTimeFrame) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountTotalsQueryOptions(activeNetwork.name, timeFrame))
+}
+
+export { AccountTimeFrame }
 
 export const useAccountTransactions = ({ params }: { params: IndexerGetTransactionsParams }) => {
   const { activeNetwork } = useSettingsStore()
