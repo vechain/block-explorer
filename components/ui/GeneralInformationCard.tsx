@@ -8,7 +8,7 @@ import {
   useValidatorsCount,
   ValidatorStatus,
 } from '@/services/veworld-indexer/hooks'
-import { Surface } from './Surface'
+import { Card } from './Card'
 
 const USERS_STAKING = 0 // TODO: Implement hook to fetch users staking count
 
@@ -25,7 +25,7 @@ export const GeneralInformationCard = () => {
   const validators = validatorsCount ?? 0
 
   return (
-    <Surface width="208px" height="274px">
+    <Card width="208px" height="274px">
       <Stack gap={2} flex="1" justifyContent="space-between">
         <Stack>
           <Text textStyle="bodyM" color="text-secondary">
@@ -62,6 +62,6 @@ export const GeneralInformationCard = () => {
           </Text>
         </Stack>
       </Stack>
-    </Surface>
+    </Card>
   )
 }

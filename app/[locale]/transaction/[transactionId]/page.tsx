@@ -12,7 +12,7 @@ import { VETBalance } from '@/components/ui/Balance'
 import { DataCard } from '@/components/ui/DataCard'
 import { IDChip } from '@/components/ui/IDChip'
 import { AddressLink, BaseLink } from '@/components/ui/Links'
-import { Surface } from '@/components/ui/Surface'
+import { Card } from '@/components/ui/Card'
 import { ValueSwitch } from '@/components/ui/ValueSwitch'
 import { type Transaction, type TransactionId, type TransactionReceipt, transactionIdSchema } from '@/lib/schemas'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/hooks'
@@ -74,7 +74,7 @@ const TransactionDetails = ({
     <Stack gap="8">
       <SearchBar mt="16" />
 
-      <Surface>
+      <Card>
         <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
           <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap" mb={{ base: '6', md: '0' }}>
             {t('Transaction')}
@@ -130,7 +130,7 @@ const TransactionDetails = ({
         />
 
         <TransactionViews transaction={transaction} receipt={receipt} view={view} />
-      </Surface>
+      </Card>
     </Stack>
   )
 }

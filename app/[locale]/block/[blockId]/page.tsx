@@ -10,7 +10,7 @@ import { SearchBar } from '@/components/navigation/SearchBar'
 import { DataCard } from '@/components/ui/DataCard'
 import { IDChip } from '@/components/ui/IDChip'
 import { AddressLink } from '@/components/ui/Links'
-import { Surface } from '@/components/ui/Surface'
+import { Card } from '@/components/ui/Card'
 import { type BlockId, blockIdSchema } from '@/lib/schemas'
 import { useBlockExpanded } from '@/services/thor/hooks'
 import { TransactionsTable } from '../../components/TransactionsTable'
@@ -42,7 +42,7 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
     <Stack gap="8">
       <SearchBar mt="16" />
 
-      <Surface>
+      <Card>
         <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
           <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap" mb={{ base: '6', md: '0' }}>
             {t('Block Details')}
@@ -94,14 +94,14 @@ const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
         </Flex>
 
         <BlockInsight block={block} />
-      </Surface>
+      </Card>
 
-      <Surface>
+      <Card>
         <Heading as="h2" textStyle="displayXs">
           {t('Transactions')}
         </Heading>
         <TransactionsTable transactions={block.transactions} />
-      </Surface>
+      </Card>
     </Stack>
   )
 }

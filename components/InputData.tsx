@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import type { InputData as InputDataType } from '@/hooks/useDecodeInputData'
 import { type DecodedInputData, useDecodeInputData } from '@/hooks/useDecodeInputData'
 import type { HexString } from '@/lib/schemas'
-import { Surface } from './ui/Surface'
+import { Card } from './ui/Card'
 import { ValueSwitch } from './ui/ValueSwitch'
 
 enum InputDataView {
@@ -20,7 +20,7 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
   const [view, setView] = useState<string>(() => (isDecoded ? InputDataView.DECODED : InputDataView.RAW))
 
   return (
-    <Surface variant="secondary">
+    <Card variant="secondary">
       <ValueSwitch
         layoutId={`input-data-${clauseIndex}`}
         bg="bg-secondary"
@@ -29,13 +29,13 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
         onChange={setView}
       />
       {isLoading ? (
-        <Surface variant="secondary">
+        <Card variant="secondary">
           <Skeleton height="320px" width="100%" />
-        </Surface>
+        </Card>
       ) : (
         <InputDataViews inputData={inputData} activeView={view as InputDataView} />
       )}
-    </Surface>
+    </Card>
   )
 }
 
@@ -44,7 +44,7 @@ const InputDataViews = ({ inputData, activeView }: { inputData: InputDataType; a
     return <DecodedInputDataTable decodedInputData={inputData.decoded} />
   }
 
-  return <Surface variant="secondary">{inputData.raw}</Surface>
+  return <Card variant="secondary">{inputData.raw}</Card>
 }
 
 const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: DecodedInputData | undefined }) => {
@@ -52,9 +52,9 @@ const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: Decoded
 
   if (!decodedInputData) {
     return (
-      <Surface variant="secondary">
+      <Card variant="secondary">
         <Text>{t('No ABI found')}</Text>
-      </Surface>
+      </Card>
     )
   }
 

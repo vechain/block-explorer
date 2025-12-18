@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { LuTrendingDown, LuTrendingUp } from 'react-icons/lu'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { usePriceList } from '@/services/coin-api/hooks'
-import { Surface } from '@/components/ui/Surface'
+import { Card } from '@/components/ui/Card'
 
 type SupportedTokenSymbol = 'VET' | 'VTHO' | 'B3TR'
 
@@ -87,7 +87,7 @@ interface TokenPriceCardProps {
 
 const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: TokenPriceCardProps) => {
   return (
-    <Surface
+    <Card
       alignItems="flex-start"
       flex={{ base: '0 0 auto', md: 1 }}
       flexShrink={0}
@@ -122,6 +122,6 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
           )}
         </HStack>
       )}
-    </Surface>
+    </Card>
   )
 }

@@ -7,7 +7,7 @@ import { AgeText } from '@/components/ui/AgeText'
 import { DataCard } from '@/components/ui/DataCard'
 import { GasUsed } from '@/components/ui/GasFees'
 import { CopyableLink } from '@/components/ui/Links'
-import { Surface } from '@/components/ui/Surface'
+import { Card } from '@/components/ui/Card'
 import type { ExpandedBlock } from '@/lib/schemas'
 
 export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
@@ -45,7 +45,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   ]
 
   return (
-    <Surface variant="secondary">
+    <Card variant="secondary">
       <Heading as="h2" textStyle="displayXs">
         {t('Block Insights')}
       </Heading>
@@ -108,7 +108,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
           </DataCard>
         </Grid>
       </Flex>
-    </Surface>
+    </Card>
   )
 }
 

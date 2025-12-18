@@ -9,7 +9,7 @@ import { formatEther } from 'viem'
 import { formatAbbreviated, formatAmount } from '@/lib/utils/units'
 import { useTotalVetStaked, useTotalVetStakedHistoric } from '@/services/veworld-indexer/hooks'
 import { TotalVetStakedRange } from '@/services/veworld-indexer/total-vet-staked-historic'
-import { Surface } from '@/components/ui/Surface'
+import { Card } from '@/components/ui/Card'
 
 const chartHeight = 140
 
@@ -46,7 +46,7 @@ export const TotalStakedChart = () => {
   if (isLoading) return <Skeleton height="274px" width="415px" rounded="md" />
 
   return (
-    <Surface width="415px" height="274px">
+    <Card width="415px" height="274px">
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL">
           {t('Total Staked')}
@@ -117,7 +117,7 @@ export const TotalStakedChart = () => {
       </Text>
 
       <TotalStakedChartVisualization data={chartData} />
-    </Surface>
+    </Card>
   )
 }
 

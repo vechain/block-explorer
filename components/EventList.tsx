@@ -5,7 +5,7 @@ import { type DecodedEvent, type DecodedEventArgs, type ParsedEvent, useDecodeEv
 import { EventType, type RawEvent } from '@/lib/schemas'
 import type * as abi from '@/lib/schemas/abi'
 import { AddressLink } from './ui/Links'
-import { Surface } from './ui/Surface'
+import { Card } from './ui/Card'
 import { ValueSwitch } from './ui/ValueSwitch'
 import { useTranslation } from 'react-i18next'
 
@@ -34,16 +34,16 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
 
   if (isLoading) {
     return (
-      <Surface variant="secondary">
+      <Card variant="secondary">
         <Skeleton height="320px" width="100%" />
-      </Surface>
+      </Card>
     )
   }
 
   return (
-    <Surface variant="secondary">
+    <Card variant="secondary">
       <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap">
-        <Surface
+        <Card
           variant="secondary"
           flexDirection="row"
           display="flex"
@@ -57,7 +57,7 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
           <Text># {index}</Text>
           <Text>{t('emitter')}</Text>
           <AddressLink address={event.raw.address} truncate={isMobile} />
-        </Surface>
+        </Card>
         <ValueSwitch
           layoutId={layoutId}
           bg="bg-secondary"
@@ -68,7 +68,7 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
         />
       </Flex>
       <EventViews event={event} activeView={view as EventView} />
-    </Surface>
+    </Card>
   )
 }
 
@@ -119,17 +119,17 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
 
   if (!event) {
     return (
-      <Surface variant="secondary">
+      <Card variant="secondary">
         <Text>{t('No ABI found')}</Text>
-      </Surface>
+      </Card>
     )
   }
 
   return (
-    <Surface variant="secondary">
+    <Card variant="secondary">
       <Text textStyle="bodyL">{event.signature.split('(')[0]}</Text>
       <DecodedEventArgsTable inputs={event.inputs} args={event.args} />
-    </Surface>
+    </Card>
   )
 }
 

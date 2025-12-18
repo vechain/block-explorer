@@ -15,7 +15,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { Surface } from '@/components/ui/Surface'
+import { Card } from '@/components/ui/Card'
 import type { BlockUsageData } from '@/lib/schemas'
 import { type BlockUsageDataPoint, transformBlockUsageData } from '@/lib/utils/block-usage'
 import { timeFormat } from '@/lib/utils/date'
@@ -159,7 +159,7 @@ export const BlockUsage = () => {
   }
 
   return (
-    <Surface>
+    <Card>
       <BlockUsageHeader
         selectedRange={selectedRange}
         selectedDate={selectedDate}
@@ -172,10 +172,10 @@ export const BlockUsage = () => {
         onDateChange={handleDateChange}
         onHourChange={handleHourChange}
       />
-      <Surface variant="secondary">
+      <Card variant="secondary">
         <BlockUsageChart data={blocksDataPoints} selectedRange={selectedRange} />
-      </Surface>
-    </Surface>
+      </Card>
+    </Card>
   )
 }
 

@@ -4,7 +4,7 @@ import type { FlexProps } from '@chakra-ui/react'
 import { Flex } from '@chakra-ui/react'
 import { forwardRef, useMemo } from 'react'
 
-type SurfaceProps = FlexProps & {
+type CardProps = FlexProps & {
   variant?: 'primary' | 'secondary'
 }
 
@@ -19,7 +19,7 @@ const variantStyles = {
   },
 }
 
-export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(({ variant = 'primary', ...props }, ref) => {
+export const Card = forwardRef<HTMLDivElement, CardProps>(({ variant = 'primary', ...props }, ref) => {
   const variantStyle = useMemo(() => variantStyles[variant], [variant])
   return (
     <Flex
@@ -38,4 +38,4 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(({ variant = 'pr
   )
 })
 
-Surface.displayName = 'Surface'
+Card.displayName = 'Card'
