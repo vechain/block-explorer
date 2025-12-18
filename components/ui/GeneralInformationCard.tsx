@@ -1,6 +1,6 @@
 'use client'
 
-import { Flex, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Skeleton, Stack, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import {
   AccountTimeFrame,
@@ -8,6 +8,7 @@ import {
   useValidatorsCount,
   ValidatorStatus,
 } from '@/services/veworld-indexer/hooks'
+import { Surface } from './Surface'
 
 const USERS_STAKING = 0 // TODO: Implement hook to fetch users staking count
 
@@ -24,17 +25,7 @@ export const GeneralInformationCard = () => {
   const validators = validatorsCount ?? 0
 
   return (
-    <Flex
-      flexDirection="column"
-      width="208px"
-      height="274px"
-      borderRadius="md"
-      borderWidth="1px"
-      borderColor="border-surface"
-      bg="bg-card-surface"
-      backdropFilter="blur(32px)"
-      p={5}
-    >
+    <Surface width="208px" height="274px">
       <Stack gap={2} flex="1" justifyContent="space-between">
         <Stack>
           <Text textStyle="bodyM" color="text-secondary">
@@ -71,6 +62,6 @@ export const GeneralInformationCard = () => {
           </Text>
         </Stack>
       </Stack>
-    </Flex>
+    </Surface>
   )
 }

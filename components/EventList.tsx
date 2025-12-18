@@ -50,7 +50,7 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
         </BorderedSurface>
         <ValueSwitch
           layoutId={layoutId}
-          bg="bg-surface-alt"
+          bg="bg-alt-primary"
           values={[EventView.RAW, EventView.DECODED]}
           activeValue={view}
           onChange={setView}
@@ -76,13 +76,13 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
 
   return (
     <ScrollArea.Root size="sm" variant="hover">
-      <ScrollArea.Viewport borderWidth="1px" borderColor="border-surface" borderRadius="md">
+      <ScrollArea.Viewport borderWidth="1px" borderColor="border-primary" borderRadius="md">
         <ScrollArea.Content>
           <Grid
             templateColumns={`${firstColumnWidth} 30px 1fr`}
             p="4"
             borderBottomWidth="1px"
-            borderColor="border-surface"
+            borderColor="border-primary"
           >
             {event.topics.map((topic, index) => (
               <>
@@ -137,14 +137,14 @@ const DecodedEventArgsTable = ({ inputs, args }: { inputs: abi.AbiEventParameter
         </Text>
       </Grid>
 
-      <Box borderWidth="1px" borderColor="border-surface" borderRadius="md" overflow="hidden">
+      <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
         {inputs.map((input, index) => (
           <Grid
             key={`${index}-${input.name}`}
             templateColumns="60px 160px 160px 1fr"
             p="4"
             borderBottomWidth={index < inputs.length - 1 ? '1px' : '0'}
-            borderColor="border-surface"
+            borderColor="border-primary"
           >
             <Text>{index}</Text>
             <Text>{input.name}</Text>

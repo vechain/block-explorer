@@ -29,15 +29,7 @@ export const SearchBar = (props: FlexProps) => {
   }
 
   return (
-    <Flex
-      border="1px solid"
-      borderColor="bg-card-surface-2"
-      bg="bg-card-surface-2"
-      rounded="full"
-      p="3.5"
-      gap="4"
-      {...props}
-    >
+    <Flex border="1px solid" borderColor="border-primary" bg="bg-primary" rounded="full" p="3.5" gap="4" {...props}>
       <LuSearch size={20} color="text-primary" onClick={handleSearch} />
       <Field.Root as="form" onSubmit={handleSubmit} invalid={!!error} flex="1" gap="0">
         <Input

@@ -26,7 +26,7 @@ export function TransactionClauses({
   const isMobile = useBreakpointValue({ base: true, md: false })
 
   return (
-    <Accordion.Root multiple rounded="md" overflow="hidden" borderWidth="1px" borderColor="border-surface">
+    <Accordion.Root multiple rounded="md" overflow="hidden" borderWidth="1px" borderColor="border-primary">
       {transaction.clauses.map((clause, index) => (
         <Accordion.Item
           key={index.toString()}
@@ -34,7 +34,7 @@ export function TransactionClauses({
           px="4"
           py="5"
           border="none"
-          bg={index % 2 === 0 ? 'bg-card-surface-2' : 'bg-card-surface'}
+          bg={index % 2 === 0 ? 'row-even-bg-primary' : 'row-odd-bg-primary'}
         >
           <Flex>
             <Accordion.ItemTrigger p="0" justifyContent="space-between" cursor="pointer">
@@ -65,7 +65,7 @@ const ClauseContent = ({ clause, eventLogs, index }: { clause: Clause; eventLogs
       <Accordion.ItemBody py={{ base: '4', md: '6' }} display="flex" flexDirection="column" gap="4">
         <ValueSwitch
           layoutId={`clause-${index}`}
-          bg="bg-surface-alt"
+          bg="bg-alt-primary"
           values={[ClauseView.INPUT_DATA, ClauseView.EVENTS]}
           activeValue={view}
           onChange={setView}

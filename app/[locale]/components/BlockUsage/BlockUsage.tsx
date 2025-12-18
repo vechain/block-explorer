@@ -172,7 +172,7 @@ export const BlockUsage = () => {
         onDateChange={handleDateChange}
         onHourChange={handleHourChange}
       />
-      <Surface>
+      <Surface variant="secondary">
         <BlockUsageChart data={blocksDataPoints} selectedRange={selectedRange} />
       </Surface>
     </Surface>
@@ -273,6 +273,7 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
             tickFormatter={formatXAxis}
             tick={{ style: { fontSize: '.7rem' } }}
             axisLine={false}
+            stroke="white"
           />
           <YAxis
             unit="M"
@@ -280,6 +281,7 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
             tickFormatter={value => (Number(value) / 10 ** 6).toLocaleString()}
             tick={{ style: { fontSize: '.8rem' } }}
             axisLine={false}
+            stroke="white"
           />
 
           <Tooltip

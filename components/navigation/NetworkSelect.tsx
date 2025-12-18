@@ -33,8 +33,8 @@ export const NetworkSelect = () => {
       gap={1}
       alignItems="center"
       border="1px solid"
-      borderColor="bg-card-surface-2"
-      bg="bg-card-surface-2"
+      borderColor="border-primary"
+      bg="bg-primary"
       p={1.5}
       rounded="full"
       textStyle="bodyMSemibold"
@@ -73,15 +73,16 @@ const NetworkItem = ({
           left={0}
           right={0}
           bottom={0}
-          bg="white"
-          color="bg-primary"
+          bg="bg-accent-primary"
+          color="text-alt-primary"
           rounded="full"
         />
       )}
       <MotionText
         as="span"
         position="relative"
-        animate={{ color: isActive ? 'var(--chakra-colors-bg-primary)' : 'var(--chakra-colors-text-primary)' }}
+        color={isActive ? 'text-alt-primary' : 'text-primary'}
+        animate={{ color: isActive ? 'text-alt-primary' : 'text-primary' }}
         textTransform="capitalize"
         fontSize={{ base: 'body-s', md: 'body-m' }}
       >

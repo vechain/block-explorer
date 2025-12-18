@@ -9,6 +9,7 @@ import { formatEther } from 'viem'
 import { formatAbbreviated, formatAmount } from '@/lib/utils/units'
 import { useTotalVetStaked, useTotalVetStakedHistoric } from '@/services/veworld-indexer/hooks'
 import { TotalVetStakedRange } from '@/services/veworld-indexer/total-vet-staked-historic'
+import { Surface } from '@/components/ui/Surface'
 
 const chartHeight = 140
 
@@ -45,17 +46,7 @@ export const TotalStakedChart = () => {
   if (isLoading) return <Skeleton height="274px" width="415px" rounded="md" />
 
   return (
-    <Stack
-      width="415px"
-      height="274px"
-      gap={4}
-      bg="bg-card-surface-2"
-      borderRadius="md"
-      borderWidth="1px"
-      borderColor="border-surface"
-      backdropFilter="blur(32px)"
-      p={5}
-    >
+    <Surface width="415px" height="274px">
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL">
           {t('Total Staked')}
@@ -64,10 +55,10 @@ export const TotalStakedChart = () => {
         <Flex
           align="center"
           gap={1}
-          bg="bg-surface-alt"
+          bg="bg-primary"
           borderRadius="full"
           borderWidth="0.5px"
-          borderColor="border-surface"
+          borderColor="border-primary"
           p="4px"
         >
           <Flex
@@ -78,7 +69,7 @@ export const TotalStakedChart = () => {
             py={1}
             borderRadius="full"
             bg={selectedRange === TotalVetStakedRange.DAY ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.DAY ? 'bg-primary' : 'fg'}
+            color={selectedRange === TotalVetStakedRange.DAY ? 'text-alt-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.DAY)}
@@ -94,7 +85,7 @@ export const TotalStakedChart = () => {
             py={1}
             borderRadius="full"
             bg={selectedRange === TotalVetStakedRange.MONTH ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.MONTH ? 'bg-primary' : 'fg'}
+            color={selectedRange === TotalVetStakedRange.MONTH ? 'text-alt-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.MONTH)}
@@ -110,7 +101,7 @@ export const TotalStakedChart = () => {
             py={1}
             borderRadius="full"
             bg={selectedRange === TotalVetStakedRange.YEAR ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.YEAR ? 'bg-primary' : 'fg'}
+            color={selectedRange === TotalVetStakedRange.YEAR ? 'text-alt-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.YEAR)}
@@ -126,7 +117,7 @@ export const TotalStakedChart = () => {
       </Text>
 
       <TotalStakedChartVisualization data={chartData} />
-    </Stack>
+    </Surface>
   )
 }
 

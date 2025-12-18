@@ -20,20 +20,27 @@ const config = defineConfig({
         // Text colors
         'text-primary': { value: 'rgba(238, 243, 247, 1)' },
         'text-secondary': { value: 'rgba(195, 198, 200, 1)' },
-        'text-alt': { value: 'rgba(186, 196, 220, 1)' },
-        // Background colors
-        'bg-primary': { value: 'rgba(11, 12, 16, 1)' },
-        'bg-card-surface': { value: 'rgba(255, 255, 255, 0.06)' },
-        'bg-card-surface-2': { value: 'rgba(255, 255, 255, 0.1)' },
-        'bg-card-surface-3': { value: 'rgba(255, 255, 255, 0.2)' },
-        'bg-card-surface-hover': { value: 'rgba(255, 255, 255, 0.1)' },
-        'bg-card-surface-active': { value: 'rgba(255, 255, 255, 0.2)' },
-        'bg-surface-alt': { value: 'rgba(0, 0, 0, 0.2)' },
-        'bg-surface-alt-1': { value: 'rgba(0, 0, 0, 0.1)' },
-        'bg-surface-alt-hover': { value: 'rgba(0, 0, 0, 0.4)' },
-        // Border colors
-        'border-surface': { value: 'rgba(255, 255, 255, 0.2)' },
-        'border-surface-2': { value: 'rgba(255, 255, 255, 0.4)' },
+        'text-alt-primary': { value: 'rgba(11, 12, 16, 1)' },
+
+        // Background
+        'bg-primary': { value: 'rgba(50, 50, 50, 0.06)' },
+        'bg-alt-primary': { value: 'rgba(255, 255, 255, 0.1)' },
+        'bg-accent-primary': { value: 'white' },
+
+        // Border
+        'border-primary': { value: 'rgba(255, 255, 255, 0.2)' },
+
+        // Card
+        'card-bg-primary': {
+          value:
+            'radial-gradient(circle 2000px at -150px -150px, rgba(184, 166, 255, 0.53) 0%, rgba(50, 50, 50, 0.06) 20%)',
+        },
+        'card-bg-secondary': { value: 'rgba(0,0,0, 0.4)' },
+
+        // Table and Accordion rows
+        'row-odd-bg-primary': { value: 'rgba(255, 255, 255, 0.08)' },
+        'row-even-bg-primary': { value: 'rgba(255, 255, 255, 0.1)' },
+
         // Blur colors
         'blur-blue': { value: 'rgba(54, 24, 251, 1)' },
         'blur-purple': { value: 'rgba(143, 66, 221, 1)' },

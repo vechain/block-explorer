@@ -45,7 +45,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   ]
 
   return (
-    <Surface bg="bg-surface-alt" borderColor="transparent">
+    <Surface variant="secondary">
       <Heading as="h2" textStyle="displayXs">
         {t('Block Insights')}
       </Heading>
@@ -57,7 +57,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
           rounded="md"
           border="1px solid"
           textStyle="bodyM"
-          borderColor="border-surface"
+          borderColor="border-primary"
         >
           {blockInsights.map(insight => (
             <Flex
@@ -66,7 +66,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
               px="6"
               flex="1"
               alignItems="center"
-              borderBottom="1px solid var(--chakra-colors-border-surface)"
+              borderBottom="1px solid var(--chakra-colors-border-primary)"
               css={{ '&:last-child': { borderBottom: 'none' } }}
             >
               <Text width="130px">{insight.label}</Text>
@@ -117,7 +117,7 @@ const TxFeatures = ({ features }: { features: number | undefined }) => {
 
   if (features === 1) {
     return (
-      <Badge textStyle="bodyS" rounded="8px" variant="subtle" px="2" py="1" size="sm" bg="bg-surface-alt">
+      <Badge textStyle="bodyS" rounded="8px" variant="subtle" px="2" py="1" size="sm" bg="bg-alt-primary">
         {t('VIP-191 - Fee delegation')}
       </Badge>
     )

@@ -95,7 +95,7 @@ The app uses Next.js App Router with internationalized routes:
 
 Chakra UI v3 custom theme configured in `components/theme/config.tsx`:
 
-- Custom color tokens for blockchain explorer aesthetic (text-primary, bg-card-surface, etc.)
+- Custom color tokens for blockchain explorer aesthetic (text-primary, bg-primary, border-primary, etc.)
 - Dark mode design with glass-morphism surfaces
 - Custom font: Rubik (loaded via next/font/google)
 - Responsive design tokens and breakpoints

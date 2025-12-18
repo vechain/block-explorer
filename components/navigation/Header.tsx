@@ -67,7 +67,8 @@ const NavigationMenu = () => {
               bg="transparent"
               cursor="pointer"
               borderRadius="full"
-              border="1px solid var(--chakra-colors-border-surface-2)"
+              border="1px solid"
+              borderColor="border-primary"
               p={2}
             >
               <FiMenu size={20} />
@@ -86,8 +87,8 @@ const NavigationMenu = () => {
                 right={0}
                 mt={2}
                 border="1px solid"
-                borderColor="bg-card-surface-2"
-                bg="bg-card-surface-2"
+                borderColor="border-primary"
+                bg="bg-primary"
                 backdropFilter="blur(32px)"
                 borderRadius="md"
                 boxShadow="lg"
@@ -110,7 +111,7 @@ const NavigationMenu = () => {
                   w="100%"
                   cursor="pointer"
                   borderTopWidth="1px"
-                  borderColor="border-surface"
+                  borderColor="border-primary"
                   mt={2}
                   pt={2}
                 >

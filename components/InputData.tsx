@@ -23,7 +23,7 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
     <SurfaceAlt>
       <ValueSwitch
         layoutId={`input-data-${clauseIndex}`}
-        bg="bg-surface-alt"
+        bg="bg-alt-primary"
         values={[InputDataView.RAW, InputDataView.DECODED]}
         activeValue={view}
         onChange={setView}
@@ -75,14 +75,14 @@ const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: Decoded
           </Text>
         </Grid>
 
-        <Box borderWidth="1px" borderColor="border-surface" borderRadius="md" overflow="hidden">
+        <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
           {decodedInputData.inputs.map((input, index) => (
             <Grid
               key={`${index}-${input.name}`}
               templateColumns={templateColumns}
               p="4"
               borderBottomWidth={index < decodedInputData.inputs.length - 1 ? '1px' : '0'}
-              borderColor="border-surface"
+              borderColor="border-primary"
             >
               <Text>{index}</Text>
               <Text>{input.name}</Text>

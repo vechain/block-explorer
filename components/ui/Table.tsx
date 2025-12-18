@@ -34,7 +34,7 @@ type DataTableProps<T extends TableRow = TableRow> = {
   rows: T[]
 }
 
-const border = '1px solid var(--chakra-colors-border-surface)'
+const border = '1px solid var(--chakra-colors-border-primary)'
 
 export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: DataTableProps<T>) => (
   <TableChakra.ScrollArea>
@@ -86,12 +86,12 @@ export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: Data
             borderBottomRightRadius: 'var(--chakra-radii-lg)',
           },
           '& tr:nth-of-type(odd)': {
-            background: 'var(--chakra-colors-bg-card-surface)',
+            background: 'var(--chakra-colors-row-odd-bg-primary)',
           },
         }}
       >
         {rows.map(row => (
-          <TableChakra.Row key={row.id} height="fit-content" bg="bg-card-surface-2">
+          <TableChakra.Row key={row.id} height="fit-content" bg="row-even-bg-primary">
             {columns.map(column => (
               <TableChakra.Cell
                 key={`${row.id}-${column.key}`}
@@ -117,7 +117,7 @@ export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: Data
 )
 
 export const TableSkeleton = (props: SkeletonProps) => {
-  return <Skeleton height="320px" width="100%" bg="bg-card-surface-2" {...props} />
+  return <Skeleton height="320px" width="100%" bg="bg-primary" {...props} />
 }
 
 /**
