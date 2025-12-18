@@ -32,9 +32,13 @@ export const PriceCards = () => {
   const { t } = useTranslation()
   const { data: priceList, isLoading: priceListLoading } = usePriceList()
 
-  const { data: vetDailyPrices, isLoading: vetDailyLoading } = useTokenDailyPrices('vechain', 'usd')
-  const { data: vthoDailyPrices, isLoading: vthoDailyLoading } = useTokenDailyPrices('vethor-token', 'usd')
-  const { data: b3trDailyPrices, isLoading: b3trDailyLoading } = useTokenDailyPrices('vebetterdao', 'usd')
+  // Daily prices load independently - don't block main price display
+  const { data: vetDailyPrices } = useTokenDailyPrices('vechain', 'usd')
+  const { data: vthoDailyPrices } = useTokenDailyPrices('vethor-token', 'usd')
+  const { data: b3trDailyPrices } = useTokenDailyPrices('vebetterdao', 'usd')
+
+  // Only show loading skeleton while main price list is loading
+  const isPriceLoading = priceListLoading || !priceList
 
   return (
     <Flex
@@ -57,21 +61,21 @@ export const PriceCards = () => {
         label={t('VET Price')}
         price={priceList?.vet.usd}
         changePercent={getDailyChangePercent(vetDailyPrices)}
-        isLoading={priceListLoading || !priceList || vetDailyLoading}
+        isLoading={isPriceLoading}
       />
       <TokenPriceCard
         token="VTHO"
         label={t('VTHO Price')}
         price={priceList?.vtho.usd}
         changePercent={getDailyChangePercent(vthoDailyPrices)}
-        isLoading={priceListLoading || !priceList || vthoDailyLoading}
+        isLoading={isPriceLoading}
       />
       <TokenPriceCard
         token="B3TR"
         label={t('B3TR Price')}
         price={priceList?.b3tr.usd}
         changePercent={getDailyChangePercent(b3trDailyPrices)}
-        isLoading={priceListLoading || !priceList || b3trDailyLoading}
+        isLoading={isPriceLoading}
       />
     </Flex>
   )
