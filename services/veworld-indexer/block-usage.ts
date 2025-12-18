@@ -41,6 +41,8 @@ const blockUsageQueryOptions = (
     queryKey: ['blockUsage', networkName, startTimestamp, endTimestamp, isLiveMode],
     queryFn: () => getBlockUsage({ networkName, startTimestamp, endTimestamp }),
     staleTime: isLiveMode ? getRefetchInterval(rangeSeconds) : Infinity,
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnMount: false, // Don't refetch on mount if data exists (will still refetch via interval if live mode)
     refetchInterval: refetchInterval,
     placeholderData: keepPreviousData,
   }

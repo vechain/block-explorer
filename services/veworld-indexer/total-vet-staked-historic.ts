@@ -15,6 +15,9 @@ export enum TotalVetStakedRange {
 export const totalVetStakedHistoricQueryOptions = (networkName: NetworkName, range: TotalVetStakedRange) => ({
   queryKey: [getTotalVetStakedHistoric.name, networkName, range],
   queryFn: () => getTotalVetStakedHistoric({ networkName, range }),
+  staleTime: 60 * 1000, // Consider data fresh for 60 seconds
+  gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  refetchOnMount: false, // Don't refetch on mount if data exists
   placeholderData: keepPreviousData,
 })
 

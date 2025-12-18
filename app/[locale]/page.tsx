@@ -70,7 +70,7 @@ export default async function HomePage({
 
   // Prefetch all critical data in parallel (including blocks)
   // Use Promise.allSettled to continue even if some queries fail
-  await Promise.allSettled([
+  const prefetchResults = await Promise.allSettled([
     // Price data
     queryClient.prefetchQuery(priceListQueryOptions()),
     queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', 'usd')),
@@ -91,6 +91,15 @@ export default async function HomePage({
     // Latest blocks for ActivitySection
     ...blockQueries,
   ])
+
+  // Log any prefetch failures in development
+  if (process.env.NODE_ENV === 'development') {
+    prefetchResults.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.warn(`Prefetch ${index} failed:`, result.reason)
+      }
+    })
+  }
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
