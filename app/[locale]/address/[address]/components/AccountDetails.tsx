@@ -42,7 +42,7 @@ export const AccountDetails = ({ account }: { account: Account }) => {
         <Table.Root size="md">
           <Table.Body>
             {items.map(item => (
-              <Table.Row key={item.name}>
+              <Table.Row key={item.name} bg="bg-secondary">
                 <Table.Cell>{item.name}</Table.Cell>
                 <Table.Cell>{item.value}</Table.Cell>
               </Table.Row>

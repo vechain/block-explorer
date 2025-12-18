@@ -9,7 +9,7 @@ export const NotFound = ({ title, description }: { title?: string; description?:
   const { t } = useTranslation()
 
   return (
-    <Box position="fixed" bg="bg" top="0" left="0" right="0" bottom="0">
+    <Box position="fixed" bg="bg-primary" top="0" left="0" right="0" bottom="0">
       <AbsoluteCenter>
         <EmptyState.Root size="md">
           <EmptyState.Content>

@@ -182,7 +182,7 @@ const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>)
   const formattedVetAmount = decimalPart ? `${formattedInt}.${decimalPart}` : formattedInt
 
   return (
-    <Stack bg="bg" rounded="xl" p={4}>
+    <Stack bg="bg-primary" rounded="xl" p={4}>
       <Flex alignItems="center" gap={2}>
         <Text textStyle="bodyMSemibold">{t('Date & Time')}:</Text>
         <Text textStyle="bodyM">{format(new Date(dataPoint.timestamp), 'MMM d, yyyy h:mm a')}</Text>

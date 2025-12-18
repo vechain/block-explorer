@@ -339,7 +339,7 @@ const CustomTooltip = ({
   }
 
   return (
-    <Stack bg="bg" rounded="xl" p={4}>
+    <Stack bg="bg-primary" rounded="xl" p={4}>
       {selectedRange === 'hourly' && (
         <Flex alignItems="center" gap={2}>
           <Text fontSize="sm" fontWeight="bold">
