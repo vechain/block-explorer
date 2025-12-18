@@ -43,7 +43,7 @@ export const TotalStakedChart = () => {
   const latestValue = chartData.length > 0 ? chartData[chartData.length - 1] : null
   const displayValue = currentTotal?.total ?? (latestValue ? latestValue.value : 0n)
 
-  // Show skeleton only if loading AND no data available (prefetched data should be available immediately)
+  // Show skeleton only if loading AND no data available
   if (isLoading && !historicData && !currentTotal) {
     return <Skeleton height="274px" width="415px" rounded="md" />
   }
