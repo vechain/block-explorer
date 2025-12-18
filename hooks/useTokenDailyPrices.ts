@@ -1,8 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-
-interface PriceDataRaw {
-  prices: [number, number][]
-}
+import { tokenDailyPricesQueryOptions } from '@/services/coin-api/token-daily-prices'
 
 type PriceData = {
   timestamp: number
@@ -13,19 +10,7 @@ export const useTokenDailyPrices = (
   token: 'vechain' | 'vethor-token' | 'vebetterdao',
   currency: 'usd' | 'eur' | 'gbp',
 ) => {
-  const { data, isLoading, error } = useQuery<PriceDataRaw>({
-    queryKey: ['priceChart', token, currency],
-    queryFn: async () => {
-      const response = await fetch(
-        `https://coin-api.veworld.vechain.org/coins/${token}/market_chart?days=1&vs_currency=${currency}`,
-      )
-      if (!response.ok) {
-        throw new Error('Failed to fetch price data')
-      }
-      return response.json()
-    },
-    refetchInterval: 300000,
-  })
+  const { data, isLoading, error } = useQuery(tokenDailyPricesQueryOptions(token, currency))
 
   const formattedData: PriceData[] =
     data?.prices?.map(([timestamp, price]) => ({

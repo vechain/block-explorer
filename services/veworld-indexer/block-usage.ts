@@ -77,3 +77,6 @@ export const useBlockUsage = (startTimestamp: number, endTimestamp: number, isLi
   const { activeNetwork } = useSettingsStore()
   return useQuery(blockUsageQueryOptions(activeNetwork.name, startTimestamp, endTimestamp, isLiveMode))
 }
+
+// Export query options for server-side prefetching
+export { blockUsageQueryOptions }

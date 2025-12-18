@@ -139,3 +139,21 @@ export const getAllValidatorsCount = async (networkName: NetworkName, status?: V
 
   return totalCount
 }
+
+/**
+ * Query options for validators count
+ * Can be used for server-side prefetching
+ */
+export const validatorsCountQueryOptions = (networkName: NetworkName, status?: ValidatorStatus) => ({
+  queryKey: ['validatorsCount', networkName, status],
+  queryFn: () => getAllValidatorsCount(networkName, status),
+  refetchInterval: 60 * 1000, // Refetch every 60 seconds
+  retry: (failureCount: number, error: Error) => {
+    // Retry up to 3 times for network errors
+    if (failureCount < 3 && error?.message?.includes('fetch')) {
+      return true
+    }
+    return false
+  },
+  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff with 30s max
+})

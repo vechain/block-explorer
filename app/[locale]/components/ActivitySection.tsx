@@ -18,7 +18,7 @@ export const ActivitySection = () => {
       <Heading as="h3" textStyle="displayXs">
         {t('Activity')}
       </Heading>
-      {isPending ? <TableSkeleton /> : <BlocksTable blocks={latestBlocks} />}
+      {isPending && !latestBlocks?.length ? <TableSkeleton /> : <BlocksTable blocks={latestBlocks} />}
     </Card>
   )
 }
