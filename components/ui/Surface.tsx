@@ -1,7 +1,7 @@
 'use client'
 
-import type { BoxProps, FlexProps } from '@chakra-ui/react'
-import { Box, Flex } from '@chakra-ui/react'
+import type { FlexProps } from '@chakra-ui/react'
+import { Flex } from '@chakra-ui/react'
 import { forwardRef, useMemo } from 'react'
 
 type SurfaceProps = FlexProps & {
@@ -39,9 +39,3 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(({ variant = 'pr
 })
 
 Surface.displayName = 'Surface'
-
-export const BorderedSurface = forwardRef<HTMLDivElement, BoxProps>((props, ref) => {
-  return <Box ref={ref} borderWidth="1px" borderColor="border-primary" p="4" rounded="md" {...props} />
-})
-
-BorderedSurface.displayName = 'BorderedSurface'

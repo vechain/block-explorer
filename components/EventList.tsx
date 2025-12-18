@@ -5,7 +5,7 @@ import { type DecodedEvent, type DecodedEventArgs, type ParsedEvent, useDecodeEv
 import { EventType, type RawEvent } from '@/lib/schemas'
 import type * as abi from '@/lib/schemas/abi'
 import { AddressLink } from './ui/Links'
-import { BorderedSurface, Surface } from './ui/Surface'
+import { Surface } from './ui/Surface'
 import { ValueSwitch } from './ui/ValueSwitch'
 import { useTranslation } from 'react-i18next'
 
@@ -34,20 +34,30 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
 
   if (isLoading) {
     return (
-      <BorderedSurface>
+      <Surface variant="secondary">
         <Skeleton height="320px" width="100%" />
-      </BorderedSurface>
+      </Surface>
     )
   }
 
   return (
     <Surface variant="secondary">
       <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap">
-        <BorderedSurface display="flex" alignItems="center" gap="2" rounded="full" whiteSpace="nowrap">
+        <Surface
+          variant="secondary"
+          flexDirection="row"
+          display="flex"
+          alignItems="center"
+          gap="2"
+          rounded="full"
+          whiteSpace="nowrap"
+          py="2"
+          px="4"
+        >
           <Text># {index}</Text>
           <Text>{t('emitter')}</Text>
           <AddressLink address={event.raw.address} truncate={isMobile} />
-        </BorderedSurface>
+        </Surface>
         <ValueSwitch
           layoutId={layoutId}
           bg="bg-secondary"
@@ -109,17 +119,17 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
 
   if (!event) {
     return (
-      <BorderedSurface>
+      <Surface variant="secondary">
         <Text>{t('No ABI found')}</Text>
-      </BorderedSurface>
+      </Surface>
     )
   }
 
   return (
-    <BorderedSurface>
+    <Surface variant="secondary">
       <Text textStyle="bodyL">{event.signature.split('(')[0]}</Text>
       <DecodedEventArgsTable inputs={event.inputs} args={event.args} />
-    </BorderedSurface>
+    </Surface>
   )
 }
 

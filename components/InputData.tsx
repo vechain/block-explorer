@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import type { InputData as InputDataType } from '@/hooks/useDecodeInputData'
 import { type DecodedInputData, useDecodeInputData } from '@/hooks/useDecodeInputData'
 import type { HexString } from '@/lib/schemas'
-import { BorderedSurface, Surface } from './ui/Surface'
+import { Surface } from './ui/Surface'
 import { ValueSwitch } from './ui/ValueSwitch'
 
 enum InputDataView {
@@ -29,9 +29,9 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
         onChange={setView}
       />
       {isLoading ? (
-        <BorderedSurface>
+        <Surface variant="secondary">
           <Skeleton height="320px" width="100%" />
-        </BorderedSurface>
+        </Surface>
       ) : (
         <InputDataViews inputData={inputData} activeView={view as InputDataView} />
       )}
@@ -44,7 +44,7 @@ const InputDataViews = ({ inputData, activeView }: { inputData: InputDataType; a
     return <DecodedInputDataTable decodedInputData={inputData.decoded} />
   }
 
-  return <BorderedSurface>{inputData.raw}</BorderedSurface>
+  return <Surface variant="secondary">{inputData.raw}</Surface>
 }
 
 const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: DecodedInputData | undefined }) => {
@@ -52,9 +52,9 @@ const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: Decoded
 
   if (!decodedInputData) {
     return (
-      <BorderedSurface>
+      <Surface variant="secondary">
         <Text>{t('No ABI found')}</Text>
-      </BorderedSurface>
+      </Surface>
     )
   }
 
