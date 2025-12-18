@@ -32,8 +32,6 @@ export const PriceCards = () => {
   const { t } = useTranslation()
   const { data: priceList, isLoading: priceListLoading } = usePriceList()
 
-  // Defer daily price API calls - they're less critical and can load after initial render
-  // Using enabled: false initially and enabling after mount to prioritize main price list
   const { data: vetDailyPrices, isLoading: vetDailyLoading } = useTokenDailyPrices('vechain', 'usd')
   const { data: vthoDailyPrices, isLoading: vthoDailyLoading } = useTokenDailyPrices('vethor-token', 'usd')
   const { data: b3trDailyPrices, isLoading: b3trDailyLoading } = useTokenDailyPrices('vebetterdao', 'usd')
