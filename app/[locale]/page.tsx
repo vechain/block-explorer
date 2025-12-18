@@ -37,12 +37,12 @@ export default async function HomePage({
 
       <Stack mt={8} gap={8}>
         <PriceCards />
-        <BlockUsage />
-
         <Flex gap={4} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
           <TotalStakedChart />
           <GeneralInformationCard />
         </Flex>
+        <BlockUsage />
+
         <ActivitySection />
       </Stack>
     </HydrationBoundary>

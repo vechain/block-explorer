@@ -5,7 +5,7 @@ import { type DecodedEvent, type DecodedEventArgs, type ParsedEvent, useDecodeEv
 import { EventType, type RawEvent } from '@/lib/schemas'
 import type * as abi from '@/lib/schemas/abi'
 import { AddressLink } from './ui/Links'
-import { BorderedSurface, SurfaceAlt } from './ui/Surface'
+import { Card } from './ui/Card'
 import { ValueSwitch } from './ui/ValueSwitch'
 import { useTranslation } from 'react-i18next'
 
@@ -34,23 +34,33 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
 
   if (isLoading) {
     return (
-      <BorderedSurface>
+      <Card variant="secondary">
         <Skeleton height="320px" width="100%" />
-      </BorderedSurface>
+      </Card>
     )
   }
 
   return (
-    <SurfaceAlt>
+    <Card variant="secondary">
       <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap">
-        <BorderedSurface display="flex" alignItems="center" gap="2" rounded="full" whiteSpace="nowrap">
+        <Card
+          variant="secondary"
+          flexDirection="row"
+          display="flex"
+          alignItems="center"
+          gap="2"
+          rounded="full"
+          whiteSpace="nowrap"
+          py="2"
+          px="4"
+        >
           <Text># {index}</Text>
           <Text>{t('emitter')}</Text>
           <AddressLink address={event.raw.address} truncate={isMobile} />
-        </BorderedSurface>
+        </Card>
         <ValueSwitch
           layoutId={layoutId}
-          bg="bg-surface-alt"
+          bg="bg-secondary"
           values={[EventView.RAW, EventView.DECODED]}
           activeValue={view}
           onChange={setView}
@@ -58,7 +68,7 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
         />
       </Flex>
       <EventViews event={event} activeView={view as EventView} />
-    </SurfaceAlt>
+    </Card>
   )
 }
 
@@ -76,13 +86,13 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
 
   return (
     <ScrollArea.Root size="sm" variant="hover">
-      <ScrollArea.Viewport borderWidth="1px" borderColor="border-surface" borderRadius="md">
+      <ScrollArea.Viewport borderWidth="1px" borderColor="border-primary" borderRadius="md">
         <ScrollArea.Content>
           <Grid
             templateColumns={`${firstColumnWidth} 30px 1fr`}
             p="4"
             borderBottomWidth="1px"
-            borderColor="border-surface"
+            borderColor="border-primary"
           >
             {event.topics.map((topic, index) => (
               <>
@@ -109,17 +119,17 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
 
   if (!event) {
     return (
-      <BorderedSurface>
+      <Card variant="secondary">
         <Text>{t('No ABI found')}</Text>
-      </BorderedSurface>
+      </Card>
     )
   }
 
   return (
-    <BorderedSurface>
+    <Card variant="secondary">
       <Text textStyle="bodyL">{event.signature.split('(')[0]}</Text>
       <DecodedEventArgsTable inputs={event.inputs} args={event.args} />
-    </BorderedSurface>
+    </Card>
   )
 }
 
@@ -137,14 +147,14 @@ const DecodedEventArgsTable = ({ inputs, args }: { inputs: abi.AbiEventParameter
         </Text>
       </Grid>
 
-      <Box borderWidth="1px" borderColor="border-surface" borderRadius="md" overflow="hidden">
+      <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
         {inputs.map((input, index) => (
           <Grid
             key={`${index}-${input.name}`}
             templateColumns="60px 160px 160px 1fr"
             p="4"
             borderBottomWidth={index < inputs.length - 1 ? '1px' : '0'}
-            borderColor="border-surface"
+            borderColor="border-primary"
           >
             <Text>{index}</Text>
             <Text>{input.name}</Text>

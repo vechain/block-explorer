@@ -6,6 +6,7 @@ import React, { forwardRef } from 'react'
 import type { IconBaseProps } from 'react-icons'
 import { IconInCircle } from './IconInCircle'
 import { Tooltip } from './Tooltip'
+import { Card } from './Card'
 
 interface DataCardProps extends FlexProps {
   icon: React.ReactElement<IconBaseProps>
@@ -19,22 +20,7 @@ export const DataCard = forwardRef<HTMLDivElement, DataCardProps>(
     const Icon = React.cloneElement(icon, { ...icon.props, width: iconSize, height: iconSize })
 
     return (
-      <Flex
-        ref={ref}
-        flexDirection="column"
-        flex="1"
-        justifyContent="space-between"
-        alignSelf="stretch"
-        gap={6}
-        bg="bg-surface-alt-1"
-        color="text-primary"
-        borderRadius="md"
-        borderWidth="1px"
-        borderColor="bg-card-surface-2"
-        py={5}
-        px={4}
-        {...props}
-      >
+      <Card variant="secondary" ref={ref} flex="1" {...props}>
         <Flex alignItems="center" justifyContent="space-between">
           <Group>
             <IconInCircle icon={Icon} p="1" />
@@ -49,7 +35,7 @@ export const DataCard = forwardRef<HTMLDivElement, DataCardProps>(
           )}
         </Flex>
         {children}
-      </Flex>
+      </Card>
     )
   },
 )

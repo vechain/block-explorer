@@ -32,21 +32,21 @@ export const LanguageModal = ({ isOpen, onClose }: LanguageModalProps) => {
         <Dialog.Positioner alignItems={{ base: 'flex-end', md: 'center' }} px={{ base: 0, md: 4 }}>
           <Dialog.Content
             mb={{ base: 0, md: 'inherit' }}
-            bg="bg-card-surface-2"
+            bg="bg-primary"
             backdropFilter="blur(32px)"
             borderTopLeftRadius={{ base: '2xl', md: 'xl' }}
             borderTopRightRadius={{ base: '2xl', md: 'xl' }}
             borderBottomLeftRadius={{ base: 0, md: 'xl' }}
             borderBottomRightRadius={{ base: 0, md: 'xl' }}
             borderWidth="1px"
-            borderColor="border-surface"
+            borderColor="border-primary"
             maxW={{ base: '100vw', md: '400px' }}
             w={{ base: '100vw', md: '90vw' }}
             maxH={{ base: '85vh', md: 'unset' }}
             overflow="hidden"
             p={0}
           >
-            <Dialog.Header p={4} borderBottomWidth="1px" borderColor="border-surface">
+            <Dialog.Header p={4} borderBottomWidth="1px" borderColor="border-primary">
               <Flex justify="space-between" align="center">
                 <Flex align="center" gap={2}>
                   <LuGlobe size={20} />
@@ -75,12 +75,12 @@ export const LanguageModal = ({ isOpen, onClose }: LanguageModalProps) => {
                       onClick={() => handleLanguageChange(locale)}
                       w="100%"
                       p={4}
-                      bg={isActive ? 'bg-surface-alt' : 'transparent'}
-                      _hover={{ bg: 'bg-surface-alt' }}
+                      bg={isActive ? 'bg-secondary' : 'transparent'}
+                      _hover={{ bg: 'bg-secondary' }}
                       cursor="pointer"
                       transition="background 0.2s"
                       borderBottomWidth="1px"
-                      borderColor="border-surface"
+                      borderColor="border-primary"
                       css={{ '&:last-child': { borderBottom: 'none' } }}
                     >
                       <Flex justify="space-between" align="center">
@@ -95,7 +95,7 @@ export const LanguageModal = ({ isOpen, onClose }: LanguageModalProps) => {
                             </Text>
                           </VStack>
                         </Flex>
-                        {isActive && <LuCheck size={20} color="var(--chakra-colors-highlight-primary)" />}
+                        {isActive && <LuCheck size={20} color="var(--chakra-colors-accent-primary)" />}
                       </Flex>
                     </Box>
                   )

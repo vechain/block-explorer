@@ -7,7 +7,7 @@ import { AgeText } from '@/components/ui/AgeText'
 import { DataCard } from '@/components/ui/DataCard'
 import { GasUsed } from '@/components/ui/GasFees'
 import { CopyableLink } from '@/components/ui/Links'
-import { Surface } from '@/components/ui/Surface'
+import { Card } from '@/components/ui/Card'
 import type { ExpandedBlock } from '@/lib/schemas'
 
 export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
@@ -45,7 +45,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   ]
 
   return (
-    <Surface bg="bg-surface-alt" borderColor="transparent">
+    <Card variant="secondary">
       <Heading as="h2" textStyle="displayXs">
         {t('Block Insights')}
       </Heading>
@@ -57,7 +57,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
           rounded="md"
           border="1px solid"
           textStyle="bodyM"
-          borderColor="border-surface"
+          borderColor="border-primary"
         >
           {blockInsights.map(insight => (
             <Flex
@@ -66,7 +66,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
               px="6"
               flex="1"
               alignItems="center"
-              borderBottom="1px solid var(--chakra-colors-border-surface)"
+              borderBottom="1px solid var(--chakra-colors-border-primary)"
               css={{ '&:last-child': { borderBottom: 'none' } }}
             >
               <Text width="130px">{insight.label}</Text>
@@ -108,7 +108,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
           </DataCard>
         </Grid>
       </Flex>
-    </Surface>
+    </Card>
   )
 }
 
@@ -117,7 +117,7 @@ const TxFeatures = ({ features }: { features: number | undefined }) => {
 
   if (features === 1) {
     return (
-      <Badge textStyle="bodyS" rounded="8px" variant="subtle" px="2" py="1" size="sm" bg="bg-surface-alt">
+      <Badge textStyle="bodyS" rounded="8px" variant="subtle" px="2" py="1" size="sm" bg="bg-secondary">
         {t('VIP-191 - Fee delegation')}
       </Badge>
     )

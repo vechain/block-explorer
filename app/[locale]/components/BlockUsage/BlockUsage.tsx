@@ -15,7 +15,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { Surface } from '@/components/ui/Surface'
+import { Card } from '@/components/ui/Card'
 import type { BlockUsageData } from '@/lib/schemas'
 import { type BlockUsageDataPoint, transformBlockUsageData } from '@/lib/utils/block-usage'
 import { timeFormat } from '@/lib/utils/date'
@@ -159,7 +159,7 @@ export const BlockUsage = () => {
   }
 
   return (
-    <Surface>
+    <Card>
       <BlockUsageHeader
         selectedRange={selectedRange}
         selectedDate={selectedDate}
@@ -172,10 +172,10 @@ export const BlockUsage = () => {
         onDateChange={handleDateChange}
         onHourChange={handleHourChange}
       />
-      <Surface>
+      <Card variant="secondary">
         <BlockUsageChart data={blocksDataPoints} selectedRange={selectedRange} />
-      </Surface>
-    </Surface>
+      </Card>
+    </Card>
   )
 }
 
@@ -273,6 +273,7 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
             tickFormatter={formatXAxis}
             tick={{ style: { fontSize: '.7rem' } }}
             axisLine={false}
+            stroke="white"
           />
           <YAxis
             unit="M"
@@ -280,6 +281,7 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
             tickFormatter={value => (Number(value) / 10 ** 6).toLocaleString()}
             tick={{ style: { fontSize: '.8rem' } }}
             axisLine={false}
+            stroke="white"
           />
 
           <Tooltip
@@ -337,7 +339,7 @@ const CustomTooltip = ({
   }
 
   return (
-    <Stack bg="bg" rounded="xl" p={4}>
+    <Stack bg="bg-primary" rounded="xl" p={4}>
       {selectedRange === 'hourly' && (
         <Flex alignItems="center" gap={2}>
           <Text fontSize="sm" fontWeight="bold">

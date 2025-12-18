@@ -7,7 +7,7 @@ import { AgeText } from '@/components/ui/AgeText'
 import { DataCard } from '@/components/ui/DataCard'
 import { AddressLink } from '@/components/ui/Links'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { Surface } from '@/components/ui/Surface'
+import { Card } from '@/components/ui/Card'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
 import { GasUsed, TxFeePaid, TxGasFees, useTxGasFees } from './ui/GasFees'
 
@@ -49,7 +49,7 @@ export const TransactionInsight = ({
   ]
 
   return (
-    <Surface bg="bg-surface-alt" borderColor="transparent">
+    <Card variant="secondary">
       <Flex alignItems="center" justifyContent="space-between">
         <Heading as="h2" textStyle="displayXs">
           {t('Transaction Insights')}
@@ -64,7 +64,7 @@ export const TransactionInsight = ({
           rounded="md"
           border="1px solid"
           textStyle="bodyM"
-          borderColor="border-surface"
+          borderColor="border-primary"
         >
           {transactionInsights.map(insight => (
             <Flex
@@ -73,7 +73,7 @@ export const TransactionInsight = ({
               px="6"
               flex="1"
               alignItems="center"
-              borderBottom="1px solid var(--chakra-colors-border-surface)"
+              borderBottom="1px solid var(--chakra-colors-border-primary)"
               css={{ '&:last-child': { borderBottom: 'none' } }}
             >
               <Text width="130px">{insight.label}</Text>
@@ -120,6 +120,6 @@ export const TransactionInsight = ({
           </DataCard>
         </Grid>
       </Flex>
-    </Surface>
+    </Card>
   )
 }

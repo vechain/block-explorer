@@ -2,7 +2,7 @@
 
 import { Heading } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import { Surface } from '@/components/ui/Surface'
+import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { useLatestBlocksExpanded } from '@/services/thor/hooks'
 import { BlocksTable } from './BlocksTable'
@@ -14,11 +14,11 @@ export const ActivitySection = () => {
   const { data: latestBlocks, isPending } = useLatestBlocksExpanded({ count: BLOCKS_TO_DISPLAY })
 
   return (
-    <Surface>
+    <Card>
       <Heading as="h3" textStyle="displayXs">
         {t('Activity')}
       </Heading>
       {isPending ? <TableSkeleton /> : <BlocksTable blocks={latestBlocks} />}
-    </Surface>
+    </Card>
   )
 }

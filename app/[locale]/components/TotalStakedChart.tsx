@@ -9,6 +9,7 @@ import { formatEther } from 'viem'
 import { formatAbbreviated, formatAmount } from '@/lib/utils/units'
 import { useTotalVetStaked, useTotalVetStakedHistoric } from '@/services/veworld-indexer/hooks'
 import { TotalVetStakedRange } from '@/services/veworld-indexer/total-vet-staked-historic'
+import { Card } from '@/components/ui/Card'
 
 const chartHeight = 140
 
@@ -45,17 +46,7 @@ export const TotalStakedChart = () => {
   if (isLoading) return <Skeleton height="274px" width="415px" rounded="md" />
 
   return (
-    <Stack
-      width="415px"
-      height="274px"
-      gap={4}
-      bg="bg-card-surface-2"
-      borderRadius="md"
-      borderWidth="1px"
-      borderColor="border-surface"
-      backdropFilter="blur(32px)"
-      p={5}
-    >
+    <Card width="415px" height="274px">
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL">
           {t('Total Staked')}
@@ -64,10 +55,10 @@ export const TotalStakedChart = () => {
         <Flex
           align="center"
           gap={1}
-          bg="bg-surface-alt"
+          bg="bg-primary"
           borderRadius="full"
           borderWidth="0.5px"
-          borderColor="border-surface"
+          borderColor="border-primary"
           p="4px"
         >
           <Flex
@@ -78,7 +69,7 @@ export const TotalStakedChart = () => {
             py={1}
             borderRadius="full"
             bg={selectedRange === TotalVetStakedRange.DAY ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.DAY ? 'bg-primary' : 'fg'}
+            color={selectedRange === TotalVetStakedRange.DAY ? 'text-alt-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.DAY)}
@@ -94,7 +85,7 @@ export const TotalStakedChart = () => {
             py={1}
             borderRadius="full"
             bg={selectedRange === TotalVetStakedRange.MONTH ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.MONTH ? 'bg-primary' : 'fg'}
+            color={selectedRange === TotalVetStakedRange.MONTH ? 'text-alt-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.MONTH)}
@@ -110,7 +101,7 @@ export const TotalStakedChart = () => {
             py={1}
             borderRadius="full"
             bg={selectedRange === TotalVetStakedRange.YEAR ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.YEAR ? 'bg-primary' : 'fg'}
+            color={selectedRange === TotalVetStakedRange.YEAR ? 'text-alt-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.YEAR)}
@@ -121,12 +112,12 @@ export const TotalStakedChart = () => {
         </Flex>
       </Flex>
 
-      <Text textStyle="displayS" color="highlight-primary">
+      <Text textStyle="displayS" color="accent-primary">
         {formatAbbreviated(displayValue)} VET
       </Text>
 
       <TotalStakedChartVisualization data={chartData} />
-    </Stack>
+    </Card>
   )
 }
 
@@ -164,7 +155,7 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
           <Area
             type="monotone"
             dataKey="formattedValue"
-            stroke="var(--chakra-colors-highlight-primary)"
+            stroke="var(--chakra-colors-accent-primary)"
             strokeWidth={2}
             fill="none"
             activeDot={{ r: 6, cursor: 'pointer' }}
@@ -191,7 +182,7 @@ const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>)
   const formattedVetAmount = decimalPart ? `${formattedInt}.${decimalPart}` : formattedInt
 
   return (
-    <Stack bg="bg" rounded="xl" p={4}>
+    <Stack bg="bg-primary" rounded="xl" p={4}>
       <Flex alignItems="center" gap={2}>
         <Text textStyle="bodyMSemibold">{t('Date & Time')}:</Text>
         <Text textStyle="bodyM">{format(new Date(dataPoint.timestamp), 'MMM d, yyyy h:mm a')}</Text>

@@ -1,10 +1,11 @@
 'use client'
 
-import { Circle, Flex, HStack, Icon, Image, Skeleton, Text, VStack } from '@chakra-ui/react'
+import { Circle, Flex, HStack, Icon, Image, Skeleton, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { LuTrendingDown, LuTrendingUp } from 'react-icons/lu'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { usePriceList } from '@/services/coin-api/hooks'
+import { Card } from '@/components/ui/Card'
 
 type SupportedTokenSymbol = 'VET' | 'VTHO' | 'B3TR'
 
@@ -86,21 +87,17 @@ interface TokenPriceCardProps {
 
 const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: TokenPriceCardProps) => {
   return (
-    <VStack
+    <Card
       alignItems="flex-start"
       flex={{ base: '0 0 auto', md: 1 }}
       flexShrink={0}
       minW={{ base: '75%', md: '0' }}
-      bg="bg-card-surface-2"
-      borderRadius="md"
-      borderWidth="1px"
-      borderColor="bg-card-surface-2"
       py={5}
       px={4}
       gap={6}
     >
       <Flex alignItems="center" justifyContent="space-between" gap={2}>
-        <Circle bg="bg-card-surface-2" borderWidth="1px" borderColor="bg-card-surface-2" rounded="full">
+        <Circle bg="bg-primary" borderWidth="1px" borderColor="border-primary" rounded="full">
           <Image src={`/tokens/${token}.svg`} alt={`${token} token`} width={6} height={6} rounded="full" />
         </Circle>
         <Text textStyle="bodyL">{label}</Text>
@@ -125,6 +122,6 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
           )}
         </HStack>
       )}
-    </VStack>
+    </Card>
   )
 }

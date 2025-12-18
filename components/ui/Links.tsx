@@ -12,7 +12,7 @@ export const BaseLink = ({ children, href, ...props }: BaseLinkProps) => {
   return (
     <ChakraLink
       asChild
-      color="text-alt"
+      color="text-secondary"
       textDecoration="underline"
       textUnderlineOffset="1px"
       maxWidth="full"
