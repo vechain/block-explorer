@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Rubik } from 'next/font/google'
 import { Footer } from '@/components/Footer/Footer'
 import { Header } from '@/components/navigation/Header'
+import { BackgroundImage } from '@/components/BackgroundImage'
 import { ChakraProvider } from '@/components/theme/provider'
 import type { Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
@@ -12,6 +13,7 @@ const rubik = Rubik({
   subsets: ['latin'],
   variable: '--font-rubik',
   weight: ['400', '500', '600'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -34,23 +36,24 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        {/* Preconnect to external APIs for faster connection */}
+        <link rel="preconnect" href="https://coin-api.veworld.vechain.org" />
+        <link rel="dns-prefetch" href="https://coin-api.veworld.vechain.org" />
+      </head>
       <body className={rubik.variable}>
         <Providers locale={locale}>
           <Box
             as="main"
+            position="relative"
             h="100vh"
-            bgImage={{
-              base: "url('/bg/Mobile.webp')",
-              md: "url('/bg/Desktop.webp')",
-            }}
             color="text-primary"
-            bgSize="100%"
-            bgRepeat="no-repeat"
             // TODO: Update background color with theme once implemented
             backgroundColor="#0B0C10"
             overflowY="auto"
             overflowX="hidden"
           >
+            <BackgroundImage mobileSrc="/bg/Mobile.webp" desktopSrc="/bg/Desktop.webp" alt="background" />
             <Container
               maxW="1080px"
               display="flex"
@@ -59,6 +62,8 @@ export default async function RootLayout({
               pt={{ base: 2, md: 10 }}
               pb={10}
               mx="auto"
+              position="relative"
+              zIndex={1}
             >
               <Header />
               {children}
