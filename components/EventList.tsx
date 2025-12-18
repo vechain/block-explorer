@@ -5,7 +5,7 @@ import { type DecodedEvent, type DecodedEventArgs, type ParsedEvent, useDecodeEv
 import { EventType, type RawEvent } from '@/lib/schemas'
 import type * as abi from '@/lib/schemas/abi'
 import { AddressLink } from './ui/Links'
-import { BorderedSurface, SurfaceAlt } from './ui/Surface'
+import { BorderedSurface, Surface } from './ui/Surface'
 import { ValueSwitch } from './ui/ValueSwitch'
 import { useTranslation } from 'react-i18next'
 
@@ -41,7 +41,7 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
   }
 
   return (
-    <SurfaceAlt>
+    <Surface variant="secondary">
       <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap">
         <BorderedSurface display="flex" alignItems="center" gap="2" rounded="full" whiteSpace="nowrap">
           <Text># {index}</Text>
@@ -50,7 +50,7 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
         </BorderedSurface>
         <ValueSwitch
           layoutId={layoutId}
-          bg="bg-alt-primary"
+          bg="bg-secondary"
           values={[EventView.RAW, EventView.DECODED]}
           activeValue={view}
           onChange={setView}
@@ -58,7 +58,7 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
         />
       </Flex>
       <EventViews event={event} activeView={view as EventView} />
-    </SurfaceAlt>
+    </Surface>
   )
 }
 

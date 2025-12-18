@@ -75,8 +75,8 @@ export const LanguageModal = ({ isOpen, onClose }: LanguageModalProps) => {
                       onClick={() => handleLanguageChange(locale)}
                       w="100%"
                       p={4}
-                      bg={isActive ? 'bg-alt-primary' : 'transparent'}
-                      _hover={{ bg: 'bg-alt-primary' }}
+                      bg={isActive ? 'bg-secondary' : 'transparent'}
+                      _hover={{ bg: 'bg-secondary' }}
                       cursor="pointer"
                       transition="background 0.2s"
                       borderBottomWidth="1px"
@@ -95,7 +95,7 @@ export const LanguageModal = ({ isOpen, onClose }: LanguageModalProps) => {
                             </Text>
                           </VStack>
                         </Flex>
-                        {isActive && <LuCheck size={20} color="var(--chakra-colors-highlight-primary)" />}
+                        {isActive && <LuCheck size={20} color="var(--chakra-colors-accent-primary)" />}
                       </Flex>
                     </Box>
                   )

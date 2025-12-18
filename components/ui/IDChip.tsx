@@ -12,10 +12,11 @@ export const IDChip = forwardRef<HTMLDivElement, IDChipProps>(({ value, ...props
   return (
     <Flex
       ref={ref}
-      p="2"
+      py="2"
+      px="4"
       gap="2"
       alignItems="center"
-      bg="bg-alt-primary"
+      bg="bg-primary"
       color="text-secondary"
       borderRadius="full"
       borderWidth="1px"

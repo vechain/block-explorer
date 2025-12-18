@@ -65,7 +65,7 @@ const ClauseContent = ({ clause, eventLogs, index }: { clause: Clause; eventLogs
       <Accordion.ItemBody py={{ base: '4', md: '6' }} display="flex" flexDirection="column" gap="4">
         <ValueSwitch
           layoutId={`clause-${index}`}
-          bg="bg-alt-primary"
+          bg="bg-secondary"
           values={[ClauseView.INPUT_DATA, ClauseView.EVENTS]}
           activeValue={view}
           onChange={setView}
@@ -81,8 +81,8 @@ const ClauseTypeBadge = () => {
   const { t } = useTranslation()
 
   return (
-    <Box bg="highlight-primary/20" px={4} py={1.5} rounded="full">
-      <Text textStyle="bodyM" color="highlight-primary">
+    <Box bg="accent-primary/20" px={4} py={1.5} rounded="full">
+      <Text textStyle="bodyM" color="accent-primary">
         {t('Call')}
       </Text>
     </Box>

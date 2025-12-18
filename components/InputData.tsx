@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import type { InputData as InputDataType } from '@/hooks/useDecodeInputData'
 import { type DecodedInputData, useDecodeInputData } from '@/hooks/useDecodeInputData'
 import type { HexString } from '@/lib/schemas'
-import { BorderedSurface, SurfaceAlt } from './ui/Surface'
+import { BorderedSurface, Surface } from './ui/Surface'
 import { ValueSwitch } from './ui/ValueSwitch'
 
 enum InputDataView {
@@ -20,10 +20,10 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
   const [view, setView] = useState<string>(() => (isDecoded ? InputDataView.DECODED : InputDataView.RAW))
 
   return (
-    <SurfaceAlt>
+    <Surface variant="secondary">
       <ValueSwitch
         layoutId={`input-data-${clauseIndex}`}
-        bg="bg-alt-primary"
+        bg="bg-secondary"
         values={[InputDataView.RAW, InputDataView.DECODED]}
         activeValue={view}
         onChange={setView}
@@ -35,7 +35,7 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
       ) : (
         <InputDataViews inputData={inputData} activeView={view as InputDataView} />
       )}
-    </SurfaceAlt>
+    </Surface>
   )
 }
 

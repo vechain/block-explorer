@@ -13,7 +13,7 @@ export const ValueSwitch = ({ values, layoutId, activeValue, onChange, ...props 
     <Flex
       gap={1}
       alignItems="center"
-      bg="bg-alt-primary"
+      bg="bg-secondary"
       p={1}
       rounded="full"
       textTransform="capitalize"

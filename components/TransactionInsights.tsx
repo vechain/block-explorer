@@ -49,7 +49,7 @@ export const TransactionInsight = ({
   ]
 
   return (
-    <Surface bg="bg-alt-primary" borderColor="transparent">
+    <Surface variant="secondary">
       <Flex alignItems="center" justifyContent="space-between">
         <Heading as="h2" textStyle="displayXs">
           {t('Transaction Insights')}

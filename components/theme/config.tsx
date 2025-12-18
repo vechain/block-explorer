@@ -24,7 +24,7 @@ const config = defineConfig({
 
         // Background
         'bg-primary': { value: 'rgba(50, 50, 50, 0.06)' },
-        'bg-alt-primary': { value: 'rgba(255, 255, 255, 0.1)' },
+        'bg-secondary': { value: 'rgba(0,0,0, 0.4)' },
         'bg-accent-primary': { value: 'white' },
 
         // Border
@@ -35,16 +35,16 @@ const config = defineConfig({
           value:
             'radial-gradient(circle 2000px at -150px -150px, rgba(184, 166, 255, 0.53) 0%, rgba(50, 50, 50, 0.06) 20%)',
         },
-        'card-bg-secondary': { value: 'rgba(0,0,0, 0.4)' },
 
-        // Table and Accordion rows
-        'row-odd-bg-primary': { value: 'rgba(255, 255, 255, 0.08)' },
-        'row-even-bg-primary': { value: 'rgba(255, 255, 255, 0.1)' },
+        // Accent colors
+        'accent-primary': { value: 'rgba(184, 166, 255, 1)' },
+        'accent-secondary': { value: 'rgba(231, 130, 255, 1)' },
+        'accent-tertiary': { value: 'rgba(56, 216, 153, 1)' },
 
-        // Blur colors
-        'blur-blue': { value: 'rgba(54, 24, 251, 1)' },
-        'blur-purple': { value: 'rgba(143, 66, 221, 1)' },
-        'blur-pink': { value: 'rgba(165, 12, 141, 1)' },
+        // Alternating rows
+        'row-even-bg-primary': { value: 'rgba(255, 255, 255, 0.06)' },
+        'row-odd-bg-primary': { value: 'rgba(50, 50, 50, 0.06)' },
+
         // Status colors
         'success-text': { value: 'rgba(16, 255, 161, 1)' },
         'success-surface': { value: 'rgba(16, 255, 161, 0.26)' },
@@ -52,11 +52,7 @@ const config = defineConfig({
         'error-text': { value: 'rgba(255, 138, 138, 1)' },
         'pending-surface': { value: 'rgba(246, 255, 165, 0.2)' },
         'pending-text': { value: 'rgba(246, 255, 165, 1)' },
-        // Highlight colors
-        'highlight-primary': { value: 'rgba(184, 166, 255, 1)' },
-        'highlight-secondary': { value: 'rgba(231, 130, 255, 1)' },
-        'highlight-tertiary': { value: 'rgba(56, 216, 153, 1)' },
-        'highlight-green-chart-line': { value: 'rgba(56, 216, 153, 1)' },
+
         primary: {
           50: { value: '#F9F8FB' },
           100: { value: '#F0EEFC' },

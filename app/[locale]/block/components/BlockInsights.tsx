@@ -117,7 +117,7 @@ const TxFeatures = ({ features }: { features: number | undefined }) => {
 
   if (features === 1) {
     return (
-      <Badge textStyle="bodyS" rounded="8px" variant="subtle" px="2" py="1" size="sm" bg="bg-alt-primary">
+      <Badge textStyle="bodyS" rounded="8px" variant="subtle" px="2" py="1" size="sm" bg="bg-secondary">
         {t('VIP-191 - Fee delegation')}
       </Badge>
     )

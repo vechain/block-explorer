@@ -27,7 +27,7 @@ export const AgeText = ({ timestamp, ...props }: { timestamp: number } & TextPro
   const locale = (params.locale as Locale) || 'en'
 
   return (
-    <Text color="highlight-secondary" display="flex" alignItems="center" textTransform="capitalize" gap={1} {...props}>
+    <Text color="accent-secondary" display="flex" alignItems="center" textTransform="capitalize" gap={1} {...props}>
       <HiOutlineBolt size={16} />
       {formatDistanceToNow(new Date(timestamp), { includeSeconds: true, locale: dateFnsLocales[locale] })}
     </Text>

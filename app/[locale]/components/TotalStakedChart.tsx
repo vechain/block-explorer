@@ -112,7 +112,7 @@ export const TotalStakedChart = () => {
         </Flex>
       </Flex>
 
-      <Text textStyle="displayS" color="highlight-primary">
+      <Text textStyle="displayS" color="accent-primary">
         {formatAbbreviated(displayValue)} VET
       </Text>
 
@@ -155,7 +155,7 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
           <Area
             type="monotone"
             dataKey="formattedValue"
-            stroke="var(--chakra-colors-highlight-primary)"
+            stroke="var(--chakra-colors-accent-primary)"
             strokeWidth={2}
             fill="none"
             activeDot={{ r: 6, cursor: 'pointer' }}
