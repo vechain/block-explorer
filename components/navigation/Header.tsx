@@ -1,15 +1,17 @@
 'use client'
 
-import { Box, Flex, Text } from '@chakra-ui/react'
+import { Box, Flex, HStack, Separator, Text } from '@chakra-ui/react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiArrowUpRight, FiMenu } from 'react-icons/fi'
 import { i18nConfig, type Locale } from '@/i18n/config'
 import { languageNames } from '@/i18n/utils'
+import { Currency, useSettingsStore } from '@/lib/stores/settings'
 import { useColorMode } from '../theme/color-mode'
 import { MotionBox } from '../ui/MotionBox'
+import { CurrencyModal } from './CurrencyModal'
 import { LanguageModal } from './LanguageModal'
 import { NetworkSelect } from './NetworkSelect'
 import { SearchBar } from './SearchBar'
@@ -34,14 +36,44 @@ const NavigationMenu = () => {
   const { t } = useTranslation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false)
+  const [isCurrencyModalOpen, setIsCurrencyModalOpen] = useState(false)
   const params = useParams()
   const currentLocale = (params.locale as Locale) || i18nConfig.defaultLocale
   const currentLanguage = languageNames[currentLocale]
+  const { currency } = useSettingsStore()
 
   const handleLanguageClick = () => {
     setIsMenuOpen(false)
     setIsLanguageModalOpen(true)
   }
+
+  const handleCurrencyClick = () => {
+    setIsMenuOpen(false)
+    setIsCurrencyModalOpen(true)
+  }
+
+  const currencyName = useMemo(() => {
+    switch (currency) {
+      case Currency.EUR:
+        return 'EUR'
+      case Currency.GBP:
+        return 'GBP'
+      case Currency.USD:
+      default:
+        return 'USD'
+    }
+  }, [currency])
+
+  const currencySymbol = useMemo(() => {
+    switch (currency) {
+      case Currency.EUR:
+        return '€'
+      case Currency.GBP:
+        return '£'
+      case Currency.USD:
+        return '$'
+    }
+  }, [currency])
 
   return (
     <>
@@ -85,7 +117,6 @@ const NavigationMenu = () => {
                 }}
                 position="absolute"
                 right={0}
-                mt={2}
                 border="1px solid"
                 borderColor="border-primary"
                 bg="bg-primary"
@@ -98,24 +129,16 @@ const NavigationMenu = () => {
                 minW="160px"
               >
                 <Link href="https://inspector.vecha.in/" target="_blank" rel="noopener noreferrer">
-                  <Flex gap={2} alignItems="center" py={1}>
+                  <Flex gap={2} alignItems="center" py={2}>
                     <Text fontSize="body-m" whiteSpace="nowrap">
                       {t('Inspect tool')}
                     </Text>
                     <FiArrowUpRight width={16} height={16} />
                   </Flex>
                 </Link>
-                <Box
-                  as="button"
-                  onClick={handleLanguageClick}
-                  w="100%"
-                  cursor="pointer"
-                  borderTopWidth="1px"
-                  borderColor="border-primary"
-                  mt={2}
-                  pt={2}
-                >
-                  <Flex gap={2} alignItems="center" py={1}>
+                <Separator />
+                <Box as="button" onClick={handleLanguageClick} w="100%" cursor="pointer">
+                  <Flex gap={2} alignItems="center" py={2}>
                     <Text fontSize="body-m" whiteSpace="nowrap">
                       {currentLanguage.flag}
                     </Text>
@@ -124,12 +147,25 @@ const NavigationMenu = () => {
                     </Text>
                   </Flex>
                 </Box>
+                <Separator />
+
+                <Box as="button" onClick={handleCurrencyClick} w="100%" cursor="pointer">
+                  <HStack gap={2} alignItems="center" py={2}>
+                    <Text fontSize="body-m" whiteSpace="nowrap">
+                      {currencySymbol}
+                    </Text>
+                    <Text fontSize="body-m" whiteSpace="nowrap">
+                      {currencyName}
+                    </Text>
+                  </HStack>
+                </Box>
               </MotionBox>
             )}
           </Box>
         </Box>
       </Flex>
       <LanguageModal isOpen={isLanguageModalOpen} onClose={() => setIsLanguageModalOpen(false)} />
+      <CurrencyModal isOpen={isCurrencyModalOpen} onClose={() => setIsCurrencyModalOpen(false)} />
     </>
   )
 }

@@ -5,10 +5,10 @@ import { persist } from 'zustand/middleware'
 import { ColorMode } from '@/components/theme/config'
 import { NETWORKS, type Network, NetworkName } from '@/lib/constants/network'
 
-enum Currency {
+export enum Currency {
   USD = 'usd',
   EUR = 'eur',
-  CNY = 'cny',
+  GBP = 'gbp',
 }
 
 type SettingsStore = {
