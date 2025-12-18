@@ -1,30 +1,43 @@
-'use client'
-
+import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
-import { use } from 'react'
+import z from 'zod'
+import { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
-import { useAccount } from '@/services/thor/hooks'
-import { AccountDetails } from './components/AccountDetails'
-import { ContractDetails } from './components/ContractDetails'
+import { zodParse } from '@/lib/utils/zod'
+import { accountQueryOptions } from '@/services/thor/account'
+import { vnsNameQueryOptions } from '@/services/thor/vns'
+import { AddressPageContent } from './components/AddressPageContent'
 
-export default function AddressPage({ params }: { params: Promise<{ address: AddressString }> }) {
-  const { address } = use(params)
+export default async function AddressPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ address: AddressString }>
+  searchParams: Promise<{ network: NetworkName | undefined }>
+}) {
+  const { address } = await params
+  const networkName = (await searchParams).network || NetworkName.MAINNET
 
   if (!address) {
     notFound()
   }
 
-  return <RenderAccountOrContract address={address} />
-}
+  const activeNetworkName = zodParse({
+    data: networkName,
+    schema: z.enum(Object.values(NetworkName)),
+    errorMessage: 'Invalid network name',
+    fallbackData: NetworkName.MAINNET,
+  })
 
-const RenderAccountOrContract = ({ address }: { address: AddressString }) => {
-  const { data: account, isLoading: isAccountLoading } = useAccount(address)
+  const queryClient = new QueryClient()
+  await Promise.all([
+    queryClient.prefetchQuery(accountQueryOptions(activeNetworkName, address)),
+    queryClient.prefetchQuery(vnsNameQueryOptions(activeNetworkName, address)),
+  ])
 
-  if (isAccountLoading) return <div>Loading...</div>
-
-  if (!account) {
-    notFound()
-  }
-
-  return account.hasCode ? <ContractDetails account={account} /> : <AccountDetails account={account} />
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <AddressPageContent address={address} />
+    </HydrationBoundary>
+  )
 }

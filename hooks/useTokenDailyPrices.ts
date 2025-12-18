@@ -9,21 +9,26 @@ type PriceData = {
   price: number
 }
 
+export const getTokenDailyPrices = async (
+  token: 'vechain' | 'vethor-token' | 'vebetterdao',
+  currency: 'usd' | 'eur' | 'gbp',
+) => {
+  const response = await fetch(
+    `https://coin-api.veworld.vechain.org/coins/${token}/market_chart?days=1&vs_currency=${currency}`,
+  )
+  if (!response.ok) {
+    throw new Error('Failed to fetch price data')
+  }
+  return response.json()
+}
+
 export const useTokenDailyPrices = (
   token: 'vechain' | 'vethor-token' | 'vebetterdao',
   currency: 'usd' | 'eur' | 'gbp',
 ) => {
   const { data, isLoading, error } = useQuery<PriceDataRaw>({
-    queryKey: ['priceChart', token, currency],
-    queryFn: async () => {
-      const response = await fetch(
-        `https://coin-api.veworld.vechain.org/coins/${token}/market_chart?days=1&vs_currency=${currency}`,
-      )
-      if (!response.ok) {
-        throw new Error('Failed to fetch price data')
-      }
-      return response.json()
-    },
+    queryKey: [getTokenDailyPrices.name, token, currency],
+    queryFn: () => getTokenDailyPrices(token, currency),
     refetchInterval: 300000,
   })
 
