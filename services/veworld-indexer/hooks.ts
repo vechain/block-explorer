@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { accountTotalsQueryOptions, AccountTimeFrame } from './account-totals'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
 import { nftHoldersQueryOptions } from './nft-holders'
 import { accountErc721TokensQueryOptions } from './nfts'
@@ -18,6 +19,7 @@ import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
 import { contractTransactionsQueryOptions } from './transactions-contract'
 import { accountTransfersQueryOptions } from './transfers'
+import { getAllValidatorsCount, ValidatorStatus } from './validators'
 
 export const useNftHolders = () => {
   const { activeNetwork } = useSettingsStore()
@@ -38,6 +40,13 @@ export const useTotalVthoClaimed = () => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(totalVthoClaimedQueryOptions(activeNetwork.name))
 }
+
+export const useAccountTotals = (timeFrame: AccountTimeFrame) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountTotalsQueryOptions(activeNetwork.name, timeFrame))
+}
+
+export { AccountTimeFrame }
 
 export const useAccountTransactions = ({ params }: { params: IndexerGetTransactionsParams }) => {
   const { activeNetwork } = useSettingsStore()
@@ -63,3 +72,22 @@ export const useAccountErc721 = ({ params }: { params: IndexerGetErc721Params })
   const { activeNetwork } = useSettingsStore()
   return useQuery(accountErc721TokensQueryOptions(activeNetwork.name, params))
 }
+
+export const useValidatorsCount = (status?: ValidatorStatus) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery({
+    queryKey: ['validatorsCount', activeNetwork.name, status],
+    queryFn: () => getAllValidatorsCount(activeNetwork.name, status),
+    refetchInterval: 60 * 1000, // Refetch every 60 seconds
+    retry: (failureCount: number, error: Error) => {
+      // Retry up to 3 times for network errors
+      if (failureCount < 3 && error?.message?.includes('fetch')) {
+        return true
+      }
+      return false
+    },
+    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff with 30s max
+  })
+}
+
+export { ValidatorStatus }

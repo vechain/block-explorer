@@ -49,6 +49,7 @@ const config = defineConfig({
         'highlight-primary': { value: 'rgba(184, 166, 255, 1)' },
         'highlight-secondary': { value: 'rgba(231, 130, 255, 1)' },
         'highlight-tertiary': { value: 'rgba(56, 216, 153, 1)' },
+        'highlight-green-chart-line': { value: 'rgba(56, 216, 153, 1)' },
         primary: {
           50: { value: '#F9F8FB' },
           100: { value: '#F0EEFC' },

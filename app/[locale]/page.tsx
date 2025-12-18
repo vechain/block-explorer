@@ -1,6 +1,7 @@
 import { Container, Flex, Stack } from '@chakra-ui/react'
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import z from 'zod'
+import { GeneralInformationCard } from '@/components/ui/GeneralInformationCard'
 import { SearchBar } from '@/components/navigation/SearchBar'
 import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
@@ -40,6 +41,7 @@ export default async function HomePage({
 
         <Flex gap={4} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
           <TotalStakedChart />
+          <GeneralInformationCard />
         </Flex>
         <ActivitySection />
       </Stack>
