@@ -30,6 +30,7 @@
     "@vechain/sdk-core": "^2.0.7",
     "@vechain/sdk-network": "^2.0.7",
     "@vechain/vechain-contract-types": "^1.4.1",
+    "bignumber.js": "^9.3.1",
     "date-fns": "^4.1.0",
     "i18next": "^25.4.2",
     "i18next-resources-to-backend": "^1.2.1",
