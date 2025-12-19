@@ -14,7 +14,8 @@ export default async function i18nInit({ locale, i18nInstance }: { locale: Local
     lng: locale ?? i18nConfig.defaultLocale,
     fallbackLng: i18nConfig.defaultLocale,
     supportedLngs: i18nConfig.locales,
-    preload: i18nConfig.locales,
+    // Only preload the current locale, not all of them
+    //preload: typeof window === 'undefined' ? i18nConfig.locales : [],
   })
 
   return i18n
