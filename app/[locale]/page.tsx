@@ -1,6 +1,9 @@
 import { Container, Flex, Stack } from '@chakra-ui/react'
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import z from 'zod'
+
+// Force dynamic rendering - ensures SSR data prefetching works in production
+export const dynamic = 'force-dynamic'
 import { GeneralInformationCard } from '@/components/ui/GeneralInformationCard'
 import { SearchBar } from '@/components/navigation/SearchBar'
 import { NetworkName } from '@/lib/constants/network'

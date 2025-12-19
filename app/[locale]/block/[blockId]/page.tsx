@@ -1,6 +1,9 @@
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 import z from 'zod'
+
+// Force dynamic rendering - ensures SSR data prefetching works in production
+export const dynamic = 'force-dynamic'
 import { NetworkName } from '@/lib/constants/network'
 import { type BlockId, blockIdSchema } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
