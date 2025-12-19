@@ -1,9 +1,9 @@
-import { Link as ChakraLink, type LinkProps as ChakraLinkProps, Flex } from '@chakra-ui/react'
+import { Link as ChakraLink, type LinkProps as ChakraLinkProps, Flex, Skeleton } from '@chakra-ui/react'
 import Link, { type LinkProps as NextLinkProps } from 'next/link'
 import type { AddressString } from '@/lib/schemas'
 import { truncateAddress } from '@/lib/utils/address'
 import { CopyToClipBoard } from './CopyToClipBoard'
-
+import { useVnsName } from '@/services/thor/hooks'
 interface BaseLinkProps extends Omit<ChakraLinkProps, 'href'> {
   href: NextLinkProps['href']
 }
@@ -30,9 +30,15 @@ interface AddressLinkProps extends Omit<BaseLinkProps, 'href'> {
 }
 
 export const AddressLink = ({ address, truncate = false, ...props }: AddressLinkProps) => {
+  const { data: vnsName, isPending } = useVnsName(address)
+
+  if (isPending) {
+    return <Skeleton height="16px" width="100%" />
+  }
+
   return (
     <BaseLink href={`/address/${address}`} {...props}>
-      {truncate ? truncateAddress(address) : address}
+      {vnsName ? vnsName : truncate ? truncateAddress(address) : address}
     </BaseLink>
   )
 }
