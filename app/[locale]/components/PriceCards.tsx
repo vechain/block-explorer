@@ -108,7 +108,7 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
         <HStack gap={2} alignItems="flex-start">
           <Text textStyle="displayXs">{formatFiat(price)}</Text>
           {changePercent !== undefined && (
-            <Text
+            <HStack
               textStyle="bodyS"
               color={changePercent >= 0 ? 'success-text' : 'error-text'}
               marginTop={-4}
@@ -117,8 +117,9 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
               px={2}
               borderRadius="full"
             >
-              <Icon as={changePercent >= 0 ? LuTrendingUp : LuTrendingDown} /> {formatChangePercent(changePercent)}
-            </Text>
+              <Icon as={changePercent >= 0 ? LuTrendingUp : LuTrendingDown} />
+              <Text textStyle="bodyS">{formatChangePercent(changePercent)}</Text>
+            </HStack>
           )}
         </HStack>
       )}
