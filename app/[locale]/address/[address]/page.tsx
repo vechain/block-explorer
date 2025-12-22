@@ -1,10 +1,11 @@
-import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 import z from 'zod'
 
 // Force dynamic rendering - ensures SSR data prefetching works in production
 export const dynamic = 'force-dynamic'
 import { NetworkName } from '@/lib/constants/network'
+import { getQueryClient } from '@/lib/query-client/query-client'
 import type { AddressString } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
 import { accountQueryOptions } from '@/services/thor/account'
@@ -32,7 +33,7 @@ export default async function AddressPage({
     fallbackData: NetworkName.MAINNET,
   })
 
-  const queryClient = new QueryClient()
+  const queryClient = getQueryClient()
   await Promise.all([
     queryClient.prefetchQuery(accountQueryOptions(activeNetworkName, address)),
     queryClient.prefetchQuery(vnsNameQueryOptions(activeNetworkName, address)),

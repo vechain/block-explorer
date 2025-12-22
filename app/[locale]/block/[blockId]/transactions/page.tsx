@@ -1,10 +1,11 @@
-import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 import z from 'zod'
 
 // Force dynamic rendering - ensures SSR data prefetching works in production
 export const dynamic = 'force-dynamic'
 import { NetworkName } from '@/lib/constants/network'
+import { getQueryClient } from '@/lib/query-client/query-client'
 import { type BlockId, blockIdSchema } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
 import { blockExpandedQueryOptions } from '@/services/thor/block'
@@ -31,7 +32,7 @@ export default async function BlockTransactionsPage({
     fallbackData: NetworkName.MAINNET,
   })
 
-  const queryClient = new QueryClient()
+  const queryClient = getQueryClient()
   await queryClient.prefetchQuery(blockExpandedQueryOptions(activeNetworkName, blockId))
 
   return (

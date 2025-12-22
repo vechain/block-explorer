@@ -1,5 +1,5 @@
 import { Container, Flex, Stack } from '@chakra-ui/react'
-import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import z from 'zod'
 
 // Force dynamic rendering - ensures SSR data prefetching works in production
@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 import { GeneralInformationCard } from '@/components/ui/GeneralInformationCard'
 import { SearchBar } from '@/components/navigation/SearchBar'
 import { NetworkName } from '@/lib/constants/network'
+import { getQueryClient } from '@/lib/query-client/query-client'
 
 import { zodParse } from '@/lib/utils/zod'
 import { bestBlockCompressedQueryOptions, blockExpandedQueryOptions } from '@/services/thor/block'
@@ -39,7 +40,7 @@ export default async function HomePage({
     fallbackData: NetworkName.MAINNET,
   })
 
-  const queryClient = new QueryClient()
+  const queryClient = getQueryClient()
   await queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName))
   await queryClient.prefetchQuery({
     queryKey: [getTokenDailyPrices.name, 'vechain', 'usd'],

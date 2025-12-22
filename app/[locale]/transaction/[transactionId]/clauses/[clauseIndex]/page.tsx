@@ -1,10 +1,11 @@
-import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
+import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 import z from 'zod'
 
 // Force dynamic rendering - ensures SSR data prefetching works in production
 export const dynamic = 'force-dynamic'
 import { NetworkName } from '@/lib/constants/network'
+import { getQueryClient } from '@/lib/query-client/query-client'
 import { type TransactionId, transactionIdSchema } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
 import { transactionQueryOptions, transactionReceiptQueryOptions } from '@/services/thor/transaction'
@@ -33,7 +34,7 @@ export default async function ClauseDetailsPage({
     fallbackData: NetworkName.MAINNET,
   })
 
-  const queryClient = new QueryClient()
+  const queryClient = getQueryClient()
   await Promise.all([
     queryClient.prefetchQuery(transactionQueryOptions(activeNetworkName, transactionId)),
     queryClient.prefetchQuery(transactionReceiptQueryOptions(activeNetworkName, transactionId)),
