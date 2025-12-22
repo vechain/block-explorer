@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { useQuery } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { COIN_API_URL } from '@/env.public'
 import { apiClient } from '@/lib/api'
 import { zodParse } from '@/lib/utils/zod'
@@ -19,7 +19,7 @@ export const tokenDailyPricesQueryOptions = (token: TokenDailyPricesToken, curre
 })
 
 export const useTokenDailyPrices = (token: TokenDailyPricesToken, currency: TokenDailyPricesCurrency) => {
-  const { data, isLoading, error } = useQuery<TokenDailyPrice[]>(tokenDailyPricesQueryOptions(token, currency))
+  const { data, isLoading, error } = useSuspenseQuery<TokenDailyPrice[]>(tokenDailyPricesQueryOptions(token, currency))
 
   const dailyChangePercent = (() => {
     if (!data || data.length < 2) return 0

@@ -1,4 +1,4 @@
-import { queryOptions, skipToken } from '@tanstack/react-query'
+import { queryOptions } from '@tanstack/react-query'
 import type { NetworkName } from '@/lib/constants/network'
 import { type BlockId, type BlockRevision, blockCompressedSchema, blockExpandedSchema } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
@@ -36,7 +36,7 @@ const getBestBlockCompressed = async ({ networkName }: { networkName: NetworkNam
 export const blockExpandedQueryOptions = (networkName: NetworkName, revision: BlockRevision | undefined) =>
   queryOptions({
     queryKey: [getBlockExpanded.name, networkName, revision],
-    queryFn: revision ? () => getBlockExpanded({ networkName, revision }) : skipToken,
+    queryFn: () => getBlockExpanded({ networkName, revision: revision ?? '0x' }),
     staleTime: Infinity,
   })
 
@@ -65,7 +65,7 @@ export const blockCompressedQueryOptions = ({
 }) =>
   queryOptions({
     queryKey: [getBlockCompressed.name, networkName, revision],
-    queryFn: revision ? () => getBlockCompressed({ networkName, revision }) : skipToken,
+    queryFn: () => getBlockCompressed({ networkName, revision: revision ?? '0x' }),
     staleTime: Infinity,
   })
 
@@ -94,6 +94,6 @@ export const getBlockCompressed = async ({
 export const baseFeePerGasQueryOptions = (networkName: NetworkName, blockId: BlockId | undefined) =>
   queryOptions({
     queryKey: [getBlockCompressed.name, networkName, blockId],
-    queryFn: blockId ? () => getBlockCompressed({ networkName, revision: blockId }) : skipToken,
+    queryFn: () => getBlockCompressed({ networkName, revision: blockId ?? '0x' }),
     select: data => data.baseFeePerGas,
   })

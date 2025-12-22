@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { BigNumber } from 'bignumber.js'
 import { ThorClient } from '@vechain/sdk-network'
 import { OracleVechainEnergy__factory } from '@vechain/vechain-contract-types'
@@ -43,10 +43,9 @@ export const useGetTokenUsdPrice = (token: SupportedToken) => {
   const { activeNetwork } = useSettingsStore()
   const thor = getThorClient(activeNetwork.name)
 
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: getTokenUsdPriceQueryKey(token),
     queryFn: async () => getTokenUsdPrice(thor, token, activeNetwork.name),
-    enabled: !!thor && !!activeNetwork.name,
     retry: (failureCount, error) => {
       // Don't retry on cancellation errors
       if (error instanceof Error) {

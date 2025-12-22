@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import type { Abi } from 'viem'
 import { apiClient } from '@/lib/api'
 
 export const useAbi = (signature: string) => {
-  return useQuery(abiQueryOptions(signature))
+  return useSuspenseQuery(abiQueryOptions(signature))
 }
 
 const abiQueryOptions = (signature: string) => ({

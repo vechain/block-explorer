@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQueries, useSuspenseQuery } from '@tanstack/react-query'
 import type {
   AddressString,
   BlockId,
@@ -23,7 +23,7 @@ import { vnsNameQueryOptions } from './vns'
  */
 const useBestBlockCompressed = () => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
+  return useSuspenseQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
 }
 
 export const useLatestBlocksCompressed = ({ count }: { count: number }) => {
@@ -85,7 +85,7 @@ const isExpandedBlock = (block: unknown): block is ExpandedBlock => {
 }
 export const useBlockExpanded = (revision: BlockRevision | undefined) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(blockExpandedQueryOptions(activeNetwork.name, revision))
+  return useSuspenseQuery(blockExpandedQueryOptions(activeNetwork.name, revision))
 }
 
 /**
@@ -93,22 +93,22 @@ export const useBlockExpanded = (revision: BlockRevision | undefined) => {
  */
 export const useTransaction = (transactionId: TransactionId | undefined) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(transactionQueryOptions(activeNetwork.name, transactionId))
+  return useSuspenseQuery(transactionQueryOptions(activeNetwork.name, transactionId))
 }
 
 export const useTransactionReceipt = (transactionId: TransactionId | undefined) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(transactionReceiptQueryOptions(activeNetwork.name, transactionId))
+  return useSuspenseQuery(transactionReceiptQueryOptions(activeNetwork.name, transactionId))
 }
 
 export const useBaseFeePerGas = (blockId: BlockId | undefined) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(baseFeePerGasQueryOptions(activeNetwork.name, blockId))
+  return useSuspenseQuery(baseFeePerGasQueryOptions(activeNetwork.name, blockId))
 }
 
 export const useLegacyBaseFeePerGas = () => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(legacyBaseFeePerGasQueryOptions(activeNetwork.name))
+  return useSuspenseQuery(legacyBaseFeePerGasQueryOptions(activeNetwork.name))
 }
 
 /**
@@ -117,10 +117,10 @@ export const useLegacyBaseFeePerGas = () => {
 export const useVnsName = (address: AddressString | undefined) => {
   const { activeNetwork } = useSettingsStore()
 
-  return useQuery(vnsNameQueryOptions(activeNetwork.name, address))
+  return useSuspenseQuery(vnsNameQueryOptions(activeNetwork.name, address))
 }
 
 export const useAccount = (address: AddressString | undefined) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(accountQueryOptions(activeNetwork.name, address))
+  return useSuspenseQuery(accountQueryOptions(activeNetwork.name, address))
 }

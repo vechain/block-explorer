@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useSuspenseQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { type BlockUsageResponse, blockUsageResponseSchema } from '@/lib/schemas'
@@ -75,5 +75,5 @@ const getBlockUsage = async ({
 
 export const useBlockUsage = (startTimestamp: number, endTimestamp: number, isLiveMode: boolean = true) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(blockUsageQueryOptions(activeNetwork.name, startTimestamp, endTimestamp, isLiveMode))
+  return useSuspenseQuery(blockUsageQueryOptions(activeNetwork.name, startTimestamp, endTimestamp, isLiveMode))
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useQuery, useQueries } from '@tanstack/react-query'
+import { useSuspenseQuery, useQueries } from '@tanstack/react-query'
 import type { AddressString, ExpandedBlock } from '@/lib/schemas'
 import { isNotNullish } from '@/lib/type-predicates'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -28,39 +28,39 @@ import { getAllValidatorsCount, ValidatorStatus } from './validators'
 
 export const useNftHolders = () => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(nftHoldersQueryOptions(activeNetwork.name))
+  return useSuspenseQuery(nftHoldersQueryOptions(activeNetwork.name))
 }
 
 export const useTotalVetStaked = () => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(totalVetStakedQueryOptions(activeNetwork.name))
+  return useSuspenseQuery(totalVetStakedQueryOptions(activeNetwork.name))
 }
 
 export const useTotalVetStakedHistoric = (range: TotalVetStakedRange) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(totalVetStakedHistoricQueryOptions(activeNetwork.name, range))
+  return useSuspenseQuery(totalVetStakedHistoricQueryOptions(activeNetwork.name, range))
 }
 
 export const useTotalVthoClaimed = () => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(totalVthoClaimedQueryOptions(activeNetwork.name))
+  return useSuspenseQuery(totalVthoClaimedQueryOptions(activeNetwork.name))
 }
 
 export const useAccountTotals = (timeFrame: AccountTimeFrame) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(accountTotalsQueryOptions(activeNetwork.name, timeFrame))
+  return useSuspenseQuery(accountTotalsQueryOptions(activeNetwork.name, timeFrame))
 }
 
 export { AccountTimeFrame }
 
 export const useAccountTransactions = ({ params }: { params: IndexerGetTransactionsParams }) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(accountTransactionsQueryOptions(activeNetwork.name, params))
+  return useSuspenseQuery(accountTransactionsQueryOptions(activeNetwork.name, params))
 }
 
 export const useAccountTransfers = ({ params }: { params: IndexerGetTransfersParams }) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(accountTransfersQueryOptions(activeNetwork.name, params))
+  return useSuspenseQuery(accountTransfersQueryOptions(activeNetwork.name, params))
 }
 
 export const useAccountTransfersWithTokens = ({ params }: { params: IndexerGetTransfersParams }) => {
@@ -86,22 +86,22 @@ export const useAccountTransfersWithTokens = ({ params }: { params: IndexerGetTr
 
 export const useContractTransactions = ({ params }: { params: IndexerGetContractTransactionsParams }) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(contractTransactionsQueryOptions(activeNetwork.name, params))
+  return useSuspenseQuery(contractTransactionsQueryOptions(activeNetwork.name, params))
 }
 
 export const useAccountErc20Contracts = ({ params }: { params: IndexerGetErc20ContractsParams }) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(accountErc20ContractsQueryOptions(activeNetwork.name, params))
+  return useSuspenseQuery(accountErc20ContractsQueryOptions(activeNetwork.name, params))
 }
 
 export const useAccountErc721 = ({ params }: { params: IndexerGetErc721Params }) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(accountErc721TokensQueryOptions(activeNetwork.name, params))
+  return useSuspenseQuery(accountErc721TokensQueryOptions(activeNetwork.name, params))
 }
 
 export const useValidatorsCount = (status?: ValidatorStatus) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: [getAllValidatorsCount.name, activeNetwork.name, status],
     queryFn: () => getAllValidatorsCount(activeNetwork.name, status),
     refetchInterval: 60 * 1000, // Refetch every 60 seconds
@@ -125,7 +125,7 @@ const isExpandedBlock = (block: unknown): block is ExpandedBlock => {
 export const useRecentTokenTransfers = ({ count }: { count: number }) => {
   const { activeNetwork } = useSettingsStore()
   const [blocksToFetch, setBlocksToFetch] = useState(5)
-  const { data: bestBlock } = useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
+  const { data: bestBlock } = useSuspenseQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
   const bestBlockNumber = bestBlock?.number ?? blocksToFetch
 
   const blockQueries = useMemo(() => {

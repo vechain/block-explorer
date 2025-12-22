@@ -1,4 +1,4 @@
-import { queryOptions, skipToken } from '@tanstack/react-query'
+import { queryOptions } from '@tanstack/react-query'
 import { Address } from '@vechain/sdk-core'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
@@ -9,7 +9,7 @@ import { getThorClient } from './client'
 export const accountQueryOptions = (networkName: NetworkName, address: AddressString | undefined) =>
   queryOptions({
     queryKey: [getAccount.name, networkName, address],
-    queryFn: address ? () => getAccount({ networkName, address }) : skipToken,
+    queryFn: () => getAccount({ networkName, address: address ?? '0x' }),
   })
 
 export const getAccount = async ({ networkName, address }: { networkName: NetworkName; address: AddressString }) => {

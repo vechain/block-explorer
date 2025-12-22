@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQueries, useSuspenseQuery } from '@tanstack/react-query'
 import { ERC20_ABI, ZERO_ADDRESS } from '@vechain/sdk-core'
 import type { Contract } from '@vechain/sdk-network'
 import type { NetworkName } from '@/lib/constants/network'
@@ -40,7 +40,7 @@ export const useErc20BalanceOf = ({
   contract: Erc20['contract']
   accountAddress: AddressString
 }) => {
-  return useQuery(erc20BalanceOfQueryOptions(contract, accountAddress))
+  return useSuspenseQuery(erc20BalanceOfQueryOptions(contract, accountAddress))
 }
 
 const erc20ContractQueryOptions = (networkName: NetworkName, address: AddressString) => ({

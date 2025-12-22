@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import z from 'zod'
 import { IPFS_GATEWAY_PROXY_URL } from '@/env.public'
 import { apiClient } from '@/lib/api'
@@ -33,7 +33,7 @@ export const useNftMetadata = (uri: string) => {
     fallbackData: null,
   })
 
-  return useQuery({ ...nftMetadataQueryOptions(parsedUri), enabled: !!parsedUri })
+  return useSuspenseQuery({ ...nftMetadataQueryOptions(parsedUri) })
 }
 
 // ****************************** IPFS URI schema ******************************

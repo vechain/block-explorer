@@ -1,4 +1,4 @@
-import { queryOptions, skipToken } from '@tanstack/react-query'
+import { queryOptions } from '@tanstack/react-query'
 import z from 'zod'
 import type { NetworkName } from '@/lib/constants/network'
 import { type TransactionId, transactionReceiptSchema, transactionSchema } from '@/lib/schemas'
@@ -11,7 +11,7 @@ import { getThorClient } from './client'
 export const transactionQueryOptions = (networkName: NetworkName, transactionId: TransactionId | undefined) =>
   queryOptions({
     queryKey: [getTransaction.name, networkName, transactionId],
-    queryFn: transactionId ? () => getTransaction({ networkName, transactionId }) : skipToken,
+    queryFn: () => getTransaction({ networkName, transactionId: transactionId ?? '0x' }),
     staleTime: Infinity,
   })
 
@@ -41,7 +41,7 @@ export const getTransaction = async ({
 export const transactionReceiptQueryOptions = (networkName: NetworkName, transactionId: TransactionId | undefined) =>
   queryOptions({
     queryKey: [getTransactionReceipt.name, networkName, transactionId],
-    queryFn: transactionId ? () => getTransactionReceipt({ networkName, transactionId }) : skipToken,
+    queryFn: () => getTransactionReceipt({ networkName, transactionId: transactionId ?? '0x' }),
     refetchInterval: query => (query.state.data === null ? false : 3000),
   })
 
