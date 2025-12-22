@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import type { AddressString, ExpandedBlock } from '@/lib/schemas'
+import { isNotNullish } from '@/lib/type-predicates'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { type Erc20, useErc20Contracts } from '@/services/thor/tokens/erc20'
 import { blockExpandedQueryOptions, bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { accountTotalsQueryOptions, AccountTimeFrame } from './account-totals'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
@@ -59,6 +61,27 @@ export const useAccountTransactions = ({ params }: { params: IndexerGetTransacti
 export const useAccountTransfers = ({ params }: { params: IndexerGetTransfersParams }) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(accountTransfersQueryOptions(activeNetwork.name, params))
+}
+
+export const useAccountTransfersWithTokens = ({ params }: { params: IndexerGetTransfersParams }) => {
+  const { data: transfers, isLoading, isError, error } = useAccountTransfers({ params })
+
+  const allTokenAddresses: AddressString[] = useMemo(
+    () => transfers?.data.map(transfer => transfer.tokenAddress).filter(isNotNullish) ?? [],
+    [transfers?.data],
+  )
+
+  const { data: erc20Map, isPending: isPendingErc20List } = useErc20Contracts({
+    contractAddressList: new Set<AddressString>(allTokenAddresses),
+  })
+
+  return {
+    transfers,
+    erc20Map: erc20Map ?? new Map<AddressString, Erc20>(),
+    isLoading: isLoading || isPendingErc20List,
+    isError,
+    error,
+  }
 }
 
 export const useContractTransactions = ({ params }: { params: IndexerGetContractTransactionsParams }) => {
