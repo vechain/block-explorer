@@ -1,7 +1,6 @@
 'use client'
 
 import { Badge, type BadgeProps, Stack, Table } from '@chakra-ui/react'
-import { ZERO_ADDRESS } from '@vechain/sdk-core'
 import { useState } from 'react'
 import { NoTransfers } from '@/components/NoResults'
 import { AmountWithHover } from '@/components/ui-legacy/AmountWithHover'
@@ -10,9 +9,8 @@ import { BaseLink, TransactionLink } from '@/components/ui-legacy/Links'
 import { Pagination } from '@/components/ui-legacy/Pagination'
 import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import type { AddressString } from '@/lib/schemas'
-import { isNotNullish } from '@/lib/type-predicates'
-import { type Erc20, useErc20Contracts } from '@/services/thor/tokens/erc20'
-import { useAccountTransfers } from '@/services/veworld-indexer/hooks'
+import { type Erc20 } from '@/services/thor/tokens/erc20'
+import { useAccountTransfersWithTokens } from '@/services/veworld-indexer/hooks'
 import type { IndexerTransfer } from '@/services/veworld-indexer/schemas'
 import { useTranslation } from 'react-i18next'
 
@@ -21,18 +19,11 @@ const PAGE_SIZE = 30
 export const AccountTransfersTab = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
   const [page, setPage] = useState(0)
-  const { data: transfers, isLoading } = useAccountTransfers({
+  const { transfers, erc20Map, isLoading } = useAccountTransfersWithTokens({
     params: { address, page, size: PAGE_SIZE },
   })
 
-  const allTokenAddresses: AddressString[] =
-    transfers?.data.map(transfer => transfer.tokenAddress).filter(isNotNullish) ?? []
-
-  const { data: erc20Map, isPending: isPendingErc20List } = useErc20Contracts({
-    contractAddressList: new Set<AddressString>(allTokenAddresses),
-  })
-
-  if (isLoading || isPendingErc20List) return <div>Loading...</div>
+  if (isLoading) return <div>Loading...</div>
   if (!transfers || transfers.data.length === 0) return <NoTransfers />
 
   return (
@@ -56,7 +47,7 @@ export const AccountTransfersTab = ({ address }: { address: AddressString }) => 
                   key={transfer.id}
                   transfer={transfer}
                   accountAddress={address}
-                  token={erc20Map.get(transfer.tokenAddress ?? ZERO_ADDRESS)}
+                  token={transfer.tokenAddress ? erc20Map.get(transfer.tokenAddress) : undefined}
                 />
               ))}
             </ErrorBoundary>
@@ -78,7 +69,7 @@ const TransferRow = ({
   accountAddress: AddressString
   token: Erc20 | null | undefined
 }) => {
-  const symbol = token?.symbol ?? '-'
+  const symbol = transfer.eventType === 'VET' ? 'VET' : (token?.symbol ?? '-')
   const decimals = token?.decimals ?? 18
 
   const isReceived = transfer.to.toLowerCase() === accountAddress.toLowerCase()
