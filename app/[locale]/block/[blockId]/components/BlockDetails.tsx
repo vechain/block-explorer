@@ -1,0 +1,97 @@
+'use client'
+
+import { Flex, Group, Heading, Stack, Text } from '@chakra-ui/react'
+import { format } from 'date-fns'
+import Image from 'next/image'
+import { notFound } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
+import { SearchBar } from '@/components/navigation/SearchBar'
+import { DataCard } from '@/components/ui/DataCard'
+import { IDChip } from '@/components/ui/IDChip'
+import { AddressLink } from '@/components/ui/Links'
+import { Card } from '@/components/ui/Card'
+import type { BlockId } from '@/lib/schemas'
+import { useBlockExpanded } from '@/services/thor/hooks'
+import { TransactionsTable } from '../../../components/TransactionsTable'
+import { BlockInsight } from '../../components/BlockInsights'
+
+export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
+  const { data: block, isPending } = useBlockExpanded(blockId)
+  const { t } = useTranslation()
+
+  if (isPending) return <div>Loading...</div>
+
+  if (!block) {
+    notFound()
+  }
+
+  const formattedDate = format(new Date(block.timestamp), 'dd/MM/yyyy')
+  const formattedTime = format(new Date(block.timestamp), 'HH:mm:ss')
+
+  return (
+    <Stack gap="8">
+      <SearchBar mt="16" />
+
+      <Card>
+        <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
+          <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap" mb={{ base: '6', md: '0' }}>
+            {t('Block Details')}
+          </Heading>
+          <IDChip value={block.id} />
+        </Flex>
+
+        <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
+          {/* Date and time */}
+          <DataCard
+            icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
+            title={t('Date time')}
+            tooltip={t('Information coming soon')}
+          >
+            <Group gap="1">
+              <Text textStyle="bodyL">{formattedDate}</Text>
+              <Text textStyle="bodyL" color="text-secondary">
+                {formattedTime}
+              </Text>
+            </Group>
+          </DataCard>
+
+          {/* Clauses count */}
+          <DataCard
+            icon={<Image src="/icons/clause.svg" alt="Clauses" />}
+            title={t('Total Clauses')}
+            tooltip={t('Information coming soon')}
+          >
+            <Text>{block.transactions.reduce((acc, tx) => acc + tx.clauses.length, 0)}</Text>
+          </DataCard>
+
+          {/* Block signer */}
+          <DataCard
+            icon={<Image src="/icons/link.svg" alt="Signer" />}
+            title={t('Block Signer')}
+            tooltip={t('Information coming soon')}
+          >
+            <AddressLink address={block.signer} truncate />
+          </DataCard>
+
+          {/* Beneficiary */}
+          <DataCard
+            icon={<Image src="/icons/link.svg" alt="Beneficiary" />}
+            title={t('Beneficiary')}
+            tooltip={t('Information coming soon')}
+          >
+            <AddressLink address={block.beneficiary} truncate />
+          </DataCard>
+        </Flex>
+
+        <BlockInsight block={block} />
+      </Card>
+
+      <Card>
+        <Heading as="h2" textStyle="displayXs">
+          {t('Transactions')}
+        </Heading>
+        <TransactionsTable transactions={block.transactions} />
+      </Card>
+    </Stack>
+  )
+}

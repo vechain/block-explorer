@@ -14,7 +14,6 @@ export default async function i18nInit({ locale, i18nInstance }: { locale: Local
     lng: locale ?? i18nConfig.defaultLocale,
     fallbackLng: i18nConfig.defaultLocale,
     supportedLngs: i18nConfig.locales,
-    preload: i18nConfig.locales,
   })
 
   return i18n
