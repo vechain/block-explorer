@@ -1,0 +1,179 @@
+---
+description: Technology stack versions and best practices for each major dependency
+alwaysApply: true
+---
+
+# Stack & Versions
+
+## Core Framework
+
+| Package | Version | Notes |
+|---------|---------|-------|
+| Next.js | 15.5.8 | App Router, Turbopack for builds |
+| React | 19.1.2 | Concurrent features, `use` hook available |
+| TypeScript | 5.9.2 | Strict mode enabled |
+| pnpm | 9.15.4 | Required package manager |
+
+### Next.js 15 Best Practices
+
+- Use `async` Server Components for data fetching; avoid `getServerSideProps`/`getStaticProps`
+- Prefer Server Components by default; add `'use client'` only when using hooks/browser APIs
+- Use `loading.tsx` and `error.tsx` for Suspense boundaries
+- Route handlers go in `app/api/` with `route.ts` files
+- Dynamic routes use `[param]` folder naming
+- Build uses Turbopack (`next build --turbopack`)
+
+### React 19 Best Practices
+
+- Use the `use` hook for reading promises/context in render
+- `ref` is now a regular prop—no need for `forwardRef` in most cases
+- Actions: `useActionState`, `useFormStatus`, `useOptimistic` for forms
+- Avoid legacy patterns (`defaultProps`, string refs)
+
+## UI & Styling
+
+| Package | Version | Notes |
+|---------|---------|-------|
+| Chakra UI | 3.26.0 | v3 with Ark UI primitives |
+| Emotion | 11.14.0 | CSS-in-JS for Chakra |
+| Motion | 12.23.22 | Animation library (formerly Framer Motion) |
+| react-icons | 5.5.0 | Icon library |
+| recharts | 3.2.1 | Chart components |
+
+### Chakra UI v3 Best Practices
+
+- v3 uses Ark UI primitives under the hood—API differs from v2
+- Import from `@chakra-ui/react` (not sub-packages)
+- Use semantic tokens from theme config (`components/theme/config.tsx`)
+- Prefer composition: `<Box>`, `<Flex>`, `<Stack>`, `<Grid>`
+- Use `asChild` prop to merge styling onto child elements
+- Color mode via `next-themes` integration
+
+### Motion Best Practices
+
+- Import `motion` components from `motion` package
+- Use CSS spring easing for natural animations (MCP tool available)
+- Prefer `whileHover`, `whileTap` for micro-interactions
+- Use `layout` prop for shared layout animations
+- Keep animations under 400ms for responsiveness
+
+## State & Data
+
+| Package | Version | Notes |
+|---------|---------|-------|
+| TanStack Query | 5.85.6 | Server state management |
+| Zustand | 5.0.8 | Client state management |
+| Zod | 4.1.5 | Schema validation |
+
+### TanStack Query v5 Best Practices
+
+- Queries return `{ data, isPending, isError }` (not `isLoading`)
+- Use `queryOptions()` helper for type-safe query definitions
+- Mutations: use `useMutation` with `onSuccess`/`onError`
+- Prefetch in Server Components with `prefetchQuery`
+- Configure staleTime/gcTime per query type
+- Devtools available via `@tanstack/react-query-devtools`
+
+### Zustand v5 Best Practices
+
+- Use `create` with `persist` middleware for localStorage
+- Selectors: `useStore((s) => s.value)` to avoid re-renders
+- No providers needed—stores are global
+- Avoid storing derived state; compute in selectors
+- Settings store: `lib/stores/settings.ts`
+
+### Zod v4 Best Practices
+
+- v4 has improved performance and tree-shaking
+- Use `z.object()` for API response schemas
+- Prefer `z.infer<typeof schema>` for TypeScript types
+- Use `.transform()` for data normalization
+- Schemas live in `lib/schemas/` and `services/**/schemas.ts`
+
+## Internationalization
+
+| Package | Version | Notes |
+|---------|---------|-------|
+| i18next | 25.4.2 | Core i18n library |
+| react-i18next | 15.7.3 | React bindings |
+| next-i18n-router | 5.5.3 | Locale routing |
+
+### i18n Best Practices
+
+- Translations in `i18n/languages/*.json`
+- Use `useTranslation` hook in Client Components
+- Server Components: use `i18n/server.ts` utilities
+- Locale detected via middleware (`middleware.ts`)
+- Always add new keys to `en.json` first
+
+## Blockchain SDKs
+
+| Package | Version | Notes |
+|---------|---------|-------|
+| @vechain/sdk-core | 2.0.7 | VeChain core utilities |
+| @vechain/sdk-network | 2.0.7 | Thor node client |
+| viem | 2.36.0 | EVM utilities (ABI, encoding) |
+| bignumber.js | 9.3.1 | Arbitrary precision math |
+
+### VeChain SDK Best Practices
+
+- Use services in `services/thor/` for node interactions
+- Network switching handled by settings store
+- Always validate responses with Zod schemas
+- Use `bignumber.js` for token amounts (avoid floating point)
+
+### viem Best Practices
+
+- Use for ABI encoding/decoding, address validation
+- Prefer viem utilities over manual hex manipulation
+- Type-safe contract interactions with `getContract`
+
+## Utilities
+
+| Package | Version | Notes |
+|---------|---------|-------|
+| date-fns | 4.1.0 | Date manipulation |
+| next-themes | 0.4.6 | Theme switching |
+
+### date-fns v4 Best Practices
+
+- Tree-shakeable—import specific functions
+- Use `formatDistanceToNow` for relative times
+- Utilities in `lib/utils/date.ts`
+
+## Testing
+
+| Package | Version | Notes |
+|---------|---------|-------|
+| Vitest | 3.2.4 | Test runner |
+| Testing Library React | 16.3.0 | React testing utilities |
+| Testing Library DOM | 10.4.1 | DOM queries |
+| jsdom | 26.1.0 | DOM environment |
+
+### Testing Best Practices
+
+- Run tests: `pnpm test` or `pnpm test:watch`
+- Test files: `*.spec.ts` or `*.test.ts` colocated with source
+- Use `screen.getByRole` queries over `getByTestId`
+- Mock API calls at the service layer
+- Setup file: `test/setup.ts`
+
+## Linting & Formatting
+
+| Package | Version | Notes |
+|---------|---------|-------|
+| ESLint | 8.57.0 | Linting |
+| Prettier | 3.4.0 | Code formatting |
+| Husky | 9.1.7 | Git hooks |
+| lint-staged | 16.2.7 | Pre-commit checks |
+
+### Quality Commands
+
+```bash
+pnpm lint        # Check linting
+pnpm lint:fix    # Fix lint issues
+pnpm format      # Format code
+pnpm ts-check    # Type check
+pnpm test        # Run tests
+pnpm validate    # Full validation (build + test + lint + format)
+```

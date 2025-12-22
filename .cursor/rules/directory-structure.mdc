@@ -1,0 +1,151 @@
+---
+alwaysApply: true
+---
+
+# Directory Structure
+
+VeChain Block Explorer frontend - Next.js 15 App Router project.
+
+## Root Structure
+
+```
+block-explorer/
+├── app/                    # Next.js App Router pages
+├── components/             # Shared React components
+├── hooks/                  # Custom React hooks
+├── i18n/                   # Internationalization
+├── lib/                    # Core utilities, schemas, stores
+├── services/               # API clients and data fetching
+├── public/                 # Static assets
+├── test/                   # Test setup
+├── terraform/              # Infrastructure as code
+├── middleware.ts           # Next.js middleware (locale routing)
+├── env.api.ts              # Server-side env vars
+├── env.public.ts           # Client-side env vars
+└── next.config.ts
+```
+
+## App Directory (`app/`)
+
+Locale-prefixed routes under `app/[locale]/`:
+
+```
+app/
+├── [locale]/
+│   ├── page.tsx                    # Homepage
+│   ├── layout.tsx                  # Root layout with providers
+│   ├── address/[address]/          # Address/account pages
+│   ├── block/[blockId]/            # Block detail pages
+│   ├── transaction/[transactionId]/ # Transaction detail pages
+│   └── components/                 # Page-specific components
+│       ├── ActivitySection.tsx
+│       ├── BlocksTable.tsx
+│       ├── BlockUsage/
+│       ├── PriceCards.tsx
+│       └── TransactionsTable.tsx
+└── api/                            # API routes
+    ├── b32/                        # B32 name resolution
+    └── nft-metadata/               # NFT metadata proxy
+```
+
+## Components (`components/`)
+
+```
+components/
+├── ui/                 # Preferred UI primitives (use these)
+│   ├── Card.tsx
+│   ├── Table.tsx
+│   ├── Links.tsx
+│   ├── Balance.tsx
+│   ├── StatusBadge.tsx
+│   └── ...
+├── ui-legacy/          # Legacy components (avoid expanding)
+├── theme/              # Chakra theme configuration
+│   ├── config.tsx
+│   ├── provider.tsx
+│   └── text-styles.ts
+├── navigation/         # Header, search, network select
+├── Footer/
+└── error/              # Error boundary and not-found
+```
+
+## Services (`services/`)
+
+API clients for external data sources:
+
+```
+services/
+├── thor/               # VeChain Thor node client
+│   ├── client.ts       # Base client setup
+│   ├── account.ts      # Account queries
+│   ├── block.ts        # Block queries
+│   ├── transaction.ts  # Transaction queries
+│   ├── hooks.ts        # React Query hooks
+│   ├── vns.ts          # VeChain Name Service
+│   └── tokens/         # ERC20/ERC721 helpers
+├── veworld-indexer/    # VeWorld Indexer API
+│   ├── index.ts        # Client setup
+│   ├── hooks.ts        # React Query hooks
+│   ├── schemas.ts      # Zod validation schemas
+│   ├── transactions.ts
+│   ├── transfers.ts
+│   └── ...
+├── coin-api/           # Price data
+│   ├── hooks.ts
+│   └── price-list.ts
+├── b32.ts              # B32 name service
+└── nft-metadata.ts     # NFT metadata fetching
+```
+
+## Lib (`lib/`)
+
+Core utilities and infrastructure:
+
+```
+lib/
+├── api/                # Fetch helpers
+├── constants/          # Network configs, contract addresses
+├── query-client/       # TanStack Query provider
+├── schemas/            # Zod schemas for API responses
+│   ├── account.ts
+│   ├── blocks.ts
+│   ├── transactions.ts
+│   └── events.ts
+├── stores/
+│   └── settings.ts     # Zustand settings store (network, currency)
+├── utils/              # Pure utility functions
+│   ├── address.ts
+│   ├── date.ts
+│   ├── units.ts
+│   └── vns.ts
+└── type-predicates.ts
+```
+
+## i18n (`i18n/`)
+
+```
+i18n/
+├── config.ts           # Supported locales
+├── languages/          # Translation JSON files (en.json, etc.)
+├── provider.tsx        # Client-side provider
+├── server.ts           # Server-side translations
+└── utils.ts
+```
+
+## Key Configuration Files
+
+| File               | Purpose                   |
+| ------------------ | ------------------------- |
+| `next.config.ts`   | Next.js configuration     |
+| `middleware.ts`    | Locale routing middleware |
+| `tsconfig.json`    | TypeScript config         |
+| `vitest.config.ts` | Test runner config        |
+| `package.json`     | Dependencies and scripts  |
+
+## Important Patterns
+
+1. **Route params**: Dynamic segments use `[param]` naming (e.g., `[address]`, `[blockId]`)
+2. **Service hooks**: Data fetching via `services/**/hooks.ts` files with TanStack Query
+3. **Schemas**: Validate external data with `lib/schemas/**` and `services/**/schemas.ts`
+4. **Settings store**: Network/currency from `lib/stores/settings.ts`
+5. **UI components**: Prefer `components/ui/*` over `components/ui-legacy/*`
