@@ -1,0 +1,133 @@
+# VeChain Block Explorer - Cursor Rules
+
+## Project Overview
+
+VeChain Block Explorer built with Next.js 15 (App Router), React 19, TypeScript, and Chakra UI v3. Blockchain data via VeChain SDK.
+
+## Tech Stack
+
+- **Framework**: Next.js 15 App Router, React 19
+- **Styling**: Chakra UI v3 + Emotion
+- **State**: Zustand (persisted), TanStack Query
+- **Blockchain**: @vechain/sdk-core, @vechain/sdk-network
+- **i18n**: react-i18next, next-i18n-router
+- **Validation**: Zod
+- **Package Manager**: pnpm
+
+## Code Style
+
+### Formatting
+
+- No semicolons
+- Single quotes
+- 2-space indentation
+- Trailing commas
+- 120 char line width
+
+### TypeScript
+
+- Strict mode enabled
+- Prefix unused vars with `_`
+- Use `type` imports: `import type { X } from 'y'`
+- Path alias: `@/*` maps to project root
+
+### React/Next.js
+
+- Prefer Server Components (default), use `'use client'` only when needed
+- Use `async` Server Components for data fetching
+- Prefetch queries on server with `HydrationBoundary`
+- Page params are `Promise<T>` - must await them
+
+## Architecture Patterns
+
+### Schemas (Zod)
+
+- Define in `lib/schemas/` for shared types
+- Use branded types for domain values (AddressString, TransactionId)
+- Always validate API responses
+
+### File Organization
+
+- `app/[locale]/` - routes with i18n
+- `app/[locale]/[route]/components/` - page-specific components
+- `components/ui/` - reusable UI components
+- `components/navigation/` - header, search, network select
+- `services/` - API clients and query options
+- `lib/` - utilities, schemas, stores, constants
+- `hooks/` - custom React hooks
+
+### Component Patterns
+
+```typescript
+// Props typing
+type MyComponentProps = {
+  value: string
+  onChange?: (value: string) => void
+}
+
+// Chakra UI v3 - use semantic tokens
+<Box color="text-primary" bg="bg-primary" />
+<Text textStyle="bodyM" />
+```
+
+### State Management
+
+```typescript
+// Zustand store pattern
+export const useSettingsStore = create<SettingsStore>()(
+  persist(
+    set => ({
+      activeNetwork: NETWORKS[NetworkName.MAINNET],
+      setActiveNetwork: network => set({ activeNetwork: network }),
+    }),
+    { name: 'settings' },
+  ),
+)
+```
+
+## Key Conventions
+
+### Network-Aware Code
+
+All blockchain API calls require the active network from settings store:
+
+```typescript
+const { activeNetwork } = useSettingsStore()
+```
+
+### Error Handling
+
+- Use `ApiError` class for API errors
+- Wrap async components with React Error Boundary
+- Use `zodParse` helper with fallback for safe parsing
+
+### i18n
+
+- No hardcoded strings in JSX (eslint enforced)
+- Use `useTranslation` hook from react-i18next
+- Translations in `i18n/languages/*.json`
+
+### Imports
+
+- Group: external deps → @/ alias → relative
+- Prefer named exports
+- Re-export from index files where appropriate
+
+## Commands
+
+```bash
+pnpm dev          # Start dev server
+pnpm build        # Build with Turbopack
+pnpm test         # Run Vitest tests
+pnpm lint:fix     # Fix ESLint issues
+pnpm format       # Format with Prettier
+pnpm validate     # Full validation
+```
+
+## Don'ts
+
+- Don't use `console.log` (use `console.error`/`console.warn` if needed)
+- Don't use `any` type
+- Don't add literal strings to JSX
+- Don't use default exports except for pages
+- Don't forget `'use client'` for hooks/state/events
