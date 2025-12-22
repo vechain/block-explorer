@@ -25,7 +25,9 @@ const config = defineConfig({
         // Background
         'bg-primary': { value: 'rgba(50, 50, 50, 0.06)' },
         'bg-secondary': { value: 'rgba(0,0,0, 0.4)' },
-        'bg-accent-primary': { value: 'white' },
+
+        // Tooltip
+        'tooltip-bg': { value: 'rgba(0,0,0, 0.7)' },
 
         // Border
         'border-primary': { value: 'rgba(255, 255, 255, 0.2)' },
@@ -39,7 +41,7 @@ const config = defineConfig({
         // Accent colors
         'accent-primary': { value: 'rgba(184, 166, 255, 1)' },
         'accent-secondary': { value: 'rgba(231, 130, 255, 1)' },
-        'accent-tertiary': { value: 'rgba(56, 216, 153, 1)' },
+        'accent-tertiary': { value: 'white' },
 
         // Alternating rows
         'row-even-bg-primary': { value: 'rgba(255, 255, 255, 0.06)' },
