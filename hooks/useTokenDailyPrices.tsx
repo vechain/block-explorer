@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { COIN_API_URL } from '@/env.public'
 import { apiClient } from '@/lib/api'
 import { zodParse } from '@/lib/utils/zod'
-import { useMemo } from 'react'
 
 export type TokenDailyPrice = {
   timestamp: number
@@ -22,13 +21,13 @@ export const tokenDailyPricesQueryOptions = (token: TokenDailyPricesToken, curre
 export const useTokenDailyPrices = (token: TokenDailyPricesToken, currency: TokenDailyPricesCurrency) => {
   const { data, isLoading, error } = useQuery<TokenDailyPrice[]>(tokenDailyPricesQueryOptions(token, currency))
 
-  const dailyChangePercent = useMemo(() => {
-    if (!data || data.length < 2) return undefined
+  const dailyChangePercent = (() => {
+    if (!data || data.length < 2) return 0
     const first = data[0]?.price
     const last = data[data.length - 1]?.price
-    if (!first || !last) return undefined
+    if (!first || !last) return 0
     return ((last - first) / first) * 100
-  }, [data])
+  })()
 
   return {
     data: data ?? [],
