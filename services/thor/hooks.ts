@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import type {
   AddressString,
   BlockId,
@@ -21,9 +21,9 @@ import { vnsNameQueryOptions } from './vns'
 /**
  * Block hooks
  */
-const useBestBlockCompressed = () => {
+export const useBestBlockCompressed = () => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
+  return useSuspenseQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
 }
 
 export const useLatestBlocksCompressed = ({ count }: { count: number }) => {

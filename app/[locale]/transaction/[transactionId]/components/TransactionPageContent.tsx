@@ -9,7 +9,7 @@ import { TransactionViews } from '@/components/TransactionViews'
 import { VETBalance } from '@/components/ui/Balance'
 import { DataCard } from '@/components/ui/DataCard'
 import { IDChip } from '@/components/ui/IDChip'
-import { AddressLink, BaseLink } from '@/components/ui/Links'
+import { BaseLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import { ValueSwitch } from '@/components/ui/ValueSwitch'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
@@ -82,42 +82,33 @@ const TransactionDetails = ({
         </Flex>
 
         <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
-          {/* Date and time */}
+          {/* Block Number */}
           <DataCard
             icon={<Image src="/icons/block-number.svg" alt="Block Number" />}
             title={t('Block Number')}
             tooltip="Information coming soon"
           >
             <BaseLink href={`/block/${transaction.meta.blockID}`}>
-              {transaction.meta.blockNumber.toLocaleString()}
+              #{transaction.meta.blockNumber.toLocaleString()}
             </BaseLink>
           </DataCard>
 
-          {/* Clauses count */}
+          {/* Total Clauses */}
           <DataCard
             icon={<Image src="/icons/clause.svg" alt="Clauses" />}
             title={t('Total Clauses')}
             tooltip={t('Information coming soon')}
           >
-            <Text>{transaction.clauses.length}</Text>
+            <BaseLink href={`/transaction/${transaction.id}?view=clauses`}>{transaction.clauses.length}</BaseLink>
           </DataCard>
 
-          {/* Beneficiary */}
+          {/* Rewards */}
           <DataCard
             icon={<Image src="/icons/reward.svg" alt="Rewards" />}
             title={t('Rewards')}
             tooltip={t('Information coming soon')}
           >
-            {receipt ? <VETBalance balance={receipt.reward} /> : <Text>-</Text>}
-          </DataCard>
-
-          {/* Block signer */}
-          <DataCard
-            icon={<Image src="/icons/link.svg" alt="Origin" />}
-            title={t('Origin')}
-            tooltip={t('Information coming soon')}
-          >
-            <AddressLink address={transaction.origin} truncate />
+            {receipt ? <VETBalance balance={receipt.reward} justifyContent="flex-start" /> : <Text>-</Text>}
           </DataCard>
         </Flex>
 

@@ -4,6 +4,7 @@ import z from 'zod'
 
 // Force dynamic rendering - ensures SSR data prefetching works in production
 export const dynamic = 'force-dynamic'
+
 import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
 import { type TransactionId, transactionIdSchema } from '@/lib/schemas'
@@ -33,6 +34,7 @@ export default async function TransactionPage({
   })
 
   const queryClient = getQueryClient()
+
   await Promise.all([
     queryClient.prefetchQuery(transactionQueryOptions(activeNetworkName, transactionId)),
     queryClient.prefetchQuery(transactionReceiptQueryOptions(activeNetworkName, transactionId)),
