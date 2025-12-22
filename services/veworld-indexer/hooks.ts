@@ -102,7 +102,7 @@ export const useAccountErc721 = ({ params }: { params: IndexerGetErc721Params })
 export const useValidatorsCount = (status?: ValidatorStatus) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery({
-    queryKey: ['validatorsCount', activeNetwork.name, status],
+    queryKey: [getAllValidatorsCount.name, activeNetwork.name, status],
     queryFn: () => getAllValidatorsCount(activeNetwork.name, status),
     refetchInterval: 60 * 1000, // Refetch every 60 seconds
     retry: (failureCount: number, error: Error) => {

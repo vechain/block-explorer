@@ -73,7 +73,7 @@ const NetworkItem = ({
           left={0}
           right={0}
           bottom={0}
-          bg="bg-accent-primary"
+          bg="accent-tertiary"
           color="text-alt-primary"
           rounded="full"
         />
