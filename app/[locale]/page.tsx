@@ -16,7 +16,7 @@ import { ActivitySection } from './components/ActivitySection'
 import { BlockUsage } from './components/BlockUsage/BlockUsage'
 import { PriceCards } from './components/PriceCards'
 import { TotalStakedChart } from './components/TotalStakedChart'
-import { getTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
+import { tokenDailyPricesQueryOptions } from '@/hooks/useTokenDailyPrices'
 import { priceListQueryOptions } from '@/services/coin-api/price-list'
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
 import {
@@ -42,18 +42,9 @@ export default async function HomePage({
 
   const queryClient = getQueryClient()
   await queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName))
-  await queryClient.prefetchQuery({
-    queryKey: [getTokenDailyPrices.name, 'vechain', 'usd'],
-    queryFn: () => getTokenDailyPrices('vechain', 'usd'),
-  })
-  await queryClient.prefetchQuery({
-    queryKey: [getTokenDailyPrices.name, 'vethor-token', 'usd'],
-    queryFn: () => getTokenDailyPrices('vethor-token', 'usd'),
-  })
-  await queryClient.prefetchQuery({
-    queryKey: [getTokenDailyPrices.name, 'vebetterdao', 'usd'],
-    queryFn: () => getTokenDailyPrices('vebetterdao', 'usd'),
-  })
+  await queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', 'usd'))
+  await queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', 'usd'))
+  await queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', 'usd'))
   await queryClient.prefetchQuery(priceListQueryOptions())
 
   await queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName))

@@ -19,22 +19,22 @@ const formatChangePercent = (change?: number) => {
   return `${Math.abs(change).toFixed(2)}%`
 }
 
-const getDailyChangePercent = (prices?: { price: number }[]) => {
-  if (!prices || prices.length < 2) return undefined
-  const first = prices[0]?.price
-  const last = prices[prices.length - 1]?.price
-  if (!first || !last) return undefined
-
-  return ((last - first) / first) * 100
-}
-
 export const PriceCards = () => {
   const { t } = useTranslation()
   const { data: priceList, isLoading: priceListLoading } = usePriceList()
 
-  const { data: vetDailyPrices, isLoading: vetDailyLoading } = useTokenDailyPrices('vechain', 'usd')
-  const { data: vthoDailyPrices, isLoading: vthoDailyLoading } = useTokenDailyPrices('vethor-token', 'usd')
-  const { data: b3trDailyPrices, isLoading: b3trDailyLoading } = useTokenDailyPrices('vebetterdao', 'usd')
+  const { dailyChangePercent: vetDailyChangePercent, isLoading: vetDailyLoading } = useTokenDailyPrices(
+    'vechain',
+    'usd',
+  )
+  const { dailyChangePercent: vthoDailyChangePercent, isLoading: vthoDailyLoading } = useTokenDailyPrices(
+    'vethor-token',
+    'usd',
+  )
+  const { dailyChangePercent: b3trDailyChangePercent, isLoading: b3trDailyLoading } = useTokenDailyPrices(
+    'vebetterdao',
+    'usd',
+  )
 
   return (
     <Flex
@@ -56,21 +56,21 @@ export const PriceCards = () => {
         token="VET"
         label={t('VET Price')}
         price={priceList?.vet.usd}
-        changePercent={getDailyChangePercent(vetDailyPrices)}
+        changePercent={vetDailyChangePercent}
         isLoading={priceListLoading || !priceList || vetDailyLoading}
       />
       <TokenPriceCard
         token="VTHO"
         label={t('VTHO Price')}
         price={priceList?.vtho.usd}
-        changePercent={getDailyChangePercent(vthoDailyPrices)}
+        changePercent={vthoDailyChangePercent}
         isLoading={priceListLoading || !priceList || vthoDailyLoading}
       />
       <TokenPriceCard
         token="B3TR"
         label={t('B3TR Price')}
         price={priceList?.b3tr.usd}
-        changePercent={getDailyChangePercent(b3trDailyPrices)}
+        changePercent={b3trDailyChangePercent}
         isLoading={priceListLoading || !priceList || b3trDailyLoading}
       />
     </Flex>
