@@ -1,7 +1,10 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQuery, useQueries } from '@tanstack/react-query'
+import type { AddressString, ExpandedBlock } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { blockExpandedQueryOptions, bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { accountTotalsQueryOptions, AccountTimeFrame } from './account-totals'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
 import { nftHoldersQueryOptions } from './nft-holders'
@@ -91,3 +94,138 @@ export const useValidatorsCount = (status?: ValidatorStatus) => {
 }
 
 export { ValidatorStatus }
+
+const isExpandedBlock = (block: unknown): block is ExpandedBlock => {
+  return block !== null && block !== undefined && typeof block === 'object' && 'transactions' in block
+}
+
+export const useRecentTokenTransfers = ({ count }: { count: number }) => {
+  const { activeNetwork } = useSettingsStore()
+  const [blocksToFetch, setBlocksToFetch] = useState(5)
+  const { data: bestBlock } = useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
+  const bestBlockNumber = bestBlock?.number ?? blocksToFetch
+
+  const blockQueries = useMemo(() => {
+    const queries = []
+    for (let i = 0; i < blocksToFetch; i++) {
+      const revision = bestBlockNumber - i
+      if (revision > 0) {
+        queries.push(blockExpandedQueryOptions(activeNetwork.name, revision))
+      }
+    }
+    return queries
+  }, [activeNetwork.name, bestBlockNumber, blocksToFetch])
+
+  const blocksResult = useQueries({
+    queries: blockQueries,
+    combine: queries => ({
+      data: queries.map(query => query.data).filter(isExpandedBlock),
+      isPending: queries.some(query => query.isPending),
+    }),
+  })
+
+  const latestBlocks = blocksResult.data
+  const blocksPending = blocksResult.isPending
+
+  const { addressArray, recentBlockNumbersArray } = useMemo(() => {
+    const addresses = new Set<AddressString>()
+    const blockNumbers = new Set<number>()
+
+    if (latestBlocks?.length > 0) {
+      for (const block of latestBlocks) {
+        blockNumbers.add(Number(block.number))
+        for (const tx of block.transactions) {
+          addresses.add(tx.origin)
+          for (const clause of tx.clauses) {
+            if (clause.to) addresses.add(clause.to)
+          }
+        }
+      }
+    }
+
+    return {
+      addressArray: Array.from(addresses).slice(0, 30),
+      recentBlockNumbersArray: Array.from(blockNumbers).sort((a, b) => a - b),
+    }
+  }, [latestBlocks])
+
+  const recentBlockNumbers = useMemo(() => new Set(recentBlockNumbersArray), [recentBlockNumbersArray])
+
+  const transferQueries = useMemo(
+    () =>
+      addressArray.map(address =>
+        accountTransfersQueryOptions(activeNetwork.name, {
+          address,
+          page: 0,
+          size: 50,
+          direction: 'DESC',
+        }),
+      ),
+    [activeNetwork.name, addressArray],
+  )
+
+  const transferResults = useQueries({
+    queries: transferQueries,
+    combine: queries => ({
+      data: queries.flatMap(query => query.data?.data ?? []),
+      isPending: queries.some(query => query.isPending),
+    }),
+  })
+
+  const allTransfersRef = useRef<Map<string, (typeof transferResults.data)[0]>>(new Map())
+
+  const filteredTransfers = useMemo(() => {
+    const transfersData = transferResults.data
+
+    if (transfersData?.length > 0) {
+      for (const transfer of transfersData) {
+        if (recentBlockNumbers.has(transfer.blockNumber) && !allTransfersRef.current.has(transfer.id)) {
+          allTransfersRef.current.set(transfer.id, transfer)
+        }
+      }
+    }
+
+    return Array.from(allTransfersRef.current.values())
+      .filter(
+        transfer =>
+          recentBlockNumbers.has(transfer.blockNumber) &&
+          (transfer.eventType === 'VET' || transfer.eventType === 'FUNGIBLE_TOKEN'),
+      )
+      .sort((a, b) => {
+        if (b.blockTimestamp !== a.blockTimestamp) return b.blockTimestamp - a.blockTimestamp
+        return b.blockNumber - a.blockNumber
+      })
+      .slice(0, count)
+  }, [transferResults.data, recentBlockNumbers, count])
+
+  useEffect(() => {
+    if (
+      !blocksPending &&
+      !transferResults.isPending &&
+      filteredTransfers.length < count &&
+      blocksToFetch < 30 &&
+      bestBlockNumber > blocksToFetch
+    ) {
+      setBlocksToFetch(prev => Math.min(prev + 5, 30))
+    }
+  }, [blocksPending, transferResults.isPending, filteredTransfers.length, count, blocksToFetch, bestBlockNumber])
+
+  useEffect(() => {
+    if (recentBlockNumbersArray.length > 0) {
+      const minBlock = Math.min(...recentBlockNumbersArray)
+      for (const [id, transfer] of allTransfersRef.current.entries()) {
+        if (transfer.blockNumber < minBlock - 10) {
+          allTransfersRef.current.delete(id)
+        }
+      }
+    }
+  }, [recentBlockNumbersArray])
+
+  const hasData = filteredTransfers.length > 0
+  const isInitialLoad = blocksPending && transferResults.isPending && !hasData
+
+  return {
+    data: isInitialLoad ? undefined : filteredTransfers,
+    isPending: isInitialLoad,
+  }
+}

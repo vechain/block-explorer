@@ -10,6 +10,7 @@ import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { ActivitySection } from './components/ActivitySection'
 import { BlockUsage } from './components/BlockUsage/BlockUsage'
 import { PriceCards } from './components/PriceCards'
+import { TokenTransfersSection } from './components/TokenTransfersSection'
 import { TotalStakedChart } from './components/TotalStakedChart'
 
 export default async function HomePage({
@@ -44,6 +45,7 @@ export default async function HomePage({
         <BlockUsage />
 
         <ActivitySection />
+        <TokenTransfersSection />
       </Stack>
     </HydrationBoundary>
   )
