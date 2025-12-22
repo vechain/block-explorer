@@ -1,7 +1,6 @@
 'use client'
 
 import { Badge, type BadgeProps, Stack, Table } from '@chakra-ui/react'
-import { ZERO_ADDRESS } from '@vechain/sdk-core'
 import { useState } from 'react'
 import { NoTransfers } from '@/components/NoResults'
 import { AmountWithHover } from '@/components/ui-legacy/AmountWithHover'
@@ -56,7 +55,7 @@ export const AccountTransfersTab = ({ address }: { address: AddressString }) => 
                   key={transfer.id}
                   transfer={transfer}
                   accountAddress={address}
-                  token={erc20Map.get(transfer.tokenAddress ?? ZERO_ADDRESS)}
+                  token={transfer.tokenAddress ? erc20Map.get(transfer.tokenAddress) : undefined}
                 />
               ))}
             </ErrorBoundary>
@@ -78,7 +77,7 @@ const TransferRow = ({
   accountAddress: AddressString
   token: Erc20 | null | undefined
 }) => {
-  const symbol = token?.symbol ?? '-'
+  const symbol = transfer.eventType === 'VET' ? 'VET' : (token?.symbol ?? '-')
   const decimals = token?.decimals ?? 18
 
   const isReceived = transfer.to.toLowerCase() === accountAddress.toLowerCase()
