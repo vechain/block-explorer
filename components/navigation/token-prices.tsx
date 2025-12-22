@@ -2,6 +2,7 @@
 
 import { Link as ChakraLink, Flex, Text } from '@chakra-ui/react'
 
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion'
 import { usePriceList } from '@/services/coin-api/hooks'
 
 export const TokenPrices = () => {
@@ -24,10 +25,12 @@ const COINGECKO_TOKEN_IDS = {
 }
 
 function TokenPrice({ token, usdPrice }: { token: keyof typeof COINGECKO_TOKEN_IDS; usdPrice: number }) {
+  const { formatFiat } = useCurrencyConversion()
+
   return (
     <Text asChild fontSize="sm" color="fg.muted">
       <ChakraLink href={`https://www.coingecko.com/coins/${COINGECKO_TOKEN_IDS[token]}`} target="_blank">
-        {token}: {usdPrice.toFixed(4).toLocaleString()} $
+        {token}: {formatFiat(usdPrice)}
       </ChakraLink>
     </Text>
   )

@@ -3,16 +3,12 @@
 import { Circle, Flex, HStack, Icon, Image, Skeleton, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { LuTrendingDown, LuTrendingUp } from 'react-icons/lu'
+import { useCurrencyConversion } from '@/hooks/useCurrencyConversion'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { usePriceList } from '@/services/coin-api/hooks'
 import { Card } from '@/components/ui/Card'
 
 type SupportedTokenSymbol = 'VET' | 'VTHO' | 'B3TR'
-
-const formatFiat = (price?: number) => {
-  if (price === undefined) return '-'
-  return `$${price.toFixed(4)}`
-}
 
 const formatChangePercent = (change?: number) => {
   if (change === undefined) return '-'
@@ -22,6 +18,7 @@ const formatChangePercent = (change?: number) => {
 export const PriceCards = () => {
   const { t } = useTranslation()
   const { data: priceList, isLoading: priceListLoading } = usePriceList()
+  const { formatFiat } = useCurrencyConversion()
 
   const { dailyChangePercent: vetDailyChangePercent, isLoading: vetDailyLoading } = useTokenDailyPrices(
     'vechain',
@@ -58,6 +55,7 @@ export const PriceCards = () => {
         price={priceList?.vet.usd}
         changePercent={vetDailyChangePercent}
         isLoading={priceListLoading || !priceList || vetDailyLoading}
+        formatFiat={formatFiat}
       />
       <TokenPriceCard
         token="VTHO"
@@ -65,6 +63,7 @@ export const PriceCards = () => {
         price={priceList?.vtho.usd}
         changePercent={vthoDailyChangePercent}
         isLoading={priceListLoading || !priceList || vthoDailyLoading}
+        formatFiat={formatFiat}
       />
       <TokenPriceCard
         token="B3TR"
@@ -72,6 +71,7 @@ export const PriceCards = () => {
         price={priceList?.b3tr.usd}
         changePercent={b3trDailyChangePercent}
         isLoading={priceListLoading || !priceList || b3trDailyLoading}
+        formatFiat={formatFiat}
       />
     </Flex>
   )
@@ -83,9 +83,10 @@ interface TokenPriceCardProps {
   price?: number
   changePercent?: number
   isLoading?: boolean
+  formatFiat: (usd?: number, decimals?: number) => string
 }
 
-const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: TokenPriceCardProps) => {
+const TokenPriceCard = ({ token, label, price, changePercent, isLoading, formatFiat }: TokenPriceCardProps) => {
   return (
     <Card
       alignItems="flex-start"
