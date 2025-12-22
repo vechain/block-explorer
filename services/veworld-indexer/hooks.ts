@@ -198,6 +198,15 @@ export const useRecentTokenTransfers = ({ count }: { count: number }) => {
   const allTransfersRef = useRef<Map<string, (typeof transferResults.data)[0]>>(new Map())
 
   const filteredTransfers = useMemo(() => {
+    if (recentBlockNumbersArray.length > 0) {
+      const minBlock = Math.min(...recentBlockNumbersArray)
+      for (const [id, transfer] of allTransfersRef.current.entries()) {
+        if (transfer.blockNumber < minBlock - 10) {
+          allTransfersRef.current.delete(id)
+        }
+      }
+    }
+
     const transfersData = transferResults.data
 
     if (transfersData?.length > 0) {
@@ -219,7 +228,7 @@ export const useRecentTokenTransfers = ({ count }: { count: number }) => {
         return b.blockNumber - a.blockNumber
       })
       .slice(0, count)
-  }, [transferResults.data, recentBlockNumbers, count])
+  }, [transferResults.data, recentBlockNumbers, recentBlockNumbersArray, count])
 
   useEffect(() => {
     if (
@@ -232,17 +241,6 @@ export const useRecentTokenTransfers = ({ count }: { count: number }) => {
       setBlocksToFetch(prev => Math.min(prev + 5, 30))
     }
   }, [blocksPending, transferResults.isPending, filteredTransfers.length, count, blocksToFetch, bestBlockNumber])
-
-  useEffect(() => {
-    if (recentBlockNumbersArray.length > 0) {
-      const minBlock = Math.min(...recentBlockNumbersArray)
-      for (const [id, transfer] of allTransfersRef.current.entries()) {
-        if (transfer.blockNumber < minBlock - 10) {
-          allTransfersRef.current.delete(id)
-        }
-      }
-    }
-  }, [recentBlockNumbersArray])
 
   const hasData = filteredTransfers.length > 0
   const isInitialLoad = blocksPending && transferResults.isPending && !hasData
