@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
+import { ABIEvent, ERC20_ABI } from '@vechain/sdk-core'
 import type { AddressString, ExpandedBlock } from '@/lib/schemas'
 import { isNotNullish } from '@/lib/type-predicates'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -122,8 +123,18 @@ const isExpandedBlock = (block: unknown): block is ExpandedBlock => {
   return block !== null && block !== undefined && typeof block === 'object' && 'transactions' in block
 }
 
-// ERC20/ERC721 Transfer event signature: Transfer(address,address,uint256)
-const TRANSFER_EVENT_SIGNATURE = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
+// Get Transfer event signature hash from ERC20 ABI (same for ERC721)
+const getTransferEventSignature = (): `0x${string}` => {
+  const transferEvent = ERC20_ABI.find(item => item.type === 'event' && item.name === 'Transfer')
+  if (!transferEvent) {
+    // Fallback to well-known hash if ABI lookup fails
+    return '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef' as `0x${string}`
+  }
+  const eventAbi = new ABIEvent(transferEvent)
+  return eventAbi.signatureHash as `0x${string}`
+}
+
+const TRANSFER_EVENT_SIGNATURE = getTransferEventSignature()
 
 export type TransferFromBlock = {
   id: string
