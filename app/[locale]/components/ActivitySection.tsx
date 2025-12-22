@@ -1,6 +1,6 @@
 'use client'
 
-import { Heading } from '@chakra-ui/react'
+import { Box, Heading } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
@@ -18,7 +18,7 @@ export const ActivitySection = () => {
       <Heading as="h3" textStyle="displayXs">
         {t('Activity')}
       </Heading>
-      {isPending ? <TableSkeleton /> : <BlocksTable blocks={latestBlocks} />}
+      <Box minHeight="320px">{isPending ? <TableSkeleton /> : <BlocksTable blocks={latestBlocks} />}</Box>
     </Card>
   )
 }
