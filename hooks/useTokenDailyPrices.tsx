@@ -21,13 +21,6 @@ export const tokenDailyPricesQueryOptions = (token: TokenDailyPricesToken, curre
 })
 
 export const useTokenDailyPrices = (token: TokenDailyPricesToken, currency: TokenDailyPricesCurrency) => {
-  if (typeof window === 'undefined') {
-    // eslint-disable-next-line no-console
-    console.log('server: getTokenDailyPrices', token, currency)
-  } else {
-    // eslint-disable-next-line no-console
-    console.log('client: getTokenDailyPrices', token, currency)
-  }
   const { data, isLoading, error } = useQuery<TokenDailyPrice[]>(tokenDailyPricesQueryOptions(token, currency))
 
   const dailyChangePercent = (() => {
