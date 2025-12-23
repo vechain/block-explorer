@@ -4,8 +4,10 @@ import type { NetworkName } from '@/lib/constants/network'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 
+const NFT_HOLDERS_QUERY_KEY = 'getNftHolders'
+
 export const nftHoldersQueryOptions = (networkName: NetworkName) => ({
-  queryKey: [getNftHolders.name, networkName],
+  queryKey: [NFT_HOLDERS_QUERY_KEY, networkName],
   queryFn: () => getNftHolders({ networkName }),
   refetchInterval: 5 * 1000,
 })

@@ -5,8 +5,10 @@ import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 import { nftNameSchema } from './nft-holders'
 
+const TOTAL_VET_STAKED_QUERY_KEY = 'getTotalVetStaked'
+
 export const totalVetStakedQueryOptions = (networkName: NetworkName) => ({
-  queryKey: [getTotalVetStaked.name, networkName],
+  queryKey: [TOTAL_VET_STAKED_QUERY_KEY, networkName],
   queryFn: () => getTotalVetStaked({ networkName }),
   refetchInterval: 5 * 1000,
 })

@@ -26,7 +26,11 @@ import {
   TotalVetStakedRange,
 } from '@/services/veworld-indexer/total-vet-staked-historic'
 import { AccountTimeFrame, accountTotalsQueryOptions } from '@/services/veworld-indexer/account-totals'
-import { getAllValidatorsCount, ValidatorStatus } from '@/services/veworld-indexer/validators'
+import {
+  ALL_VALIDATORS_COUNT_QUERY_KEY,
+  getAllValidatorsCount,
+  ValidatorStatus,
+} from '@/services/veworld-indexer/validators'
 
 export default async function HomePage({
   searchParams,
@@ -43,22 +47,22 @@ export default async function HomePage({
   })
 
   const queryClient = getQueryClient()
-  await queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName))
-  await queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', 'usd'))
-  await queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', 'usd'))
-  await queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', 'usd'))
-  await queryClient.prefetchQuery(priceListQueryOptions())
-
-  await queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName))
-  await queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.DAY))
-  await queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.MONTH))
-  await queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.YEAR))
-
-  await queryClient.prefetchQuery(accountTotalsQueryOptions(activeNetworkName, AccountTimeFrame.ALL))
-  await queryClient.prefetchQuery({
-    queryKey: [getAllValidatorsCount.name, activeNetworkName, ValidatorStatus.ACTIVE],
-    queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.ACTIVE),
-  })
+  await Promise.all([
+    queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', 'usd')),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', 'usd')),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', 'usd')),
+    queryClient.prefetchQuery(priceListQueryOptions()),
+    queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
+    queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.DAY)),
+    queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.MONTH)),
+    queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.YEAR)),
+    queryClient.prefetchQuery(accountTotalsQueryOptions(activeNetworkName, AccountTimeFrame.ALL)),
+    queryClient.prefetchQuery({
+      queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.ACTIVE],
+      queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.ACTIVE),
+    }),
+  ])
 
   // Prefetch latest 5 expanded blocks for ActivitySection
   const bestBlock = queryClient.getQueryData<CompressedBlock>(

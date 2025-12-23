@@ -25,7 +25,7 @@ import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
 import { contractTransactionsQueryOptions } from './transactions-contract'
 import { accountTransfersQueryOptions } from './transfers'
-import { getAllValidatorsCount, ValidatorStatus } from './validators'
+import { ALL_VALIDATORS_COUNT_QUERY_KEY, getAllValidatorsCount, ValidatorStatus } from './validators'
 
 export const useNftHolders = () => {
   const { activeNetwork } = useSettingsStore()
@@ -103,7 +103,7 @@ export const useAccountErc721 = ({ params }: { params: IndexerGetErc721Params })
 export const useValidatorsCount = (status?: ValidatorStatus) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery({
-    queryKey: [getAllValidatorsCount.name, activeNetwork.name, status],
+    queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetwork.name, status],
     queryFn: () => getAllValidatorsCount(activeNetwork.name, status),
     refetchInterval: 60 * 1000, // Refetch every 60 seconds
     retry: (failureCount: number, error: Error) => {
