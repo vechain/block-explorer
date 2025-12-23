@@ -35,7 +35,7 @@ export default async function TransactionPage({
 
   const queryClient = getQueryClient()
 
-  await Promise.all([
+  await Promise.allSettled([
     queryClient.prefetchQuery(transactionQueryOptions(activeNetworkName, transactionId)),
     queryClient.prefetchQuery(transactionReceiptQueryOptions(activeNetworkName, transactionId)),
   ])

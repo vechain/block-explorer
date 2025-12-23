@@ -3,10 +3,10 @@
 import { Circle, Flex, HStack, Icon, Image, Skeleton, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { LuTrendingDown, LuTrendingUp } from 'react-icons/lu'
-import { useCurrencyConversion } from '@/hooks/useCurrencyConversion'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
-import { usePriceList } from '@/services/coin-api/hooks'
 import { Card } from '@/components/ui/Card'
+import { useSettingsStore } from '@/lib/stores/settings'
+import { CURRENCIES } from '@/lib/constants/currencies'
 
 type SupportedTokenSymbol = 'VET' | 'VTHO' | 'B3TR'
 
@@ -17,21 +17,24 @@ const formatChangePercent = (change?: number) => {
 
 export const PriceCards = () => {
   const { t } = useTranslation()
-  const { data: priceList, isLoading: priceListLoading } = usePriceList()
-  const { formatFiat } = useCurrencyConversion()
 
-  const { dailyChangePercent: vetDailyChangePercent, isLoading: vetDailyLoading } = useTokenDailyPrices(
-    'vechain',
-    'usd',
-  )
-  const { dailyChangePercent: vthoDailyChangePercent, isLoading: vthoDailyLoading } = useTokenDailyPrices(
-    'vethor-token',
-    'usd',
-  )
-  const { dailyChangePercent: b3trDailyChangePercent, isLoading: b3trDailyLoading } = useTokenDailyPrices(
-    'vebetterdao',
-    'usd',
-  )
+  const { currency } = useSettingsStore()
+
+  const {
+    dailyChangePercent: vetDailyChangePercent,
+    isLoading: vetDailyLoading,
+    price: vetPrice,
+  } = useTokenDailyPrices('vechain', currency)
+  const {
+    dailyChangePercent: vthoDailyChangePercent,
+    isLoading: vthoDailyLoading,
+    price: vthoPrice,
+  } = useTokenDailyPrices('vethor-token', currency)
+  const {
+    dailyChangePercent: b3trDailyChangePercent,
+    isLoading: b3trDailyLoading,
+    price: b3trPrice,
+  } = useTokenDailyPrices('vebetterdao', currency)
 
   return (
     <Flex
@@ -52,26 +55,23 @@ export const PriceCards = () => {
       <TokenPriceCard
         token="VET"
         label={t('VET Price')}
-        price={priceList?.vet.usd}
+        price={vetPrice}
         changePercent={vetDailyChangePercent}
-        isLoading={priceListLoading || !priceList || vetDailyLoading}
-        formatFiat={formatFiat}
+        isLoading={vetDailyLoading}
       />
       <TokenPriceCard
         token="VTHO"
         label={t('VTHO Price')}
-        price={priceList?.vtho.usd}
+        price={vthoPrice}
         changePercent={vthoDailyChangePercent}
-        isLoading={priceListLoading || !priceList || vthoDailyLoading}
-        formatFiat={formatFiat}
+        isLoading={vthoDailyLoading}
       />
       <TokenPriceCard
         token="B3TR"
         label={t('B3TR Price')}
-        price={priceList?.b3tr.usd}
+        price={b3trPrice}
         changePercent={b3trDailyChangePercent}
-        isLoading={priceListLoading || !priceList || b3trDailyLoading}
-        formatFiat={formatFiat}
+        isLoading={b3trDailyLoading}
       />
     </Flex>
   )
@@ -83,10 +83,12 @@ interface TokenPriceCardProps {
   price?: number
   changePercent?: number
   isLoading?: boolean
-  formatFiat: (usd?: number, decimals?: number) => string
 }
 
-const TokenPriceCard = ({ token, label, price, changePercent, isLoading, formatFiat }: TokenPriceCardProps) => {
+const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: TokenPriceCardProps) => {
+  const { currency } = useSettingsStore()
+  const currencySymbol = CURRENCIES[currency]?.symbol
+
   return (
     <Card
       alignItems="flex-start"
@@ -103,27 +105,28 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading, formatF
         </Circle>
         <Text textStyle="bodyL">{label}</Text>
       </Flex>
-      {isLoading ? (
-        <Skeleton height="28px" width="80px" />
-      ) : (
-        <HStack gap={2} alignItems="flex-start">
-          <Text textStyle="displayXs">{formatFiat(price)}</Text>
-          {changePercent !== undefined && (
-            <HStack
-              textStyle="bodyS"
-              color={changePercent >= 0 ? 'success-text' : 'error-text'}
-              marginTop={-4}
-              bg={changePercent >= 0 ? 'success-surface' : 'error-surface'}
-              py={0.5}
-              px={2}
-              borderRadius="full"
-            >
-              <Icon as={changePercent >= 0 ? LuTrendingUp : LuTrendingDown} />
-              <Text textStyle="bodyS">{formatChangePercent(changePercent)}</Text>
-            </HStack>
-          )}
-        </HStack>
-      )}
+
+      <HStack gap={2} alignItems="flex-start">
+        {isLoading ? (
+          <Skeleton height="28px" width="80px" />
+        ) : (
+          <Text textStyle="displayXs">{`${currencySymbol}${price?.toFixed(4)}`}</Text>
+        )}
+        {changePercent !== undefined && !isLoading && (
+          <HStack
+            textStyle="bodyS"
+            color={changePercent >= 0 ? 'success-text' : 'error-text'}
+            marginTop={-4}
+            bg={changePercent >= 0 ? 'success-surface' : 'error-surface'}
+            py={0.5}
+            px={2}
+            borderRadius="full"
+          >
+            <Icon as={changePercent >= 0 ? LuTrendingUp : LuTrendingDown} />
+            <Text textStyle="bodyS">{formatChangePercent(changePercent)}</Text>
+          </HStack>
+        )}
+      </HStack>
     </Card>
   )
 }
