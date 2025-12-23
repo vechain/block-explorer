@@ -39,9 +39,6 @@ export const TransactionInsight = ({
     transaction.clauses.reduce((acc, clause) => acc.plus(clause.value), new BigNumber(0)).toString(),
   )
 
-  const confirmations =
-    bestBlock.number - transaction.meta.blockNumber <= 12 ? bestBlock.number - transaction.meta.blockNumber : 12
-
   const transactionInsights = [
     {
       label: t('Origin'),
@@ -73,6 +70,9 @@ export const TransactionInsight = ({
   const TransactionDate = () => {
     return <Text color="text-secondary">{formatDateFromTimestamp(transaction.meta.blockTimestamp)}</Text>
   }
+
+  const confirmations = getConfirmations(bestBlock?.number, transaction.meta.blockNumber)
+  const confirmationsStatus = getConfirmationsStatus(confirmations)
 
   return (
     <Card variant="secondary">
@@ -142,20 +142,22 @@ export const TransactionInsight = ({
           >
             <Box>
               {isBestBlockPending ? (
-                <Skeleton width="60px" height="24px" rounded="full" />
+                <Skeleton width="52px" height="29px" rounded="full" />
               ) : (
                 <Badge
                   textStyle="bodyM"
-                  bg="success-surface"
-                  color="success-text"
+                  minWidth="30px"
+                  justifyContent="center"
+                  bg={`${confirmationsStatus}-surface`}
+                  color={`${confirmationsStatus}-text`}
                   gap="1"
                   py="1"
                   px="2"
                   rounded="full"
                   flexShrink={1}
                 >
-                  <LuChevronRight />
-                  {confirmations}
+                  {confirmations && confirmations >= 12 && <LuChevronRight />}
+                  {getConfirmations(bestBlock?.number, transaction.meta.blockNumber)}
                 </Badge>
               )}
             </Box>
@@ -184,4 +186,20 @@ export const TransactionInsight = ({
       </Flex>
     </Card>
   )
+}
+
+function getConfirmations(bestBlockNumber: number | undefined, transactionBlockNumber: number) {
+  if (bestBlockNumber === undefined) return undefined
+
+  const confirmations = bestBlockNumber - transactionBlockNumber
+
+  return confirmations > 12 ? 12 : confirmations
+}
+
+function getConfirmationsStatus(confirmations: number | undefined) {
+  if (confirmations === undefined) return 'error'
+
+  if (confirmations === 12) return 'success'
+
+  return 'pending'
 }
