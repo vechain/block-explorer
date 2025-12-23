@@ -6,6 +6,8 @@ import { timestampSchema } from '@/lib/schemas/common'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 
+const TOTAL_VET_STAKED_HISTORIC_QUERY_KEY = 'getTotalVetStakedHistoric'
+
 export enum TotalVetStakedRange {
   DAY = '1-day',
   MONTH = '1-month',
@@ -13,7 +15,7 @@ export enum TotalVetStakedRange {
 }
 
 export const totalVetStakedHistoricQueryOptions = (networkName: NetworkName, range: TotalVetStakedRange) => ({
-  queryKey: [getTotalVetStakedHistoric.name, networkName, range],
+  queryKey: [TOTAL_VET_STAKED_HISTORIC_QUERY_KEY, networkName, range],
   queryFn: () => getTotalVetStakedHistoric({ networkName, range }),
   placeholderData: keepPreviousData,
 })

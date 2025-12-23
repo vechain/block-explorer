@@ -3,8 +3,10 @@ import { COIN_API_URL } from '@/env.public'
 import { apiClient } from '@/lib/api'
 import { zodParse } from '@/lib/utils/zod'
 
+const PRICE_LIST_QUERY_KEY = 'getPriceList'
+
 export const priceListQueryOptions = () => ({
-  queryKey: [getPriceList.name],
+  queryKey: [PRICE_LIST_QUERY_KEY],
   queryFn: getPriceList,
   refetchInterval: 1000 * 60 * 5, // 5 minutes
 })

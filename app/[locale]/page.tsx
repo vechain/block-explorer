@@ -26,7 +26,11 @@ import {
   TotalVetStakedRange,
 } from '@/services/veworld-indexer/total-vet-staked-historic'
 import { AccountTimeFrame, accountTotalsQueryOptions } from '@/services/veworld-indexer/account-totals'
-import { getAllValidatorsCount, ValidatorStatus } from '@/services/veworld-indexer/validators'
+import {
+  ALL_VALIDATORS_COUNT_QUERY_KEY,
+  getAllValidatorsCount,
+  ValidatorStatus,
+} from '@/services/veworld-indexer/validators'
 
 export default async function HomePage({
   searchParams,
@@ -56,7 +60,7 @@ export default async function HomePage({
 
   await queryClient.prefetchQuery(accountTotalsQueryOptions(activeNetworkName, AccountTimeFrame.ALL))
   await queryClient.prefetchQuery({
-    queryKey: [getAllValidatorsCount.name, activeNetworkName, ValidatorStatus.ACTIVE],
+    queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.ACTIVE],
     queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.ACTIVE),
   })
 

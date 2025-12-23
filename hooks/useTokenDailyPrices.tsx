@@ -12,13 +12,22 @@ export type TokenDailyPrice = {
 export type TokenDailyPricesToken = 'vechain' | 'vethor-token' | 'vebetterdao'
 export type TokenDailyPricesCurrency = 'usd' | 'eur' | 'gbp'
 
+const TOKEN_DAILY_PRICES_QUERY_KEY = 'tokenDailyPrices'
+
 export const tokenDailyPricesQueryOptions = (token: TokenDailyPricesToken, currency: TokenDailyPricesCurrency) => ({
-  queryKey: [getTokenDailyPrices.name, token, currency],
+  queryKey: [TOKEN_DAILY_PRICES_QUERY_KEY, token, currency],
   queryFn: () => getTokenDailyPrices(token, currency),
   refetchInterval: 1000 * 60 * 5, // 5 minutes
 })
 
 export const useTokenDailyPrices = (token: TokenDailyPricesToken, currency: TokenDailyPricesCurrency) => {
+  if (typeof window === 'undefined') {
+    // eslint-disable-next-line no-console
+    console.log('server: getTokenDailyPrices', token, currency)
+  } else {
+    // eslint-disable-next-line no-console
+    console.log('client: getTokenDailyPrices', token, currency)
+  }
   const { data, isLoading, error } = useQuery<TokenDailyPrice[]>(tokenDailyPricesQueryOptions(token, currency))
 
   const dailyChangePercent = (() => {
