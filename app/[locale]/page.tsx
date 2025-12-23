@@ -16,6 +16,7 @@ import { ActivitySection } from './components/ActivitySection'
 import { BlockUsage } from './components/BlockUsage/BlockUsage'
 import { PriceCards } from './components/PriceCards'
 import { TokenTransfersSection } from './components/TokenTransfersSection'
+import { NFTTransfersSection } from './components/NFTTransfersSection'
 import { TotalStakedChart } from './components/TotalStakedChart'
 import { tokenDailyPricesQueryOptions } from '@/hooks/useTokenDailyPrices'
 import { priceListQueryOptions } from '@/services/coin-api/price-list'
@@ -92,6 +93,7 @@ export default async function HomePage({
 
         <ActivitySection />
         <TokenTransfersSection />
+        <NFTTransfersSection />
       </Stack>
     </HydrationBoundary>
   )
