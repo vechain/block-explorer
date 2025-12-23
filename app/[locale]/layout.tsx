@@ -1,4 +1,4 @@
-import { Box, Container } from '@chakra-ui/react'
+import { Container, VStack } from '@chakra-ui/react'
 import type { Metadata } from 'next'
 import { Rubik } from 'next/font/google'
 import { Footer } from '@/components/Footer/Footer'
@@ -36,7 +36,7 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning>
       <body className={rubik.variable}>
         <Providers locale={locale}>
-          <Box
+          <VStack
             as="main"
             h="100vh"
             bgImage={{
@@ -50,6 +50,7 @@ export default async function RootLayout({
             backgroundColor="#0B0C10"
             overflowY="auto"
             overflowX="hidden"
+            justifyContent="space-between"
           >
             <Container
               maxW="1080px"
@@ -64,7 +65,7 @@ export default async function RootLayout({
               {children}
             </Container>
             <Footer />
-          </Box>
+          </VStack>
         </Providers>
       </body>
     </html>
