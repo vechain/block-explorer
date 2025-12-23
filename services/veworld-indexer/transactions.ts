@@ -5,8 +5,10 @@ import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from './index'
 import { type IndexerGetTransactionsParams, indexerResponseSchema, indexerTransactionSchema } from './schemas'
 
+const TRANSACTIONS_QUERY_KEY = 'getTransactions'
+
 export const accountTransactionsQueryOptions = (networkName: NetworkName, params: IndexerGetTransactionsParams) => ({
-  queryKey: [getTransactions.name, networkName, params],
+  queryKey: [TRANSACTIONS_QUERY_KEY, networkName, params],
   queryFn: () => getTransactions({ networkName, params }),
 })
 

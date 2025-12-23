@@ -5,12 +5,13 @@ import { type TransactionId, transactionReceiptSchema, transactionSchema } from 
 import { zodParse } from '@/lib/utils/zod'
 import { getThorClient } from './client'
 
-/**
- * Transaction
- */
+const TRANSACTION_QUERY_KEY = 'getTransaction'
+const TRANSACTION_RECEIPT_QUERY_KEY = 'getTransactionReceipt'
+const LEGACY_BASE_GAS_PRICE_QUERY_KEY = 'getLegacyBaseGasPrice'
+
 export const transactionQueryOptions = (networkName: NetworkName, transactionId: TransactionId | undefined) =>
   queryOptions({
-    queryKey: [getTransaction.name, networkName, transactionId],
+    queryKey: [TRANSACTION_QUERY_KEY, networkName, transactionId],
     queryFn: transactionId ? () => getTransaction({ networkName, transactionId }) : skipToken,
     staleTime: Infinity,
   })
@@ -40,7 +41,7 @@ export const getTransaction = async ({
  */
 export const transactionReceiptQueryOptions = (networkName: NetworkName, transactionId: TransactionId | undefined) =>
   queryOptions({
-    queryKey: [getTransactionReceipt.name, networkName, transactionId],
+    queryKey: [TRANSACTION_RECEIPT_QUERY_KEY, networkName, transactionId],
     queryFn: transactionId ? () => getTransactionReceipt({ networkName, transactionId }) : skipToken,
     refetchInterval: query => (query.state.data === null ? false : 3000),
   })
@@ -67,7 +68,7 @@ const getTransactionReceipt = async ({
 
 export const legacyBaseFeePerGasQueryOptions = (networkName: NetworkName) =>
   queryOptions({
-    queryKey: [getLegacyBaseGasPrice.name, networkName],
+    queryKey: [LEGACY_BASE_GAS_PRICE_QUERY_KEY, networkName],
     queryFn: () => getLegacyBaseGasPrice({ networkName }),
   })
 

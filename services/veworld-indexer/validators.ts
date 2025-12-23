@@ -5,6 +5,9 @@ import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 import { indexerResponseSchema } from './schemas'
 
+const VALIDATORS_QUERY_KEY = 'getValidators'
+export const ALL_VALIDATORS_COUNT_QUERY_KEY = 'getAllValidatorsCount'
+
 export enum ValidatorStatus {
   NONE = 'NONE',
   QUEUED = 'QUEUED',
@@ -35,7 +38,7 @@ export const validatorsQueryOptions = (
   page: number = 0,
   size: number = 100,
 ) => ({
-  queryKey: [getValidators.name, networkName, status, page, size],
+  queryKey: [VALIDATORS_QUERY_KEY, networkName, status, page, size],
   queryFn: () => getValidators({ networkName, status, page, size }),
   refetchInterval: 60 * 1000, // Refetch every 60 seconds
 })

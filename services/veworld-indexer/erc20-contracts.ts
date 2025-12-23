@@ -6,11 +6,13 @@ import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 import { type IndexerGetErc20ContractsParams, indexerResponseSchema } from './schemas'
 
+const ERC20_CONTRACTS_QUERY_KEY = 'getErc20Contracts'
+
 export const accountErc20ContractsQueryOptions = (
   networkName: NetworkName,
   params: IndexerGetErc20ContractsParams,
 ) => ({
-  queryKey: [getErc20Contracts.name, networkName, params],
+  queryKey: [ERC20_CONTRACTS_QUERY_KEY, networkName, params],
   queryFn: () => getErc20Contracts({ networkName, params }),
 })
 
