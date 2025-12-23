@@ -49,9 +49,9 @@ export default async function HomePage({
   const queryClient = getQueryClient()
   await Promise.allSettled([
     queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', Currency.USD)),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', Currency.USD)),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', Currency.USD)),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', 'usd' as Currency)),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', 'usd' as Currency)),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', 'usd' as Currency)),
     queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.DAY)),
     queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.MONTH)),
