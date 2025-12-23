@@ -4,8 +4,10 @@ import type { NetworkName } from '@/lib/constants/network'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 
+const TOTAL_VTHO_CLAIMED_QUERY_KEY = 'getTotalVthoClaimed'
+
 export const totalVthoClaimedQueryOptions = (networkName: NetworkName) => ({
-  queryKey: [getTotalVthoClaimed.name, networkName],
+  queryKey: [TOTAL_VTHO_CLAIMED_QUERY_KEY, networkName],
   queryFn: () => getTotalVthoClaimed({ networkName }),
   refetchInterval: 5 * 1000,
 })

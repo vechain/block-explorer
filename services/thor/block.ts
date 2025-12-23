@@ -4,15 +4,15 @@ import { type BlockId, type BlockRevision, blockCompressedSchema, blockExpandedS
 import { zodParse } from '@/lib/utils/zod'
 import { getThorClient } from './client'
 
-/**
- * Best block compressed
- */
+const BEST_BLOCK_COMPRESSED_QUERY_KEY = 'getBestBlockCompressed'
+const BLOCK_EXPANDED_QUERY_KEY = 'getBlockExpanded'
+const BLOCK_COMPRESSED_QUERY_KEY = 'getBlockCompressed'
 
 const BLOCK_TIME = 10 * 1000 // 10 seconds
 
 export const bestBlockCompressedQueryOptions = (networkName: NetworkName) =>
   queryOptions({
-    queryKey: [getBestBlockCompressed.name, networkName],
+    queryKey: [BEST_BLOCK_COMPRESSED_QUERY_KEY, networkName],
     queryFn: () => getBestBlockCompressed({ networkName }),
     refetchInterval: BLOCK_TIME,
   })
@@ -35,7 +35,7 @@ const getBestBlockCompressed = async ({ networkName }: { networkName: NetworkNam
 
 export const blockExpandedQueryOptions = (networkName: NetworkName, revision: BlockRevision | undefined) =>
   queryOptions({
-    queryKey: [getBlockExpanded.name, networkName, revision],
+    queryKey: [BLOCK_EXPANDED_QUERY_KEY, networkName, revision],
     queryFn: revision ? () => getBlockExpanded({ networkName, revision }) : skipToken,
     staleTime: Infinity,
   })
@@ -64,7 +64,7 @@ export const blockCompressedQueryOptions = ({
   revision: BlockRevision | undefined
 }) =>
   queryOptions({
-    queryKey: [getBlockCompressed.name, networkName, revision],
+    queryKey: [BLOCK_COMPRESSED_QUERY_KEY, networkName, revision],
     queryFn: revision ? () => getBlockCompressed({ networkName, revision }) : skipToken,
     staleTime: Infinity,
   })
@@ -93,7 +93,7 @@ export const getBlockCompressed = async ({
 
 export const baseFeePerGasQueryOptions = (networkName: NetworkName, blockId: BlockId | undefined) =>
   queryOptions({
-    queryKey: [getBlockCompressed.name, networkName, blockId],
+    queryKey: [BLOCK_COMPRESSED_QUERY_KEY, networkName, blockId],
     queryFn: blockId ? () => getBlockCompressed({ networkName, revision: blockId }) : skipToken,
     select: data => data.baseFeePerGas,
   })

@@ -4,6 +4,8 @@ import { IPFS_GATEWAY_PROXY_URL } from '@/env.public'
 import { apiClient } from '@/lib/api'
 import { zodParse } from '@/lib/utils/zod'
 
+const NFT_METADATA_QUERY_KEY = 'getNftMetadata'
+
 const getNftMetadata = async (uri: string) => {
   const { data } = await apiClient.get({
     baseUrl: '/api',
@@ -19,7 +21,7 @@ const getNftMetadata = async (uri: string) => {
 }
 
 const nftMetadataQueryOptions = (uri: string) => ({
-  queryKey: [getNftMetadata.name, uri],
+  queryKey: [NFT_METADATA_QUERY_KEY, uri],
   queryFn: () => getNftMetadata(uri),
   staleTime: Infinity,
   retry: false,

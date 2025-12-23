@@ -6,6 +6,9 @@ import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getThorClient } from '@/services/thor/client'
 
+const ERC20_CONTRACT_QUERY_KEY = 'getErc20Contract'
+const ERC20_BALANCE_OF_QUERY_KEY = 'getErc20BalanceOf'
+
 export const useErc20Contracts = ({ contractAddressList }: { contractAddressList: Set<AddressString> }) => {
   const { activeNetwork } = useSettingsStore()
 
@@ -44,13 +47,13 @@ export const useErc20BalanceOf = ({
 }
 
 const erc20ContractQueryOptions = (networkName: NetworkName, address: AddressString) => ({
-  queryKey: [getErc20Contract.name, networkName, address],
+  queryKey: [ERC20_CONTRACT_QUERY_KEY, networkName, address],
   queryFn: () => getErc20Contract(networkName, address),
   select: (data: Erc20 | null) => ({ address, erc20: data }),
 })
 
 const erc20BalanceOfQueryOptions = (contract: Erc20['contract'], accountAddress: AddressString) => ({
-  queryKey: [getErc20BalanceOf.name, contract.address, accountAddress],
+  queryKey: [ERC20_BALANCE_OF_QUERY_KEY, contract.address, accountAddress],
   queryFn: () => getErc20BalanceOf(contract, accountAddress),
 })
 

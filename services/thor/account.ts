@@ -6,9 +6,11 @@ import { accountSchema } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
 import { getThorClient } from './client'
 
+const ACCOUNT_QUERY_KEY = 'getAccount'
+
 export const accountQueryOptions = (networkName: NetworkName, address: AddressString | undefined) =>
   queryOptions({
-    queryKey: [getAccount.name, networkName, address],
+    queryKey: [ACCOUNT_QUERY_KEY, networkName, address],
     queryFn: address ? () => getAccount({ networkName, address }) : skipToken,
   })
 

@@ -6,6 +6,8 @@ import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 import { indexerResponseSchema } from './schemas'
 
+const ACCOUNT_TOTALS_QUERY_KEY = 'getAccountTotals'
+
 export enum AccountTimeFrame {
   DAY = 'DAY',
   WEEK = 'WEEK',
@@ -29,7 +31,7 @@ export type AccountTotal = z.infer<typeof accountTotalSchema>
 export type AccountTotalsResponse = z.infer<typeof accountTotalsResponseSchema>
 
 export const accountTotalsQueryOptions = (networkName: NetworkName, timeFrame: AccountTimeFrame) => ({
-  queryKey: [getAccountTotals.name, networkName, timeFrame],
+  queryKey: [ACCOUNT_TOTALS_QUERY_KEY, networkName, timeFrame],
   queryFn: () => getAccountTotals({ networkName, timeFrame }),
   refetchInterval: 5 * 1000, // Refetch every 5 seconds
   placeholderData: keepPreviousData, // Prevent UI flickering during refetches

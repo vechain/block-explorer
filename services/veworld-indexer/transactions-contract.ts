@@ -9,11 +9,13 @@ import {
   indexerResponseSchema,
 } from './schemas'
 
+const CONTRACT_TRANSACTIONS_QUERY_KEY = 'getContractTransactions'
+
 export const contractTransactionsQueryOptions = (
   networkName: NetworkName,
   params: IndexerGetContractTransactionsParams,
 ) => ({
-  queryKey: [getContractTransactions.name, networkName, params],
+  queryKey: [CONTRACT_TRANSACTIONS_QUERY_KEY, networkName, params],
   queryFn: () => getContractTransactions({ networkName, params }),
 })
 
