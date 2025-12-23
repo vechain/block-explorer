@@ -54,7 +54,7 @@ export const StatusBadge = ({ status, ...props }: StatusBadgeProps) => {
   const config = statusConfig[status]
 
   return (
-    <Badge textStyle="bodyM" bg={config.bg} color={config.color} gap="1" p="2" rounded="full" {...props}>
+    <Badge textStyle="bodyM" bg={config.bg} color={config.color} gap="1" py="1" px="2" rounded="full" {...props}>
       {config.icon}
       {config.label}
     </Badge>

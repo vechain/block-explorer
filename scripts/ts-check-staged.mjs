@@ -11,5 +11,3 @@ const result = spawnSync('pnpm', ['exec', 'tsc', '-p', 'tsconfig.json', '--noEmi
 })
 
 process.exit(result.status ?? 1)
-
-
