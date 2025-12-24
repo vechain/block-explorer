@@ -34,7 +34,7 @@ export default async function AddressPage({
   })
 
   const queryClient = getQueryClient()
-  await Promise.all([
+  await Promise.allSettled([
     queryClient.prefetchQuery(accountQueryOptions(activeNetworkName, address)),
     queryClient.prefetchQuery(vnsNameQueryOptions(activeNetworkName, address)),
   ])

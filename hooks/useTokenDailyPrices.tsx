@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { COIN_API_URL } from '@/env.public'
 import { apiClient } from '@/lib/api'
 import { zodParse } from '@/lib/utils/zod'
+import { Currency } from '@/lib/stores/settings'
 
 export type TokenDailyPrice = {
   timestamp: number
@@ -10,17 +11,16 @@ export type TokenDailyPrice = {
 }
 
 export type TokenDailyPricesToken = 'vechain' | 'vethor-token' | 'vebetterdao'
-export type TokenDailyPricesCurrency = 'usd' | 'eur' | 'gbp'
 
 const TOKEN_DAILY_PRICES_QUERY_KEY = 'tokenDailyPrices'
 
-export const tokenDailyPricesQueryOptions = (token: TokenDailyPricesToken, currency: TokenDailyPricesCurrency) => ({
+export const tokenDailyPricesQueryOptions = (token: TokenDailyPricesToken, currency: Currency) => ({
   queryKey: [TOKEN_DAILY_PRICES_QUERY_KEY, token, currency],
   queryFn: () => getTokenDailyPrices(token, currency),
   refetchInterval: 1000 * 60 * 5, // 5 minutes
 })
 
-export const useTokenDailyPrices = (token: TokenDailyPricesToken, currency: TokenDailyPricesCurrency) => {
+export const useTokenDailyPrices = (token: TokenDailyPricesToken, currency: Currency) => {
   const { data, isLoading, error } = useQuery<TokenDailyPrice[]>(tokenDailyPricesQueryOptions(token, currency))
 
   const dailyChangePercent = (() => {
@@ -31,15 +31,18 @@ export const useTokenDailyPrices = (token: TokenDailyPricesToken, currency: Toke
     return ((last - first) / first) * 100
   })()
 
+  const price = data?.[data.length - 1]?.price
+
   return {
     data: data ?? [],
     dailyChangePercent,
     isLoading,
     error,
+    price,
   }
 }
 
-const getTokenDailyPrices = async (token: TokenDailyPricesToken, currency: TokenDailyPricesCurrency) => {
+const getTokenDailyPrices = async (token: TokenDailyPricesToken, currency: Currency) => {
   const { data } = await apiClient.get({
     baseUrl: COIN_API_URL,
     endPoint: `/coins/${token}/market_chart`,

@@ -9,6 +9,10 @@ export enum Currency {
   USD = 'usd',
   EUR = 'eur',
   GBP = 'gbp',
+  CNY = 'cny',
+  JPY = 'jpy',
+  AUD = 'aud',
+  CAD = 'cad',
 }
 
 type SettingsStore = {
