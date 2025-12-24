@@ -1,10 +1,9 @@
 'use client'
 
-import { Flex, Heading, Stack, Text } from '@chakra-ui/react'
+import { Flex, Heading, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { notFound, useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
-import { SearchBar } from '@/components/navigation/SearchBar'
 import { TransactionViews } from '@/components/TransactionViews'
 import { VETBalance } from '@/components/ui/Balance'
 import { DataCard } from '@/components/ui/DataCard'
@@ -70,57 +69,53 @@ const TransactionDetails = ({
 }) => {
   const { t } = useTranslation()
   return (
-    <Stack gap="8">
-      <SearchBar mt="16" />
+    <Card>
+      <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
+        <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap" mb={{ base: '6', md: '0' }}>
+          {t('Transaction')}
+        </Heading>
+        <IDChip value={transaction.id} />
+      </Flex>
 
-      <Card>
-        <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
-          <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap" mb={{ base: '6', md: '0' }}>
-            {t('Transaction')}
-          </Heading>
-          <IDChip value={transaction.id} />
-        </Flex>
+      <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
+        {/* Block Number */}
+        <DataCard
+          icon={<Image src="/icons/block-number.svg" alt="Block Number" />}
+          title={t('Block Number')}
+          tooltip="Information coming soon"
+        >
+          <BaseLink href={`/block/${transaction.meta.blockID}`}>
+            #{transaction.meta.blockNumber.toLocaleString()}
+          </BaseLink>
+        </DataCard>
 
-        <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
-          {/* Block Number */}
-          <DataCard
-            icon={<Image src="/icons/block-number.svg" alt="Block Number" />}
-            title={t('Block Number')}
-            tooltip="Information coming soon"
-          >
-            <BaseLink href={`/block/${transaction.meta.blockID}`}>
-              #{transaction.meta.blockNumber.toLocaleString()}
-            </BaseLink>
-          </DataCard>
+        {/* Total Clauses */}
+        <DataCard
+          icon={<Image src="/icons/clause.svg" alt="Clauses" />}
+          title={t('Total Clauses')}
+          tooltip={t('Information coming soon')}
+        >
+          <BaseLink href={`/transaction/${transaction.id}?view=clauses`}>{transaction.clauses.length}</BaseLink>
+        </DataCard>
 
-          {/* Total Clauses */}
-          <DataCard
-            icon={<Image src="/icons/clause.svg" alt="Clauses" />}
-            title={t('Total Clauses')}
-            tooltip={t('Information coming soon')}
-          >
-            <BaseLink href={`/transaction/${transaction.id}?view=clauses`}>{transaction.clauses.length}</BaseLink>
-          </DataCard>
+        {/* Rewards */}
+        <DataCard
+          icon={<Image src="/icons/reward.svg" alt="Rewards" />}
+          title={t('Rewards')}
+          tooltip={t('Information coming soon')}
+        >
+          {receipt ? <VETBalance balance={receipt.reward} justifyContent="flex-start" /> : <Text>-</Text>}
+        </DataCard>
+      </Flex>
 
-          {/* Rewards */}
-          <DataCard
-            icon={<Image src="/icons/reward.svg" alt="Rewards" />}
-            title={t('Rewards')}
-            tooltip={t('Information coming soon')}
-          >
-            {receipt ? <VETBalance balance={receipt.reward} justifyContent="flex-start" /> : <Text>-</Text>}
-          </DataCard>
-        </Flex>
+      <ValueSwitch
+        layoutId="transaction-view"
+        values={['transaction', 'clauses']}
+        activeValue={view}
+        onChange={value => onViewChange(value as TransactionDetailsView)}
+      />
 
-        <ValueSwitch
-          layoutId="transaction-view"
-          values={['transaction', 'clauses']}
-          activeValue={view}
-          onChange={value => onViewChange(value as TransactionDetailsView)}
-        />
-
-        <TransactionViews transaction={transaction} receipt={receipt} view={view} />
-      </Card>
-    </Stack>
+      <TransactionViews transaction={transaction} receipt={receipt} view={view} />
+    </Card>
   )
 }
