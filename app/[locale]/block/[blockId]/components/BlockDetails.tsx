@@ -1,13 +1,12 @@
 'use client'
 
-import { Flex, Group, Heading, Stack, Text } from '@chakra-ui/react'
-import { format } from 'date-fns'
+import { Flex, Heading, Stack, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { DataCard } from '@/components/ui/DataCard'
 import { IDChip } from '@/components/ui/IDChip'
-import { AddressLink } from '@/components/ui/Links'
+import { AddressLink, BaseLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import type { BlockId } from '@/lib/schemas'
 import { useBlockExpanded } from '@/services/thor/hooks'
@@ -24,9 +23,6 @@ export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
     notFound()
   }
 
-  const formattedDate = format(new Date(block.timestamp), 'dd/MM/yyyy')
-  const formattedTime = format(new Date(block.timestamp), 'HH:mm:ss')
-
   return (
     <Stack gap="8">
       <Card>
@@ -41,15 +37,12 @@ export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
           {/* Date and time */}
           <DataCard
             icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
-            title={t('Date time')}
+            title={t('Block Number')}
             tooltip={t('Information coming soon')}
           >
-            <Group gap="1">
-              <Text textStyle="bodyL">{formattedDate}</Text>
-              <Text textStyle="bodyL" color="text-secondary">
-                {formattedTime}
-              </Text>
-            </Group>
+            <Text textStyle="bodyL" color="text-primary">
+              #{block.number.toLocaleString()}
+            </Text>
           </DataCard>
 
           {/* Clauses count */}
@@ -70,13 +63,13 @@ export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
             <AddressLink address={block.signer} truncate />
           </DataCard>
 
-          {/* Beneficiary */}
+          {/* Parent block */}
           <DataCard
-            icon={<Image src="/icons/link.svg" alt="Beneficiary" />}
-            title={t('Beneficiary')}
+            icon={<Image src="/icons/link.svg" alt="Parent block" />}
+            title={t('Parent block')}
             tooltip={t('Information coming soon')}
           >
-            <AddressLink address={block.beneficiary} truncate />
+            <BaseLink href={`/block/${block.parentID}`}>#{(block.number - 1).toLocaleString()}</BaseLink>
           </DataCard>
         </Flex>
 

@@ -1,42 +1,35 @@
 'use client'
 
-import { Badge, Flex, Grid, Heading, Text } from '@chakra-ui/react'
+import { Flex, Grid, Heading, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
-import { AgeText } from '@/components/ui/AgeText'
 import { DataCard } from '@/components/ui/DataCard'
 import { GasUsed } from '@/components/ui/GasFees'
-import { CopyableLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import type { ExpandedBlock } from '@/lib/schemas'
+import { formatDateFromTimestamp } from '@/lib/utils/date'
+import { Fragment } from 'react'
+import { TxFeaturesBadge } from '@/components/ui/TxTypeBadge'
 
 export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   const { t } = useTranslation()
 
   const blockInsights = [
     {
-      label: t('Block'),
-      value: (
-        <CopyableLink href={`/block/${block.id}`} value={block.number.toString()}>
-          {`#${block.number.toString()}`}
-        </CopyableLink>
-      ),
+      label: t('Type'),
+      value: <TxFeaturesBadge features={block.txsFeatures} />,
     },
     {
-      label: t('Age'),
-      value: <AgeText timestamp={block.timestamp} />,
-    },
-    {
-      label: t('Features'),
-      value: <TxFeatures features={block.txsFeatures} />,
+      label: t('Block Finality'),
+      value: block.isFinalized ? t('Finalized') : t('Finalizing'),
     },
     {
       label: t('Gas Used'),
       value: <GasUsed gasUsed={block.gasUsed} gasLimit={block.gasLimit} />,
     },
     {
-      label: t('Block Finality'),
-      value: block.isFinalized ? t('Finalized') : t('Finalizing'),
+      label: t('Gas Limit'),
+      value: block.gasLimit.toLocaleString(),
     },
     {
       label: t('Transactions'),
@@ -46,36 +39,50 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
 
   return (
     <Card variant="secondary">
-      <Heading as="h2" textStyle="displayXs">
-        {t('Block Insights')}
-      </Heading>
-      <Flex alignItems="center" flexDirection={{ base: 'column', md: 'row' }} gap="4">
-        <Flex
+      <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gapX="2" gapY="4">
+        <Heading as="h2" textStyle="displayXs">
+          {t('Block Insights')}
+        </Heading>
+
+        <Text color="text-secondary">{formatDateFromTimestamp(block.timestamp)}</Text>
+      </Flex>
+
+      <Flex alignItems="start" flexDirection={{ base: 'column', md: 'row' }} gap="4" justifyContent="normal">
+        <Grid
           flex="1"
-          flexDirection="column"
-          alignSelf="stretch"
           rounded="md"
           border="1px solid"
           textStyle="bodyM"
           borderColor="border-primary"
+          templateColumns="160px auto"
         >
-          {blockInsights.map(insight => (
-            <Flex
-              key={insight.label}
-              py="4"
-              px="6"
-              flex="1"
-              alignItems="center"
-              borderBottom="1px solid var(--chakra-colors-border-primary)"
-              css={{ '&:last-child': { borderBottom: 'none' } }}
-            >
-              <Text width="130px">{insight.label}</Text>
-              {insight.value}
-            </Flex>
+          {blockInsights.map((insight, index) => (
+            <Fragment key={insight.label}>
+              <Flex
+                alignItems="center"
+                py="4"
+                pl="6"
+                borderBottom={
+                  index !== blockInsights.length - 1 ? '1px solid var(--chakra-colors-border-primary)' : 'none'
+                }
+              >
+                <Text width="130px">{insight.label}</Text>
+              </Flex>
+              <Flex
+                alignItems="center"
+                py="4"
+                pr="6"
+                borderBottom={
+                  index !== blockInsights.length - 1 ? '1px solid var(--chakra-colors-border-primary)' : 'none'
+                }
+              >
+                {insight.value}
+              </Flex>
+            </Fragment>
           ))}
-        </Flex>
-        <Grid templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }} flex="1" alignSelf="stretch" gap="4">
-          {/* //TODO: Add relevant data to data cards */}
+        </Grid>
+
+        <Grid templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }} flex="1" alignSelf="center" gap="4">
           <DataCard
             icon={<Image src="/icons/coin.svg" alt="VTHO Paid" />}
             title={t('VTHO Paid')}
@@ -110,18 +117,4 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
       </Flex>
     </Card>
   )
-}
-
-const TxFeatures = ({ features }: { features: number | undefined }) => {
-  const { t } = useTranslation()
-
-  if (features === 1) {
-    return (
-      <Badge textStyle="bodyS" rounded="8px" variant="subtle" px="2" py="1" size="sm" bg="bg-secondary">
-        {t('VIP-191 - Fee delegation')}
-      </Badge>
-    )
-  }
-
-  return null
 }
