@@ -5,7 +5,6 @@ import { format } from 'date-fns'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
-import { SearchBar } from '@/components/navigation/SearchBar'
 import { DataCard } from '@/components/ui/DataCard'
 import { IDChip } from '@/components/ui/IDChip'
 import { AddressLink } from '@/components/ui/Links'
@@ -30,8 +29,6 @@ export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
 
   return (
     <Stack gap="8">
-      <SearchBar mt="16" />
-
       <Card>
         <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
           <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap" mb={{ base: '6', md: '0' }}>

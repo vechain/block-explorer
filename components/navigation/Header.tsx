@@ -25,9 +25,9 @@ export const Header = () => {
       <Box hideBelow="md">
         <Logo />
       </Box>
-      <Box hideBelow="md" flex={1}>
-        <SearchBar />
-      </Box>
+
+      <SearchBar hideBelow="md" flex={1} />
+
       <NavigationMenu />
     </Flex>
   )

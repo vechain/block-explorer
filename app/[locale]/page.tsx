@@ -82,7 +82,7 @@ export default async function HomePage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Container p="0" mt={4} maxW={{ md: '60%' }} hideFrom={'md'}>
+      <Container p="0" mt={4} hideFrom="md">
         <SearchBar />
       </Container>
 
