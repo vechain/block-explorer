@@ -3,12 +3,12 @@
 import { Box, Flex, HStack, Separator, Text } from '@chakra-ui/react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiArrowUpRight, FiMenu } from 'react-icons/fi'
 import { i18nConfig, type Locale } from '@/i18n/config'
 import { languageNames } from '@/i18n/utils'
-import { Currency, useSettingsStore } from '@/lib/stores/settings'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { useColorMode } from '../theme/color-mode'
 import { MotionBox } from '../ui/MotionBox'
 import { CurrencyModal } from './CurrencyModal'
@@ -16,6 +16,7 @@ import { LanguageModal } from './LanguageModal'
 import { NetworkSelect } from './NetworkSelect'
 import { SearchBar } from './SearchBar'
 import { Logo } from '../Logo'
+import { CURRENCIES } from '@/lib/constants/currencies'
 
 export const Header = () => {
   useColorMode()
@@ -52,29 +53,7 @@ const NavigationMenu = () => {
     setIsCurrencyModalOpen(true)
   }
 
-  const currencyName = useMemo(() => {
-    switch (currency) {
-      case Currency.EUR:
-        return 'EUR'
-      case Currency.GBP:
-        return 'GBP'
-      case Currency.USD:
-      default:
-        return 'USD'
-    }
-  }, [currency])
-
-  const currencySymbol = useMemo(() => {
-    switch (currency) {
-      case Currency.EUR:
-        return '€'
-      case Currency.GBP:
-        return '£'
-      case Currency.USD:
-        return '$'
-    }
-  }, [currency])
-
+  const currencyInfo = CURRENCIES[currency]
   return (
     <>
       <Flex
@@ -152,10 +131,10 @@ const NavigationMenu = () => {
                 <Box as="button" onClick={handleCurrencyClick} w="100%" cursor="pointer">
                   <HStack gap={2} alignItems="center" py={2}>
                     <Text fontSize="body-m" whiteSpace="nowrap">
-                      {currencySymbol}
+                      {currencyInfo.symbol}
                     </Text>
-                    <Text fontSize="body-m" whiteSpace="nowrap">
-                      {currencyName}
+                    <Text fontSize="body-m" whiteSpace="nowrap" textTransform="uppercase">
+                      {currencyInfo.code}
                     </Text>
                   </HStack>
                 </Box>

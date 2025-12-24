@@ -4,16 +4,11 @@ import { Box, Button, Dialog, Flex, Portal, Text, VStack } from '@chakra-ui/reac
 import { useTranslation } from 'react-i18next'
 import { LuCheck, LuX } from 'react-icons/lu'
 import { Currency, useSettingsStore } from '@/lib/stores/settings'
+import { CURRENCIES } from '@/lib/constants/currencies'
 
 interface CurrencyModalProps {
   isOpen: boolean
   onClose: () => void
-}
-
-const CURRENCY_LABELS: Record<Currency, { label: string; symbol: string }> = {
-  [Currency.USD]: { label: 'USD', symbol: '$' },
-  [Currency.EUR]: { label: 'EUR', symbol: '€' },
-  [Currency.GBP]: { label: 'GBP', symbol: '£' },
 }
 
 export const CurrencyModal = ({ isOpen, onClose }: CurrencyModalProps) => {
@@ -65,7 +60,7 @@ export const CurrencyModal = ({ isOpen, onClose }: CurrencyModalProps) => {
               <VStack gap={0} align="stretch">
                 {(Object.values(Currency) as Currency[]).map(curr => {
                   const isActive = curr === currency
-                  const info = CURRENCY_LABELS[curr]
+                  const info = CURRENCIES[curr]
 
                   return (
                     <Box
@@ -84,9 +79,13 @@ export const CurrencyModal = ({ isOpen, onClose }: CurrencyModalProps) => {
                     >
                       <Flex justify="space-between" align="center">
                         <Flex align="center" gap={3}>
-                          <Text fontSize="xl">{CURRENCY_LABELS[curr].symbol}</Text>
-                          <Text textStyle="bodyM" fontWeight={isActive ? 'semibold' : 'normal'}>
-                            {info.label}
+                          <Text fontSize="xl">{info.symbol}</Text>
+                          <Text
+                            textStyle="bodyM"
+                            fontWeight={isActive ? 'semibold' : 'normal'}
+                            textTransform={'uppercase'}
+                          >
+                            {info.code}
                           </Text>
                         </Flex>
                         {isActive && <LuCheck size={20} color="var(--chakra-colors-accent-primary)" />}

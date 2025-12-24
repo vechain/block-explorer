@@ -19,7 +19,6 @@ import { TokenTransfersSection } from './components/TokenTransfersSection'
 import { NFTTransfersSection } from './components/NFTTransfersSection'
 import { TotalStakedChart } from './components/TotalStakedChart'
 import { tokenDailyPricesQueryOptions } from '@/hooks/useTokenDailyPrices'
-import { priceListQueryOptions } from '@/services/coin-api/price-list'
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
 import {
   totalVetStakedHistoricQueryOptions,
@@ -31,6 +30,7 @@ import {
   getAllValidatorsCount,
   ValidatorStatus,
 } from '@/services/veworld-indexer/validators'
+import { Currency } from '@/lib/stores/settings'
 
 export default async function HomePage({
   searchParams,
@@ -47,12 +47,11 @@ export default async function HomePage({
   })
 
   const queryClient = getQueryClient()
-  await Promise.all([
+  await Promise.allSettled([
     queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', 'usd')),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', 'usd')),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', 'usd')),
-    queryClient.prefetchQuery(priceListQueryOptions()),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', 'usd' as Currency)),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', 'usd' as Currency)),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', 'usd' as Currency)),
     queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.DAY)),
     queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.MONTH)),
@@ -70,7 +69,7 @@ export default async function HomePage({
   )
   if (bestBlock?.number) {
     const BLOCKS_TO_DISPLAY = 5
-    await Promise.all(
+    await Promise.allSettled(
       Array.from({ length: BLOCKS_TO_DISPLAY }, (_, i) => {
         const revision = bestBlock.number - i
         if (revision > 0) {
