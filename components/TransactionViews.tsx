@@ -1,20 +1,24 @@
 import type { Transaction, TransactionReceipt } from '@/lib/schemas/transactions'
 import { TransactionClauses } from './TransactionClauses'
 import { TransactionInsight } from './TransactionInsights'
-
-type View = 'transaction' | 'clauses'
+import { TransactionEvents } from './TransactionEvents'
+import { TransactionDetailsView } from '@/lib/types'
 
 export function TransactionViews({
   transaction,
   receipt,
-  view = 'transaction',
+  view = TransactionDetailsView.TRANSACTION,
 }: {
-  view: View
+  view: TransactionDetailsView
   transaction: Transaction
   receipt: TransactionReceipt | null
 }) {
   if (view === 'clauses') {
     return <TransactionClauses transaction={transaction} receipt={receipt} />
+  }
+
+  if (view === 'events') {
+    return <TransactionEvents receipt={receipt} />
   }
 
   return <TransactionInsight transaction={transaction} receipt={receipt} />

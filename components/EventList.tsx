@@ -1,9 +1,8 @@
-import { Box, Flex, Grid, ScrollArea, Skeleton, Text, useBreakpointValue } from '@chakra-ui/react'
-import { useState } from 'react'
+import { Box, Flex, Grid, HStack, ScrollArea, Skeleton, Text, useBreakpointValue } from '@chakra-ui/react'
+import { Fragment, useState } from 'react'
 import { ErrorBoundary } from '@/components/ui-legacy/ErrorBoundary'
-import { type DecodedEvent, type DecodedEventArgs, type ParsedEvent, useDecodeEvent } from '@/hooks/useDecodeEvent'
+import { type DecodedEvent, useDecodeEvent } from '@/hooks/useDecodeEvent'
 import { EventType, type RawEvent } from '@/lib/schemas'
-import type * as abi from '@/lib/schemas/abi'
 import { AddressLink } from './ui/Links'
 import { Card } from './ui/Card'
 import { ValueSwitch } from './ui/ValueSwitch'
@@ -15,6 +14,16 @@ enum EventView {
 }
 
 export const EventsList = ({ clauseIndex, eventLogs }: { clauseIndex: number; eventLogs: RawEvent[] }) => {
+  const { t } = useTranslation()
+
+  if (eventLogs.length === 0) {
+    return (
+      <Card bg="card-bg-alt-primary" border="none">
+        <Text>{t('No events')}</Text>
+      </Card>
+    )
+  }
+
   return eventLogs.map((eventLog, index) => (
     <ErrorBoundary key={`${index}-${eventLog.address}`}>
       <EventCard layoutId={`event-${clauseIndex}-${index}`} index={index} eventLog={eventLog} />
@@ -25,38 +34,39 @@ export const EventsList = ({ clauseIndex, eventLogs }: { clauseIndex: number; ev
 const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: number; eventLog: RawEvent }) => {
   const { t } = useTranslation()
 
-  const { event, isLoading } = useDecodeEvent(eventLog)
+  const { event, isPending } = useDecodeEvent(eventLog)
   const isMobile = useBreakpointValue({ base: true, md: false })
 
   const isDecoded = event.type === EventType.DECODED
 
   const [view, setView] = useState<string>(() => (isDecoded ? EventView.DECODED : EventView.RAW))
 
-  if (isLoading) {
+  if (isPending) {
     return (
-      <Card variant="secondary">
+      <Card bg="card-bg-alt-primary" border="none">
         <Skeleton height="320px" width="100%" />
       </Card>
     )
   }
 
   return (
-    <Card variant="secondary">
+    <Card bg="card-bg-alt-primary" border="none">
       <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap">
         <Card
-          variant="secondary"
           flexDirection="row"
           display="flex"
           alignItems="center"
-          gap="2"
+          gap="5"
           rounded="full"
           whiteSpace="nowrap"
           py="2"
           px="4"
         >
-          <Text># {index}</Text>
-          <Text>{t('emitter')}</Text>
-          <AddressLink address={event.raw.address} truncate={isMobile} />
+          <Text>#{index}</Text>
+          <HStack gap="2">
+            <Text>{t('emitter')}</Text>
+            <AddressLink address={event.raw.address} truncate={isMobile} />
+          </HStack>
         </Card>
         <ValueSwitch
           layoutId={layoutId}
@@ -67,17 +77,14 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
           mt={{ base: '4', md: '0' }}
         />
       </Flex>
-      <EventViews event={event} activeView={view as EventView} />
+
+      {view === EventView.DECODED ? (
+        <DecodedEventCard event={event.type === EventType.DECODED ? event.decoded : undefined} />
+      ) : (
+        <RawEventCard event={event.raw} />
+      )}
     </Card>
   )
-}
-
-const EventViews = ({ event, activeView }: { event: ParsedEvent; activeView: EventView }) => {
-  if (activeView === EventView.DECODED) {
-    return <DecodedEventCard event={event.type === EventType.DECODED ? event.decoded : undefined} />
-  }
-
-  return <RawEventCard event={event.raw} />
 }
 
 const RawEventCard = ({ event }: { event: RawEvent }) => {
@@ -95,11 +102,11 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
             borderColor="border-primary"
           >
             {event.topics.map((topic, index) => (
-              <>
+              <Fragment key={index}>
                 {index === 0 ? <Text>{t('Topic')}</Text> : <br />}
                 <Text>[{index}]</Text>
                 <Text>{topic}</Text>
-              </>
+              </Fragment>
             ))}
           </Grid>
 
@@ -119,56 +126,48 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
 
   if (!event) {
     return (
-      <Card variant="secondary">
+      <Card>
         <Text>{t('No ABI found')}</Text>
       </Card>
     )
   }
 
   return (
-    <Card variant="secondary">
+    <Card>
       <Text textStyle="bodyL">{event.signature.split('(')[0]}</Text>
-      <DecodedEventArgsTable inputs={event.inputs} args={event.args} />
-    </Card>
-  )
-}
+      <Box textAlign="center">
+        <Grid templateColumns="60px 160px 160px 1fr" p="4">
+          <Text>#</Text>
+          <Text>{t('Name')}</Text>
+          <Text>{t('Type')}</Text>
+          <Text textAlign="left" pl="4">
+            {t('Data')}
+          </Text>
+        </Grid>
 
-const DecodedEventArgsTable = ({ inputs, args }: { inputs: abi.AbiEventParameter[]; args: DecodedEventArgs }) => {
-  const { t } = useTranslation()
+        <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
+          {event.inputs.map((input, index) => (
+            <Grid
+              key={`${index}-${input.name}`}
+              templateColumns="60px 160px 160px 1fr"
+              p="4"
+              borderBottomWidth={index < event.inputs.length - 1 ? '1px' : '0'}
+              borderColor="border-primary"
+            >
+              <Text>{index}</Text>
+              <Text>{input.name}</Text>
+              <Flex gap="1">
+                <Text>{input.type}</Text>
+                {input.indexed && <Text fontSize="xs">{t('indexed')}</Text>}
+              </Flex>
 
-  return (
-    <Box textAlign="center">
-      <Grid templateColumns="60px 160px 160px 1fr" p="4">
-        <Text>#</Text>
-        <Text>{t('Name')}</Text>
-        <Text>{t('Type')}</Text>
-        <Text textAlign="left" pl="4">
-          {t('Data')}
-        </Text>
-      </Grid>
-
-      <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
-        {inputs.map((input, index) => (
-          <Grid
-            key={`${index}-${input.name}`}
-            templateColumns="60px 160px 160px 1fr"
-            p="4"
-            borderBottomWidth={index < inputs.length - 1 ? '1px' : '0'}
-            borderColor="border-primary"
-          >
-            <Text>{index}</Text>
-            <Text>{input.name}</Text>
-            <Flex gap="1">
-              <Text>{input.type}</Text>
-              {input.indexed && <Text fontSize="xs">{t('indexed')}</Text>}
-            </Flex>
-
-            <Text textAlign="left" pl="4">
-              {input.name ? args[input.name] : 'N/A'}
-            </Text>
-          </Grid>
-        ))}
+              <Text textAlign="left" pl="4">
+                {input.name ? event.args[input.name] : 'N/A'}
+              </Text>
+            </Grid>
+          ))}
+        </Box>
       </Box>
-    </Box>
+    </Card>
   )
 }
