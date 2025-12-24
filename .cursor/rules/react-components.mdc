@@ -1,0 +1,156 @@
+---
+description: React component conventions and patterns
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# React Component Conventions
+
+## Component Structure
+
+1. **Directive first**: `'use client'` at the top when using hooks/browser APIs
+2. **Imports grouped**: External → Internal (`@/`) → Relative (`./`)
+3. **Types before component**: Define props interfaces/types above the component
+4. **Helper functions after exports**: Keep sub-components and helpers below the main export
+
+```tsx
+'use client'
+
+import { Flex, Text } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
+import { Card } from '@/components/ui/Card'
+import type { SomeSchema } from '@/lib/schemas'
+
+interface MyComponentProps {
+  data: SomeSchema
+}
+
+export const MyComponent = ({ data }: MyComponentProps) => {
+  const { t } = useTranslation()
+  return <Card>{/* ... */}</Card>
+}
+
+const HelperComponent = () => {/* ... */}
+```
+
+## Naming Conventions
+
+- **Files**: PascalCase matching the component name (`BlockInsights.tsx`)
+- **Components**: PascalCase arrow functions (`export const BlockInsights = () => {}`)
+- **Props types**: `ComponentNameProps` interface
+- **Internal components**: Non-exported, defined below the main component
+
+## Props Patterns
+
+```tsx
+// Extend Chakra props for composable components
+interface CardProps extends FlexProps {
+  variant?: 'primary' | 'secondary'
+}
+
+// Use discriminated unions for status-like props
+type Status = 'success' | 'pending' | 'reverted'
+interface StatusBadgeProps extends Omit<BadgeProps, 'children'> {
+  status: Status
+}
+
+// Destructure with defaults
+export const Card = ({ variant = 'primary', ...props }: CardProps) => {}
+```
+
+## forwardRef Pattern
+
+Use when component needs to expose its ref:
+
+```tsx
+import { forwardRef } from 'react'
+
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  ({ variant = 'primary', ...props }, ref) => {
+    return <Flex ref={ref} {...props} />
+  },
+)
+
+Card.displayName = 'Card'
+```
+
+## Styling Patterns
+
+```tsx
+// Use semantic tokens from theme
+<Text color="text-primary" />
+<Card bg="card-bg-primary" borderColor="border-primary" />
+
+// Use textStyle for typography
+<Text textStyle="bodyM" />
+<Heading textStyle="displayXs" />
+
+// Responsive values
+<Flex gap={{ base: 2, md: 4 }} />
+
+// Extract variant styles to constants
+const variantStyles = {
+  primary: { bg: 'card-bg-primary', borderColor: 'border-primary' },
+  secondary: { bg: 'bg-secondary', borderColor: 'border-primary' },
+}
+```
+
+## Translations
+
+Always use the `useTranslation` hook for user-facing text:
+
+```tsx
+const { t } = useTranslation()
+return <Text>{t('Block Insights')}</Text>
+```
+
+## Loading States
+
+Use Chakra Skeleton for loading:
+
+```tsx
+{isLoading ? (
+  <Skeleton height="24px" width="120px" />
+) : (
+  <Text>{data}</Text>
+)}
+```
+
+## Data-Driven Rendering
+
+Prefer mapping over repetitive JSX:
+
+```tsx
+const insights = [
+  { label: t('Block'), value: block.number },
+  { label: t('Age'), value: <AgeText timestamp={block.timestamp} /> },
+]
+
+return (
+  <>
+    {insights.map(insight => (
+      <Flex key={insight.label}>
+        <Text>{insight.label}</Text>
+        {insight.value}
+      </Flex>
+    ))}
+  </>
+)
+```
+
+## Component Location
+
+| Type | Location |
+|------|----------|
+| Shared UI primitives | `components/ui/` |
+| Page-specific | `app/[locale]/**/components/` |
+| Feature-specific | Colocated with feature |
+| Navigation/Layout | `components/navigation/`, `components/Footer/` |
+
+## Avoid
+
+- `any` types — use proper typing or `unknown` with guards
+- Hardcoded colors — use theme tokens
+- Inline style objects — extract to constants or use Chakra props
+- `components/ui-legacy/` — prefer `components/ui/`
+- String refs — use `useRef` or `forwardRef`
