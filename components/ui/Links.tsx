@@ -12,7 +12,7 @@ export const BaseLink = ({ children, href, ...props }: BaseLinkProps) => {
   return (
     <ChakraLink
       asChild
-      color="text-secondary"
+      color="text-alt-secondary"
       textDecoration="underline"
       textUnderlineOffset="1px"
       maxWidth="full"
@@ -65,9 +65,15 @@ interface CopyableAddressLinkProps extends Omit<BaseLinkProps, 'href'> {
 }
 
 export const CopyableAddressLink = ({ address, truncate = false, ...props }: CopyableAddressLinkProps) => {
+  const { data: vnsName, isPending } = useVnsName(address)
+
+  if (isPending) {
+    return <Skeleton height="16px" width="100%" />
+  }
+
   return (
     <CopyableLink href={`/address/${address}`} value={address} {...props}>
-      {truncate ? truncateAddress(address) : address}
+      {vnsName ? vnsName : truncate ? truncateAddress(address) : address}
     </CopyableLink>
   )
 }

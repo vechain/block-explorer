@@ -21,6 +21,7 @@ const config = defineConfig({
         'text-primary': { value: 'rgba(238, 243, 247, 1)' },
         'text-secondary': { value: 'rgba(195, 198, 200, 1)' },
         'text-alt-primary': { value: 'rgba(11, 12, 16, 1)' },
+        'text-alt-secondary': { value: 'rgba(186, 196, 220, 1)' },
 
         // Background
         'bg-primary': { value: 'rgba(50, 50, 50, 0.06)' },
@@ -37,6 +38,7 @@ const config = defineConfig({
           value:
             'radial-gradient(circle 2000px at -150px -150px, rgba(184, 166, 255, 0.53) 0%, rgba(50, 50, 50, 0.06) 20%)',
         },
+        'card-bg-alt-secondary': { value: 'rgba(255, 255, 255, 0.1)' },
 
         // Accent colors
         'accent-primary': { value: 'rgba(184, 166, 255, 1)' },
