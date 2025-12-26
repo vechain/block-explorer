@@ -13,11 +13,11 @@ export function TransactionViews({
   transaction: Transaction
   receipt: TransactionReceipt | null
 }) {
-  if (view === 'clauses') {
+  if (view === TransactionDetailsView.CLAUSES) {
     return <TransactionClauses transaction={transaction} receipt={receipt} />
   }
 
-  if (view === 'events') {
+  if (view === TransactionDetailsView.EVENTS) {
     return <TransactionEvents receipt={receipt} />
   }
 
