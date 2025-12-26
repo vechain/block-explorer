@@ -38,6 +38,7 @@ const config = defineConfig({
           value:
             'radial-gradient(circle 2000px at -150px -150px, rgba(184, 166, 255, 0.53) 0%, rgba(50, 50, 50, 0.06) 20%)',
         },
+        'card-bg-alt-primary': { value: 'rgba(255, 255, 255, 0.06)' }, // color exists below as row-even-bg-primary
         'card-bg-alt-secondary': { value: 'rgba(255, 255, 255, 0.1)' },
 
         // Accent colors

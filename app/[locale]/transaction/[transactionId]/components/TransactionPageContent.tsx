@@ -13,11 +13,7 @@ import { Card } from '@/components/ui/Card'
 import { ValueSwitch } from '@/components/ui/ValueSwitch'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/hooks'
-
-enum TransactionDetailsView {
-  TRANSACTION = 'transaction',
-  CLAUSES = 'clauses',
-}
+import { TransactionDetailsView } from '@/lib/types'
 
 export const TransactionPageContent = ({
   transactionId,
@@ -69,7 +65,7 @@ const TransactionDetails = ({
 }) => {
   const { t } = useTranslation()
   return (
-    <Card>
+    <Card variant="primary">
       <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
         <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap" mb={{ base: '6', md: '0' }}>
           {t('Transaction')}
@@ -108,14 +104,16 @@ const TransactionDetails = ({
         </DataCard>
       </Flex>
 
-      <ValueSwitch
-        layoutId="transaction-view"
-        values={['transaction', 'clauses']}
-        activeValue={view}
-        onChange={value => onViewChange(value as TransactionDetailsView)}
-      />
+      <Card variant="secondary" border="none">
+        <ValueSwitch
+          layoutId="transaction-view-switch"
+          values={[TransactionDetailsView.TRANSACTION, TransactionDetailsView.CLAUSES, TransactionDetailsView.EVENTS]}
+          activeValue={view}
+          onChange={value => onViewChange(value as TransactionDetailsView)}
+        />
 
-      <TransactionViews transaction={transaction} receipt={receipt} view={view} />
+        <TransactionViews transaction={transaction} receipt={receipt} view={view} />
+      </Card>
     </Card>
   )
 }

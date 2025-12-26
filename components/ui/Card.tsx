@@ -2,34 +2,37 @@
 
 import type { FlexProps } from '@chakra-ui/react'
 import { Flex } from '@chakra-ui/react'
-import { forwardRef, useMemo } from 'react'
-
-type CardProps = FlexProps & {
-  variant?: 'primary' | 'secondary'
-}
+import { forwardRef } from 'react'
 
 const variantStyles = {
   primary: {
     bg: 'card-bg-primary',
-    borderColor: 'border-primary',
   },
   secondary: {
     bg: 'bg-secondary',
-    borderColor: 'border-primary',
+  },
+  default: {
+    bg: 'none',
+    backdropFilter: 'none',
   },
 }
 
-export const Card = forwardRef<HTMLDivElement, CardProps>(({ variant = 'primary', ...props }, ref) => {
-  const variantStyle = useMemo(() => variantStyles[variant], [variant])
+type CardProps = FlexProps & {
+  variant?: keyof typeof variantStyles
+}
+
+export const Card = forwardRef<HTMLDivElement, CardProps>(({ variant = 'default', ...props }, ref) => {
+  const variantStyle = variantStyles[variant]
+
   return (
     <Flex
       ref={ref}
-      as="section"
       flexDirection="column"
       gap={6}
       color="text-primary"
       borderRadius="md"
       borderWidth="1px"
+      borderColor="border-primary"
       p={{ base: 4, md: 5 }}
       backdropFilter="blur(16px)"
       {...variantStyle}
