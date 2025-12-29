@@ -1,4 +1,4 @@
-import { Flex, Skeleton, type SkeletonProps, Table as TableChakra, Text, type TextProps } from '@chakra-ui/react'
+import { Box, Flex, Grid, Skeleton, type SkeletonProps, Text, type TextProps } from '@chakra-ui/react'
 import type { AddressString } from '@/lib/schemas'
 
 type CellValue = string | number | AddressString | boolean
@@ -36,84 +36,88 @@ type DataTableProps<T extends TableRow = TableRow> = {
 
 const border = '1px solid var(--chakra-colors-border-primary)'
 
-export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: DataTableProps<T>) => (
-  <TableChakra.ScrollArea>
-    <TableChakra.Root
-      variant="line"
-      size="md"
-      borderCollapse="separate"
-      borderSpacing={0}
-      tableLayout="auto"
-      textStyle="bodyM"
-    >
-      <TableChakra.Header>
-        <TableChakra.Row bg="transparent">
-          {columns.map(column => (
-            <TableChakra.ColumnHeader
-              key={column.key}
-              border="none"
-              whiteSpace="nowrap"
-              textAlign="center"
-              color="text-primary"
-            >
-              {column.label}
-            </TableChakra.ColumnHeader>
-          ))}
-        </TableChakra.Row>
-      </TableChakra.Header>
+const getTemplateColumns = (columnCount: number) => {
+  if (columnCount <= 2) return `repeat(${columnCount}, auto)`
+  const middleCols = columnCount - 2
+  return `auto repeat(${middleCols}, 1fr) auto`
+}
 
-      <TableChakra.Body
-        css={{
-          '& td:first-of-type': {
-            borderLeft: border,
-          },
-          '& td:last-child': {
-            borderRight: border,
-          },
-          '& tr:first-of-type td': {
-            borderTop: border,
-          },
-          '& tr:first-of-type td:first-of-type': {
-            borderTopLeftRadius: 'var(--chakra-radii-lg)',
-          },
-          '& tr:first-of-type td:last-child': {
-            borderTopRightRadius: 'var(--chakra-radii-lg)',
-          },
-          '& tr:last-child td:first-of-type': {
-            borderBottomLeftRadius: 'var(--chakra-radii-lg)',
-          },
-          '& tr:last-child td:last-child': {
-            borderBottomRightRadius: 'var(--chakra-radii-lg)',
-          },
-          '& tr:nth-of-type(odd)': {
-            background: 'var(--chakra-colors-row-odd-bg-primary)',
-          },
-        }}
-      >
-        {rows.map(row => (
-          <TableChakra.Row key={row.id} height="fit-content" bg="row-even-bg-primary">
-            {columns.map(column => (
-              <TableChakra.Cell
-                key={`${row.id}-${column.key}`}
-                whiteSpace="nowrap"
-                borderBottom={border}
-                p={4}
-                textAlign="center"
-              >
-                <Flex justifyContent="center">
-                  {column.Cell ? (
-                    <column.Cell value={row[column.key]} row={row} columnKey={column.key} />
-                  ) : (
-                    <TableText>{row[column.key]}</TableText>
-                  )}
-                </Flex>
-              </TableChakra.Cell>
-            ))}
-          </TableChakra.Row>
+const getCellBorderRadius = (rowIndex: number, colIndex: number, totalRows: number, totalCols: number) => {
+  const isFirstRow = rowIndex === 0
+  const isLastRow = rowIndex === totalRows - 1
+  const isFirstCol = colIndex === 0
+  const isLastCol = colIndex === totalCols - 1
+
+  if (isFirstRow && isFirstCol) return { borderTopLeftRadius: 'lg' }
+  if (isFirstRow && isLastCol) return { borderTopRightRadius: 'lg' }
+  if (isLastRow && isFirstCol) return { borderBottomLeftRadius: 'lg' }
+  if (isLastRow && isLastCol) return { borderBottomRightRadius: 'lg' }
+  return {}
+}
+
+const getCellBorders = (rowIndex: number, colIndex: number, totalCols: number) => {
+  const isFirstRow = rowIndex === 0
+  const isFirstCol = colIndex === 0
+  const isLastCol = colIndex === totalCols - 1
+
+  return {
+    borderTop: isFirstRow ? border : undefined,
+    borderLeft: isFirstCol ? border : undefined,
+    borderRight: isLastCol ? border : undefined,
+    borderBottom: border,
+  }
+}
+
+export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: DataTableProps<T>) => (
+  <Box overflowX="auto">
+    <Grid
+      templateColumns={getTemplateColumns(columns.length)}
+      textStyle="bodyM"
+      role="table"
+      aria-rowcount={rows.length + 1}
+    >
+      {/* Header Row */}
+      <Grid gridColumn="1 / -1" templateColumns="subgrid" role="row" aria-rowindex={1}>
+        {columns.map(column => (
+          <Box key={column.key} whiteSpace="nowrap" textAlign="center" color="text-primary" p={4} role="columnheader">
+            {column.label}
+          </Box>
         ))}
-      </TableChakra.Body>
-    </TableChakra.Root>
-  </TableChakra.ScrollArea>
+      </Grid>
+
+      {/* Data Rows */}
+      {rows.map((row, rowIndex) => (
+        <Grid
+          key={row.id}
+          gridColumn="1 / -1"
+          templateColumns="subgrid"
+          bg={rowIndex % 2 === 0 ? 'row-odd-bg-primary' : 'row-even-bg-primary'}
+          role="row"
+          aria-rowindex={rowIndex + 2}
+        >
+          {columns.map((column, colIndex) => (
+            <Box
+              key={`${row.id}-${column.key}`}
+              whiteSpace="nowrap"
+              p={4}
+              textAlign="center"
+              {...getCellBorders(rowIndex, colIndex, columns.length)}
+              {...getCellBorderRadius(rowIndex, colIndex, rows.length, columns.length)}
+              role="cell"
+            >
+              <Flex justifyContent="center">
+                {column.Cell ? (
+                  <column.Cell value={row[column.key]} row={row} columnKey={column.key} />
+                ) : (
+                  <TableText>{row[column.key]}</TableText>
+                )}
+              </Flex>
+            </Box>
+          ))}
+        </Grid>
+      ))}
+    </Grid>
+  </Box>
 )
 
 export const TableSkeleton = (props: SkeletonProps) => {
