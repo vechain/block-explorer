@@ -1,40 +1,53 @@
-import Image from 'next/image'
-import { AgeText } from '@/components/ui/AgeText'
-import { BaseLink, CopyableAddressLink } from '@/components/ui/Links'
-import { AppendIconCell, type CellComponentProps, type Column, DataTable } from '@/components/ui/Table'
-import type { CompressedBlock } from '@/lib/schemas'
+'use client'
 
-export const BlocksTable = ({ blocks }: { blocks: CompressedBlock[] }) => {
+import Image from 'next/image'
+import { useTranslation } from 'react-i18next'
+import { AgeText } from '@/components/ui/AgeText'
+import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
+import { AppendIconCell, type CellComponentProps, type Column, DataTable } from '@/components/ui/Table'
+import type { ExpandedBlock } from '@/lib/schemas'
+
+export const BlocksTable = ({ blocks }: { blocks: ExpandedBlock[] }) => {
+  const { t } = useTranslation()
+
   const columns: Column<(typeof rows)[number]>[] = [
-    { key: 'age', label: 'Age', Cell: ({ value }) => <AgeText timestamp={value as number} /> },
+    { key: 'age', label: t('Age'), Cell: ({ value }) => <AgeText timestamp={value as number} /> },
     {
       key: 'blockNumber',
-      label: 'ID',
-      Cell: ({ row }) => <BaseLink href={`/block/${row.id}`}>{row.blockNumber}</BaseLink>,
+      label: t('Block'),
+      Cell: ({ row }) => (
+        <CopyableLink href={`/block/${row.id}`} value={row.blockNumberRaw}>
+          {row.blockNumber}
+        </CopyableLink>
+      ),
     },
     {
       key: 'signer',
-      label: 'Signer',
+      label: t('Signer'),
       Cell: ({ row }) => <CopyableAddressLink truncate address={row.signer} />,
     },
-    { key: 'txs', label: 'Txs' },
+    { key: 'txs/clauses', label: t('Txs/Clauses') },
     {
       key: 'gasUsed',
-      label: 'Gas Used',
+      label: t('Gas Used'),
       Cell: GasUsedCell,
     },
   ]
 
-  const rows = blocks.map(block => ({
-    id: block.id,
-    blockNumber: `#${block.number.toString()}`,
-    age: block.timestamp,
-    block: block.number.toLocaleString(),
-    signer: block.signer,
-    txs: block.transactions.length,
-    gasUsed: block.gasUsed.toLocaleString(),
-    isFinalized: block.isFinalized,
-  }))
+  const rows = blocks.map(block => {
+    const totalClauses = block.transactions.reduce((sum, tx) => sum + tx.clauses.length, 0)
+    return {
+      id: block.id,
+      blockNumber: `#${block.number.toString()}`,
+      blockNumberRaw: block.number.toString(),
+      age: block.timestamp,
+      block: block.number.toLocaleString(),
+      signer: block.signer,
+      'txs/clauses': `${block.transactions.length}/${totalClauses}`,
+      gasUsed: block.gasUsed.toLocaleString(),
+      isFinalized: block.isFinalized,
+    }
+  })
 
   return <DataTable columns={columns} rows={rows} />
 }

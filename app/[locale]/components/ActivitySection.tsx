@@ -1,22 +1,24 @@
 'use client'
 
-import { Heading } from '@chakra-ui/react'
-import { Surface } from '@/components/ui/Surface'
+import { Box, Heading } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
+import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
-import { useLatestBlocksCompressed } from '@/services/thor/hooks'
+import { useRecentBlocksExpanded } from '@/services/veworld-indexer/hooks'
 import { BlocksTable } from './BlocksTable'
 
 const BLOCKS_TO_DISPLAY = 5
 
 export const ActivitySection = () => {
-  const { data: latestBlocks, isPending } = useLatestBlocksCompressed({ count: BLOCKS_TO_DISPLAY })
+  const { t } = useTranslation()
+  const { data: latestBlocks, isPending } = useRecentBlocksExpanded({ count: BLOCKS_TO_DISPLAY })
 
   return (
-    <Surface>
+    <Card>
       <Heading as="h3" textStyle="displayXs">
-        Activity
+        {t('Activity')}
       </Heading>
-      {isPending ? <TableSkeleton /> : <BlocksTable blocks={latestBlocks} />}
-    </Surface>
+      <Box minHeight="320px">{isPending ? <TableSkeleton /> : <BlocksTable blocks={latestBlocks ?? []} />}</Box>
+    </Card>
   )
 }

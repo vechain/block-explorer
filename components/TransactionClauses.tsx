@@ -1,5 +1,8 @@
+'use client'
+
 import { Accordion, Box, Flex, Text, useBreakpointValue } from '@chakra-ui/react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { RawEvent } from '@/lib/schemas/events'
 import type { Clause, Transaction, TransactionReceipt } from '@/lib/schemas/transactions'
 import { EventsList } from './EventList'
@@ -23,7 +26,7 @@ export function TransactionClauses({
   const isMobile = useBreakpointValue({ base: true, md: false })
 
   return (
-    <Accordion.Root multiple rounded="md" overflow="hidden" borderWidth="1px" borderColor="border-surface">
+    <Accordion.Root multiple rounded="md" overflow="hidden" borderWidth="1px" borderColor="border-primary">
       {transaction.clauses.map((clause, index) => (
         <Accordion.Item
           key={index.toString()}
@@ -31,7 +34,8 @@ export function TransactionClauses({
           px="4"
           py="5"
           border="none"
-          bg={index % 2 === 0 ? 'bg-card-surface-2' : 'bg-card-surface'}>
+          bg={index % 2 === 0 ? 'row-even-bg-primary' : 'row-odd-bg-primary'}
+        >
           <Flex>
             <Accordion.ItemTrigger p="0" justifyContent="space-between" cursor="pointer">
               <Flex alignItems="center" gap={{ base: '2', md: '5' }}>
@@ -61,7 +65,7 @@ const ClauseContent = ({ clause, eventLogs, index }: { clause: Clause; eventLogs
       <Accordion.ItemBody py={{ base: '4', md: '6' }} display="flex" flexDirection="column" gap="4">
         <ValueSwitch
           layoutId={`clause-${index}`}
-          bg="bg-surface-alt"
+          bg="bg-secondary"
           values={[ClauseView.INPUT_DATA, ClauseView.EVENTS]}
           activeValue={view}
           onChange={setView}
@@ -74,10 +78,12 @@ const ClauseContent = ({ clause, eventLogs, index }: { clause: Clause; eventLogs
 }
 
 const ClauseTypeBadge = () => {
+  const { t } = useTranslation()
+
   return (
-    <Box bg="highlight-primary/20" px={4} py={1.5} rounded="full">
-      <Text textStyle="bodyM" color="highlight-primary">
-        Call
+    <Box bg="accent-primary/20" px={4} py={1.5} rounded="full">
+      <Text textStyle="bodyM" color="accent-primary">
+        {t('Call')}
       </Text>
     </Box>
   )

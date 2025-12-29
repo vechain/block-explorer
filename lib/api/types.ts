@@ -16,7 +16,13 @@ export class ApiError extends Error {
     content,
     cause,
     response,
-  }: { message?: string; status: number; content?: string; cause?: Error; response?: Response }) {
+  }: {
+    message?: string
+    status: number
+    content?: string
+    cause?: Error
+    response?: Response
+  }) {
     super(message)
     this.name = 'ApiError'
     this.status = status

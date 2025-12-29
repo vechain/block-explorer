@@ -11,8 +11,10 @@ import {
   indexerResponseSchema,
 } from './schemas'
 
+const ERC721_TOKENS_QUERY_KEY = 'getErc721Tokens'
+
 export const accountErc721TokensQueryOptions = (networkName: NetworkName, params: IndexerGetErc721Params) => ({
-  queryKey: [getErc721Tokens.name, networkName, params],
+  queryKey: [ERC721_TOKENS_QUERY_KEY, networkName, params],
   queryFn: () => getErc721Tokens({ networkName, params }),
   select: (data: IndexerResponse<typeof indexerErc721Schema>) => {
     const tokenIdsMap = data.data.reduce((acc, nft) => {

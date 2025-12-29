@@ -19,9 +19,11 @@ const VNS_FUNCTION_ABI_GET_ADDRESSES = new ABIFunction(
 
 const VNS_FUNCTION_ABI_GET_NAMES = new ABIFunction('function getNames(address[] addresses) returns (string[] names)')
 
+const VNS_NAME_QUERY_KEY = 'getVnsName'
+
 export const vnsNameQueryOptions = (networkName: NetworkName, address: AddressString | undefined) =>
   queryOptions({
-    queryKey: [getVnsName.name, networkName, address],
+    queryKey: [VNS_NAME_QUERY_KEY, networkName, address],
     queryFn: address ? () => getVnsName({ networkName, address }) : skipToken,
     staleTime: Infinity,
   })

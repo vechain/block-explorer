@@ -8,6 +8,7 @@ import { isNotNullish } from '@/lib/type-predicates'
 import { parseNftMetadataUri, useNftMetadata } from '@/services/nft-metadata'
 import { type Erc721, type Erc721Token, useErc721Contracts, useErc721Tokens } from '@/services/thor/tokens/erc721'
 import { useAccountErc721 } from '@/services/veworld-indexer/hooks'
+import { useTranslation } from 'react-i18next'
 
 const PAGE_SIZE = 30
 
@@ -57,6 +58,7 @@ const Erc721Collection = ({ token }: { token: Erc721WithTokenIds }) => {
 
 const Erc721TokenCard = ({ token }: { token: Erc721Token }) => {
   const { data: metadata, isPending } = useNftMetadata(token.tokenUri)
+  const { t } = useTranslation()
 
   if (isPending) return <Text>Loading...</Text>
 
@@ -72,13 +74,13 @@ const Erc721TokenCard = ({ token }: { token: Erc721Token }) => {
             <ImageWithFallback src={parseNftMetadataUri(metadata.image)} alt={metadata.name} width={100} height={100} />
 
             <Flex flexDirection="column" gap={2}>
-              <Text fontWeight="bold">Description:</Text>
+              <Text fontWeight="bold">{t('Description')}:</Text>
               <Text fontSize="sm">{metadata.description}</Text>
             </Flex>
 
             {metadata.attributes.length > 0 && (
               <Flex flexDirection="column" gap={2}>
-                <Text fontWeight="bold">Attributes:</Text>
+                <Text fontWeight="bold">{t('Attributes')}:</Text>
                 {metadata.attributes.map(attribute => (
                   <Flex key={`${attribute.traitType}-${attribute.value}`} gap={2}>
                     <Text fontSize="sm" fontWeight="bold">
@@ -97,12 +99,13 @@ const Erc721TokenCard = ({ token }: { token: Erc721Token }) => {
 }
 
 const NoMetadataCard = ({ token }: { token: Erc721Token }) => {
+  const { t } = useTranslation()
   return (
     <Card.Root width="300px" css={{ _hover: { bg: 'gray.100' } }}>
       <Card.Body gap={2}>
         <Flex flexDirection="column" gap={2}>
           <Text fontWeight="bold"># {token.tokenId}</Text>
-          <Text>Metadata not found at this uri:</Text>
+          <Text>{t('Metadata not found at this uri')}:</Text>
           <Text fontSize="sm">{token.tokenUri}</Text>
         </Flex>
       </Card.Body>

@@ -11,23 +11,25 @@ AWS App Runner deployment for Block Explorer using Terraform workspaces.
 
 ## Workspaces
 
-| Workspace | Purpose | Domain | State Location |
-|-----------|---------|--------|----------------|
-| `production` | Production environment | `block-explorer.vechain.org` | `s3://vechain-terraform-state-prod/env:/production/frontend/terraform.tfstate` |
+| Workspace             | Purpose                 | Domain                                           | State Location                                                                             |
+| --------------------- | ----------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `production`          | Production environment  | `block-explorer.vechain.org`                     | `s3://vechain-terraform-state-prod/env:/production/frontend/terraform.tfstate`             |
 | `preview-pr-{number}` | PR preview environments | `pr-{number}.block-explorer-preview.vechain.org` | `s3://vechain-terraform-state-nonprod/env:/preview-pr-{number}/frontend/terraform.tfstate` |
 
 ## Automated Deployment
 
 ### Production
+
 - **Trigger**: Push to `main` branch
 - **Workflow**: `.github/workflows/deploy-production.yml`
-- **Process**: 
+- **Process**:
   1. Build Docker image with tag `prod-{short_sha}`
   2. Push to ECR
   3. Update `prod.yaml` with new image tag
   4. Deploy via Terraform
 
 ### Preview Environments
+
 - **Trigger**: PR opened/updated
 - **Workflow**: `.github/workflows/deploy-preview.yml`
 - **Process**:
@@ -45,35 +47,38 @@ AWS App Runner deployment for Block Explorer using Terraform workspaces.
 Environment configuration is stored in YAML files:
 
 ### Production
+
 **File**: `terraform/environments/prod/prod.yaml`
 
 ```yaml
 environment: prod
 domain: block-explorer.vechain.org
-image_tag: prod-abc1234  # Updated by CI/CD
-cpu: 1024                 # 1 vCPU
-memory: 2048              # 2 GB
-min_size: 1               # Always 1 instance (no cold starts)
+image_tag: prod-abc1234 # Updated by CI/CD
+cpu: 1024 # 1 vCPU
+memory: 2048 # 2 GB
+min_size: 1 # Always 1 instance (no cold starts)
 max_size: 10
 ```
 
 ### Preview
+
 **Template**: `terraform/environments/preview/preview.yaml.example`
 **Generated**: `terraform/environments/preview-pr-{number}/preview-pr-{number}.yaml`
 
 ```yaml
 environment: preview-pr-123
 domain: pr-123.block-explorer-preview.vechain.org
-image_tag: pr-123-abc1234  # Set by CI/CD
-cpu: 512                    # 0.5 vCPU (smaller for previews)
-memory: 1024                # 1 GB
-min_size: 1                 # App Runner requires ≥1
+image_tag: pr-123-abc1234 # Set by CI/CD
+cpu: 512 # 0.5 vCPU (smaller for previews)
+memory: 1024 # 1 GB
+min_size: 1 # App Runner requires ≥1
 max_size: 2
 ```
 
 ## Resources Created
 
 Per environment:
+
 - **App Runner Service** - Runs the Next.js application
 - **Auto-scaling Configuration** - Defines scaling limits
 - **Custom Domain Association** - Links custom domain to service
@@ -82,6 +87,7 @@ Per environment:
 ## Manual Deployment
 
 ### Prerequisites
+
 - Account-level infrastructure deployed
 - Docker image pushed to ECR
 - Environment config file created
@@ -135,11 +141,11 @@ Custom domains are automatically configured:
 
 After deployment:
 
-| Output | Description | Example |
-|--------|-------------|---------|
-| `service_url` | Default App Runner URL | `https://xyz.awsapprunner.com` |
-| `custom_domain_url` | Custom domain URL | `https://block-explorer.vechain.org` |
-| `service_arn` | App Runner service ARN | For API operations |
+| Output                 | Description              | Example                                          |
+| ---------------------- | ------------------------ | ------------------------------------------------ |
+| `service_url`          | Default App Runner URL   | `https://xyz.awsapprunner.com`                   |
+| `custom_domain_url`    | Custom domain URL        | `https://block-explorer.vechain.org`             |
+| `service_arn`          | App Runner service ARN   | For API operations                               |
 | `custom_domain_status` | Domain validation status | `active` or `pending_certificate_dns_validation` |
 
 ## Cost Optimization
@@ -151,17 +157,20 @@ After deployment:
 ## Troubleshooting
 
 ### Custom domain not activating
+
 - Check validation records in Route53
 - Wait 5-10 minutes after first deployment
 - Verify ACM certificate status
 - Use default App Runner URL in the meantime
 
 ### Terraform state locked
+
 - Check for concurrent deployments (same PR)
 - Concurrency control prevents multiple applies per PR
 - If stuck, manually release lock via DynamoDB
 
 ### Health check failures
+
 - App Runner health check: `GET /` on port 3000
 - Ensure Next.js binds to `0.0.0.0` (set via `HOSTNAME` env var)
 - Check App Runner logs in CloudWatch

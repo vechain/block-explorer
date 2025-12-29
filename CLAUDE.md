@@ -49,6 +49,7 @@ pnpm validate            # Run build, test, lint, format, and knip
 ### Routing Structure
 
 The app uses Next.js App Router with internationalized routes:
+
 - Routes are nested under `app/[locale]/` for multi-language support
 - Main routes: `/`, `/block/[blockId]`, `/transaction/[transactionId]`, `/address/[address]`
 - Locale is handled by middleware using next-i18n-router
@@ -93,7 +94,8 @@ The app uses Next.js App Router with internationalized routes:
 ### Theming
 
 Chakra UI v3 custom theme configured in `components/theme/config.tsx`:
-- Custom color tokens for blockchain explorer aesthetic (text-primary, bg-card-surface, etc.)
+
+- Custom color tokens for blockchain explorer aesthetic (text-primary, bg-primary, border-primary, etc.)
 - Dark mode design with glass-morphism surfaces
 - Custom font: Rubik (loaded via next/font/google)
 - Responsive design tokens and breakpoints
@@ -101,6 +103,7 @@ Chakra UI v3 custom theme configured in `components/theme/config.tsx`:
 ### Network Configuration
 
 Networks defined in `lib/constants/network.ts`:
+
 - Mainnet and Testnet supported
 - Each network has URL and contract addresses
 - ThorClient instances cached per network in `services/thor/client.ts`
@@ -108,6 +111,7 @@ Networks defined in `lib/constants/network.ts`:
 ### Environment Variables
 
 Required environment variables (see `.env`):
+
 - `B32_URL`: VeChain name service API
 - `NEXT_PUBLIC_COIN_API_URL`: Price data API
 - `NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL`: Mainnet indexer
@@ -124,6 +128,7 @@ Required environment variables (see `.env`):
 ## Code Style
 
 Biome configuration (`biome.json`):
+
 - 2 space indentation
 - 120 character line width
 - Single quotes for JS/TS

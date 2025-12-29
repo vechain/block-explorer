@@ -1,7 +1,7 @@
-import { Box, Container } from '@chakra-ui/react'
+import { Container, VStack } from '@chakra-ui/react'
 import type { Metadata } from 'next'
 import { Rubik } from 'next/font/google'
-import { Footer } from '@/components/Footer'
+import { Footer } from '@/components/Footer/Footer'
 import { Header } from '@/components/navigation/Header'
 import { ChakraProvider } from '@/components/theme/provider'
 import type { Locale } from '@/i18n/config'
@@ -36,19 +36,22 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning>
       <body className={rubik.variable}>
         <Providers locale={locale}>
-          <Box
+          <VStack
             as="main"
-            minH="100vh"
+            h="100vh"
             bgImage={{
-              base: "url('/bg/Mobile.jpg')",
-              md: "url('/bg/Desktop.jpg')",
+              base: "url('/bg/Mobile.webp')",
+              md: "url('/bg/Desktop.webp')",
             }}
             color="text-primary"
             bgSize="100%"
             bgRepeat="no-repeat"
-            overflowX="hidden"
             // TODO: Update background color with theme once implemented
-            backgroundColor="#0B0C10">
+            backgroundColor="#0B0C10"
+            overflowY="auto"
+            overflowX="hidden"
+            justifyContent="space-between"
+          >
             <Container
               maxW="1080px"
               display="flex"
@@ -56,12 +59,13 @@ export default async function RootLayout({
               px={4}
               pt={{ base: 2, md: 10 }}
               pb={10}
-              mx="auto">
+              mx="auto"
+            >
               <Header />
               {children}
-              <Footer />
             </Container>
-          </Box>
+            <Footer />
+          </VStack>
         </Providers>
       </body>
     </html>

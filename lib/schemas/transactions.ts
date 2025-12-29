@@ -89,5 +89,6 @@ export const transactionReceiptSchema = z.object({
 })
 
 export type Transaction = z.infer<typeof transactionSchema>
+export type TransactionType = z.infer<typeof transactionTypeSchema>
 export type TransactionReceipt = z.infer<typeof transactionReceiptSchema>
 export type Clause = z.infer<typeof clauseSchema>

@@ -20,24 +20,36 @@ const config = defineConfig({
         // Text colors
         'text-primary': { value: 'rgba(238, 243, 247, 1)' },
         'text-secondary': { value: 'rgba(195, 198, 200, 1)' },
-        'text-alt': { value: 'rgba(186, 196, 220, 1)' },
-        // Background colors
-        'bg-primary': { value: 'rgba(11, 12, 16, 1)' },
-        'bg-card-surface': { value: 'rgba(255, 255, 255, 0.06)' },
-        'bg-card-surface-2': { value: 'rgba(255, 255, 255, 0.1)' },
-        'bg-card-surface-3': { value: 'rgba(255, 255, 255, 0.2)' },
-        'bg-card-surface-hover': { value: 'rgba(255, 255, 255, 0.1)' },
-        'bg-card-surface-active': { value: 'rgba(255, 255, 255, 0.2)' },
-        'bg-surface-alt': { value: 'rgba(0, 0, 0, 0.2)' },
-        'bg-surface-alt-1': { value: 'rgba(0, 0, 0, 0.1)' },
-        'bg-surface-alt-hover': { value: 'rgba(0, 0, 0, 0.4)' },
-        // Border colors
-        'border-surface': { value: 'rgba(255, 255, 255, 0.2)' },
-        'border-surface-2': { value: 'rgba(255, 255, 255, 0.4)' },
-        // Blur colors
-        'blur-blue': { value: 'rgba(54, 24, 251, 1)' },
-        'blur-purple': { value: 'rgba(143, 66, 221, 1)' },
-        'blur-pink': { value: 'rgba(165, 12, 141, 1)' },
+        'text-alt-primary': { value: 'rgba(11, 12, 16, 1)' },
+        'text-alt-secondary': { value: 'rgba(186, 196, 220, 1)' },
+
+        // Background
+        'bg-primary': { value: 'rgba(50, 50, 50, 0.06)' },
+        'bg-secondary': { value: 'rgba(0,0,0, 0.4)' },
+
+        // Tooltip
+        'tooltip-bg': { value: 'rgba(0,0,0, 0.7)' },
+
+        // Border
+        'border-primary': { value: 'rgba(255, 255, 255, 0.2)' },
+
+        // Card
+        'card-bg-primary': {
+          value:
+            'radial-gradient(circle 2000px at -150px -150px, rgba(184, 166, 255, 0.53) 0%, rgba(50, 50, 50, 0.06) 20%)',
+        },
+        'card-bg-alt-primary': { value: 'rgba(255, 255, 255, 0.06)' }, // color exists below as row-even-bg-primary
+        'card-bg-alt-secondary': { value: 'rgba(255, 255, 255, 0.1)' },
+
+        // Accent colors
+        'accent-primary': { value: 'rgba(184, 166, 255, 1)' },
+        'accent-secondary': { value: 'rgba(231, 130, 255, 1)' },
+        'accent-tertiary': { value: 'white' },
+
+        // Alternating rows
+        'row-even-bg-primary': { value: 'rgba(255, 255, 255, 0.06)' },
+        'row-odd-bg-primary': { value: 'rgba(50, 50, 50, 0.06)' },
+
         // Status colors
         'success-text': { value: 'rgba(16, 255, 161, 1)' },
         'success-surface': { value: 'rgba(16, 255, 161, 0.26)' },
@@ -45,10 +57,7 @@ const config = defineConfig({
         'error-text': { value: 'rgba(255, 138, 138, 1)' },
         'pending-surface': { value: 'rgba(246, 255, 165, 0.2)' },
         'pending-text': { value: 'rgba(246, 255, 165, 1)' },
-        // Highlight colors
-        'highlight-primary': { value: 'rgba(184, 166, 255, 1)' },
-        'highlight-secondary': { value: 'rgba(231, 130, 255, 1)' },
-        'highlight-tertiary': { value: 'rgba(56, 216, 153, 1)' },
+
         primary: {
           50: { value: '#F9F8FB' },
           100: { value: '#F0EEFC' },

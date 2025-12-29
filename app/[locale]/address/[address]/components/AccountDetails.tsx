@@ -1,4 +1,7 @@
+'use client'
+
 import { Flex, Stack, Table, Tabs } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import { LuArrowLeftRight, LuCoins, LuImage } from 'react-icons/lu'
 import { TbTransfer } from 'react-icons/tb'
 import { CopyToClipBoard } from '@/components/ui-legacy/CopyToClipBoard'
@@ -14,21 +17,22 @@ import { AccountTransactionsTab } from './AccountTransactionsTab'
 import { AccountTransfersTab } from './AccountTransfersTab'
 
 export const AccountDetails = ({ account }: { account: Account }) => {
+  const { t } = useTranslation()
   const { data: vnsName } = useVnsName(account.address)
   const { currentTab, handleTabChange } = useTabs('transactions')
 
   const items = [
     {
-      name: 'VNS',
+      name: t('VNS'),
       value: <VnsBadge size="md" address={account.address} vnsName={vnsName} />,
     },
-    { name: 'Balance', value: <VETBalance balance={account.vet} /> },
-    { name: 'VTHO / Energy', value: <VTHOBalance balance={account.vtho} /> },
+    { name: t('Balance'), value: <VETBalance balance={account.vet} /> },
+    { name: t('VTHO / Energy'), value: <VTHOBalance balance={account.vtho} /> },
   ]
 
   return (
     <Stack flex={1}>
-      <Title>Account</Title>
+      <Title>{t('Account')}</Title>
       <Flex alignItems="center" gap={2}>
         <Subtitle>{account.address}</Subtitle>
         <CopyToClipBoard value={account.address} />
@@ -38,7 +42,7 @@ export const AccountDetails = ({ account }: { account: Account }) => {
         <Table.Root size="md">
           <Table.Body>
             {items.map(item => (
-              <Table.Row key={item.name}>
+              <Table.Row key={item.name} bg="bg-secondary">
                 <Table.Cell>{item.name}</Table.Cell>
                 <Table.Cell>{item.value}</Table.Cell>
               </Table.Row>
@@ -51,20 +55,20 @@ export const AccountDetails = ({ account }: { account: Account }) => {
         <Tabs.List bg="bg.muted" rounded="l3">
           <Tabs.Trigger value="transactions">
             <LuArrowLeftRight />
-            Transactions
+            {t('Transactions')}
           </Tabs.Trigger>
           <Tabs.Trigger value="transfers">
             <TbTransfer />
-            Transfers
+            {t('Transfers')}
           </Tabs.Trigger>
           <Tabs.Trigger value="tokens">
             <LuCoins />
-            Tokens
+            {t('Tokens')}
           </Tabs.Trigger>
           <Tabs.Indicator rounded="l3" />
           <Tabs.Trigger value="nfts">
             <LuImage />
-            NFTs
+            {t('NFTs')}
           </Tabs.Trigger>
           <Tabs.Indicator rounded="l3" />
         </Tabs.List>

@@ -12,18 +12,20 @@ export const IDChip = forwardRef<HTMLDivElement, IDChipProps>(({ value, ...props
   return (
     <Flex
       ref={ref}
-      p="2"
+      py="2"
+      px="4"
       gap="2"
       alignItems="center"
-      bg="bg-surface-alt"
-      color="text-alt"
+      bg="bg-primary"
+      color="text-secondary"
       borderRadius="full"
       borderWidth="1px"
-      borderColor="border-surface"
+      borderColor="border-primary"
       textStyle="bodyS"
       maxW="full"
-      {...props}>
-      <Text color="text-alt" maxWidth="full" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+      {...props}
+    >
+      <Text color="text-secondary" maxWidth="full" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
         {value}
       </Text>
       <CopyToClipBoard value={value} />

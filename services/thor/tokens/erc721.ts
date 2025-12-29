@@ -6,6 +6,9 @@ import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getThorClient } from '@/services/thor/client'
 
+const ERC721_CONTRACT_QUERY_KEY = 'getErc721Contract'
+const ERC721_TOKEN_QUERY_KEY = 'getErc721Token'
+
 export const useErc721Contracts = ({ contractAddressList }: { contractAddressList: Set<AddressString> }) => {
   const { activeNetwork } = useSettingsStore()
 
@@ -52,13 +55,13 @@ export const useErc721Tokens = ({ contract, tokenIds }: { contract: Erc721['cont
 }
 
 const erc721ContractQueryOptions = (networkName: NetworkName, address: AddressString) => ({
-  queryKey: [getErc721Contract.name, networkName, address],
+  queryKey: [ERC721_CONTRACT_QUERY_KEY, networkName, address],
   queryFn: () => getErc721Contract(networkName, address),
   select: (data: Erc721 | null) => ({ address, erc721: data }),
 })
 
 const erc721TokensQueryOptions = (contract: Erc721['contract'], tokenId: bigint) => ({
-  queryKey: [getErc721Token.name, contract.address, tokenId.toString()],
+  queryKey: [ERC721_TOKEN_QUERY_KEY, contract.address, tokenId.toString()],
   queryFn: () => getErc721Token(contract, tokenId),
 })
 

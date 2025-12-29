@@ -1,11 +1,11 @@
 'use client'
 
 import { Flex, type FlexProps, Group, Text } from '@chakra-ui/react'
-import Image from 'next/image'
 import React, { forwardRef } from 'react'
 import type { IconBaseProps } from 'react-icons'
 import { IconInCircle } from './IconInCircle'
-import { Tooltip } from './Tooltip'
+import { InfoTip } from './InfoTip'
+import { Card } from './Card'
 
 interface DataCardProps extends FlexProps {
   icon: React.ReactElement<IconBaseProps>
@@ -19,21 +19,7 @@ export const DataCard = forwardRef<HTMLDivElement, DataCardProps>(
     const Icon = React.cloneElement(icon, { ...icon.props, width: iconSize, height: iconSize })
 
     return (
-      <Flex
-        ref={ref}
-        flexDirection="column"
-        flex="1"
-        justifyContent="space-between"
-        alignSelf="stretch"
-        gap={6}
-        bg="bg-surface-alt-1"
-        color="text-primary"
-        borderRadius="md"
-        borderWidth="1px"
-        borderColor="bg-card-surface-2"
-        py={5}
-        px={4}
-        {...props}>
+      <Card variant="secondary" ref={ref} flex="1" alignSelf="stretch" {...props}>
         <Flex alignItems="center" justifyContent="space-between">
           <Group>
             <IconInCircle icon={Icon} p="1" />
@@ -41,14 +27,10 @@ export const DataCard = forwardRef<HTMLDivElement, DataCardProps>(
               {title}
             </Text>
           </Group>
-          {tooltip && (
-            <Tooltip content={tooltip}>
-              <Image src="/icons/info.svg" alt="Info" width={16} height={16} />
-            </Tooltip>
-          )}
+          {tooltip && <InfoTip tooltip={tooltip} />}
         </Flex>
         {children}
-      </Flex>
+      </Card>
     )
   },
 )

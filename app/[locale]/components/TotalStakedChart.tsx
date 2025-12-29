@@ -3,13 +3,15 @@
 import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { format } from 'date-fns'
 import { memo, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, type TooltipContentProps, XAxis, YAxis } from 'recharts'
 import { formatEther } from 'viem'
 import { formatAbbreviated, formatAmount } from '@/lib/utils/units'
 import { useTotalVetStaked, useTotalVetStakedHistoric } from '@/services/veworld-indexer/hooks'
 import { TotalVetStakedRange } from '@/services/veworld-indexer/total-vet-staked-historic'
+import { Card } from '@/components/ui/Card'
 
-const chartHeight = 100
+const chartHeight = 140
 
 type DataPoint = {
   timestamp: number
@@ -18,6 +20,7 @@ type DataPoint = {
 }
 
 export const TotalStakedChart = () => {
+  const { t } = useTranslation()
   const [selectedRange, setSelectedRange] = useState<TotalVetStakedRange>(TotalVetStakedRange.DAY)
   const { data: historicData, isLoading } = useTotalVetStakedHistoric(selectedRange)
   const { data: currentTotal } = useTotalVetStaked()
@@ -43,29 +46,21 @@ export const TotalStakedChart = () => {
   if (isLoading) return <Skeleton height="274px" width="415px" rounded="md" />
 
   return (
-    <Stack
-      width="415px"
-      height="274px"
-      gap={4}
-      bg="bg-card-surface-2"
-      borderRadius="md"
-      borderWidth="1px"
-      borderColor="border-surface"
-      backdropFilter="blur(32px)"
-      p={5}>
+    <Card width="415px" height="274px">
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL">
-          Total Staked
+          {t('Total Staked')}
         </Heading>
 
         <Flex
           align="center"
           gap={1}
-          bg="bg-surface-alt"
+          bg="bg-primary"
           borderRadius="full"
           borderWidth="0.5px"
-          borderColor="border-surface"
-          p="4px">
+          borderColor="border-primary"
+          p="4px"
+        >
           <Flex
             as="button"
             align="center"
@@ -74,12 +69,13 @@ export const TotalStakedChart = () => {
             py={1}
             borderRadius="full"
             bg={selectedRange === TotalVetStakedRange.DAY ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.DAY ? 'bg-primary' : 'fg'}
+            color={selectedRange === TotalVetStakedRange.DAY ? 'text-alt-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.DAY)}
-            transition="all 0.2s">
-            1D
+            transition="all 0.2s"
+          >
+            {t('1D')}
           </Flex>
           <Flex
             as="button"
@@ -89,12 +85,13 @@ export const TotalStakedChart = () => {
             py={1}
             borderRadius="full"
             bg={selectedRange === TotalVetStakedRange.MONTH ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.MONTH ? 'bg-primary' : 'fg'}
+            color={selectedRange === TotalVetStakedRange.MONTH ? 'text-alt-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.MONTH)}
-            transition="all 0.2s">
-            1M
+            transition="all 0.2s"
+          >
+            {t('1M')}
           </Flex>
           <Flex
             as="button"
@@ -104,31 +101,23 @@ export const TotalStakedChart = () => {
             py={1}
             borderRadius="full"
             bg={selectedRange === TotalVetStakedRange.YEAR ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.YEAR ? 'bg-primary' : 'fg'}
+            color={selectedRange === TotalVetStakedRange.YEAR ? 'text-alt-primary' : 'fg'}
             textStyle="bodySSemibold"
             cursor="pointer"
             onClick={() => setSelectedRange(TotalVetStakedRange.YEAR)}
-            transition="all 0.2s">
-            1Y
+            transition="all 0.2s"
+          >
+            {t('1Y')}
           </Flex>
         </Flex>
       </Flex>
 
-      <Text textStyle="displayS" color="highlight-primary">
+      <Text textStyle="displayS" color="accent-primary">
         {formatAbbreviated(displayValue)} VET
       </Text>
 
       <TotalStakedChartVisualization data={chartData} />
-
-      <Stack>
-        <Text textStyle="bodyS" color="text-secondary">
-          Circulating Supply
-        </Text>
-        <Text textStyle="bodyMSemibold" color="fg">
-          1521251
-        </Text>
-      </Stack>
-    </Stack>
+    </Card>
   )
 }
 
@@ -154,7 +143,8 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
             right: 0,
             bottom: 0,
             left: 0,
-          }}>
+          }}
+        >
           <XAxis dataKey="timestamp" hide={true} />
           <YAxis dataKey="formattedValue" domain={[domainMin, domainMax]} hide={true} />
 
@@ -165,7 +155,7 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
           <Area
             type="monotone"
             dataKey="formattedValue"
-            stroke="var(--chakra-colors-highlight-primary)"
+            stroke="var(--chakra-colors-accent-primary)"
             strokeWidth={2}
             fill="none"
             activeDot={{ r: 6, cursor: 'pointer' }}
@@ -179,6 +169,7 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
 TotalStakedChartVisualization.displayName = 'TotalStakedChartVisualization'
 
 const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>) => {
+  const { t } = useTranslation()
   const isVisible = active && payload && payload.length > 0
 
   if (!isVisible) return null
@@ -191,14 +182,14 @@ const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>)
   const formattedVetAmount = decimalPart ? `${formattedInt}.${decimalPart}` : formattedInt
 
   return (
-    <Stack bg="bg" rounded="xl" p={4}>
+    <Stack bg="tooltip-bg" border="1px solid" borderColor="border-primary" rounded="xl" p={4}>
       <Flex alignItems="center" gap={2}>
-        <Text textStyle="bodyMSemibold">Date & Time:</Text>
+        <Text textStyle="bodyMSemibold">{t('Date & Time')}:</Text>
         <Text textStyle="bodyM">{format(new Date(dataPoint.timestamp), 'MMM d, yyyy h:mm a')}</Text>
       </Flex>
 
       <Flex alignItems="center" gap={2}>
-        <Text textStyle="bodyMSemibold">Total Staked:</Text>
+        <Text textStyle="bodyMSemibold">{t('Total Staked')}:</Text>
         <Text textStyle="bodyM">{formattedVetAmount} VET</Text>
       </Flex>
     </Stack>

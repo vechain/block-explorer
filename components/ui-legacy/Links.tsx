@@ -76,7 +76,8 @@ export const BaseLink = ({ children, to }: { children: React.ReactNode; to: stri
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           display: 'block',
-        }}>
+        }}
+      >
         {children}
       </Link>
     </ChakraLink>

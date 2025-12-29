@@ -1,25 +1,32 @@
-import { EmptyState } from '@chakra-ui/react'
+'use client'
 
+import { EmptyState } from '@chakra-ui/react'
+import { useTranslation } from 'react-i18next'
 import { AiOutlineStop } from 'react-icons/ai'
 
 export const NoTransfers = () => {
-  return <NoResults title="No transfers" description="This account has not made any transfers yet" />
+  const { t } = useTranslation()
+  return <NoResults title={t('No transfers')} description={t('This account has not made any transfers yet')} />
 }
 
 export const NoTransactions = () => {
-  return <NoResults title="No transactions" description="This account has not made any transactions yet" />
+  const { t } = useTranslation()
+  return <NoResults title={t('No transactions')} description={t('This account has not made any transactions yet')} />
 }
 
 export const NoTokens = () => {
-  return <NoResults title="No tokens" description="This account no tokens" />
+  const { t } = useTranslation()
+  return <NoResults title={t('No tokens')} description={t('This account has no tokens')} />
 }
 
 export const NoEvents = () => {
-  return <NoResults title="No events" description="This transaction has no events" />
+  const { t } = useTranslation()
+  return <NoResults title={t('No events')} description={t('This transaction has no events')} />
 }
 
 export const NoContractCreation = () => {
-  return <NoResults title="No contract creation" description="This clause has no contract creation" />
+  const { t } = useTranslation()
+  return <NoResults title={t('No contract creation')} description={t('This clause has no contract creation')} />
 }
 
 const NoResults = ({ title, description }: { title: string; description: string }) => {

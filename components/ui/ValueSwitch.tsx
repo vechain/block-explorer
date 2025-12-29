@@ -13,13 +13,14 @@ export const ValueSwitch = ({ values, layoutId, activeValue, onChange, ...props 
     <Flex
       gap={1}
       alignItems="center"
-      bg="bg-surface-alt-hover"
+      bg="bg-secondary"
       p={1}
       rounded="full"
       textTransform="capitalize"
-      border="0.5px solid var(--chakra-colors-border-surface)"
+      border="0.5px solid var(--chakra-colors-border-primary)"
       w="fit-content"
-      {...props}>
+      {...props}
+    >
       {values.map(value => (
         <Item key={String(value)} value={value} layoutId={layoutId} activeValue={activeValue} onChange={onChange} />
       ))}
@@ -49,9 +50,10 @@ const Item = ({
       <Text
         as="span"
         position="relative"
-        color={isActive ? 'bg-primary' : 'text-primary'}
+        color={isActive ? 'text-alt-primary' : 'text-primary'}
         textStyle={isActive ? 'bodyMSemibold' : 'bodyM'}
-        lineHeight="1">
+        lineHeight="1"
+      >
         {String(value.replace(/-/g, ' '))}
       </Text>
     </Flex>

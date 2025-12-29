@@ -12,7 +12,7 @@ const imgStyle: CSSProperties = {
   left: 0,
 }
 
-export const ImageWithFallback = ({ src, width = 100, height = 100, onLoad, onError, ...props }: ImageProps) => {
+export const ImageWithFallback = ({ src, width = 100, height = 100, onLoad, onError, alt, ...props }: ImageProps) => {
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
 
@@ -39,11 +39,19 @@ export const ImageWithFallback = ({ src, width = 100, height = 100, onLoad, onEr
         style={{ objectFit: 'contain', width: '100%', height: '100%', ...imgStyle }}
         onLoad={handleLoad}
         onError={handleError}
+        alt={alt}
         {...props}
       />
 
       {hasError && (
-        <Image src="/no-image.png" width={width} height={height} style={{ zIndex: 1, ...imgStyle }} {...props} />
+        <Image
+          src="/no-image.png"
+          width={width}
+          height={height}
+          style={{ zIndex: 1, ...imgStyle }}
+          alt={alt}
+          {...props}
+        />
       )}
     </Box>
   )

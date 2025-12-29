@@ -5,10 +5,11 @@ import { useSettingsStore } from '@/lib/stores/settings'
 import { ColorMode } from './config'
 
 export const useColorMode = () => {
-  const { resolvedTheme, setTheme, forcedTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   const { colorMode: storeColorMode, setColorMode: setStoreColorMode } = useSettingsStore()
 
-  const colorMode = storeColorMode || forcedTheme || resolvedTheme
+  // Always default to dark mode - system preference is disabled via enableSystem={false}
+  const colorMode = storeColorMode || resolvedTheme || ColorMode.DARK
 
   const setColorMode = (newColorMode: ColorMode) => {
     setStoreColorMode(newColorMode)

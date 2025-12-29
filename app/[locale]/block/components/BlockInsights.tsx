@@ -1,103 +1,120 @@
-import { Badge, Flex, Grid, Heading, Text } from '@chakra-ui/react'
+'use client'
+
+import { Flex, Grid, Heading, Text } from '@chakra-ui/react'
 import Image from 'next/image'
-import { AgeText } from '@/components/ui/AgeText'
+import { useTranslation } from 'react-i18next'
 import { DataCard } from '@/components/ui/DataCard'
 import { GasUsed } from '@/components/ui/GasFees'
-import { Surface } from '@/components/ui/Surface'
+import { Card } from '@/components/ui/Card'
 import type { ExpandedBlock } from '@/lib/schemas'
+import { formatDateFromTimestamp } from '@/lib/utils/date'
+import { Fragment } from 'react'
+import { TxFeaturesBadge } from '@/components/ui/TxTypeBadge'
 
 export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
+  const { t } = useTranslation()
+
   const blockInsights = [
     {
-      label: 'Age',
-      value: <AgeText timestamp={block.timestamp} />,
+      label: t('Type'),
+      value: <TxFeaturesBadge features={block.txsFeatures} />,
     },
     {
-      label: 'Features',
-      value: <TxFeatures features={block.txsFeatures} />,
+      label: t('Block Finality'),
+      value: block.isFinalized ? t('Finalized') : t('Finalizing'),
     },
     {
-      label: 'Gas Used',
+      label: t('Gas Used'),
       value: <GasUsed gasUsed={block.gasUsed} gasLimit={block.gasLimit} />,
     },
     {
-      label: 'Block Finality',
-      value: block.isFinalized ? 'Finalized' : 'Finalizing',
+      label: t('Gas Limit'),
+      value: block.gasLimit.toLocaleString(),
     },
     {
-      label: 'Transactions',
+      label: t('Transactions'),
       value: block.transactions.length.toLocaleString(),
     },
   ]
 
   return (
-    <Surface bg="bg-surface-alt" borderColor="transparent">
-      <Heading as="h2" textStyle="displayXs">
-        Block Insights
-      </Heading>
-      <Flex alignItems="center" flexDirection={{ base: 'column', md: 'row' }} gap="4">
-        <Flex
+    <Card variant="secondary">
+      <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gapX="2" gapY="4">
+        <Heading as="h2" textStyle="displayXs">
+          {t('Block Insights')}
+        </Heading>
+
+        <Text color="text-secondary">{formatDateFromTimestamp(block.timestamp)}</Text>
+      </Flex>
+
+      <Flex alignItems="start" flexDirection={{ base: 'column', md: 'row' }} gap="4" justifyContent="normal">
+        <Grid
           flex="1"
-          flexDirection="column"
-          alignSelf="stretch"
           rounded="md"
           border="1px solid"
           textStyle="bodyM"
-          borderColor="border-surface">
-          {blockInsights.map(insight => (
-            <Flex
-              key={insight.label}
-              py="4"
-              px="6"
-              flex="1"
-              alignItems="center"
-              borderBottom="1px solid var(--chakra-colors-border-surface)"
-              css={{ '&:last-child': { borderBottom: 'none' } }}>
-              <Text width="130px">{insight.label}</Text>
-              {insight.value}
-            </Flex>
+          borderColor="border-primary"
+          templateColumns="160px auto"
+        >
+          {blockInsights.map((insight, index) => (
+            <Fragment key={insight.label}>
+              <Flex
+                alignItems="center"
+                py="4"
+                pl="6"
+                borderBottom={
+                  index !== blockInsights.length - 1 ? '1px solid var(--chakra-colors-border-primary)' : 'none'
+                }
+              >
+                <Text width="130px">{insight.label}</Text>
+              </Flex>
+              <Flex
+                alignItems="center"
+                py="4"
+                pr="6"
+                borderBottom={
+                  index !== blockInsights.length - 1 ? '1px solid var(--chakra-colors-border-primary)' : 'none'
+                }
+              >
+                {insight.value}
+              </Flex>
+            </Fragment>
           ))}
-        </Flex>
-        <Grid templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }} flex="1" alignSelf="stretch" gap="4">
-          {/* //TODO: Add relevant data to data cards */}
+        </Grid>
+
+        <Grid templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }} flex="1" alignSelf="center" gap="4">
           <DataCard
             icon={<Image src="/icons/coin.svg" alt="VTHO Paid" />}
-            title="VTHO Paid"
-            tooltip="Information coming soon">
+            title={t('VTHO Paid')}
+            tooltip={t('Information coming soon')}
+          >
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
           <DataCard
             icon={<Image src="/icons/flash.svg" alt="VTHO Burned" />}
-            title="VTHO Burned"
-            tooltip="Information coming soon">
+            title={t('VTHO Burned')}
+            tooltip={t('Information coming soon')}
+          >
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
           <DataCard
             icon={<Image src="/icons/reward.svg" alt="VTHO Rewarded" />}
-            title="VTHO Rewarded"
-            tooltip="Information coming soon">
+            title={t('VTHO Rewarded')}
+            tooltip={t('Information coming soon')}
+          >
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
           <DataCard
             icon={<Image src="/icons/co2e.svg" alt="CO2 emitted" />}
-            title="CO2e emitted"
-            tooltip="Information coming soon">
-            <Text>{'123.456'} g</Text>
+            title={t('CO2e emitted')}
+            tooltip={t('Information coming soon')}
+          >
+            <Text>
+              {'123.456'} {t('g')}
+            </Text>
           </DataCard>
         </Grid>
       </Flex>
-    </Surface>
+    </Card>
   )
-}
-
-const TxFeatures = ({ features }: { features: number | undefined }) => {
-  if (features === 1) {
-    return (
-      <Badge textStyle="bodyS" rounded="8px" variant="subtle" px="2" py="1" size="sm" bg="bg-surface-alt">
-        VIP-191 - Fee delegation
-      </Badge>
-    )
-  }
-
-  return null
 }

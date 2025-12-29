@@ -1,9 +1,12 @@
+'use client'
+
 import { Box, Grid, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { InputData as InputDataType } from '@/hooks/useDecodeInputData'
 import { type DecodedInputData, useDecodeInputData } from '@/hooks/useDecodeInputData'
 import type { HexString } from '@/lib/schemas'
-import { BorderedSurface, SurfaceAlt } from './ui/Surface'
+import { Card } from './ui/Card'
 import { ValueSwitch } from './ui/ValueSwitch'
 
 enum InputDataView {
@@ -17,22 +20,22 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
   const [view, setView] = useState<string>(() => (isDecoded ? InputDataView.DECODED : InputDataView.RAW))
 
   return (
-    <SurfaceAlt>
+    <Card variant="secondary">
       <ValueSwitch
         layoutId={`input-data-${clauseIndex}`}
-        bg="bg-surface-alt"
+        bg="bg-secondary"
         values={[InputDataView.RAW, InputDataView.DECODED]}
         activeValue={view}
         onChange={setView}
       />
       {isLoading ? (
-        <BorderedSurface>
+        <Card variant="secondary">
           <Skeleton height="320px" width="100%" />
-        </BorderedSurface>
+        </Card>
       ) : (
         <InputDataViews inputData={inputData} activeView={view as InputDataView} />
       )}
-    </SurfaceAlt>
+    </Card>
   )
 }
 
@@ -41,15 +44,17 @@ const InputDataViews = ({ inputData, activeView }: { inputData: InputDataType; a
     return <DecodedInputDataTable decodedInputData={inputData.decoded} />
   }
 
-  return <BorderedSurface>{inputData.raw}</BorderedSurface>
+  return <Card variant="secondary">{inputData.raw}</Card>
 }
 
 const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: DecodedInputData | undefined }) => {
+  const { t } = useTranslation()
+
   if (!decodedInputData) {
     return (
-      <BorderedSurface>
-        <Text>No ABI found</Text>
-      </BorderedSurface>
+      <Card variant="secondary">
+        <Text>{t('No ABI found')}</Text>
+      </Card>
     )
   }
 
@@ -63,21 +68,22 @@ const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: Decoded
       <Box textAlign="center">
         <Grid templateColumns={templateColumns} p="4">
           <Text>#</Text>
-          <Text>Name</Text>
-          <Text>Type</Text>
+          <Text>{t('Name')}</Text>
+          <Text>{t('Type')}</Text>
           <Text textAlign="left" pl="4">
-            Data
+            {t('Data')}
           </Text>
         </Grid>
 
-        <Box borderWidth="1px" borderColor="border-surface" borderRadius="md" overflow="hidden">
+        <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
           {decodedInputData.inputs.map((input, index) => (
             <Grid
               key={`${index}-${input.name}`}
               templateColumns={templateColumns}
               p="4"
               borderBottomWidth={index < decodedInputData.inputs.length - 1 ? '1px' : '0'}
-              borderColor="border-surface">
+              borderColor="border-primary"
+            >
               <Text>{index}</Text>
               <Text>{input.name}</Text>
               <Text>{input.type}</Text>

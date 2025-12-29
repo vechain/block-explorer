@@ -9,13 +9,7 @@ interface IconInCircleProps extends CenterProps {
 
 export const IconInCircle = forwardRef<HTMLDivElement, IconInCircleProps>(({ icon, ...props }, ref) => {
   return (
-    <Center
-      ref={ref}
-      bg="bg-card-surface-2"
-      border="1px solid"
-      borderColor="border-surface-2"
-      rounded="full"
-      {...props}>
+    <Center ref={ref} bg="bg-primary" border="1px solid" borderColor="border-primary" rounded="full" {...props}>
       {icon}
     </Center>
   )

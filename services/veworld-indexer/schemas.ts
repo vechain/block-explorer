@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { z } from 'zod'
 import {
   addressStringSchema,
@@ -20,8 +21,8 @@ import {
 // ***************************** Indexer API common schemas *****************************/
 
 const paginationSchema = z.object({
-  hasCount: z.boolean(),
-  countLimit: z.number(),
+  hasCount: z.boolean().optional(),
+  countLimit: z.number().optional(),
   totalPages: z.number().nullable().optional(),
   totalElements: z.number().nullable().optional(),
   hasNext: z.boolean(),
@@ -117,8 +118,8 @@ export const indexerTransactionSchema = baseTransactionSchema
     maxFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxFeePerGas.nullable().optional(),
     maxPriorityFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxPriorityFeePerGas.nullable().optional(),
     type: transactionTypeSchema,
-    clauses: z.array(withEmptyObjects(clauseSchema)),
-    outputs: z.array(withEmptyObjects(transactionOutputSchema)),
+    clauses: z.array(withEmptyObjects(clauseSchema)).optional(),
+    outputs: z.array(withEmptyObjects(transactionOutputSchema)).optional(),
     reverted: z.boolean(),
   })
 
@@ -131,8 +132,8 @@ export const indexerContractTransactionSchema = baseTransactionSchema
     maxFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxFeePerGas.nullable().optional(),
     maxPriorityFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxPriorityFeePerGas.nullable().optional(),
     type: transactionTypeSchema,
-    clauses: z.array(withEmptyObjects(clauseSchema)),
-    outputs: z.array(withEmptyObjects(transactionOutputSchema)),
+    clauses: z.array(withEmptyObjects(clauseSchema)).optional(),
+    outputs: z.array(withEmptyObjects(transactionOutputSchema)).optional(),
     reverted: z.boolean(),
   })
 
@@ -154,7 +155,7 @@ export const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTra
 
 export const indexerErc721Schema = z.object({
   id: z.string(),
-  version: z.number(),
+  version: z.number().optional(),
   tokenId: z.coerce.bigint(),
   contractAddress: addressStringSchema,
   owner: addressStringSchema,

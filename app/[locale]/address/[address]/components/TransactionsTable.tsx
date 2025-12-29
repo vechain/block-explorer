@@ -6,6 +6,7 @@ import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import type { AddressString } from '@/lib/schemas'
 import { formatDateFromTimestamp } from '@/lib/utils/date'
 import type { IndexerContractTransaction, IndexerTransaction } from '@/services/veworld-indexer/schemas'
+import { useTranslation } from 'react-i18next'
 
 export const TransactionsTable = ({
   address,
@@ -14,6 +15,7 @@ export const TransactionsTable = ({
   address: AddressString
   transactions: IndexerContractTransaction[] | IndexerTransaction[]
 }) => {
+  const { t } = useTranslation()
   const items = transactions.map(tx => ({
     key: tx.id,
     id: <TransactionLink transactionId={tx.id}>{tx.id}</TransactionLink>,
@@ -27,7 +29,9 @@ export const TransactionsTable = ({
         delegator={tx.gasPayer.toLowerCase() === address.toLowerCase() ? null : tx.gasPayer}
       />
     ),
-    clauses: <TransactionClausesLink transactionId={tx.id}>{`${tx.clauses.length} Clauses`}</TransactionClausesLink>,
+    clauses: (
+      <TransactionClausesLink transactionId={tx.id}>{`${tx.clauses?.length ?? 0} Clauses`}</TransactionClausesLink>
+    ),
   }))
 
   return (
@@ -35,13 +39,13 @@ export const TransactionsTable = ({
       <Table.Root size="md">
         <Table.Header>
           <Table.Row bg="bg.subtle">
-            <Table.ColumnHeader>ID</Table.ColumnHeader>
-            <Table.ColumnHeader>Status</Table.ColumnHeader>
-            <Table.ColumnHeader>Block</Table.ColumnHeader>
-            <Table.ColumnHeader>Timestamp</Table.ColumnHeader>
-            <Table.ColumnHeader>Origin</Table.ColumnHeader>
-            <Table.ColumnHeader>Clauses</Table.ColumnHeader>
-            <Table.ColumnHeader>Paid</Table.ColumnHeader>
+            <Table.ColumnHeader>{t('ID')}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t('Status')}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t('Block')}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t('Timestamp')}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t('Origin')}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t('Clauses')}</Table.ColumnHeader>
+            <Table.ColumnHeader>{t('Paid')}</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
 
