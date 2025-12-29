@@ -9,6 +9,68 @@ import { BaseLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import type { AddressString } from '@/lib/schemas'
 
+interface TokenRowProps {
+  label: string
+  value: string
+  iconSrc?: string
+  iconAlt?: string
+  iconWidth?: number
+  iconHeight?: number
+  isFirst?: boolean
+  isLast?: boolean
+}
+
+const TokenRow = ({ label, value, iconSrc, iconAlt, iconWidth, iconHeight, isFirst, isLast }: TokenRowProps) => {
+  const borderProps = isFirst
+    ? { borderWidth: '1px', borderTopRadius: 'md' as const }
+    : isLast
+      ? { borderRightWidth: '1px', borderBottomWidth: '1px', borderLeftWidth: '1px', borderBottomRadius: 'md' as const }
+      : { borderRightWidth: '1px', borderBottomWidth: '1px', borderLeftWidth: '1px' }
+
+  return (
+    <Flex
+      alignItems="center"
+      justifyContent="space-between"
+      pt={4}
+      pr={6}
+      pb={4}
+      pl={6}
+      borderColor="border-primary"
+      {...borderProps}
+    >
+      <Text textStyle="bodyM" color="text-primary">
+        {label}
+      </Text>
+      <Flex alignItems="center" gap={2}>
+        <Text textStyle="bodyM" color="text-primary">
+          {value}
+        </Text>
+        {iconSrc && <Image src={iconSrc} alt={iconAlt || ''} width={iconWidth || 8} height={iconHeight || 12} />}
+      </Flex>
+    </Flex>
+  )
+}
+
+interface TokenSectionProps {
+  title: string
+  rows: Omit<TokenRowProps, 'isFirst' | 'isLast'>[]
+}
+
+const TokenSection = ({ title, rows }: TokenSectionProps) => {
+  return (
+    <Stack gap={0}>
+      <Heading as="h3" textStyle="bodyL" mb={4} color="text-primary">
+        {title}
+      </Heading>
+      <Stack gap={0}>
+        {rows.map((row, index) => (
+          <TokenRow key={row.label} {...row} isFirst={index === 0} isLast={index === rows.length - 1} />
+        ))}
+      </Stack>
+    </Stack>
+  )
+}
+
 export const AccountSummary = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
 
@@ -36,6 +98,48 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
     },
   }
 
+  const tokenBalanceRows = [
+    {
+      label: t('VeThor'),
+      value: accountData.tokenBalance.vtho,
+      iconSrc: '/icons/vtho.svg',
+      iconAlt: 'VTHO',
+      iconWidth: 8,
+      iconHeight: 12,
+    },
+    {
+      label: t('VET Value'),
+      value: accountData.tokenBalance.vetValue,
+      iconSrc: '/icons/vet.svg',
+      iconAlt: 'VET',
+      iconWidth: 11,
+      iconHeight: 12,
+    },
+    {
+      label: t('BTC Value'),
+      value: accountData.tokenBalance.btcValue,
+      iconSrc: '/icons/btc.svg',
+      iconAlt: 'BTC',
+      iconWidth: 9,
+      iconHeight: 14,
+    },
+  ]
+
+  const tokenValueRows = [
+    {
+      label: t('VeThor'),
+      value: accountData.tokenValue.vthoUsd,
+    },
+    {
+      label: t('Total USD'),
+      value: accountData.tokenValue.totalUsd,
+    },
+    {
+      label: t('Total EUR'),
+      value: accountData.tokenValue.totalEur,
+    },
+  ]
+
   return (
     <Stack gap="8">
       <Card>
@@ -47,7 +151,6 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
         </Flex>
 
         <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
-          {/* First Seen */}
           <DataCard
             icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
             title={t('First Seen')}
@@ -65,7 +168,6 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
             </Flex>
           </DataCard>
 
-          {/* Last Seen */}
           <DataCard
             icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
             title={t('Last Seen')}
@@ -83,7 +185,6 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
             </Flex>
           </DataCard>
 
-          {/* Total Transactions */}
           <DataCard
             icon={<Image src="/icons/transaction.svg" alt="Transactions" />}
             title={t('Total Transactions')}
@@ -95,7 +196,6 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
             </Text>
           </DataCard>
 
-          {/* Total Clauses */}
           <DataCard
             icon={<Image src="/icons/clause.svg" alt="Clauses" />}
             title={t('Total Clauses')}
@@ -108,107 +208,12 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
           </DataCard>
         </Flex>
 
-        {/* Token Balance and Token Value sections */}
-        <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={{ base: '4', md: '5' }} mt={4}>
-          {/* Token Balance */}
-          <Card variant="secondary" borderRadius="md" gap={4}>
-            <Heading as="h3" textStyle="bodyL" mb={0} color="text-primary">
-              {t('Token Balance')}
-            </Heading>
-            <Stack gap={0}>
-              <Flex alignItems="center" justifyContent="space-between" py={3}>
-                <Text textStyle="bodyM" color="text-primary">
-                  {t('VeThor')}
-                </Text>
-                <Flex alignItems="center" gap={2}>
-                  <Text textStyle="bodyM" color="text-primary">
-                    {accountData.tokenBalance.vtho}
-                  </Text>
-                  <Image src="/icons/vtho.svg" alt="VTHO" width={8} height={12} />
-                </Flex>
-              </Flex>
-              <Flex
-                alignItems="center"
-                justifyContent="space-between"
-                py={3}
-                borderTopWidth="1px"
-                borderTopColor="border-primary"
-              >
-                <Text textStyle="bodyM" color="text-primary">
-                  {t('VET Value')}
-                </Text>
-                <Flex alignItems="center" gap={2}>
-                  <Text textStyle="bodyM" color="text-primary">
-                    {accountData.tokenBalance.vetValue}
-                  </Text>
-                  <Image src="/icons/vet.svg" alt="VET" width={11} height={12} />
-                </Flex>
-              </Flex>
-              <Flex
-                alignItems="center"
-                justifyContent="space-between"
-                py={3}
-                borderTopWidth="1px"
-                borderTopColor="border-primary"
-              >
-                <Text textStyle="bodyM" color="text-primary">
-                  {t('BTC Value')}
-                </Text>
-                <Flex alignItems="center" gap={2}>
-                  <Text textStyle="bodyM" color="text-primary">
-                    {accountData.tokenBalance.btcValue}
-                  </Text>
-                  <Image src="/icons/btc.svg" alt="BTC" width={9} height={14} />
-                </Flex>
-              </Flex>
-            </Stack>
-          </Card>
-
-          {/* Token Value */}
-          <Card variant="secondary" borderRadius="md" gap={4}>
-            <Heading as="h3" textStyle="bodyL" mb={0} color="text-primary">
-              {t('Token Value')}
-            </Heading>
-            <Stack gap={0}>
-              <Flex alignItems="center" justifyContent="space-between" py={3}>
-                <Text textStyle="bodyM" color="text-primary">
-                  {t('VeThor')}
-                </Text>
-                <Text textStyle="bodyM" color="text-primary">
-                  {accountData.tokenValue.vthoUsd}
-                </Text>
-              </Flex>
-              <Flex
-                alignItems="center"
-                justifyContent="space-between"
-                py={3}
-                borderTopWidth="1px"
-                borderTopColor="border-primary"
-              >
-                <Text textStyle="bodyM" color="text-primary">
-                  {t('Total USD')}
-                </Text>
-                <Text textStyle="bodyM" color="text-primary">
-                  {accountData.tokenValue.totalUsd}
-                </Text>
-              </Flex>
-              <Flex
-                alignItems="center"
-                justifyContent="space-between"
-                py={3}
-                borderTopWidth="1px"
-                borderTopColor="border-primary"
-              >
-                <Text textStyle="bodyM" color="text-primary">
-                  {t('Total EUR')}
-                </Text>
-                <Text textStyle="bodyM" color="text-primary">
-                  {accountData.tokenValue.totalEur}
-                </Text>
-              </Flex>
-            </Stack>
-          </Card>
-        </Grid>
+        <Card variant="secondary" borderRadius="md" mt={4}>
+          <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={{ base: 5, md: 5 }}>
+            <TokenSection title={t('Token Balance')} rows={tokenBalanceRows} />
+            <TokenSection title={t('Token Value')} rows={tokenValueRows} />
+          </Grid>
+        </Card>
       </Card>
     </Stack>
   )
