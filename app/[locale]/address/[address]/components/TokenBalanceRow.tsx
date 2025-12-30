@@ -16,18 +16,14 @@ export const TokenBalanceRow = ({ token, balance, isFirst, isLast }: TokenBalanc
 
   const borderProps = isFirst
     ? { borderWidth: '1px', borderTopRadius: 'md' as const }
-    : isLast
-      ? { borderRightWidth: '1px', borderBottomWidth: '1px', borderLeftWidth: '1px', borderBottomRadius: 'md' as const }
-      : { borderRightWidth: '1px', borderBottomWidth: '1px', borderLeftWidth: '1px' }
+    : { borderX: '1px', borderBottomWidth: '1px', ...(isLast && { borderBottomRadius: 'md' as const }) }
 
   return (
     <Flex
       alignItems="center"
       justifyContent="space-between"
-      pt={4}
-      pr={6}
-      pb={4}
-      pl={6}
+      px={6}
+      py={4}
       borderColor="border-primary"
       {...borderProps}
     >
