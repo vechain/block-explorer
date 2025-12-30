@@ -1,12 +1,10 @@
 'use client'
 
-import { Flex, Stack, Table, Tabs } from '@chakra-ui/react'
+import { Stack, Table, Tabs } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { LuArrowLeftRight, LuCoins, LuImage } from 'react-icons/lu'
 import { TbTransfer } from 'react-icons/tb'
-import { CopyToClipBoard } from '@/components/ui-legacy/CopyToClipBoard'
 import { VETBalance, VTHOBalance } from '@/components/ui-legacy/TokenBalance'
-import { Subtitle, Title } from '@/components/ui-legacy/Typography'
 import { VnsBadge } from '@/components/ui-legacy/VnsBadge'
 import { useTabs } from '@/hooks/useTabs'
 import type { Account } from '@/lib/schemas'
@@ -15,6 +13,7 @@ import { AccountNftsTab } from './AccountNftTab'
 import { AccountTokensTab } from './AccountTokensTab'
 import { AccountTransactionsTab } from './AccountTransactionsTab'
 import { AccountTransfersTab } from './AccountTransfersTab'
+import { AccountSummary } from './AccountSummary'
 
 export const AccountDetails = ({ account }: { account: Account }) => {
   const { t } = useTranslation()
@@ -31,12 +30,8 @@ export const AccountDetails = ({ account }: { account: Account }) => {
   ]
 
   return (
-    <Stack flex={1}>
-      <Title>{t('Account')}</Title>
-      <Flex alignItems="center" gap={2}>
-        <Subtitle>{account.address}</Subtitle>
-        <CopyToClipBoard value={account.address} />
-      </Flex>
+    <Stack flex={1} gap="8">
+      <AccountSummary address={account.address} />
 
       <Table.ScrollArea my={12} borderWidth="1px" rounded="md">
         <Table.Root size="md">

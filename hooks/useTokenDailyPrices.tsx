@@ -10,14 +10,15 @@ export type TokenDailyPrice = {
   price: number
 }
 
-export type TokenDailyPricesToken = 'vechain' | 'vethor-token' | 'vebetterdao'
+export type TokenDailyPricesToken = 'vechain' | 'vethor-token' | 'vebetterdao' | string
 
 const TOKEN_DAILY_PRICES_QUERY_KEY = 'tokenDailyPrices'
 
 export const tokenDailyPricesQueryOptions = (token: TokenDailyPricesToken, currency: Currency) => ({
   queryKey: [TOKEN_DAILY_PRICES_QUERY_KEY, token, currency],
   queryFn: () => getTokenDailyPrices(token, currency),
-  refetchInterval: 1000 * 60 * 5, // 5 minutes
+  staleTime: 1000 * 60 * 2, // Consider data fresh for 2 minutes
+  refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
 })
 
 export const useTokenDailyPrices = (token: TokenDailyPricesToken, currency: Currency) => {

@@ -23,7 +23,7 @@ export const DataCard = forwardRef<HTMLDivElement, DataCardProps>(
         <Flex alignItems="center" justifyContent="space-between">
           <Group>
             <IconInCircle icon={Icon} p="1" />
-            <Text whiteSpace="nowrap" textStyle="bodyM">
+            <Text whiteSpace="nowrap" textStyle="bodyM" color="text-primary">
               {title}
             </Text>
           </Group>
