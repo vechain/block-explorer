@@ -4,7 +4,8 @@ import { useCallback } from 'react'
 import type { HexString } from '@/lib/schemas'
 import { useLocale } from './useLocale'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { formatAbbreviated, formatAmount } from '@/lib/utils/units'
+import { formatAbbreviated, formatAmount, formatCurrency, formatNumber } from '@/lib/utils/units'
+import { formatDateFromTimestamp } from '@/lib/utils/date'
 
 /**
  * Hook to format numbers using the current locale
@@ -15,7 +16,7 @@ export const useFormatNumber = () => {
 
   return useCallback(
     (num: number, options?: Intl.NumberFormatOptions): string => {
-      return num.toLocaleString(locale || 'en', options)
+      return formatNumber(num, locale, options)
     },
     [locale],
   )
@@ -30,17 +31,7 @@ export const useFormatDate = () => {
 
   return useCallback(
     (timestamp: number, options?: Intl.DateTimeFormatOptions): string => {
-      const defaultOptions: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        timeZone: 'UTC',
-        ...options,
-      }
-      return new Date(timestamp).toLocaleString(locale || 'en', defaultOptions)
+      return formatDateFromTimestamp(timestamp, locale, options)
     },
     [locale],
   )
@@ -56,11 +47,7 @@ export const useFormatCurrency = () => {
 
   return useCallback(
     (num: number, options?: Intl.NumberFormatOptions): string => {
-      return num.toLocaleString(locale || 'en', {
-        style: 'currency',
-        currency: selectedCurrency,
-        ...options,
-      })
+      return formatCurrency(num, locale, selectedCurrency, options)
     },
     [locale, selectedCurrency],
   )

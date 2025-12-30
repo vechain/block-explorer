@@ -1,6 +1,6 @@
 import type { Locale } from '@/i18n/config'
 
-export const formatDateFromTimestamp = (timestamp: number, locale?: Locale) => {
+export const formatDateFromTimestamp = (timestamp: number, locale?: Locale, options?: Intl.DateTimeFormatOptions) => {
   return new Date(timestamp).toLocaleString(locale || 'en', {
     year: 'numeric',
     month: '2-digit',
@@ -9,6 +9,7 @@ export const formatDateFromTimestamp = (timestamp: number, locale?: Locale) => {
     minute: '2-digit',
     second: '2-digit',
     timeZone: 'UTC',
+    ...options,
   })
 }
 
