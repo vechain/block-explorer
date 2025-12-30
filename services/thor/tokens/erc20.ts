@@ -52,7 +52,7 @@ const erc20ContractQueryOptions = (networkName: NetworkName, address: AddressStr
   select: (data: Erc20 | null) => ({ address, erc20: data }),
 })
 
-const erc20BalanceOfQueryOptions = (contract: Erc20['contract'], accountAddress: AddressString) => ({
+export const erc20BalanceOfQueryOptions = (contract: Erc20['contract'], accountAddress: AddressString) => ({
   queryKey: [ERC20_BALANCE_OF_QUERY_KEY, contract.address, accountAddress],
   queryFn: () => getErc20BalanceOf(contract, accountAddress),
 })

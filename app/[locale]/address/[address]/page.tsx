@@ -10,6 +10,7 @@ import type { AddressString } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
 import { accountQueryOptions } from '@/services/thor/account'
 import { vnsNameQueryOptions } from '@/services/thor/vns'
+import { accountOverviewQueryOptions } from '@/services/veworld-indexer/account-overview'
 import { AddressPageContent } from './components/AddressPageContent'
 
 export default async function AddressPage({
@@ -37,6 +38,7 @@ export default async function AddressPage({
   await Promise.allSettled([
     queryClient.prefetchQuery(accountQueryOptions(activeNetworkName, address)),
     queryClient.prefetchQuery(vnsNameQueryOptions(activeNetworkName, address)),
+    queryClient.prefetchQuery(accountOverviewQueryOptions(activeNetworkName, address)),
   ])
 
   return (

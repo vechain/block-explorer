@@ -9,6 +9,7 @@ import { useSettingsStore } from '@/lib/stores/settings'
 import { type Erc20, useErc20Contracts } from '@/services/thor/tokens/erc20'
 import { blockExpandedQueryOptions, bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { accountTotalsQueryOptions, AccountTimeFrame } from './account-totals'
+import { accountOverviewQueryOptions } from './account-overview'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
 import { nftHoldersQueryOptions } from './nft-holders'
 import { accountErc721TokensQueryOptions } from './nfts'
@@ -50,6 +51,11 @@ export const useTotalVthoClaimed = () => {
 export const useAccountTotals = (timeFrame: AccountTimeFrame) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(accountTotalsQueryOptions(activeNetwork.name, timeFrame))
+}
+
+export const useAccountOverview = (address: string) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountOverviewQueryOptions(activeNetwork.name, address))
 }
 
 export { AccountTimeFrame }
