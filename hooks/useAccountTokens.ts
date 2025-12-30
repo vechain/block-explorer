@@ -60,7 +60,7 @@ export const useAccountTokens = (address: AddressString) => {
     return balanceMap
   }, [erc20s, erc20BalanceQueries])
 
-  // Build token balance rows: VET and VTHO first, then ERC20 tokens
+  // Build token balance rows: VET, VTHO, and B3TR first (in that order), then other ERC20 tokens
   const tokenBalanceRows = useMemo((): TokenBalanceRow[] => {
     const rows: TokenBalanceRow[] = []
 
@@ -84,10 +84,25 @@ export const useAccountTokens = (address: AddressString) => {
       })
     }
 
-    // Add all ERC20 tokens (excluding VET/VTHO if they appear as ERC20)
+    // Always add B3TR third if available
+    const b3trToken = erc20s.find(erc20 => erc20.symbol.toUpperCase() === 'B3TR')
+    if (b3trToken) {
+      const balance = erc20BalanceMap.get(b3trToken.address)
+      if (balance !== undefined) {
+        rows.push({
+          symbol: b3trToken.symbol,
+          decimals: b3trToken.decimals,
+          balance,
+          key: b3trToken.address,
+        })
+      }
+    }
+
+    // Add all other ERC20 tokens (excluding VET/VTHO/B3TR if they appear as ERC20)
     erc20s.forEach(erc20 => {
-      // Skip if already added as native tokens
-      if (erc20.symbol.toUpperCase() === 'VET' || erc20.symbol.toUpperCase() === 'VTHO') {
+      // Skip if already added as native tokens or B3TR
+      const normalizedSymbol = erc20.symbol.toUpperCase()
+      if (normalizedSymbol === 'VET' || normalizedSymbol === 'VTHO' || normalizedSymbol === 'B3TR') {
         return
       }
 
@@ -107,11 +122,52 @@ export const useAccountTokens = (address: AddressString) => {
     return rows
   }, [account, erc20s, erc20BalanceMap])
 
-  // Fetch prices for all tokens using useTokenDailyPrices
+  // Build token value rows: only VET, VTHO, and B3TR
+  const tokenValueRowsData = useMemo((): TokenBalanceRow[] => {
+    const rows: TokenBalanceRow[] = []
+
+    // Add VET if available
+    if (account?.vet !== undefined) {
+      rows.push({
+        symbol: 'VET',
+        decimals: NATIVE_TOKEN_DECIMALS,
+        balance: account.vet,
+        key: 'VET',
+      })
+    }
+
+    // Add VTHO if available
+    if (account?.vtho !== undefined) {
+      rows.push({
+        symbol: 'VTHO',
+        decimals: NATIVE_TOKEN_DECIMALS,
+        balance: account.vtho,
+        key: 'VTHO',
+      })
+    }
+
+    // Add B3TR if available (find directly without iterating all tokens)
+    const b3trToken = erc20s.find(erc20 => erc20.symbol.toUpperCase() === 'B3TR')
+    if (b3trToken) {
+      const balance = erc20BalanceMap.get(b3trToken.address)
+      if (balance !== undefined) {
+        rows.push({
+          symbol: b3trToken.symbol,
+          decimals: b3trToken.decimals,
+          balance,
+          key: b3trToken.address,
+        })
+      }
+    }
+
+    return rows
+  }, [account, erc20s, erc20BalanceMap])
+
+  // Fetch prices only for VET, VTHO, and B3TR
   const tokenPriceQueries = useQueries({
     queries:
-      tokenBalanceRows.length > 0
-        ? tokenBalanceRows.map(token => tokenDailyPricesQueryOptions(getTokenSlug(token.symbol), currency))
+      tokenValueRowsData.length > 0
+        ? tokenValueRowsData.map(token => tokenDailyPricesQueryOptions(getTokenSlug(token.symbol), currency))
         : [],
   })
 
@@ -122,7 +178,7 @@ export const useAccountTokens = (address: AddressString) => {
     let total = 0
     let hasError = false
 
-    const rows: TokenValueRow[] = tokenBalanceRows.map((token, index) => {
+    const rows: TokenValueRow[] = tokenValueRowsData.map((token, index) => {
       const priceQuery = tokenPriceQueries[index]
       const priceData = priceQuery?.data
       // useTokenDailyPrices returns an array, get the latest price
@@ -165,7 +221,7 @@ export const useAccountTokens = (address: AddressString) => {
       tokenValueRows: rows,
       totalValue: formattedTotal,
     }
-  }, [tokenBalanceRows, tokenPriceQueries, currencySymbol])
+  }, [tokenValueRowsData, tokenPriceQueries, currencySymbol])
 
   return {
     tokenBalanceRows,

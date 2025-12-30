@@ -14,7 +14,13 @@ export const TokenValueRow = ({ token, value, isFirst, isLast }: TokenValueRowPr
 
   const borderProps = isFirst
     ? { borderWidth: '1px', borderTopRadius: 'md' as const }
-    : { borderX: '1px', borderBottomWidth: '1px', ...(isLast && { borderBottomRadius: 'md' as const }) }
+    : {
+        borderLeftWidth: '1px',
+        borderRightWidth: '1px',
+        borderTopWidth: '1px',
+        borderBottomWidth: '1px',
+        ...(isLast && { borderBottomRadius: 'md' as const }),
+      }
 
   return (
     <Flex
