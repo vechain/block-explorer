@@ -26,13 +26,13 @@ describe('Units utils', () => {
     it('should return the amount for a valid hex string', () => {
       const hexString = '0x1000000000000000000'
       const amount = formatAmount({ amount: hexString })
-      expect(amount).toEqual(['4722.3665', '4722.366482869645213696'])
+      expect(amount).toEqual(['4,722.3665', '4722.366482869645213696'])
     })
 
     it('should return the amount for a valid hex string with decimals and 4 decimal places', () => {
       const hexString = '0x1000000000000000000'
       const amount = formatAmount({ amount: hexString, decimals: 12 })
-      expect(amount).toEqual(['4722366482.8696', '4722366482.869645213696'])
+      expect(amount).toEqual(['4,722,366,482.8696', '4722366482.869645213696'])
     })
   })
 

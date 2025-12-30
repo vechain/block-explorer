@@ -1,3 +1,5 @@
+'use client'
+
 import { Flex, Progress, Skeleton, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { formatGwei } from 'viem'
@@ -8,6 +10,7 @@ import { AddressString } from '@/lib/schemas/common'
 import { VTHOBalance } from './Balance'
 import { AddressLink } from './Links'
 import { useTranslation } from 'react-i18next'
+import { useFormatNumber } from '@/hooks/useFormatting'
 
 type TxGasFeesResult =
   | {
@@ -112,6 +115,7 @@ export const TxFeePaid = ({ gasFees, gasPayer }: { gasFees: TxGasFeesResult; gas
 }
 
 export const GasUsed = ({ gasUsed, gasLimit }: { gasUsed: bigint; gasLimit: bigint }) => {
+  const formatNumber = useFormatNumber()
   const gasUsedRatio = (Number(gasUsed) / Number(gasLimit)) * 100
 
   return (
@@ -124,7 +128,7 @@ export const GasUsed = ({ gasUsed, gasLimit }: { gasUsed: bigint; gasLimit: bigi
           {`${gasUsedRatio.toFixed(0)}%`}
         </Progress.Label>
       </Progress.Root>
-      <InfoTip tooltip={[gasUsed.toLocaleString(), gasLimit.toLocaleString()].join(' / ')} />
+      <InfoTip tooltip={[formatNumber(Number(gasUsed)), formatNumber(Number(gasLimit))].join(' / ')} />
     </Flex>
   )
 }

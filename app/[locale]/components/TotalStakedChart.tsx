@@ -6,10 +6,10 @@ import { memo, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, type TooltipContentProps, XAxis, YAxis } from 'recharts'
 import { formatEther } from 'viem'
-import { formatAbbreviated, formatAmount } from '@/lib/utils/units'
 import { useTotalVetStaked, useTotalVetStakedHistoric } from '@/services/veworld-indexer/hooks'
 import { TotalVetStakedRange } from '@/services/veworld-indexer/total-vet-staked-historic'
 import { Card } from '@/components/ui/Card'
+import { useFormatAbbreviated, useFormatAmount } from '@/hooks/useFormatting'
 
 const chartHeight = 140
 
@@ -21,6 +21,7 @@ type DataPoint = {
 
 export const TotalStakedChart = () => {
   const { t } = useTranslation()
+  const formatAbbreviated = useFormatAbbreviated()
   const [selectedRange, setSelectedRange] = useState<TotalVetStakedRange>(TotalVetStakedRange.DAY)
   const { data: historicData, isLoading } = useTotalVetStakedHistoric(selectedRange)
   const { data: currentTotal } = useTotalVetStaked()
@@ -170,16 +171,14 @@ TotalStakedChartVisualization.displayName = 'TotalStakedChartVisualization'
 
 const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>) => {
   const { t } = useTranslation()
+  const formatAmount = useFormatAmount()
   const isVisible = active && payload && payload.length > 0
 
   if (!isVisible) return null
 
   const dataPoint = payload[0].payload as DataPoint
 
-  const [formatted] = formatAmount({ amount: dataPoint.value })
-  const [intPart, decimalPart] = formatted.split('.')
-  const formattedInt = Number(intPart).toLocaleString()
-  const formattedVetAmount = decimalPart ? `${formattedInt}.${decimalPart}` : formattedInt
+  const [formattedVetAmount] = formatAmount({ amount: dataPoint.value })
 
   return (
     <Stack bg="tooltip-bg" border="1px solid" borderColor="border-primary" rounded="xl" p={4}>

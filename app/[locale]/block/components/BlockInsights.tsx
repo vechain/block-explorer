@@ -7,12 +7,14 @@ import { DataCard } from '@/components/ui/DataCard'
 import { GasUsed } from '@/components/ui/GasFees'
 import { Card } from '@/components/ui/Card'
 import type { ExpandedBlock } from '@/lib/schemas'
-import { formatDateFromTimestamp } from '@/lib/utils/date'
+import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { Fragment } from 'react'
 import { TxFeaturesBadge } from '@/components/ui/TxTypeBadge'
 
 export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   const { t } = useTranslation()
+  const formatNumber = useFormatNumber()
+  const formatDate = useFormatDate()
 
   const blockInsights = [
     {
@@ -29,11 +31,11 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
     },
     {
       label: t('Gas Limit'),
-      value: block.gasLimit.toLocaleString(),
+      value: formatNumber(Number(block.gasLimit)),
     },
     {
       label: t('Transactions'),
-      value: block.transactions.length.toLocaleString(),
+      value: formatNumber(block.transactions.length),
     },
   ]
 
@@ -44,7 +46,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
           {t('Block Insights')}
         </Heading>
 
-        <Text color="text-secondary">{formatDateFromTimestamp(block.timestamp)}</Text>
+        <Text color="text-secondary">{formatDate(block.timestamp)}</Text>
       </Flex>
 
       <Flex alignItems="start" flexDirection={{ base: 'column', md: 'row' }} gap="4" justifyContent="normal">

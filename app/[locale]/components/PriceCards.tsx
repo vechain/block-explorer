@@ -5,8 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { LuTrendingDown, LuTrendingUp } from 'react-icons/lu'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { Card } from '@/components/ui/Card'
-import { useSettingsStore } from '@/lib/stores/settings'
-import { CURRENCIES } from '@/lib/constants/currencies'
+import { useFormatCurrency } from '@/hooks/useFormatting'
 
 type SupportedTokenSymbol = 'VET' | 'VTHO' | 'B3TR'
 
@@ -18,23 +17,21 @@ const formatChangePercent = (change?: number) => {
 export const PriceCards = () => {
   const { t } = useTranslation()
 
-  const { currency } = useSettingsStore()
-
   const {
     dailyChangePercent: vetDailyChangePercent,
     isLoading: vetDailyLoading,
     price: vetPrice,
-  } = useTokenDailyPrices('vechain', currency)
+  } = useTokenDailyPrices('vechain')
   const {
     dailyChangePercent: vthoDailyChangePercent,
     isLoading: vthoDailyLoading,
     price: vthoPrice,
-  } = useTokenDailyPrices('vethor-token', currency)
+  } = useTokenDailyPrices('vethor-token')
   const {
     dailyChangePercent: b3trDailyChangePercent,
     isLoading: b3trDailyLoading,
     price: b3trPrice,
-  } = useTokenDailyPrices('vebetterdao', currency)
+  } = useTokenDailyPrices('vebetterdao')
 
   return (
     <Flex
@@ -86,8 +83,7 @@ interface TokenPriceCardProps {
 }
 
 const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: TokenPriceCardProps) => {
-  const { currency } = useSettingsStore()
-  const currencySymbol = CURRENCIES[currency]?.symbol
+  const formattedPrice = useFormatCurrency()
 
   return (
     <Card
@@ -110,7 +106,7 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
         {isLoading ? (
           <Skeleton height="28px" width="80px" />
         ) : (
-          <Text textStyle="displayXs">{`${currencySymbol}${price?.toFixed(4)}`}</Text>
+          <Text textStyle="displayXs">{formattedPrice(price ?? 0, { minimumFractionDigits: 4 })}</Text>
         )}
         {changePercent !== undefined && !isLoading && (
           <HStack

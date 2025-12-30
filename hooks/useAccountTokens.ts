@@ -9,8 +9,8 @@ import { useSettingsStore } from '@/lib/stores/settings'
 import { CURRENCIES } from '@/lib/constants/currencies'
 import { NATIVE_TOKEN_DECIMALS, MAX_TOKENS_PER_ACCOUNT } from '@/lib/constants/tokens'
 import { isNotNullish } from '@/lib/type-predicates'
-import { formatAmount } from '@/lib/utils/units'
 import { getTokenSlug } from '@/lib/utils/tokens'
+import { useFormatAmount, useFormatNumber } from '@/hooks/useFormatting'
 
 export type TokenBalanceRow = {
   symbol: string
@@ -26,6 +26,8 @@ export type TokenValueRow = {
 }
 
 export const useAccountTokens = (address: AddressString) => {
+  const formatNumber = useFormatNumber()
+  const formatAmount = useFormatAmount()
   const { currency } = useSettingsStore()
   const currencySymbol = CURRENCIES[currency].symbol
 
@@ -192,10 +194,11 @@ export const useAccountTokens = (address: AddressString) => {
         hasError = true
       } else if (token.balance && price) {
         // Calculate: balance (in token units) * price (in currency per token)
-        const balanceNumber = Number(formatAmount({ amount: token.balance, decimals: token.decimals })[1])
+        const [, fullAmount] = formatAmount({ amount: token.balance, decimals: token.decimals })
+        const balanceNumber = Number(fullAmount)
         const totalValue = balanceNumber * price
         total += totalValue
-        value = `${currencySymbol}${totalValue.toLocaleString('en-US', {
+        value = `${currencySymbol}${formatNumber(totalValue, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}`
@@ -212,7 +215,7 @@ export const useAccountTokens = (address: AddressString) => {
 
     const formattedTotal = hasError
       ? 'n/a'
-      : `${currencySymbol}${total.toLocaleString('en-US', {
+      : `${currencySymbol}${formatNumber(total, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}`
@@ -221,7 +224,7 @@ export const useAccountTokens = (address: AddressString) => {
       tokenValueRows: rows,
       totalValue: formattedTotal,
     }
-  }, [tokenValueRowsData, tokenPriceQueries, currencySymbol])
+  }, [tokenValueRowsData, currencySymbol, formatNumber, tokenPriceQueries, formatAmount])
 
   return {
     tokenBalanceRows,

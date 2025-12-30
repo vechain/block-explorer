@@ -8,13 +8,15 @@ import { IDChip } from '@/components/ui/IDChip'
 import { Card } from '@/components/ui/Card'
 import type { AddressString } from '@/lib/schemas'
 import { useAccountOverview } from '@/services/veworld-indexer/hooks'
-import { formatDateFromTimestamp } from '@/lib/utils/date'
+import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useAccountTokens } from '@/hooks/useAccountTokens'
 import { TokenBalanceSection } from './TokenBalanceSection'
 import { TokenValueSection } from './TokenValueSection'
 
 export const AccountSummary = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
+  const formatNumber = useFormatNumber()
+  const formatDate = useFormatDate()
   const { data: overview, isPending: isOverviewPending } = useAccountOverview(address)
   const {
     tokenBalanceRows,
@@ -27,8 +29,8 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
   const isPending = isOverviewPending || isPendingTokens
 
   // API returns Unix timestamp in seconds, convert to milliseconds for Date
-  const firstSeenDate = overview ? formatDateFromTimestamp(overview.firstSeen * 1000) : ''
-  const lastSeenDate = overview ? formatDateFromTimestamp(overview.lastSeen * 1000) : ''
+  const firstSeenDate = overview ? formatDate(overview.firstSeen * 1000) : ''
+  const lastSeenDate = overview ? formatDate(overview.lastSeen * 1000) : ''
 
   return (
     <Stack gap="8">
@@ -79,7 +81,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
               <Skeleton height="24px" width="80px" />
             ) : (
               <Text textStyle="bodyL" color="text-primary" mb={0}>
-                {overview?.transactionsSent.toLocaleString() ?? '0'}
+                {overview ? formatNumber(overview.transactionsSent) : '0'}
               </Text>
             )}
           </DataCard>
@@ -94,7 +96,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
               <Skeleton height="24px" width="80px" />
             ) : (
               <Text textStyle="bodyL" color="text-primary" mb={0}>
-                {overview?.clausesSent.toLocaleString() ?? '0'}
+                {overview ? formatNumber(overview.clausesSent) : '0'}
               </Text>
             )}
           </DataCard>
