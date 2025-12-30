@@ -4,9 +4,9 @@ import { TxStatus } from '@/components/TxStatus'
 import { BlockLink, TransactionClausesLink, TransactionLink } from '@/components/ui-legacy/Links'
 import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import type { AddressString } from '@/lib/schemas'
-import { formatDateFromTimestamp } from '@/lib/utils/date'
 import type { IndexerContractTransaction, IndexerTransaction } from '@/services/veworld-indexer/schemas'
 import { useTranslation } from 'react-i18next'
+import { useFormatDate } from '@/hooks/useFormatting'
 
 export const TransactionsTable = ({
   address,
@@ -16,13 +16,14 @@ export const TransactionsTable = ({
   transactions: IndexerContractTransaction[] | IndexerTransaction[]
 }) => {
   const { t } = useTranslation()
+  const formatDate = useFormatDate()
   const items = transactions.map(tx => ({
     key: tx.id,
     id: <TransactionLink transactionId={tx.id}>{tx.id}</TransactionLink>,
     status: <TxStatus status={tx.reverted ? 'reverted' : 'success'} />,
     origin: <VnsBadgeOrAddressLink address={tx.origin} truncateAddress />,
     block: <BlockLink blockId={tx.blockId}>{tx.blockNumber}</BlockLink>,
-    timestamp: formatDateFromTimestamp(tx.blockTimestamp),
+    timestamp: formatDate(tx.blockTimestamp),
     paid: (
       <PaidGasFees
         paid={tx.paid}
