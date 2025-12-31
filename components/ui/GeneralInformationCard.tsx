@@ -9,17 +9,15 @@ import {
   ValidatorStatus,
 } from '@/services/veworld-indexer/hooks'
 import { Card } from './Card'
+import { useFormatNumber } from '@/hooks/useFormatting'
 
 const USERS_STAKING = 0 // TODO: Implement hook to fetch users staking count
 
 export const GeneralInformationCard = () => {
   const { t } = useTranslation()
+  const formatNumber = useFormatNumber()
   const { data: accountTotalsData, isLoading: isLoadingAccounts } = useAccountTotals(AccountTimeFrame.ALL)
   const { data: validatorsCount, isLoading: isLoadingValidators } = useValidatorsCount(ValidatorStatus.ACTIVE)
-
-  const formatNumber = (num: number): string => {
-    return num.toLocaleString('en-US')
-  }
 
   const totalAccounts = accountTotalsData?.data?.[0]?.total ?? 0
   const validators = validatorsCount ?? 0

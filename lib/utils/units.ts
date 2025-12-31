@@ -1,5 +1,6 @@
 import { formatEther, formatGwei, formatUnits, hexToBigInt } from 'viem'
 import { type HexString, hexStringSchema } from '@/lib/schemas'
+import type { Locale } from '@/i18n/config'
 
 export const formatHexToGwei = (value: string) => {
   const result = hexStringSchema.safeParse(value)
@@ -10,24 +11,39 @@ export const formatHexToGwei = (value: string) => {
   return formatGwei(hexToBigInt(result.data))
 }
 
-export const formatAmount = ({ amount, decimals }: { amount: bigint | HexString; decimals?: number }) => {
+export const formatAmount = ({
+  amount,
+  decimals,
+  locale,
+}: {
+  amount: bigint | HexString
+  decimals?: number
+  locale?: Locale
+}) => {
   const bigIntAmount = typeof amount === 'bigint' ? amount : hexToBigInt(amount)
 
   const fullAmount = formatUnits(bigIntAmount, decimals ?? 18)
 
   // Check if it's an integer
   if (!fullAmount.includes('.')) {
-    return [fullAmount, fullAmount]
+    const formattedInteger = Number(fullAmount).toLocaleString(locale || 'en')
+    return [formattedInteger, fullAmount]
   }
 
   // Split to get the decimal parts
-  const [_, decimalPart] = fullAmount.split('.')
+  const [, decimalPart] = fullAmount.split('.')
   // Remove trailing zeros from decimal part
   const significantDigits = decimalPart.replace(/0+$/, '')
   // If there are 4 or more non 0 digits after decimal, show 4 decimal places
   const fixed = significantDigits.length <= 4 ? significantDigits.length : 4
 
-  return [Number(fullAmount).toFixed(fixed), fullAmount]
+  // Format with locale-specific thousands separators
+  const formattedNumber = Number(fullAmount).toLocaleString(locale || 'en', {
+    minimumFractionDigits: fixed,
+    maximumFractionDigits: fixed,
+  })
+
+  return [formattedNumber, fullAmount]
 }
 
 /**
@@ -54,22 +70,79 @@ export const formatAmount = ({ amount, decimals }: { amount: bigint | HexString;
  * formatAbbreviated(BigInt('500000000000000'))      // "500"
  * ```
  */
-export const formatAbbreviated = (amount: bigint) => {
+export const formatAbbreviated = (amount: bigint, locale?: Locale) => {
   const amountString = formatEther(amount)
   const [intPart] = amountString.split('.')
   const num = Number(intPart)
 
-  if (num >= 1_000_000_000) {
-    const billions = num / 1_000_000_000
-    return `${billions % 1 === 0 ? billions.toFixed(0) : billions.toFixed(1)}B`
+  const resolvedLocale = locale ?? 'en'
+
+  const formatWithSuffix = (value: number, divisor: number, suffix: string) => {
+    const scaled = value / divisor
+    const fractionDigits = Number.isInteger(scaled) ? 0 : 1
+    return `${scaled.toLocaleString(resolvedLocale, {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    })}${suffix}`
   }
-  if (num >= 1_000_000) {
-    const millions = num / 1_000_000
-    return `${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`
+
+  const thresholds = [
+    { divisor: 1_000_000_000, suffix: 'B' },
+    { divisor: 1_000_000, suffix: 'M' },
+    { divisor: 1_000, suffix: 'K' },
+  ] as const
+
+  for (const { divisor, suffix } of thresholds) {
+    if (num >= divisor) return formatWithSuffix(num, divisor, suffix)
   }
-  if (num >= 1_000) {
-    const thousands = num / 1_000
-    return `${thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)}K`
-  }
-  return num.toLocaleString()
+
+  return num.toLocaleString(resolvedLocale)
+}
+
+/**
+ * Formats a number using locale-specific formatting (thousands separators, decimal separators, etc.)
+ *
+ * @param num - The number to format
+ * @param locale - The locale to use for formatting (defaults to 'en')
+ * @param options - Optional Intl.NumberFormatOptions for customization
+ * @returns A formatted string
+ *
+ * @example
+ * ```ts
+ * formatNumber(1234567.89, 'en') // "1,234,567.89"
+ * formatNumber(1234567.89, 'de') // "1.234.567,89"
+ * formatNumber(1234567.89, 'fr') // "1 234 567,89"
+ * ```
+ */
+export const formatNumber = (num: number, locale?: Locale, options?: Intl.NumberFormatOptions): string => {
+  return num.toLocaleString(locale || 'en', options)
+}
+
+/**
+ * Formats a number as currency using locale-specific formatting
+ *
+ * @param num - The number to format
+ * @param locale - The locale to use for formatting (defaults to 'en')
+ * @param currency - The currency code (e.g., 'USD', 'EUR', 'CNY')
+ * @param options - Optional Intl.NumberFormatOptions for customization
+ * @returns A formatted currency string
+ *
+ * @example
+ * ```ts
+ * formatCurrency(1234.56, 'en', 'USD') // "$1,234.56"
+ * formatCurrency(1234.56, 'de', 'EUR') // "1.234,56 €"
+ * formatCurrency(1234.56, 'en', 'USD', { minimumFractionDigits: 2 }) // "$1,234.56"
+ * ```
+ */
+export const formatCurrency = (
+  num: number,
+  locale: Locale | undefined,
+  currency: string,
+  options?: Intl.NumberFormatOptions,
+): string => {
+  return num.toLocaleString(locale || 'en', {
+    style: 'currency',
+    currency,
+    ...options,
+  })
 }

@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/Card'
 import { ValueSwitch } from '@/components/ui/ValueSwitch'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/hooks'
+import { useFormatNumber } from '@/hooks/useFormatting'
 import { TransactionDetailsView } from '@/lib/types'
 
 export const TransactionPageContent = ({
@@ -64,6 +65,7 @@ const TransactionDetails = ({
   onViewChange: (view: TransactionDetailsView) => void
 }) => {
   const { t } = useTranslation()
+  const formatNumber = useFormatNumber()
   return (
     <Card variant="primary">
       <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
@@ -80,9 +82,7 @@ const TransactionDetails = ({
           title={t('Block Number')}
           tooltip="Information coming soon"
         >
-          <BaseLink href={`/block/${transaction.meta.blockID}`}>
-            #{transaction.meta.blockNumber.toLocaleString()}
-          </BaseLink>
+          <BaseLink href={`/block/${transaction.meta.blockID}`}>#{formatNumber(transaction.meta.blockNumber)}</BaseLink>
         </DataCard>
 
         {/* Total Clauses */}

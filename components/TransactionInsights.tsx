@@ -12,7 +12,7 @@ import { Card } from '@/components/ui/Card'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
 import { GasUsed, TxFeePaid, TxGasFees, useTxGasFees } from './ui/GasFees'
 import { TxTypeBadge } from '@/components/ui/TxTypeBadge'
-import { formatDateFromTimestamp } from '@/lib/utils/date'
+import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { VETBalance } from './ui/Balance'
 import BigNumber from 'bignumber.js'
@@ -26,6 +26,8 @@ export const TransactionInsight = ({
   receipt: TransactionReceipt | null
 }) => {
   const { t } = useTranslation()
+  const formatNumber = useFormatNumber()
+  const formatDate = useFormatDate()
   const isMobile = useIsMobile()
 
   const status = receipt ? (receipt.reverted ? 'reverted' : 'success') : 'pending'
@@ -63,12 +65,12 @@ export const TransactionInsight = ({
     },
     {
       label: t('Size'),
-      value: `${transaction.size.toLocaleString()} B`,
+      value: `${formatNumber(transaction.size)} B`,
     },
   ]
 
   const TransactionDate = () => {
-    return <Text color="text-secondary">{formatDateFromTimestamp(transaction.meta.blockTimestamp)}</Text>
+    return <Text color="text-secondary">{formatDate(transaction.meta.blockTimestamp)}</Text>
   }
 
   const confirmations = getConfirmations(bestBlock?.number, transaction.meta.blockNumber)
@@ -170,7 +172,7 @@ export const TransactionInsight = ({
             tooltip={t('Information coming soon')}
           >
             <Text>
-              {transaction.expiration.toLocaleString()} {t('Blocks')}
+              {formatNumber(transaction.expiration)} {t('Blocks')}
             </Text>
           </DataCard>
 

@@ -1,6 +1,8 @@
+'use client'
+
 import { Flex, type FlexProps, Text } from '@chakra-ui/react'
 import type { HexString } from '@/lib/schemas'
-import { formatAmount } from '@/lib/utils/units'
+import { useFormatAmount } from '@/hooks/useFormatting'
 import { Tooltip } from './Tooltip'
 
 export const VETBalance = ({ balance, ...props }: { balance: bigint | HexString } & FlexProps) => {
@@ -17,6 +19,7 @@ const Balance = ({
   decimals,
   ...props
 }: { balance: bigint | HexString; symbol: string; decimals?: number } & FlexProps) => {
+  const formatAmount = useFormatAmount()
   const [truncatedAmount, fullAmount] = formatAmount({ amount: balance, decimals })
   return (
     <Flex textStyle="bodyL" alignItems="center" gap="1" justifyContent="center" {...props}>
