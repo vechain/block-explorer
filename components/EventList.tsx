@@ -18,7 +18,7 @@ export const EventsList = ({ clauseIndex, eventLogs }: { clauseIndex: number; ev
 
   if (eventLogs.length === 0) {
     return (
-      <Card bg="card-bg-alt-primary" border="none">
+      <Card variant="outline">
         <Text>{t('No events')}</Text>
       </Card>
     )
@@ -43,16 +43,17 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
 
   if (isPending) {
     return (
-      <Card bg="card-bg-alt-primary" border="none">
+      <Card variant="tertiary">
         <Skeleton height="320px" width="100%" />
       </Card>
     )
   }
 
   return (
-    <Card bg="card-bg-alt-primary" border="none">
+    <Card variant="tertiary">
       <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap">
         <Card
+          variant="outline"
           flexDirection="row"
           display="flex"
           alignItems="center"
@@ -70,7 +71,7 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
         </Card>
         <ValueSwitch
           layoutId={layoutId}
-          bg="bg-secondary"
+          bg="bg-outline"
           values={[EventView.RAW, EventView.DECODED]}
           activeValue={view}
           onChange={setView}
@@ -126,14 +127,14 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
 
   if (!event) {
     return (
-      <Card>
+      <Card variant="outline">
         <Text>{t('No ABI found')}</Text>
       </Card>
     )
   }
 
   return (
-    <Card>
+    <Card variant="outline">
       <Text textStyle="bodyL">{event.signature.split('(')[0]}</Text>
       <Box textAlign="center">
         <Grid templateColumns="60px 160px 160px 1fr" p="4">

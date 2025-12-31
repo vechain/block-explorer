@@ -29,7 +29,7 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
         onChange={setView}
       />
       {isLoading ? (
-        <Card variant="secondary">
+        <Card variant="outline">
           <Skeleton height="320px" width="100%" />
         </Card>
       ) : (
@@ -44,7 +44,7 @@ const InputDataViews = ({ inputData, activeView }: { inputData: InputDataType; a
     return <DecodedInputDataTable decodedInputData={inputData.decoded} />
   }
 
-  return <Card variant="secondary">{inputData.raw}</Card>
+  return <Card variant="outline">{inputData.raw}</Card>
 }
 
 const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: DecodedInputData | undefined }) => {
@@ -52,7 +52,7 @@ const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: Decoded
 
   if (!decodedInputData) {
     return (
-      <Card variant="secondary">
+      <Card variant="outline">
         <Text>{t('No ABI found')}</Text>
       </Card>
     )

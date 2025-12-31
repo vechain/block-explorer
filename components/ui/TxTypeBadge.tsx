@@ -38,7 +38,7 @@ const BaseTxBadge = (props: BadgeProps) => {
   return (
     <Badge
       textStyle="bodyM"
-      bg="card-bg-alt-secondary"
+      bg="bg-alt-secondary"
       color="text-primary"
       gap="2"
       px="2"
