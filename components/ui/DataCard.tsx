@@ -19,7 +19,7 @@ export const DataCard = forwardRef<HTMLDivElement, DataCardProps>(
     const Icon = React.cloneElement(icon, { ...icon.props, width: iconSize, height: iconSize })
 
     return (
-      <Card variant="secondary" ref={ref} flex="1" alignSelf="stretch" {...props}>
+      <Card variant="outline" ref={ref} flex="1" alignSelf="stretch" {...props}>
         <Flex alignItems="center" justifyContent="space-between">
           <Group>
             <IconInCircle icon={Icon} p="1" />

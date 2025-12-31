@@ -104,7 +104,7 @@ const TransactionDetails = ({
         </DataCard>
       </Flex>
 
-      <Card variant="secondary" border="none">
+      <Card variant="secondary">
         <ValueSwitch
           layoutId="transaction-view-switch"
           values={[TransactionDetailsView.TRANSACTION, TransactionDetailsView.CLAUSES, TransactionDetailsView.EVENTS]}

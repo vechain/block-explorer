@@ -10,8 +10,14 @@ const variantStyles = {
   },
   secondary: {
     bg: 'bg-secondary',
+    border: 'none',
   },
-  default: {
+  tertiary: {
+    bg: 'bg-alt-primary',
+    border: 'none',
+    backdropFilter: 'none',
+  },
+  outline: {
     bg: 'none',
     backdropFilter: 'none',
   },
@@ -21,7 +27,7 @@ type CardProps = FlexProps & {
   variant?: keyof typeof variantStyles
 }
 
-export const Card = forwardRef<HTMLDivElement, CardProps>(({ variant = 'default', ...props }, ref) => {
+export const Card = forwardRef<HTMLDivElement, CardProps>(({ variant = 'primary', ...props }, ref) => {
   const variantStyle = variantStyles[variant]
 
   return (
