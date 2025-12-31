@@ -23,8 +23,10 @@ const variantStyles = {
   },
 }
 
+export type CardVariant = keyof typeof variantStyles
+
 type CardProps = FlexProps & {
-  variant?: keyof typeof variantStyles
+  variant?: CardVariant
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(({ variant = 'primary', ...props }, ref) => {

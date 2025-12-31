@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
+import { keepPreviousData } from '@tanstack/react-query'
 import { resolveUrl } from './index'
 import { type IndexerGetTransactionsParams, indexerResponseSchema, indexerTransactionSchema } from './schemas'
 
@@ -10,6 +11,7 @@ const TRANSACTIONS_QUERY_KEY = 'getTransactions'
 export const accountTransactionsQueryOptions = (networkName: NetworkName, params: IndexerGetTransactionsParams) => ({
   queryKey: [TRANSACTIONS_QUERY_KEY, networkName, params],
   queryFn: () => getTransactions({ networkName, params }),
+  placeholderData: keepPreviousData,
 })
 
 const getTransactions = async ({
