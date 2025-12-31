@@ -1,0 +1,115 @@
+---
+description: Formatting dates, numbers, currency, and token amounts (locale-aware)
+globs: '**/*.{ts,tsx}'
+alwaysApply: false
+---
+
+# Formatting (dates, numbers, amounts) - locale-aware
+
+## Principle
+
+- **UI formatting happens at the UI boundary**: keep raw values (numbers, `bigint`, `HexString`, timestamps) in services/schemas; format only when rendering.
+- **Client Components**: prefer **hooks** so locale is gathered automatically from the route.
+- **Non-React code (utils/services/tests/Server Components)**: prefer **pure utils** and **pass `locale` explicitly**.
+
+## Approved APIs (use these)
+
+### Client Components (preferred)
+
+- **Locale**: `useLocale()` from `hooks/useLocale.ts`
+- **Numbers**: `useFormatNumber()` from `hooks/useFormatting.ts`
+- **Currency**: `useFormatCurrency()` from `hooks/useFormatting.ts`
+- **Dates (timestamps)**: `useFormatDate()` from `hooks/useFormatting.ts` (defaults to UTC via `formatDateFromTimestamp`)
+- **Token amounts**: `useFormatAmount()` / `useFormatAbbreviated()` from `hooks/useFormatting.ts`
+
+### Non-React / pure code
+
+- **Numbers**: `formatNumber(num, locale, options)` from `lib/utils/units.ts`
+- **Currency**: `formatCurrency(num, locale, currency, options)` from `lib/utils/units.ts`
+- **Dates (timestamps)**: `formatDateFromTimestamp(timestamp, locale, options)` from `lib/utils/date.ts`
+- **Token amounts**: `formatAmount({ amount, decimals, locale })` / `formatAbbreviated(amount, locale)` from `lib/utils/units.ts`
+
+## Locale rules
+
+- **Do**: use `useLocale()` in client code.
+- **Do not**: call `useParams()` in components just to read `params.locale`.
+- **Do**: pass `locale` as an argument in utils/services (no hidden locale lookups).
+- **Do not**: hardcode a locale (except safe fallback inside utils: `locale ?? 'en'`).
+
+## Patterns
+
+### Numbers
+
+Good:
+
+```tsx
+import { useFormatNumber } from '@/hooks/useFormatting'
+
+export const GasLimit = ({ gasLimit }: { gasLimit: number }) => {
+  const formatNumber = useFormatNumber()
+  return <span>{formatNumber(gasLimit)}</span>
+}
+```
+
+Bad (manual locale handling / inconsistent separators):
+
+```tsx
+export const GasLimit = ({ gasLimit }: { gasLimit: number }) => {
+  return <span>{gasLimit.toLocaleString()}</span>
+}
+```
+
+### Currency
+
+Good:
+
+```tsx
+import { useFormatCurrency } from '@/hooks/useFormatting'
+
+export const Price = ({ usd }: { usd: number }) => {
+  const formatCurrency = useFormatCurrency()
+  return <span>{formatCurrency(usd)}</span>
+}
+```
+
+### Token amounts (on-chain)
+
+Good:
+
+```tsx
+import { VETBalance } from '@/components/ui/Balance'
+
+export const Reward = ({ reward }: { reward: bigint }) => {
+  return <VETBalance balance={reward} justifyContent="flex-start" />
+}
+```
+
+If you need custom rendering, use the hook:
+
+```tsx
+import { useFormatAmount } from '@/hooks/useFormatting'
+
+export const CustomAmount = ({ amount }: { amount: bigint }) => {
+  const formatAmount = useFormatAmount()
+  const [display, full] = formatAmount({ amount, decimals: 18 })
+  return <span title={full}>{display}</span>
+}
+```
+
+### Dates (block/tx timestamps)
+
+Good:
+
+```tsx
+import { useFormatDate } from '@/hooks/useFormatting'
+
+export const Timestamp = ({ timestamp }: { timestamp: number }) => {
+  const formatDate = useFormatDate()
+  return <span>{formatDate(timestamp)}</span>
+}
+```
+
+Notes:
+
+- `formatDateFromTimestamp` defaults to **UTC**; override via `options` only when explicitly required.
+- For **relative time** (“3 minutes ago”), use `components/ui/AgeText.tsx` (and feed it the route locale via `useLocale()`).

@@ -1,7 +1,7 @@
 import { Flex, Text } from '@chakra-ui/react'
 import Image from 'next/image'
-import { formatAmount } from '@/lib/utils/units'
 import { getTokenIconPath } from '@/lib/utils/tokens'
+import { useFormatAmount } from '@/hooks/useFormatting'
 
 interface TokenBalanceRowProps {
   token: { symbol: string; decimals: number }
@@ -11,6 +11,7 @@ interface TokenBalanceRowProps {
 }
 
 export const TokenBalanceRow = ({ token, balance, isFirst, isLast }: TokenBalanceRowProps) => {
+  const formatAmount = useFormatAmount()
   const [formatted] = formatAmount({ amount: balance ?? BigInt(0), decimals: token.decimals })
   const iconPath = getTokenIconPath(token.symbol)
 

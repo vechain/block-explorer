@@ -10,12 +10,14 @@ import { AddressLink, BaseLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import type { BlockId } from '@/lib/schemas'
 import { useBlockExpanded } from '@/services/thor/hooks'
+import { useFormatNumber } from '@/hooks/useFormatting'
 import { TransactionsTable } from '../../../components/TransactionsTable'
 import { BlockInsight } from '../../components/BlockInsights'
 
 export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
   const { data: block, isPending } = useBlockExpanded(blockId)
   const { t } = useTranslation()
+  const formatNumber = useFormatNumber()
 
   if (isPending) return <div>Loading...</div>
 
@@ -41,7 +43,7 @@ export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
             tooltip={t('Information coming soon')}
           >
             <Text textStyle="bodyL" color="text-primary">
-              #{block.number.toLocaleString()}
+              #{formatNumber(block.number)}
             </Text>
           </DataCard>
 
@@ -69,7 +71,7 @@ export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
             title={t('Parent block')}
             tooltip={t('Information coming soon')}
           >
-            <BaseLink href={`/block/${block.parentID}`}>#{(block.number - 1).toLocaleString()}</BaseLink>
+            <BaseLink href={`/block/${block.parentID}`}>#{formatNumber(block.number - 1)}</BaseLink>
           </DataCard>
         </Flex>
 

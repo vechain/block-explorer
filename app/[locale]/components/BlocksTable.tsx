@@ -6,9 +6,11 @@ import { AgeText } from '@/components/ui/AgeText'
 import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
 import { AppendIconCell, type CellComponentProps, type Column, DataTable } from '@/components/ui/Table'
 import type { ExpandedBlock } from '@/lib/schemas'
+import { useFormatNumber } from '@/hooks/useFormatting'
 
 export const BlocksTable = ({ blocks }: { blocks: ExpandedBlock[] }) => {
   const { t } = useTranslation()
+  const formatNumber = useFormatNumber()
 
   const columns: Column<(typeof rows)[number]>[] = [
     { key: 'age', label: t('Age'), Cell: ({ value }) => <AgeText timestamp={value as number} /> },
@@ -41,10 +43,10 @@ export const BlocksTable = ({ blocks }: { blocks: ExpandedBlock[] }) => {
       blockNumber: `#${block.number.toString()}`,
       blockNumberRaw: block.number.toString(),
       age: block.timestamp,
-      block: block.number.toLocaleString(),
+      block: formatNumber(block.number),
       signer: block.signer,
       'txs/clauses': `${block.transactions.length}/${totalClauses}`,
-      gasUsed: block.gasUsed.toLocaleString(),
+      gasUsed: formatNumber(Number(block.gasUsed)),
       isFinalized: block.isFinalized,
     }
   })

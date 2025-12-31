@@ -4,9 +4,9 @@ import { Text, type TextProps } from '@chakra-ui/react'
 import type { Locale as DateFnsLocale } from 'date-fns'
 import { formatDistanceToNow } from 'date-fns'
 import { de, el, enUS, es, fr, it, ja, pt, ru, tr, zhCN } from 'date-fns/locale'
-import { useParams } from 'next/navigation'
 import { HiOutlineBolt } from 'react-icons/hi2'
 import type { Locale } from '@/i18n/config'
+import { useLocale } from '@/hooks/useLocale'
 
 const dateFnsLocales: Record<Locale, DateFnsLocale> = {
   en: enUS,
@@ -23,8 +23,7 @@ const dateFnsLocales: Record<Locale, DateFnsLocale> = {
 }
 
 export const AgeText = ({ timestamp, ...props }: { timestamp: number } & TextProps) => {
-  const params = useParams()
-  const locale = (params.locale as Locale) || 'en'
+  const locale = useLocale()
 
   return (
     <Text color="accent-secondary" display="flex" alignItems="center" textTransform="capitalize" gap={1} {...props}>

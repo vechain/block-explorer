@@ -20,6 +20,7 @@ import type { BlockUsageData } from '@/lib/schemas'
 import { type BlockUsageDataPoint, transformBlockUsageData } from '@/lib/utils/block-usage'
 import { timeFormat } from '@/lib/utils/date'
 import { useBlockUsage } from '@/services/veworld-indexer/block-usage'
+import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { BlockUsageHeader } from './components/BlockUsageHeader/BlockUsageHeader'
 import { TIME_RANGES, type TimeRangeKey } from './constants'
 
@@ -181,6 +182,7 @@ export const BlockUsage = () => {
 
 const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedRange: TimeRangeKey }) => {
   const router = useRouter()
+  const formatNumber = useFormatNumber()
 
   type AreaClickEvent = {
     activePayload?: Array<{
@@ -195,6 +197,9 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
     if (id === undefined || id === null) return
     router.push(`/block/${id}`)
   }
+
+  // Memoized tick formatter for YAxis
+  const formatYAxisTick = useCallback((value: number) => formatNumber(Number(value) / 10 ** 6), [formatNumber])
 
   // Format X-axis labels based on the selected time range
   const formatXAxis = useCallback(
@@ -278,7 +283,7 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
           <YAxis
             unit="M"
             dataKey="gasLimit"
-            tickFormatter={value => (Number(value) / 10 ** 6).toLocaleString()}
+            tickFormatter={formatYAxisTick}
             tick={{ style: { fontSize: '.8rem' } }}
             axisLine={false}
             stroke="white"
@@ -311,6 +316,8 @@ const CustomTooltip = ({
 }: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey }) => {
   const isVisible = active && payload.length > 0
   const { t } = useTranslation()
+  const formatNumber = useFormatNumber()
+  const formatDate = useFormatDate()
 
   if (!isVisible) return null
 
@@ -328,8 +335,7 @@ const CustomTooltip = ({
 
   // Format the date and time for the data point
   const formatDateTime = (timestamp: number) => {
-    const date = new Date(timestamp)
-    return date.toLocaleString(undefined, {
+    return formatDate(timestamp, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -345,7 +351,7 @@ const CustomTooltip = ({
           <Text fontSize="sm" fontWeight="bold">
             {t('Block Number')}:
           </Text>
-          <Text fontSize="sm">{dataPoint.number.toLocaleString()}</Text>
+          <Text fontSize="sm">{formatNumber(dataPoint.number)}</Text>
         </Flex>
       )}
       <Flex alignItems="center" gap={2}>
@@ -358,13 +364,13 @@ const CustomTooltip = ({
         <Text fontSize="sm" fontWeight="bold">
           {labels.gasUsed}:
         </Text>
-        <Text fontSize="sm">{Math.round(dataPoint.gasUsed).toLocaleString()}</Text>
+        <Text fontSize="sm">{formatNumber(Math.round(dataPoint.gasUsed))}</Text>
       </Flex>
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
           {labels.gasLimit}:
         </Text>
-        <Text fontSize="sm">{Math.round(dataPoint.gasLimit).toLocaleString()}</Text>
+        <Text fontSize="sm">{formatNumber(Math.round(dataPoint.gasLimit))}</Text>
       </Flex>
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">

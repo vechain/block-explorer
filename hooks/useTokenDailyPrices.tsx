@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { COIN_API_URL } from '@/env.public'
 import { apiClient } from '@/lib/api'
 import { zodParse } from '@/lib/utils/zod'
-import { Currency } from '@/lib/stores/settings'
+import { Currency, useSettingsStore } from '@/lib/stores/settings'
 
 export type TokenDailyPrice = {
   timestamp: number
@@ -21,7 +21,8 @@ export const tokenDailyPricesQueryOptions = (token: TokenDailyPricesToken, curre
   refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
 })
 
-export const useTokenDailyPrices = (token: TokenDailyPricesToken, currency: Currency) => {
+export const useTokenDailyPrices = (token: TokenDailyPricesToken) => {
+  const { currency } = useSettingsStore()
   const { data, isLoading, error } = useQuery<TokenDailyPrice[]>(tokenDailyPricesQueryOptions(token, currency))
 
   const dailyChangePercent = (() => {
