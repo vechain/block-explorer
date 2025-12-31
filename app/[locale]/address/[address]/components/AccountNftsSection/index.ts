@@ -1,0 +1,1 @@
+export { AccountNftsSection } from './AccountNftsSection'
