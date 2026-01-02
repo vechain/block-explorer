@@ -18,5 +18,4 @@ export const transferSchema = z.object({
   amount: hexToBigIntSchema,
 })
 
-export type Transfer = z.infer<typeof transferSchema>
 export type RawEvent = z.infer<typeof rawEventSchema>

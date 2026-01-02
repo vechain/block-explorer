@@ -80,5 +80,4 @@ const decodedInputDataSchema = z.object({
   inputs: z.array(abi.parameterSchema),
 })
 
-export type DecodedInputDataArgs = z.infer<typeof decodedInputDataSchema.shape.args>
 export type DecodedInputData = z.infer<typeof decodedInputDataSchema>

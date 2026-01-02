@@ -22,5 +22,3 @@ export const languageNames: Record<Locale, { native: string; english: string; fl
   [Locale.ZH]: { native: '中文', english: 'Chinese', flag: '🇨🇳' },
   [Locale.EL]: { native: 'Ελληνικά', english: 'Greek', flag: '🇬🇷' },
 }
-
-export const locales = Object.values(Locale)

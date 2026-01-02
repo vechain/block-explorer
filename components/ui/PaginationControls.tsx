@@ -4,7 +4,7 @@ import { Flex, IconButton, NativeSelect, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { LuChevronLeft, LuChevronRight } from 'react-icons/lu'
 
-export interface PaginationControlsProps {
+interface PaginationControlsProps {
   /** Current page (0-indexed) */
   page: number
   /** Current page size */

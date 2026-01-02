@@ -111,6 +111,7 @@ export const TxFeePaid = ({ gasFees, gasPayer }: { gasFees: TxGasFeesResult; gas
       </Flex>
     )
   }
+
   return <VTHOBalance balance={gasFees.totalPaid} />
 }
 

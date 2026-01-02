@@ -21,8 +21,6 @@ const accountOverviewSchema = z.object({
   vetReceived: z.string(),
 })
 
-export type AccountOverview = z.infer<typeof accountOverviewSchema>
-
 export const accountOverviewQueryOptions = (networkName: NetworkName, address: string) => ({
   queryKey: [ACCOUNT_OVERVIEW_QUERY_KEY, networkName, address],
   queryFn: () => getAccountOverview({ networkName, address }),

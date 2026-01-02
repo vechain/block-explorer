@@ -5,7 +5,7 @@ import { apiClient } from '@/lib/api'
 import { zodParse } from '@/lib/utils/zod'
 import { Currency, useSettingsStore } from '@/lib/stores/settings'
 
-export type TokenDailyPrice = {
+type TokenDailyPrice = {
   timestamp: number
   price: number
 }
