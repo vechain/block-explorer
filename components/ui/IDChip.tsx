@@ -28,9 +28,9 @@ export const IDChip = forwardRef<HTMLDivElement, IDChipProps>(({ value, vnsName,
       {...props}
     >
       <Text
-        color="accent-primary"
-        textStyle="bodyMSemibold"
+        color="text-primary"
         maxWidth="full"
+        textStyle="bodyS"
         overflow="hidden"
         textOverflow="ellipsis"
         whiteSpace="nowrap"
