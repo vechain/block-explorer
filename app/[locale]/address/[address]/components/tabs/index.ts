@@ -1,5 +1,2 @@
-export { AccountNftsTab } from './AccountNftTab'
-export { AccountTokensTab } from './AccountTokensTab'
-export { AccountTransactionsTab } from './AccountTransactionsTab'
 export { AccountTransfersTab } from './AccountTransfersTab'
 export { ContractTransactionsTab } from './ContractTransactionsTab'
