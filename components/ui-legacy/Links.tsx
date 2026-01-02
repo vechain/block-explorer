@@ -44,18 +44,6 @@ export const TransactionClausesLink = ({
   return <BaseLink to={`/transaction/${transactionId}/clauses`}>{children}</BaseLink>
 }
 
-export const ClauseLink = ({
-  transactionId,
-  clauseIndex,
-  children,
-}: {
-  transactionId: TransactionId
-  clauseIndex: number
-  children: React.ReactNode
-}) => {
-  return <BaseLink to={`/transaction/${transactionId}/clauses/${clauseIndex}`}>{children}</BaseLink>
-}
-
 export const CopyableLink = ({ children, to, value }: { children: React.ReactNode; to: string; value: string }) => {
   return (
     <Flex gap={2} alignItems="center">

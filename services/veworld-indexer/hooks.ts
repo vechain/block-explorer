@@ -67,7 +67,7 @@ export const useAccountTransactions = ({ params }: { params: IndexerGetTransacti
   return useQuery(accountTransactionsQueryOptions(activeNetwork.name, params))
 }
 
-export const useAccountTransfers = ({ params }: { params: IndexerGetTransfersParams }) => {
+const useAccountTransfers = ({ params }: { params: IndexerGetTransfersParams }) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(accountTransfersQueryOptions(activeNetwork.name, params))
 }

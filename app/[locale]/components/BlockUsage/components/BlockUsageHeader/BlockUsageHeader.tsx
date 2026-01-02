@@ -7,7 +7,7 @@ import { NavigationControls } from './components/NavigationControls'
 import { NowButton } from './components/NowButton'
 import { TimeRangeSelect } from './components/TimeRangeSelect'
 
-export interface BlockUsageHeaderProps {
+interface BlockUsageHeaderProps {
   selectedRange: TimeRangeKey
   selectedDate: Date | null
   canGoBack: boolean

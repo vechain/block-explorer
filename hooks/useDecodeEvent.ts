@@ -92,6 +92,5 @@ const parsedRawEventSchema = z.object({
 
 const _parsedEventSchema = z.discriminatedUnion('type', [parsedDecodedEventSchema, parsedRawEventSchema])
 
-export type ParsedEvent = z.infer<typeof _parsedEventSchema>
-export type DecodedEventArgs = z.infer<typeof decodedEventSchema.shape.args>
+type ParsedEvent = z.infer<typeof _parsedEventSchema>
 export type DecodedEvent = z.infer<typeof decodedEventSchema>

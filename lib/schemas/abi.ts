@@ -7,7 +7,7 @@ export const parameterSchema = z.object({
   type: z.string(),
 }) as z.ZodType<AbiParameter>
 
-export type AbiEventParameter = AbiEvent['inputs'][number]
+type AbiEventParameter = AbiEvent['inputs'][number]
 
 export const eventParameterSchema = z.object({
   name: z.string(),

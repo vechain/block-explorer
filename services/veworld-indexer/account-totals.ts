@@ -27,9 +27,6 @@ const accountTotalSchema = z.object({
 
 const accountTotalsResponseSchema = indexerResponseSchema(accountTotalSchema)
 
-export type AccountTotal = z.infer<typeof accountTotalSchema>
-export type AccountTotalsResponse = z.infer<typeof accountTotalsResponseSchema>
-
 export const accountTotalsQueryOptions = (networkName: NetworkName, timeFrame: AccountTimeFrame) => ({
   queryKey: [ACCOUNT_TOTALS_QUERY_KEY, networkName, timeFrame],
   queryFn: () => getAccountTotals({ networkName, timeFrame }),
