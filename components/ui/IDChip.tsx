@@ -7,8 +7,11 @@ import { CopyToClipBoard } from './CopyToClipBoard'
 
 interface IDChipProps extends FlexProps {
   value: string
+  vnsName?: string | null
 }
-export const IDChip = forwardRef<HTMLDivElement, IDChipProps>(({ value, ...props }, ref) => {
+export const IDChip = forwardRef<HTMLDivElement, IDChipProps>(({ value, vnsName, ...props }, ref) => {
+  const displayValue = vnsName || value
+
   return (
     <Flex
       ref={ref}
@@ -21,12 +24,18 @@ export const IDChip = forwardRef<HTMLDivElement, IDChipProps>(({ value, ...props
       borderRadius="full"
       borderWidth="1px"
       borderColor="border-primary"
-      textStyle="bodyS"
       maxW="full"
       {...props}
     >
-      <Text color="text-secondary" maxWidth="full" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-        {value}
+      <Text
+        color="accent-primary"
+        textStyle="bodyMSemibold"
+        maxWidth="full"
+        overflow="hidden"
+        textOverflow="ellipsis"
+        whiteSpace="nowrap"
+      >
+        {displayValue}
       </Text>
       <CopyToClipBoard value={value} />
     </Flex>

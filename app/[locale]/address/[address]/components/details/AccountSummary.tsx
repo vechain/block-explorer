@@ -10,6 +10,7 @@ import type { AddressString } from '@/lib/schemas'
 import { useAccountOverview } from '@/services/veworld-indexer/hooks'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useAccountTokens } from '@/hooks/useAccountTokens'
+import { useVnsName } from '@/services/thor/hooks'
 import { TokenBalanceSection } from '../sections/TokenBalanceSection'
 import { TokenValueSection } from '../sections/TokenValueSection'
 
@@ -17,6 +18,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
   const formatDate = useFormatDate()
+  const { data: vnsName } = useVnsName(address)
   const { data: overview, isPending: isOverviewPending } = useAccountOverview(address)
   const {
     tokenBalanceRows,
@@ -39,7 +41,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
           <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap" mb={{ base: '6', md: '0' }}>
             {t('Account')}
           </Heading>
-          <IDChip value={address} />
+          <IDChip value={address} vnsName={vnsName} />
         </Flex>
 
         <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
