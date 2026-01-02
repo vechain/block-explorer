@@ -84,6 +84,12 @@ const indexerGetErc721ParamsSchema = z
   })
   .extend(paginationParamsSchema.shape)
 
+const indexerGetContractsByMasterParamsSchema = z
+  .object({
+    master: addressStringSchema,
+  })
+  .extend(paginationParamsSchema.shape)
+
 // ***************************** Indexer API resources schemas *****************************/
 const withEmptyObjects = (schema: z.ZodSchema) => z.union([schema, z.object({})])
 
@@ -165,6 +171,17 @@ export const indexerErc721Schema = z.object({
   blockTimestamp: z.number(),
 })
 
+export const indexerContractSchema = z.object({
+  address: addressStringSchema,
+  createdOn: z.number(),
+  deploymentTxId: transactionIdSchema,
+  deploymentClauseIndex: z.number(),
+  master: addressStringSchema,
+  isErc20: z.boolean(),
+  isErc721: z.boolean(),
+  isErc1155: z.boolean(),
+})
+
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
 export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
 export type IndexerContractTransaction = z.infer<typeof indexerContractTransactionSchema>
@@ -173,4 +190,6 @@ export type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParams
 export type IndexerGetErc20ContractsParams = z.infer<typeof indexerGetErc20ContractsParamsSchema>
 export type IndexerGetContractTransactionsParams = z.infer<typeof indexerGetContractTransactionsParamsSchema>
 export type IndexerGetErc721Params = z.infer<typeof indexerGetErc721ParamsSchema>
+export type IndexerGetContractsByMasterParams = z.infer<typeof indexerGetContractsByMasterParamsSchema>
+export type IndexerContract = z.infer<typeof indexerContractSchema>
 export type IndexerResponse<T extends z.ZodSchema> = z.infer<ReturnType<typeof indexerResponseSchema<T>>>

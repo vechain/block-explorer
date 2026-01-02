@@ -11,6 +11,7 @@ import { blockExpandedQueryOptions, bestBlockCompressedQueryOptions } from '@/se
 import { accountTotalsQueryOptions, AccountTimeFrame } from './account-totals'
 import { accountOverviewQueryOptions } from './account-overview'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
+import { contractsByMasterQueryOptions } from './contracts'
 import { nftHoldersQueryOptions } from './nft-holders'
 import { accountErc721TokensQueryOptions } from './nfts'
 import type {
@@ -19,6 +20,7 @@ import type {
   IndexerGetErc721Params,
   IndexerGetTransactionsParams,
   IndexerGetTransfersParams,
+  IndexerGetContractsByMasterParams,
 } from './schemas'
 import { totalVetStakedQueryOptions } from './total-vet-staked'
 import { type TotalVetStakedRange, totalVetStakedHistoricQueryOptions } from './total-vet-staked-historic'
@@ -104,6 +106,11 @@ export const useAccountErc20Contracts = ({ params }: { params: IndexerGetErc20Co
 export const useAccountErc721 = ({ params }: { params: IndexerGetErc721Params }) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(accountErc721TokensQueryOptions(activeNetwork.name, params))
+}
+
+export const useContractsByMaster = ({ params }: { params: IndexerGetContractsByMasterParams }) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(contractsByMasterQueryOptions(activeNetwork.name, params))
 }
 
 export const useValidatorsCount = (status?: ValidatorStatus) => {
