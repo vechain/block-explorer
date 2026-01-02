@@ -1,9 +1,8 @@
-import { Flex, Stack, Table, Tabs } from '@chakra-ui/react'
+import { Flex, Heading, Stack, Table, Tabs } from '@chakra-ui/react'
 import { LuArrowLeftRight } from 'react-icons/lu'
 import { TbTransfer } from 'react-icons/tb'
-import { CopyToClipBoard } from '@/components/ui-legacy/CopyToClipBoard'
+import { IDChip } from '@/components/ui/IDChip'
 import { VETBalance, VTHOBalance } from '@/components/ui-legacy/TokenBalance'
-import { Subtitle, Title } from '@/components/ui-legacy/Typography'
 import { VnsBadge } from '@/components/ui-legacy/VnsBadge'
 import { useTabs } from '@/hooks/useTabs'
 import type { Account } from '@/lib/schemas'
@@ -24,11 +23,12 @@ export const ContractDetails = ({ account }: { account: Account }) => {
   ]
 
   return (
-    <Stack flex={1}>
-      <Title>{t('Contract Details')}</Title>
-      <Flex alignItems="center" gap={2}>
-        <Subtitle>{account.address}</Subtitle>
-        <CopyToClipBoard value={account.address} />
+    <Stack flex={1} gap="8">
+      <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
+        <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap" mb={{ base: '6', md: '0' }}>
+          {t('Contract Details')}
+        </Heading>
+        <IDChip value={account.address} vnsName={vnsName} />
       </Flex>
 
       <Table.ScrollArea my={12} borderWidth="1px" rounded="md">
