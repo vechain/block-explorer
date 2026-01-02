@@ -10,8 +10,8 @@ import type { AddressString } from '@/lib/schemas'
 import { useAccountOverview } from '@/services/veworld-indexer/hooks'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useAccountTokens } from '@/hooks/useAccountTokens'
-import { TokenBalanceSection } from './TokenBalanceSection'
-import { TokenValueSection } from './TokenValueSection'
+import { TokenBalanceSection } from '../sections/TokenBalanceSection'
+import { TokenValueSection } from '../sections/TokenValueSection'
 
 export const AccountSummary = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()

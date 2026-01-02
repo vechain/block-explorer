@@ -3,15 +3,15 @@ import { useState } from 'react'
 import { NoTransactions } from '@/components/NoResults'
 import { Pagination } from '@/components/ui-legacy/Pagination'
 import type { AddressString } from '@/lib/schemas'
-import { useContractTransactions } from '@/services/veworld-indexer/hooks'
-import { TransactionsTable } from './TransactionsTable'
+import { useAccountTransactions } from '@/services/veworld-indexer/hooks'
+import { TransactionsTable } from '../shared/TransactionsTable'
 
 const PAGE_SIZE = 30
 
-export const ContractTransactionsTab = ({ address }: { address: AddressString }) => {
+export const AccountTransactionsTab = ({ address }: { address: AddressString }) => {
   const [page, setPage] = useState(0)
-  const { data: transactions, isLoading } = useContractTransactions({
-    params: { contractAddress: address, page, size: PAGE_SIZE },
+  const { data: transactions, isLoading } = useAccountTransactions({
+    params: { origin: address, page, size: PAGE_SIZE },
   })
 
   if (isLoading) return <div>Loading...</div>

@@ -3,7 +3,7 @@
 import { Button, Flex, Heading, Stack, Text, Skeleton } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TokenBalanceRow } from './TokenBalanceRow'
+import { TokenBalanceRow } from '../shared/TokenBalanceRow'
 import type { TokenBalanceRow as TokenBalanceRowType } from '@/hooks/useAccountTokens'
 
 interface TokenBalanceSectionProps {
