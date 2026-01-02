@@ -1,7 +1,17 @@
-import { Box, Flex, Grid, Skeleton, type SkeletonProps, Text, type TextProps } from '@chakra-ui/react'
+import {
+  Box,
+  BoxProps,
+  Flex,
+  Grid,
+  GridProps,
+  Skeleton,
+  type SkeletonProps,
+  Text,
+  type TextProps,
+} from '@chakra-ui/react'
 import type { AddressString } from '@/lib/schemas'
 
-type CellValue = string | number | AddressString | boolean
+type CellValue = string | number | AddressString | boolean | bigint
 
 type TableRow = {
   id: string
@@ -32,6 +42,8 @@ export type Column<T extends TableRow = TableRow> = {
 type DataTableProps<T extends TableRow = TableRow> = {
   columns: Column<T>[]
   rows: T[]
+  gridProps?: GridProps
+  containerProps?: BoxProps
 }
 
 const border = '1px solid var(--chakra-colors-border-primary)'
@@ -68,13 +80,19 @@ const getCellBorders = (rowIndex: number, colIndex: number, totalCols: number) =
   }
 }
 
-export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: DataTableProps<T>) => (
-  <Box overflowX="auto">
+export const DataTable = <T extends TableRow = TableRow>({
+  columns,
+  rows,
+  gridProps,
+  containerProps,
+}: DataTableProps<T>) => (
+  <Box overflowX="auto" {...containerProps}>
     <Grid
       templateColumns={getTemplateColumns(columns.length)}
       textStyle="bodyM"
       role="table"
       aria-rowcount={rows.length + 1}
+      {...gridProps}
     >
       {/* Header Row */}
       <Grid gridColumn="1 / -1" templateColumns="subgrid" role="row" aria-rowindex={1}>
@@ -105,7 +123,7 @@ export const DataTable = <T extends TableRow = TableRow>({ columns, rows }: Data
               {...getCellBorderRadius(rowIndex, colIndex, rows.length, columns.length)}
               role="cell"
             >
-              <Flex justifyContent="center">
+              <Flex justifyContent="center" alignItems="center" h="full">
                 {column.Cell ? (
                   <column.Cell value={row[column.key]} row={row} columnKey={column.key} />
                 ) : (

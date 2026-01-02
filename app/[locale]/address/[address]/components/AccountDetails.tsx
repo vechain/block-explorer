@@ -14,6 +14,7 @@ import { AccountTokensTab } from './AccountTokensTab'
 import { AccountTransactionsTab } from './AccountTransactionsTab'
 import { AccountTransfersTab } from './AccountTransfersTab'
 import { AccountSummary } from './AccountSummary'
+import { AccountTransactionsSection } from './AccountTransactionsSection'
 
 export const AccountDetails = ({ account }: { account: Account }) => {
   const { t } = useTranslation()
@@ -32,6 +33,7 @@ export const AccountDetails = ({ account }: { account: Account }) => {
   return (
     <Stack flex={1} gap="8">
       <AccountSummary address={account.address} />
+      <AccountTransactionsSection address={account.address} />
 
       <Table.ScrollArea my={12} borderWidth="1px" rounded="md">
         <Table.Root size="md">

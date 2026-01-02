@@ -44,6 +44,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
 
         <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
           <DataCard
+            variant="secondary"
             icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
             title={t('First Seen')}
             tooltip={t('Information coming soon')}
@@ -58,6 +59,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
           </DataCard>
 
           <DataCard
+            variant="secondary"
             icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
             title={t('Last Seen')}
             tooltip={t('Information coming soon')}
@@ -72,6 +74,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
           </DataCard>
 
           <DataCard
+            variant="secondary"
             icon={<Image src="/icons/transaction.svg" alt="Transactions" />}
             title={t('Total Transactions')}
             tooltip={t('Information coming soon')}
@@ -87,6 +90,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
           </DataCard>
 
           <DataCard
+            variant="secondary"
             icon={<Image src="/icons/clause.svg" alt="Clauses" />}
             title={t('Total Clauses')}
             tooltip={t('Information coming soon')}
