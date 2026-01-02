@@ -1,6 +1,6 @@
 import { Flex, Heading, Stack, Text, Skeleton } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import { TokenValueRow } from './TokenValueRow'
+import { TokenValueRow } from '../shared/TokenValueRow'
 import type { TokenValueRow as TokenValueRowType } from '@/hooks/useAccountTokens'
 
 interface TokenValueSectionProps {
