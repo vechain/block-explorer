@@ -1,14 +1,15 @@
 'use client'
 
-import { Flex, Heading, IconButton, Text, NativeSelect, useBreakpointValue } from '@chakra-ui/react'
+import { Flex, Heading, useBreakpointValue } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LuChevronLeft, LuChevronRight, LuCircleCheck, LuLeaf } from 'react-icons/lu'
+import { LuCircleCheck, LuLeaf } from 'react-icons/lu'
 import { NoTransactions } from '@/components/NoResults'
 import { AgeText } from '@/components/ui/AgeText'
 import { Card } from '@/components/ui/Card'
 import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
+import { PaginationControls } from '@/components/ui/PaginationControls'
 import { type Column, DataTable, TableSkeleton } from '@/components/ui/Table'
 import type { AddressString } from '@/lib/schemas'
 const truncateHash = (hash: string) => `${hash.slice(0, 10)}...${hash.slice(-4)}`
@@ -143,46 +144,14 @@ export const AccountTransactionsSection = ({ address }: { address: AddressString
       )}
 
       {transactions && transactions.data.length > 0 && (
-        <Flex justifyContent="flex-end" alignItems="center" gap={4} pt={4}>
-          <Text textStyle="bodyS" color="text-secondary">
-            {t('Rows per page')}
-          </Text>
-          <Flex alignItems="center" gap={2}>
-            <NativeSelect.Root size="sm" width="70px">
-              <NativeSelect.Field value={pageSize} onChange={e => handlePageSizeChange(Number(e.target.value))}>
-                {PAGE_SIZE_OPTIONS.map(size => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </NativeSelect.Field>
-              <NativeSelect.Indicator />
-            </NativeSelect.Root>
-          </Flex>
-          <Text textStyle="bodyS" color="text-secondary">
-            {t('Page')} {page + 1}
-          </Text>
-          <Flex gap={1}>
-            <IconButton
-              aria-label={t('Previous page')}
-              variant="ghost"
-              size="sm"
-              disabled={page === 0}
-              onClick={() => setPage(p => p - 1)}
-            >
-              <LuChevronLeft />
-            </IconButton>
-            <IconButton
-              aria-label={t('Next page')}
-              variant="ghost"
-              size="sm"
-              disabled={!transactions.pagination.hasNext}
-              onClick={() => setPage(p => p + 1)}
-            >
-              <LuChevronRight />
-            </IconButton>
-          </Flex>
-        </Flex>
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+          hasNext={transactions.pagination.hasNext}
+          onPageChange={setPage}
+          onPageSizeChange={handlePageSizeChange}
+        />
       )}
     </Card>
   )
