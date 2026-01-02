@@ -11,8 +11,8 @@ const CONTRACTS_BY_MASTER_QUERY_KEY = 'getContractsByMaster'
 export const contractsByMasterQueryOptions = (networkName: NetworkName, params: IndexerGetContractsByMasterParams) => ({
   queryKey: [CONTRACTS_BY_MASTER_QUERY_KEY, networkName, params],
   queryFn: () => getContractsByMaster({ networkName, params }),
-  staleTime: 60 * 10000, // Contracts list is relatively static, consider fresh for 1 minute
-  placeholderData: keepPreviousData, // Prevent UI flickering during pagination
+  staleTime: 60 * 10000, // 10 minutes
+  placeholderData: keepPreviousData,
 })
 
 const getContractsByMaster = async ({
