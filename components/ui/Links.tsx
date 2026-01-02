@@ -2,6 +2,7 @@ import { Link as ChakraLink, type LinkProps as ChakraLinkProps, Flex, Skeleton }
 import Link, { type LinkProps as NextLinkProps } from 'next/link'
 import type { AddressString } from '@/lib/schemas'
 import { truncateAddress } from '@/lib/utils/address'
+import { stripVnsSuffix } from '@/lib/utils/vns'
 import { CopyToClipBoard } from './CopyToClipBoard'
 import { useVnsName } from '@/services/thor/hooks'
 interface BaseLinkProps extends Omit<ChakraLinkProps, 'href'> {
@@ -38,7 +39,7 @@ export const AddressLink = ({ address, truncate = false, ...props }: AddressLink
 
   return (
     <BaseLink href={`/address/${address}`} {...props}>
-      {vnsName ? vnsName : truncate ? truncateAddress(address) : address}
+      {vnsName ? stripVnsSuffix(vnsName) : truncate ? truncateAddress(address) : address}
     </BaseLink>
   )
 }
@@ -73,7 +74,7 @@ export const CopyableAddressLink = ({ address, truncate = false, ...props }: Cop
 
   return (
     <CopyableLink href={`/address/${address}`} value={address} {...props}>
-      {vnsName ? vnsName : truncate ? truncateAddress(address) : address}
+      {vnsName ? stripVnsSuffix(vnsName) : truncate ? truncateAddress(address) : address}
     </CopyableLink>
   )
 }

@@ -1,5 +1,6 @@
 import { Badge, Text } from '@chakra-ui/react'
 import type { AddressString } from '@/lib/schemas'
+import { stripVnsSuffix } from '@/lib/utils/vns'
 import { useVnsName } from '@/services/thor/hooks'
 import { Tooltip } from '../ui/Tooltip'
 import { AddressLink, CopyableLink } from './Links'
@@ -29,6 +30,8 @@ export const VnsBadge = ({
 }) => {
   if (!vnsName) return '-'
 
+  const displayName = stripVnsSuffix(vnsName)
+
   return (
     <CopyableLink to={`/address/${address}`} value={address}>
       <Tooltip showArrow positioning={{ placement: 'top' }} openDelay={0} closeDelay={0} content={vnsName}>
@@ -42,7 +45,7 @@ export const VnsBadge = ({
           boxShadow="none"
         >
           <Text as="span" maxW="150px" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
-            {vnsName}
+            {displayName}
           </Text>
         </Badge>
       </Tooltip>
