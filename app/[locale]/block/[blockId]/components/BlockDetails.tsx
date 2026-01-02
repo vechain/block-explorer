@@ -38,6 +38,7 @@ export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
         <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
           {/* Date and time */}
           <DataCard
+            variant="secondary"
             icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
             title={t('Block Number')}
             tooltip={t('Information coming soon')}
@@ -49,6 +50,7 @@ export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
 
           {/* Clauses count */}
           <DataCard
+            variant="secondary"
             icon={<Image src="/icons/clause.svg" alt="Clauses" />}
             title={t('Total Clauses')}
             tooltip={t('Information coming soon')}
@@ -58,6 +60,7 @@ export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
 
           {/* Block signer */}
           <DataCard
+            variant="secondary"
             icon={<Image src="/icons/link.svg" alt="Signer" />}
             title={t('Block Signer')}
             tooltip={t('Information coming soon')}
@@ -67,6 +70,7 @@ export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
 
           {/* Parent block */}
           <DataCard
+            variant="secondary"
             icon={<Image src="/icons/link.svg" alt="Parent block" />}
             title={t('Parent block')}
             tooltip={t('Information coming soon')}

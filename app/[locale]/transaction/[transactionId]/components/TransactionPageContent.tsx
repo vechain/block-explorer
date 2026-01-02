@@ -78,6 +78,7 @@ const TransactionDetails = ({
       <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
         {/* Block Number */}
         <DataCard
+          variant="secondary"
           icon={<Image src="/icons/block-number.svg" alt="Block Number" />}
           title={t('Block Number')}
           tooltip="Information coming soon"
@@ -87,6 +88,7 @@ const TransactionDetails = ({
 
         {/* Total Clauses */}
         <DataCard
+          variant="secondary"
           icon={<Image src="/icons/clause.svg" alt="Clauses" />}
           title={t('Total Clauses')}
           tooltip={t('Information coming soon')}
@@ -96,6 +98,7 @@ const TransactionDetails = ({
 
         {/* Rewards */}
         <DataCard
+          variant="secondary"
           icon={<Image src="/icons/reward.svg" alt="Rewards" />}
           title={t('Rewards')}
           tooltip={t('Information coming soon')}
