@@ -10,7 +10,6 @@ const variantStyles = {
   },
   secondary: {
     bg: 'bg-secondary',
-    border: 'none',
   },
   tertiary: {
     bg: 'bg-alt-primary',
