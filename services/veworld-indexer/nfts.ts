@@ -3,6 +3,7 @@ import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
+import { keepPreviousData } from '@tanstack/react-query'
 import { resolveUrl } from '.'
 import {
   type IndexerGetErc721Params,
@@ -16,6 +17,7 @@ const ERC721_TOKENS_QUERY_KEY = 'getErc721Tokens'
 export const accountErc721TokensQueryOptions = (networkName: NetworkName, params: IndexerGetErc721Params) => ({
   queryKey: [ERC721_TOKENS_QUERY_KEY, networkName, params],
   queryFn: () => getErc721Tokens({ networkName, params }),
+  placeholderData: keepPreviousData,
   select: (data: IndexerResponse<typeof indexerErc721Schema>) => {
     const tokenIdsMap = data.data.reduce((acc, nft) => {
       const { tokenId, contractAddress } = nft
