@@ -1,11 +1,11 @@
 'use client'
 
-import { Flex, Grid, Heading, IconButton, NativeSelect, Text } from '@chakra-ui/react'
+import { Grid, Heading } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LuChevronLeft, LuChevronRight } from 'react-icons/lu'
 import { NoTokens } from '@/components/NoResults'
 import { Card } from '@/components/ui/Card'
+import { PaginationControls } from '@/components/ui/PaginationControls'
 import type { AddressString } from '@/lib/schemas'
 import { type Erc721, useErc721Contracts } from '@/services/thor/tokens/erc721'
 import { useAccountErc721 } from '@/services/veworld-indexer/hooks'
@@ -61,44 +61,15 @@ export const AccountNftsSection = ({ address }: { address: AddressString }) => {
       )}
 
       {hasNfts && (
-        <Flex justifyContent="flex-end" alignItems="center" gap={4} pt={4} flexWrap="wrap">
-          <Text textStyle="bodyS" color="text-secondary">
-            {t('Rows per page')}
-          </Text>
-          <NativeSelect.Root size="sm" width="70px">
-            <NativeSelect.Field value={pageSize} onChange={e => handlePageSizeChange(Number(e.target.value))}>
-              {PAGE_SIZE_OPTIONS.map(size => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </NativeSelect.Field>
-            <NativeSelect.Indicator />
-          </NativeSelect.Root>
-          <Text textStyle="bodyS" color="text-secondary">
-            {t('Page')} {page + 1}
-          </Text>
-          <Flex gap={1}>
-            <IconButton
-              aria-label={t('Previous page')}
-              variant="ghost"
-              size="sm"
-              disabled={page === 0}
-              onClick={() => setPage(p => p - 1)}
-            >
-              <LuChevronLeft />
-            </IconButton>
-            <IconButton
-              aria-label={t('Next page')}
-              variant="ghost"
-              size="sm"
-              disabled={!pagination?.hasNext}
-              onClick={() => setPage(p => p + 1)}
-            >
-              <LuChevronRight />
-            </IconButton>
-          </Flex>
-        </Flex>
+        <PaginationControls
+          page={page}
+          pageSize={pageSize}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+          hasNext={pagination?.hasNext ?? false}
+          onPageChange={setPage}
+          onPageSizeChange={handlePageSizeChange}
+          flexWrap="wrap"
+        />
       )}
     </Card>
   )
