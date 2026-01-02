@@ -17,7 +17,14 @@ const ERC721_TOKENS_QUERY_KEY = 'getErc721Tokens'
 export const accountErc721TokensQueryOptions = (networkName: NetworkName, params: IndexerGetErc721Params) => ({
   queryKey: [ERC721_TOKENS_QUERY_KEY, networkName, params],
   queryFn: () => getErc721Tokens({ networkName, params }),
+
   placeholderData: keepPreviousData,
+  staleTime: 30_000,
+  gcTime: 10 * 60_000,
+  refetchInterval: 2 * 60_000,
+  refetchOnWindowFocus: true,
+  retry: 2,
+
   select: (data: IndexerResponse<typeof indexerErc721Schema>) => {
     const tokenIdsMap = data.data.reduce((acc, nft) => {
       const { tokenId, contractAddress } = nft
@@ -36,7 +43,6 @@ export const accountErc721TokensQueryOptions = (networkName: NetworkName, params
       pagination: data.pagination,
     }
   },
-  retry: false,
 })
 
 const getErc721Tokens = async ({
