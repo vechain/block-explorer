@@ -16,7 +16,6 @@ export type TxGasFeesResult =
       type: 'legacy'
       gasPriceCoef: number
       legacyBaseFeePerGas: bigint
-      totalGasUsed: bigint
       totalFeePaid: bigint
     }
   | {
@@ -54,11 +53,7 @@ export const useTransactionGasInsights = ({
       ...transactionGasInsights,
       {
         label: t('Gas Price Coef'),
-        value: txGasFees.gasPriceCoef,
-      },
-      {
-        label: t('Total Gas Used'),
-        value: txGasFees.totalGasUsed.toLocaleString(),
+        value: `${txGasFees.gasPriceCoef} / 255 -- ${((txGasFees.gasPriceCoef / 255) * 100).toFixed(0)}%`,
       },
       {
         label: t('Base Fee per Gas'),
@@ -110,12 +105,9 @@ const useTxGasFees = ({ transaction, gasUsed }: { transaction: Transaction; gasU
     type: 'legacy',
     gasPriceCoef,
     legacyBaseFeePerGas: legacyBaseFeePerGas,
-    totalGasUsed: calculateLegacyTotalGasUsed({ gasPriceCoef, gasUsed }),
     totalFeePaid: calculateLegacyTotalFeePaid({ gasPriceCoef, legacyBaseFeePerGas, gasUsed }),
   }
 }
-
-// functions for calculating the total gas used and total fee paid
 
 /**
  * Dynamic transactions
@@ -159,11 +151,6 @@ function calculatePriorityFeePerGas({
 /**
  * Legacy transactions
  * */
-function calculateLegacyTotalGasUsed({ gasPriceCoef, gasUsed }: { gasPriceCoef: number; gasUsed: bigint }): bigint {
-  const totalGasUsed = new BigNumber(gasPriceCoef / 255 + 1).multipliedBy(gasUsed).integerValue().toString()
-  return BigInt(totalGasUsed)
-}
-
 function calculateLegacyTotalFeePaid({
   gasPriceCoef,
   legacyBaseFeePerGas,
@@ -173,7 +160,8 @@ function calculateLegacyTotalFeePaid({
   legacyBaseFeePerGas: bigint
   gasUsed: bigint
 }): bigint {
-  const totalFeePaid = new BigNumber(calculateLegacyTotalGasUsed({ gasPriceCoef, gasUsed }))
+  const totalFeePaid = new BigNumber(gasPriceCoef / 255 + 1)
+    .multipliedBy(gasUsed)
     .multipliedBy(legacyBaseFeePerGas)
     .toString()
 
