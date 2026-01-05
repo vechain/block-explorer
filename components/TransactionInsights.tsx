@@ -10,13 +10,14 @@ import { AddressLink } from '@/components/ui/Links'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Card } from '@/components/ui/Card'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
-import { GasUsed, TxFeePaid, TxGasFees, useTxGasFees } from './ui/GasFees'
+import { useTransactionGasInsights } from '@/hooks/useTransactionGasInsights'
 import { TxTypeBadge } from '@/components/ui/TxTypeBadge'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { VETBalance } from './ui/Balance'
 import BigNumber from 'bignumber.js'
 import { useBestBlockCompressed } from '@/services/thor/hooks'
+import { InsightType } from '@/lib/types'
 
 export const TransactionInsight = ({
   transaction,
@@ -30,51 +31,40 @@ export const TransactionInsight = ({
   const formatDate = useFormatDate()
   const isMobile = useIsMobile()
 
-  const status = receipt ? (receipt.reverted ? 'reverted' : 'success') : 'pending'
-  const gasUsed = receipt?.gasUsed ?? BigInt(0)
-  const gasLimit = transaction.gas
-
-  const gasFees = useTxGasFees({ transaction, gasUsed })
   const { data: bestBlock, isPending: isBestBlockPending } = useBestBlockCompressed()
 
-  const VETValue = BigInt(
-    transaction.clauses.reduce((acc, clause) => acc.plus(clause.value), new BigNumber(0)).toString(),
-  )
+  const transactionGasInsights = useTransactionGasInsights({
+    transaction,
+    gasUsed: receipt?.gasUsed ?? BigInt(0),
+    gasPayer: receipt?.gasPayer ?? null,
+  })
 
-  const transactionInsights = [
+  const transactionInsights: InsightType[] = [
     {
       label: t('Origin'),
       value: <AddressLink address={transaction.origin} truncate />,
     },
     {
-      // TODO: This section needs to be refined in the designs
-      label: t('Gas Price'),
-      value: <TxGasFees gasFees={gasFees} />,
-    },
-    {
-      label: t('Gas Used'),
-      value: <GasUsed gasUsed={gasUsed} gasLimit={gasLimit} />,
-    },
-    {
       label: t('Type'),
       value: <TxTypeBadge type={transaction.type} />,
     },
-    {
-      label: t('Fee Paid'),
-      value: <TxFeePaid gasFees={gasFees} gasPayer={receipt?.gasPayer ?? null} />,
-    },
+    ...transactionGasInsights,
     {
       label: t('Size'),
       value: `${formatNumber(transaction.size)} B`,
     },
   ]
 
+  const status = receipt ? (receipt.reverted ? 'reverted' : 'success') : 'pending'
+  const confirmations = getConfirmations(bestBlock?.number, transaction.meta.blockNumber)
+  const confirmationsStatus = getConfirmationsStatus(confirmations)
+  const VETValue = BigInt(
+    transaction.clauses.reduce((acc, clause) => acc.plus(clause.value), new BigNumber(0)).toString(),
+  )
+
   const TransactionDate = () => {
     return <Text color="text-secondary">{formatDate(transaction.meta.blockTimestamp)}</Text>
   }
-
-  const confirmations = getConfirmations(bestBlock?.number, transaction.meta.blockNumber)
-  const confirmationsStatus = getConfirmationsStatus(confirmations)
 
   return (
     <Card variant="tertiary">
@@ -98,7 +88,7 @@ export const TransactionInsight = ({
           border="1px solid"
           textStyle="bodyM"
           borderColor="border-primary"
-          templateColumns="115px auto"
+          templateColumns="auto auto"
         >
           {transactionInsights.map((insight, index) => (
             <Fragment key={insight.label}>
@@ -106,6 +96,7 @@ export const TransactionInsight = ({
                 alignItems="center"
                 py="4"
                 pl="6"
+                whiteSpace="nowrap"
                 borderBottom={
                   index !== transactionInsights.length - 1 ? '1px solid var(--chakra-colors-border-primary)' : 'none'
                 }

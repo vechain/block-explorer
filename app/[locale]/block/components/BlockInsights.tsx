@@ -10,13 +10,15 @@ import type { ExpandedBlock } from '@/lib/schemas'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { Fragment } from 'react'
 import { TxFeaturesBadge } from '@/components/ui/TxTypeBadge'
+import { formatGwei } from 'viem'
+import { InsightType } from '@/lib/types'
 
 export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
   const formatDate = useFormatDate()
 
-  const blockInsights = [
+  const blockInsights: InsightType[] = [
     {
       label: t('Type'),
       value: <TxFeaturesBadge features={block.txsFeatures} />,
@@ -32,6 +34,10 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
     {
       label: t('Gas Limit'),
       value: formatNumber(Number(block.gasLimit)),
+    },
+    {
+      label: t('Base Fee per Gas'),
+      value: block.baseFeePerGas ? `${formatNumber(Number(formatGwei(block.baseFeePerGas)))} Gwei` : '-',
     },
     {
       label: t('Transactions'),

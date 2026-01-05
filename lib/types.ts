@@ -3,3 +3,8 @@ export enum TransactionDetailsView {
   CLAUSES = 'clauses',
   EVENTS = 'events',
 }
+
+export type InsightType = {
+  label: string
+  value: string | React.ReactNode
+}
