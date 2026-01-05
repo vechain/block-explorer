@@ -2,6 +2,27 @@ import { formatEther, formatGwei, formatUnits, hexToBigInt } from 'viem'
 import { type HexString, hexStringSchema } from '@/lib/schemas'
 import { Locale } from '@/i18n/config'
 
+/**
+ * Cache for Intl.NumberFormat instances to avoid expensive re-creation on every call.
+ * The Intl.NumberFormat constructor is costly - caching improves performance significantly
+ * for high-frequency formatting (charts, tables, lists).
+ */
+const numberFormatCache = new Map<string, Intl.NumberFormat>()
+
+/**
+ * Gets a cached Intl.NumberFormat instance or creates one if not cached.
+ * Cache key is derived from locale + stringified options.
+ */
+const getNumberFormatter = (locale: string, options?: Intl.NumberFormatOptions): Intl.NumberFormat => {
+  const key = options ? `${locale}:${JSON.stringify(options)}` : locale
+  let formatter = numberFormatCache.get(key)
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, options)
+    numberFormatCache.set(key, formatter)
+  }
+  return formatter
+}
+
 export const formatHexToGwei = (value: string) => {
   const result = hexStringSchema.safeParse(value)
   if (!result.success) {
@@ -24,9 +45,11 @@ export const formatAmount = ({
 
   const fullAmount = formatUnits(bigIntAmount, decimals ?? 18)
 
+  const effectiveLocale = locale || Locale.EN
+
   // Check if it's an integer
   if (!fullAmount.includes('.')) {
-    const formattedInteger = Number(fullAmount).toLocaleString(locale || Locale.EN)
+    const formattedInteger = getNumberFormatter(effectiveLocale).format(Number(fullAmount))
     return [formattedInteger, fullAmount]
   }
 
@@ -38,10 +61,10 @@ export const formatAmount = ({
   const fixed = significantDigits.length <= 4 ? significantDigits.length : 4
 
   // Format with locale-specific thousands separators
-  const formattedNumber = Number(fullAmount).toLocaleString(locale || Locale.EN, {
+  const formattedNumber = getNumberFormatter(effectiveLocale, {
     minimumFractionDigits: fixed,
     maximumFractionDigits: fixed,
-  })
+  }).format(Number(fullAmount))
 
   return [formattedNumber, fullAmount]
 }
@@ -74,7 +97,7 @@ export const formatAbbreviated = (amount: bigint, locale: Locale = Locale.EN) =>
   // Convert to number for compact display (precision loss acceptable for abbreviation)
   const num = Number(formatEther(amount))
 
-  return new Intl.NumberFormat(locale, {
+  return getNumberFormatter(locale, {
     notation: 'compact',
     compactDisplay: 'short',
     maximumFractionDigits: 1,
@@ -97,7 +120,7 @@ export const formatAbbreviated = (amount: bigint, locale: Locale = Locale.EN) =>
  * ```
  */
 export const formatNumber = (num: number, locale?: Locale, options?: Intl.NumberFormatOptions): string => {
-  return num.toLocaleString(locale || Locale.EN, options)
+  return getNumberFormatter(locale || Locale.EN, options).format(num)
 }
 
 /**
@@ -122,9 +145,9 @@ export const formatCurrency = (
   currency: string,
   options?: Intl.NumberFormatOptions,
 ): string => {
-  return num.toLocaleString(locale || Locale.EN, {
+  return getNumberFormatter(locale || Locale.EN, {
     style: 'currency',
     currency,
     ...options,
-  })
+  }).format(num)
 }
