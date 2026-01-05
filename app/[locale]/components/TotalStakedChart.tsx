@@ -1,15 +1,14 @@
 'use client'
 
 import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
-import { format } from 'date-fns'
-import { memo, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, type TooltipContentProps, XAxis, YAxis } from 'recharts'
 import { formatEther } from 'viem'
 import { useTotalVetStaked, useTotalVetStakedHistoric } from '@/services/veworld-indexer/hooks'
 import { TotalVetStakedRange } from '@/services/veworld-indexer/total-vet-staked-historic'
 import { Card } from '@/components/ui/Card'
-import { useFormatAbbreviated, useFormatAmount } from '@/hooks/useFormatting'
+import { useFormatAbbreviated, useFormatAmount, useFormatDate } from '@/hooks/useFormatting'
 
 const chartHeight = 140
 
@@ -123,6 +122,10 @@ export const TotalStakedChart = () => {
 }
 
 const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => {
+  const { t } = useTranslation()
+  const formatAmount = useFormatAmount()
+  const formatDate = useFormatDate()
+
   // Calculate Y-axis domain to show more variation
   const values = data.map(d => d.formattedValue)
   const minValue = values.length > 0 ? Math.min(...values) : 0
@@ -132,6 +135,30 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
   const padding = range > 0 ? range * 0.05 : maxValue * 0.01
   const domainMin = Math.max(0, minValue - padding)
   const domainMax = maxValue + padding
+
+  const renderTooltip = useCallback(
+    ({ active, payload }: TooltipContentProps<number, string>) => {
+      if (!active || !payload || payload.length === 0) return null
+
+      const dataPoint = payload[0].payload as DataPoint
+      const [formattedVetAmount] = formatAmount({ amount: dataPoint.value })
+
+      return (
+        <Stack bg="tooltip-bg" border="1px solid" borderColor="border-primary" rounded="xl" p={4}>
+          <Flex alignItems="center" gap={2}>
+            <Text textStyle="bodyMSemibold">{t('Date & Time')}:</Text>
+            <Text textStyle="bodyM">{formatDate(dataPoint.timestamp)}</Text>
+          </Flex>
+
+          <Flex alignItems="center" gap={2}>
+            <Text textStyle="bodyMSemibold">{t('Total Staked')}:</Text>
+            <Text textStyle="bodyM">{formattedVetAmount} VET</Text>
+          </Flex>
+        </Stack>
+      )
+    },
+    [t, formatAmount, formatDate],
+  )
 
   return (
     <Box height={chartHeight} mb={4}>
@@ -149,10 +176,7 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
           <XAxis dataKey="timestamp" hide={true} />
           <YAxis dataKey="formattedValue" domain={[domainMin, domainMax]} hide={true} />
 
-          <Tooltip
-            contentStyle={{ fontSize: '.8rem' }}
-            content={(props: TooltipContentProps<number, string>) => <CustomTooltip {...props} />}
-          />
+          <Tooltip contentStyle={{ fontSize: '.8rem' }} content={renderTooltip} />
           <Area
             type="monotone"
             dataKey="formattedValue"
@@ -168,29 +192,3 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
 })
 
 TotalStakedChartVisualization.displayName = 'TotalStakedChartVisualization'
-
-const CustomTooltip = ({ active, payload }: TooltipContentProps<number, string>) => {
-  const { t } = useTranslation()
-  const formatAmount = useFormatAmount()
-  const isVisible = active && payload && payload.length > 0
-
-  if (!isVisible) return null
-
-  const dataPoint = payload[0].payload as DataPoint
-
-  const [formattedVetAmount] = formatAmount({ amount: dataPoint.value })
-
-  return (
-    <Stack bg="tooltip-bg" border="1px solid" borderColor="border-primary" rounded="xl" p={4}>
-      <Flex alignItems="center" gap={2}>
-        <Text textStyle="bodyMSemibold">{t('Date & Time')}:</Text>
-        <Text textStyle="bodyM">{format(new Date(dataPoint.timestamp), 'MMM d, yyyy h:mm a')}</Text>
-      </Flex>
-
-      <Flex alignItems="center" gap={2}>
-        <Text textStyle="bodyMSemibold">{t('Total Staked')}:</Text>
-        <Text textStyle="bodyM">{formattedVetAmount} VET</Text>
-      </Flex>
-    </Stack>
-  )
-}
