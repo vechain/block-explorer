@@ -3,7 +3,7 @@ import { useBaseFeePerGas, useLegacyBaseFeePerGas } from '@/services/thor/hooks'
 import BigNumber from 'bignumber.js'
 import type { AddressString } from '@/lib/schemas'
 import { formatGwei } from 'viem'
-import { formatNumber } from '@/lib/utils/units'
+import { useFormatNumber } from '@/hooks/useFormatting'
 import type { InsightType } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { GasUsed, TxFeePaid } from '@/components/ui/GasFees'
@@ -36,6 +36,7 @@ export const useTransactionGasInsights = ({
 }): InsightType[] => {
   const txGasFees = useTxGasFees({ transaction, gasUsed })
   const { t } = useTranslation()
+  const formatNumber = useFormatNumber()
 
   const transactionGasInsights = [
     {
@@ -67,11 +68,11 @@ export const useTransactionGasInsights = ({
       ...transactionGasInsights,
       {
         label: t('Max Fee per Gas'),
-        value: Number(formatGwei(txGasFees.maxFeePerGas)).toLocaleString() + ' Gwei',
+        value: `${formatNumber(Number(formatGwei(txGasFees.maxFeePerGas)))} Gwei`,
       },
       {
         label: t('Priority Fee per Gas'),
-        value: Number(formatGwei(txGasFees.priorityFeePerGas)).toLocaleString() + ' Gwei',
+        value: `${formatNumber(Number(formatGwei(txGasFees.priorityFeePerGas)))} Gwei`,
       },
     ]
   }
