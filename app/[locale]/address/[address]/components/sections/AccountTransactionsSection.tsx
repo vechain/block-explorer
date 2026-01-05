@@ -14,6 +14,7 @@ import { type Column, DataTable, TableSkeleton } from '@/components/ui/Table'
 import type { AddressString } from '@/lib/schemas'
 const truncateHash = (hash: string) => `${hash.slice(0, 10)}...${hash.slice(-4)}`
 import { formatAmount } from '@/lib/utils/units'
+import { useFormatNumber } from '@/hooks/useFormatting'
 import { useAccountTransactions } from '@/services/veworld-indexer/hooks'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
@@ -31,6 +32,7 @@ const TxStatusIcon = ({ status }: { status: 'success' | 'reverted' | 'pending' }
 
 export const AccountTransactionsSection = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
+  const formatNumber = useFormatNumber()
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[0])
 
@@ -69,7 +71,7 @@ export const AccountTransactionsSection = ({ address }: { address: AddressString
         label: t('Block'),
         Cell: ({ row }) => (
           <CopyableLink href={`/block/${row.blockId}`} value={row.blockNumber.toString()}>
-            #{row.blockNumber.toLocaleString()}
+            #{formatNumber(row.blockNumber)}
           </CopyableLink>
         ),
       },
@@ -105,7 +107,7 @@ export const AccountTransactionsSection = ({ address }: { address: AddressString
         ),
       },
     ],
-    [t],
+    [t, formatNumber],
   )
 
   const rows: TransactionRow[] = useMemo(

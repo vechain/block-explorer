@@ -1,6 +1,6 @@
 import { formatEther, formatGwei, formatUnits, hexToBigInt } from 'viem'
 import { type HexString, hexStringSchema } from '@/lib/schemas'
-import type { Locale } from '@/i18n/config'
+import { Locale } from '@/i18n/config'
 
 export const formatHexToGwei = (value: string) => {
   const result = hexStringSchema.safeParse(value)
@@ -26,7 +26,7 @@ export const formatAmount = ({
 
   // Check if it's an integer
   if (!fullAmount.includes('.')) {
-    const formattedInteger = Number(fullAmount).toLocaleString(locale || 'en')
+    const formattedInteger = Number(fullAmount).toLocaleString(locale || Locale.EN)
     return [formattedInteger, fullAmount]
   }
 
@@ -38,7 +38,7 @@ export const formatAmount = ({
   const fixed = significantDigits.length <= 4 ? significantDigits.length : 4
 
   // Format with locale-specific thousands separators
-  const formattedNumber = Number(fullAmount).toLocaleString(locale || 'en', {
+  const formattedNumber = Number(fullAmount).toLocaleString(locale || Locale.EN, {
     minimumFractionDigits: fixed,
     maximumFractionDigits: fixed,
   })
@@ -70,33 +70,15 @@ export const formatAmount = ({
  * formatAbbreviated(BigInt('500000000000000'))      // "500"
  * ```
  */
-export const formatAbbreviated = (amount: bigint, locale?: Locale) => {
-  const amountString = formatEther(amount)
-  const [intPart] = amountString.split('.')
-  const num = Number(intPart)
+export const formatAbbreviated = (amount: bigint, locale: Locale = Locale.EN) => {
+  // Convert to number for compact display (precision loss acceptable for abbreviation)
+  const num = Number(formatEther(amount))
 
-  const resolvedLocale = locale ?? 'en'
-
-  const formatWithSuffix = (value: number, divisor: number, suffix: string) => {
-    const scaled = value / divisor
-    const fractionDigits = Number.isInteger(scaled) ? 0 : 1
-    return `${scaled.toLocaleString(resolvedLocale, {
-      minimumFractionDigits: fractionDigits,
-      maximumFractionDigits: fractionDigits,
-    })}${suffix}`
-  }
-
-  const thresholds = [
-    { divisor: 1_000_000_000, suffix: 'B' },
-    { divisor: 1_000_000, suffix: 'M' },
-    { divisor: 1_000, suffix: 'K' },
-  ] as const
-
-  for (const { divisor, suffix } of thresholds) {
-    if (num >= divisor) return formatWithSuffix(num, divisor, suffix)
-  }
-
-  return num.toLocaleString(resolvedLocale)
+  return new Intl.NumberFormat(locale, {
+    notation: 'compact',
+    compactDisplay: 'short',
+    maximumFractionDigits: 1,
+  }).format(num)
 }
 
 /**
@@ -115,7 +97,7 @@ export const formatAbbreviated = (amount: bigint, locale?: Locale) => {
  * ```
  */
 export const formatNumber = (num: number, locale?: Locale, options?: Intl.NumberFormatOptions): string => {
-  return num.toLocaleString(locale || 'en', options)
+  return num.toLocaleString(locale || Locale.EN, options)
 }
 
 /**
@@ -140,7 +122,7 @@ export const formatCurrency = (
   currency: string,
   options?: Intl.NumberFormatOptions,
 ): string => {
-  return num.toLocaleString(locale || 'en', {
+  return num.toLocaleString(locale || Locale.EN, {
     style: 'currency',
     currency,
     ...options,
