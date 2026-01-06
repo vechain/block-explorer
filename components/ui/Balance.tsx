@@ -13,12 +13,12 @@ export const VTHOBalance = ({ balance, ...props }: { balance: bigint | HexString
   return <Balance balance={balance} symbol="VTHO" decimals={18} {...props} />
 }
 
-const Balance = ({
+export const Balance = ({
   balance,
   symbol,
   decimals,
   ...props
-}: { balance: bigint | HexString; symbol: string; decimals?: number } & FlexProps) => {
+}: { balance: bigint | HexString; symbol?: string; decimals?: number } & FlexProps) => {
   const formatAmount = useFormatAmount()
   const [truncatedAmount, fullAmount] = formatAmount({ amount: balance, decimals })
   return (
@@ -26,7 +26,7 @@ const Balance = ({
       <Tooltip content={fullAmount} disabled={fullAmount === '0'}>
         <Text>{truncatedAmount}</Text>
       </Tooltip>
-      <Text>{symbol}</Text>
+      {symbol && <Text>{symbol}</Text>}
     </Flex>
   )
 }

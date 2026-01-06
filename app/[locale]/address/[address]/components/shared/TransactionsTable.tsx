@@ -1,12 +1,13 @@
 import { Table } from '@chakra-ui/react'
 import { PaidGasFees } from '@/components/PaidGasFees'
-import { TxStatus } from '@/components/TxStatus'
+import { TxStatusBadge } from '@/components/TxStatus'
 import { BlockLink, TransactionClausesLink, TransactionLink } from '@/components/ui-legacy/Links'
 import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import type { AddressString } from '@/lib/schemas'
 import type { IndexerContractTransaction, IndexerTransaction } from '@/services/veworld-indexer/schemas'
 import { useTranslation } from 'react-i18next'
 import { useFormatDate } from '@/hooks/useFormatting'
+import { TransactionStatus } from '@/lib/types'
 
 export const TransactionsTable = ({
   address,
@@ -20,7 +21,7 @@ export const TransactionsTable = ({
   const items = transactions.map(tx => ({
     key: tx.id,
     id: <TransactionLink transactionId={tx.id}>{tx.id}</TransactionLink>,
-    status: <TxStatus status={tx.reverted ? 'reverted' : 'success'} />,
+    status: <TxStatusBadge status={tx.reverted ? TransactionStatus.REVERTED : TransactionStatus.SUCCESS} />,
     origin: <VnsBadgeOrAddressLink address={tx.origin} truncateAddress />,
     block: <BlockLink blockId={tx.blockId}>{tx.blockNumber}</BlockLink>,
     timestamp: formatDate(tx.blockTimestamp),

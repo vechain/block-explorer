@@ -13,7 +13,7 @@ import type { AddressString } from '@/lib/schemas'
 
 type CellValue = string | number | AddressString | boolean | bigint
 
-type TableRow = {
+export type TableRow = {
   id: string
   [key: string]: CellValue
 }

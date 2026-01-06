@@ -1,7 +1,7 @@
 import { type Transaction, transactionTypeSchema } from '@/lib/schemas/transactions'
 import { useBaseFeePerGas, useLegacyBaseFeePerGas } from '@/services/thor/hooks'
 import BigNumber from 'bignumber.js'
-import type { AddressString } from '@/lib/schemas'
+import type { TransactionReceipt } from '@/lib/schemas'
 import { formatGwei } from 'viem'
 import { useFormatNumber } from '@/hooks/useFormatting'
 import type { InsightType } from '@/lib/types'
@@ -29,25 +29,23 @@ export type TxGasFeesResult =
 
 export const useTransactionGasInsights = ({
   transaction,
-  gasUsed,
-  gasPayer,
+  receipt,
 }: {
   transaction: Transaction
-  gasUsed: bigint
-  gasPayer: AddressString | null
+  receipt: TransactionReceipt | null
 }): InsightType[] => {
-  const txGasFees = useTxGasFees({ transaction, gasUsed })
+  const txGasFees = useTxGasFees({ transaction, receipt })
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
 
   const transactionGasInsights = [
     {
       label: t('Gas Used'),
-      value: <GasUsed gasUsed={gasUsed} gasLimit={transaction.gas} />,
+      value: <GasUsed gasUsed={receipt?.gasUsed ?? BigInt(0)} gasLimit={transaction.gas} />,
     },
     {
       label: t('Fee Paid'),
-      value: <TxFeePaid gasFees={txGasFees} gasPayer={gasPayer} />,
+      value: <TxFeePaid gasFees={txGasFees} gasPayer={receipt?.gasPayer ?? null} />,
     },
   ]
 
@@ -89,7 +87,15 @@ export const useTransactionGasInsights = ({
   return []
 }
 
-const useTxGasFees = ({ transaction, gasUsed }: { transaction: Transaction; gasUsed: bigint }): TxGasFeesResult => {
+const useTxGasFees = ({
+  transaction,
+  receipt,
+}: {
+  transaction: Transaction
+  receipt: TransactionReceipt | null
+}): TxGasFeesResult => {
+  const totalFeePaid = receipt?.paid ?? BigInt(0)
+
   const { isLoading: isBaseFeePerGasLoading, data: baseFeePerGas } = useBaseFeePerGas(transaction?.meta.blockID)
   const { isLoading: isLegacyBaseFeePerGasLoading, data: legacyBaseFeePerGas } = useLegacyBaseFeePerGas()
 
@@ -105,7 +111,7 @@ const useTxGasFees = ({ transaction, gasUsed }: { transaction: Transaction; gasU
       type: 'dynamic',
       maxFeePerGas,
       priorityFeePerGas: calculatePriorityFeePerGas({ maxPriorityFeePerGas, maxFeePerGas, baseFeePerGas }),
-      totalFeePaid: calculateDynamicTotalFeePaid({ maxPriorityFeePerGas, maxFeePerGas, baseFeePerGas, gasUsed }),
+      totalFeePaid,
     }
   }
 
@@ -115,29 +121,8 @@ const useTxGasFees = ({ transaction, gasUsed }: { transaction: Transaction; gasU
     type: 'legacy',
     gasPriceCoef,
     legacyBaseFeePerGas: legacyBaseFeePerGas,
-    totalFeePaid: calculateLegacyTotalFeePaid({ gasPriceCoef, legacyBaseFeePerGas, gasUsed }),
+    totalFeePaid,
   }
-}
-
-/**
- * Dynamic transactions
- * */
-function calculateDynamicTotalFeePaid({
-  maxPriorityFeePerGas,
-  maxFeePerGas,
-  baseFeePerGas,
-  gasUsed,
-}: {
-  maxPriorityFeePerGas: bigint
-  maxFeePerGas: bigint
-  baseFeePerGas: bigint
-  gasUsed: bigint
-}): bigint {
-  const totalFeePaid = new BigNumber(calculatePriorityFeePerGas({ maxPriorityFeePerGas, maxFeePerGas, baseFeePerGas }))
-    .multipliedBy(gasUsed)
-    .toString()
-
-  return BigInt(totalFeePaid)
 }
 
 function calculatePriorityFeePerGas({
@@ -156,24 +141,4 @@ function calculatePriorityFeePerGas({
 
   const priorityFeePerGas = new BigNumber(maxPriorityFeePerGas).toString()
   return BigInt(priorityFeePerGas)
-}
-
-/**
- * Legacy transactions
- * */
-function calculateLegacyTotalFeePaid({
-  gasPriceCoef,
-  legacyBaseFeePerGas,
-  gasUsed,
-}: {
-  gasPriceCoef: number
-  legacyBaseFeePerGas: bigint
-  gasUsed: bigint
-}): bigint {
-  const totalFeePaid = new BigNumber(gasPriceCoef / 255 + 1)
-    .multipliedBy(gasUsed)
-    .multipliedBy(legacyBaseFeePerGas)
-    .toString()
-
-  return BigInt(totalFeePaid)
 }
