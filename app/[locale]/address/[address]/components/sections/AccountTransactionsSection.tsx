@@ -4,7 +4,7 @@ import { Flex, Heading, useBreakpointValue } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LuCircleCheck, LuLeaf } from 'react-icons/lu'
+import { LuLeaf } from 'react-icons/lu'
 import { NoTransactions } from '@/components/NoResults'
 import { AgeText } from '@/components/ui/AgeText'
 import { Card } from '@/components/ui/Card'
@@ -16,19 +16,10 @@ const truncateHash = (hash: string) => `${hash.slice(0, 10)}...${hash.slice(-4)}
 import { formatAmount } from '@/lib/utils/units'
 import { useFormatNumber } from '@/hooks/useFormatting'
 import { useAccountTransactions } from '@/services/veworld-indexer/hooks'
+import { TxStatusIcon } from '@/components/TxStatus'
+import { TransactionStatus } from '@/lib/types'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
-
-const TxStatusIcon = ({ status }: { status: 'success' | 'reverted' | 'pending' }) => {
-  switch (status) {
-    case 'success':
-      return <LuCircleCheck color="var(--chakra-colors-success-text)" width={16} height={16} />
-    case 'reverted':
-      return <Image src="/icons/revert.svg" alt="Reverted" width={12} height={12} />
-    case 'pending':
-      return <Image src="/icons/pending.svg" alt="Pending" width={16} height={16} />
-  }
-}
 
 export const AccountTransactionsSection = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
@@ -124,7 +115,7 @@ export const AccountTransactionsSection = ({ address }: { address: AddressString
         isDelegated: tx.gasPayer.toLowerCase() !== tx.origin.toLowerCase(),
         co2e: '-',
         vthoBurn: tx.paid,
-        status: tx.reverted ? ('reverted' as const) : ('success' as const),
+        status: tx.reverted ? TransactionStatus.REVERTED : TransactionStatus.SUCCESS,
       })),
     [transactions?.data],
   )
@@ -171,5 +162,5 @@ type TransactionRow = {
   isDelegated: boolean
   co2e: string
   vthoBurn: bigint
-  status: 'success' | 'reverted' | 'pending'
+  status: TransactionStatus
 }

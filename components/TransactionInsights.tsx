@@ -17,7 +17,7 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { VETBalance } from './ui/Balance'
 import BigNumber from 'bignumber.js'
 import { useBestBlockCompressed } from '@/services/thor/hooks'
-import { InsightType } from '@/lib/types'
+import { InsightType, TransactionStatus } from '@/lib/types'
 
 export const TransactionInsight = ({
   transaction,
@@ -35,8 +35,7 @@ export const TransactionInsight = ({
 
   const transactionGasInsights = useTransactionGasInsights({
     transaction,
-    gasUsed: receipt?.gasUsed ?? BigInt(0),
-    gasPayer: receipt?.gasPayer ?? null,
+    receipt,
   })
 
   const transactionInsights: InsightType[] = [
@@ -55,7 +54,12 @@ export const TransactionInsight = ({
     },
   ]
 
-  const status = receipt ? (receipt.reverted ? 'reverted' : 'success') : 'pending'
+  const status = receipt
+    ? receipt.reverted
+      ? TransactionStatus.REVERTED
+      : TransactionStatus.SUCCESS
+    : TransactionStatus.PENDING
+
   const confirmations = getConfirmations(bestBlock?.number, transaction.meta.blockNumber)
   const confirmationsStatus = getConfirmationsStatus(confirmations)
   const VETValue = BigInt(
