@@ -1,7 +1,7 @@
 import { Container, VStack } from '@chakra-ui/react'
 import type { Metadata } from 'next'
 import { Rubik } from 'next/font/google'
-import { Footer } from '@/components/Footer/Footer'
+import { Footer } from '@/components/Footer'
 import { Header } from '@/components/navigation/Header'
 import { ChakraProvider } from '@/components/theme/provider'
 import type { Locale } from '@/i18n/config'
