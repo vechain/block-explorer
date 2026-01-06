@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatAbbreviated, formatAmount, formatHexToGwei } from './units'
+import { formatAbbreviated, formatAmount, formatHexToGwei, formatPercentage } from './units'
 
 describe('Units utils', () => {
   describe('formatHexToGwei', () => {
@@ -93,6 +93,39 @@ describe('Units utils', () => {
       expect(formatAbbreviated(BigInt('1000000000000000000000'))).toBe('1K')
       // Just below 1 thousand ether (999)
       expect(formatAbbreviated(BigInt('999000000000000000000'))).toBe('999')
+    })
+  })
+
+  describe('formatPercentage', () => {
+    it('should format whole numbers without decimal places', () => {
+      expect(formatPercentage(36)).toBe('36%')
+      expect(formatPercentage(85)).toBe('85%')
+      expect(formatPercentage(100)).toBe('100%')
+      expect(formatPercentage(0)).toBe('0%')
+    })
+
+    it('should format decimals with up to 2 decimal places', () => {
+      expect(formatPercentage(34.45)).toBe('34.45%')
+      expect(formatPercentage(92.32)).toBe('92.32%')
+      expect(formatPercentage(50.5)).toBe('50.5%')
+    })
+
+    it('should round to 2 decimal places when more decimals are provided', () => {
+      expect(formatPercentage(34.456)).toBe('34.46%')
+      expect(formatPercentage(92.321)).toBe('92.32%')
+      expect(formatPercentage(50.999)).toBe('51%')
+    })
+
+    it('should remove trailing zeros', () => {
+      expect(formatPercentage(92.3)).toBe('92.3%')
+      expect(formatPercentage(50.1)).toBe('50.1%')
+      expect(formatPercentage(33.0)).toBe('33%')
+    })
+
+    it('should handle edge cases', () => {
+      expect(formatPercentage(0.01)).toBe('0.01%')
+      expect(formatPercentage(0.001)).toBe('0%')
+      expect(formatPercentage(99.999)).toBe('100%')
     })
   })
 })

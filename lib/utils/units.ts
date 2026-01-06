@@ -151,3 +151,29 @@ export const formatCurrency = (
     ...options,
   }).format(num)
 }
+
+/**
+ * Formats a number as a percentage string.
+ *
+ * - Shows 2 decimal places if the value has decimals (e.g., 34.456 → "34.46%")
+ * - Shows no decimal places if the value is a whole number (e.g., 36 → "36%")
+ * - Removes unnecessary trailing zeros (e.g., 92.30 → "92.3%")
+ *
+ * @param value - The percentage value to format
+ * @returns A formatted percentage string
+ *
+ * @example
+ * ```ts
+ * formatPercentage(36)      // "36%"
+ * formatPercentage(34.456)  // "34.46%"
+ * formatPercentage(92.3)    // "92.3%"
+ * formatPercentage(100)     // "100%"
+ * ```
+ */
+export const formatPercentage = (value: number): string => {
+  if (Number.isInteger(value)) {
+    return `${value}%`
+  }
+  // Round to 2 decimal places and remove trailing zeros
+  return `${parseFloat(value.toFixed(2))}%`
+}

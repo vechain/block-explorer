@@ -7,6 +7,8 @@ import { useFormatNumber } from '@/hooks/useFormatting'
 import type { InsightType } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { GasUsed, TxFeePaid } from '@/components/ui/GasFees'
+import { HStack, Text } from '@chakra-ui/react'
+import { formatPercentage } from '@/lib/utils/units'
 
 export type TxGasFeesResult =
   | {
@@ -54,7 +56,14 @@ export const useTransactionGasInsights = ({
       ...transactionGasInsights,
       {
         label: t('Gas Price Coef'),
-        value: `${txGasFees.gasPriceCoef} / 255 -- ${((txGasFees.gasPriceCoef / 255) * 100).toFixed(0)}%`,
+        value: (
+          <HStack alignItems="center" gap="8">
+            <Text>
+              {txGasFees.gasPriceCoef} {'/ 255'}
+            </Text>
+            <Text color="text-alt-secondary">{formatPercentage((txGasFees.gasPriceCoef / 255) * 100)}</Text>
+          </HStack>
+        ),
       },
       {
         label: t('Base Fee per Gas'),
