@@ -3,7 +3,7 @@
 import { Box, Container, Heading, Image, Link, VStack, Text, HStack, Flex } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import packageJson from '@/package.json'
-import { Logo } from '../Logo'
+import { Logo } from './Logo'
 import { FiExternalLink } from 'react-icons/fi'
 
 export const Footer = () => {
