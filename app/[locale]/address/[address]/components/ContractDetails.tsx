@@ -7,8 +7,8 @@ import { VnsBadge } from '@/components/ui-legacy/VnsBadge'
 import { useTabs } from '@/hooks/useTabs'
 import type { Account } from '@/lib/schemas'
 import { useVnsName } from '@/services/thor/hooks'
-import { AccountTransfersTab } from '../tabs/AccountTransfersTab'
-import { ContractTransactionsTab } from '../tabs/ContractTransactionsTab'
+import { AccountTransfersTab } from './tabs/AccountTransfersTab'
+import { ContractTransactionsTab } from './tabs/ContractTransactionsTab'
 import { useTranslation } from 'react-i18next'
 
 export const ContractDetails = ({ account }: { account: Account }) => {

@@ -38,23 +38,23 @@ export const TransactionsTable = ({ transactions }: { transactions: ExpandedBloc
       ),
     },
     {
-      key: 'origin',
-      label: t('Origin'),
-      Cell: ({ row }) => <CopyableAddressLink truncate address={row.origin} />,
-    },
-    {
       key: 'type',
       label: t('Type'),
       Cell: ({ row }) => <TxTypeBadge textStyle="bodyS" type={row.type} />,
     },
     { key: 'clausesCount', label: t('Clauses'), Cell: ({ row }) => row.clausesCount.toString() },
     {
+      key: 'origin',
+      label: t('Origin'),
+      Cell: ({ row }) => <CopyableAddressLink truncate address={row.origin} />,
+    },
+    { key: 'vthoBurn', label: t('VTHO Burn'), Cell: ({ row }) => <Balance balance={row.vthoBurn} /> },
+    {
       key: 'feeDelegatedTo',
       label: t('Fee delegated to'),
       Cell: ({ row }) => <CopyableAddressLink truncate address={row.feeDelegatedTo} />,
     },
     // { key: 'co2e', label: t('Co2e') }, // TODO: find out how to get co2e from transaction
-    { key: 'vthoBurn', label: t('VTHO Burn'), Cell: ({ row }) => <Balance balance={row.vthoBurn} /> },
     { key: 'status', label: t('Status'), Cell: ({ row }) => <TxStatusIcon status={row.status} /> },
   ]
 

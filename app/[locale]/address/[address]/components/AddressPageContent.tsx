@@ -3,8 +3,11 @@
 import { notFound } from 'next/navigation'
 import type { AddressString } from '@/lib/schemas'
 import { useAccount } from '@/services/thor/hooks'
-import { AccountDetails } from './details/AccountDetails'
-import { ContractDetails } from './details/ContractDetails'
+import { Stack } from '@chakra-ui/react'
+import { AccountSummary } from './AccountSummary'
+import { AccountTransactionsSection } from './sections/AccountTransactionsSection'
+import { AccountNftsSection } from './sections/AccountNftsSection'
+import { ContractSummary } from './ContractSummary'
 
 export const AddressPageContent = ({ address }: { address: AddressString }) => {
   const { data: account, isLoading: isAccountLoading } = useAccount(address)
@@ -15,5 +18,11 @@ export const AddressPageContent = ({ address }: { address: AddressString }) => {
     notFound()
   }
 
-  return account.hasCode ? <ContractDetails account={account} /> : <AccountDetails account={account} />
+  return (
+    <Stack flex={1} gap="8">
+      {account.hasCode ? <ContractSummary address={account.address} /> : <AccountSummary address={account.address} />}
+      <AccountTransactionsSection address={account.address} hasCode={account.hasCode} />
+      {!account.hasCode && <AccountNftsSection address={account.address} />}
+    </Stack>
+  )
 }
