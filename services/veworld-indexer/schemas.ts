@@ -177,5 +177,4 @@ export type IndexerGetErc20ContractsParams = z.infer<typeof indexerGetErc20Contr
 export type IndexerGetContractTransactionsParams = z.infer<typeof indexerGetContractTransactionsParamsSchema>
 export type IndexerGetErc721Params = z.infer<typeof indexerGetErc721ParamsSchema>
 export type IndexerGetContractsByMasterParams = z.infer<typeof indexerGetContractsByMasterParamsSchema>
-export type IndexerContract = z.infer<typeof indexerContractSchema>
 export type IndexerResponse<T extends z.ZodSchema> = z.infer<ReturnType<typeof indexerResponseSchema<T>>>
