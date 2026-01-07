@@ -7,7 +7,6 @@ import { LuChevronRight } from 'react-icons/lu'
 import { useTranslation } from 'react-i18next'
 import { DataCard } from '@/components/ui/DataCard'
 import { AddressLink } from '@/components/ui/Links'
-import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Card } from '@/components/ui/Card'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
 import { useTransactionGasInsights } from '@/hooks/useTransactionGasInsights'
@@ -18,6 +17,7 @@ import { VETBalance } from './ui/Balance'
 import BigNumber from 'bignumber.js'
 import { useBestBlockCompressed } from '@/services/thor/hooks'
 import { InsightType, TransactionStatus } from '@/lib/types'
+import { TxStatusBadge } from './TxStatus'
 
 export const TransactionInsight = ({
   transaction,
@@ -79,7 +79,7 @@ export const TransactionInsight = ({
 
         <HStack alignItems="center" justifyContent="space-between">
           {!isMobile && <TransactionDate />}
-          <StatusBadge status={status} />
+          <TxStatusBadge status={status} />
         </HStack>
 
         {isMobile && <TransactionDate />}

@@ -9,5 +9,3 @@ export const accountSchema = z.object({
   vet: z.bigint(),
   vtho: z.bigint(),
 })
-
-export type Account = z.infer<typeof accountSchema>
