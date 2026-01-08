@@ -18,7 +18,7 @@ interface NftStatsCardsProps {
 export const NftStatsCards = ({ contractAddress, tokenId }: NftStatsCardsProps) => {
   const { t } = useTranslation()
   const { data: owner, isPending: isOwnerPending } = useErc721Owner({ contractAddress, tokenId })
-  const { mintEvent, isLoading: isMintEventLoading } = useMintEvent({ contractAddress, tokenId })
+  const { mintEvent, isPending: isMintEventLoading } = useMintEvent({ contractAddress, tokenId })
   const formatDate = useFormatDate()
   const mintDate = mintEvent ? formatDate(mintEvent.blockTimestamp * 1000) : null
 

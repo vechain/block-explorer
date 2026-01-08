@@ -7,11 +7,9 @@ import { AddressLink, BaseLink } from '@/components/ui/Links'
 import type { AddressString } from '@/lib/schemas'
 import type { NftMetadata } from '@/services/nft-metadata'
 import { type Erc721, useErc721CollectionStats } from '@/services/thor/tokens/erc721'
-import { useNftTransfers } from '@/services/veworld-indexer/nft-transfers'
 import { useFormatNumber } from '@/hooks/useFormatting'
-import { ZERO_ADDRESS } from '@vechain/sdk-core'
 import { truncateHex } from '@/lib/utils/truncateHex'
-
+import { useMintEvent } from '@/services/veworld-indexer/nft-transfers'
 interface NftDetailsSectionProps {
   collection: Erc721
   contractAddress: AddressString
@@ -52,13 +50,7 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
   const formatNumber = useFormatNumber()
 
   const { data: collectionStats } = useErc721CollectionStats({ contractAddress })
-  const { data: transfersData } = useNftTransfers({
-    contractAddress,
-    tokenId,
-    size: 100,
-  })
-
-  const mintTransfer = transfersData?.data.find(transfer => transfer.from.toLowerCase() === ZERO_ADDRESS.toLowerCase())
+  const { mintEvent } = useMintEvent({ contractAddress, tokenId })
 
   return (
     <Card variant="secondary" gap={6}>
@@ -85,16 +77,16 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
       </SectionCard>
 
       {/* NFT Mint */}
-      {mintTransfer && (
+      {mintEvent && (
         <SectionCard title={t('NFT Mint')}>
           <DetailRow label={t('Block')}>
-            <BaseLink href={`/block/${mintTransfer.blockId}`}>#{formatNumber(mintTransfer.blockNumber)}</BaseLink>
+            <BaseLink href={`/block/${mintEvent.blockId}`}>#{formatNumber(mintEvent.blockNumber)}</BaseLink>
           </DetailRow>
           <DetailRow label={t('Transaction ID')}>
-            <BaseLink href={`/transaction/${mintTransfer.txId}`}>{truncateHex(mintTransfer.txId)}</BaseLink>
+            <BaseLink href={`/transaction/${mintEvent.txId}`}>{truncateHex(mintEvent.txId)}</BaseLink>
           </DetailRow>
           <DetailRow label={t('Minted by')}>
-            <AddressLink address={mintTransfer.to} truncate />
+            <AddressLink address={mintEvent.to} truncate />
           </DetailRow>
         </SectionCard>
       )}

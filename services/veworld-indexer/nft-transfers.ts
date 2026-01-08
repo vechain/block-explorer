@@ -82,6 +82,6 @@ export const useMintEvent = ({ contractAddress, tokenId }: { contractAddress: Ad
 
   return {
     mintEvent,
-    isLoading: isPending,
+    isPending,
   }
 }
