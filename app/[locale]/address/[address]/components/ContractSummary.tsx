@@ -51,7 +51,7 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
               <Skeleton height="24px" width="120px" />
             ) : (
               <Text textStyle="bodyL" color="text-primary">
-                {formatDate(contract?.createdOn ?? 0 * 1000)}
+                {formatDate(contract?.createdOn ?? 0)}
               </Text>
             )}
           </DataCard>
