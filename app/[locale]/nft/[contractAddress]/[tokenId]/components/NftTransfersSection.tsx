@@ -1,13 +1,14 @@
 'use client'
 
-import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
-import { useState } from 'react'
+import { Flex, Heading, Text } from '@chakra-ui/react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HiArrowRight, HiOutlineFire, HiOutlineSparkles } from 'react-icons/hi2'
 import { Card } from '@/components/ui/Card'
-import { AddressLink, BaseLink } from '@/components/ui/Links'
+import { CopyableAddressLink, BaseLink } from '@/components/ui/Links'
 import { AgeText } from '@/components/ui/AgeText'
 import { PaginationControls } from '@/components/ui/PaginationControls'
+import { type Column, DataTable, TableSkeleton } from '@/components/ui/Table'
 import type { AddressString } from '@/lib/schemas'
 import { useNftTransfers } from '@/services/veworld-indexer/nft-transfers'
 import { ZERO_ADDRESS } from '@vechain/sdk-core'
@@ -29,26 +30,11 @@ const getTransferType = (from: string, to: string): TransferType => {
   return 'transfer'
 }
 
-const TransferTypeBadge = ({ type }: { type: TransferType }) => {
-  const { t } = useTranslation()
-
-  const config = {
-    mint: { label: t('Mint'), icon: HiOutlineSparkles, color: 'green.400' },
-    burn: { label: t('Burn'), icon: HiOutlineFire, color: 'red.400' },
-    transfer: { label: t('Transfer'), icon: HiArrowRight, color: 'blue.400' },
-  }
-
-  const { label, icon: Icon, color } = config[type]
-
-  return (
-    <Flex alignItems="center" gap={1.5}>
-      <Text textStyle="bodyL" color="text-primary">
-        {label}
-      </Text>
-      <Icon size={16} color={color} />
-    </Flex>
-  )
-}
+const transferConfig = {
+  mint: { label: 'Mint', icon: HiOutlineSparkles, color: 'green.400' },
+  burn: { label: 'Burn', icon: HiOutlineFire, color: 'red.400' },
+  transfer: { label: 'Transfer', icon: HiArrowRight, color: 'blue.400' },
+} as const
 
 export const NftTransfersSection = ({ contractAddress, tokenId }: NftTransfersSectionProps) => {
   const { t } = useTranslation()
@@ -62,7 +48,7 @@ export const NftTransfersSection = ({ contractAddress, tokenId }: NftTransfersSe
     size: pageSize,
   })
 
-  const transfers = transfersData?.data ?? []
+  const transfers = useMemo(() => transfersData?.data ?? [], [transfersData?.data])
   const pagination = transfersData?.pagination
   const hasTransfers = transfers.length > 0
 
@@ -71,6 +57,68 @@ export const NftTransfersSection = ({ contractAddress, tokenId }: NftTransfersSe
     setPage(0)
   }
 
+  const transferMap = useMemo(() => {
+    const map = new Map<string, (typeof transfers)[number]>()
+    transfers.forEach(transfer => map.set(transfer.id, transfer))
+    return map
+  }, [transfers])
+
+  const TypeCell = useMemo(() => {
+    const Cell = ({ row }: { row: { id: string } }) => {
+      const transfer = transferMap.get(row.id)
+      if (!transfer) return null
+      const type = getTransferType(transfer.from, transfer.to)
+      const { label, icon: Icon, color } = transferConfig[type]
+      return (
+        <Flex alignItems="center" gap={1.5}>
+          <Text textStyle="bodyM" color="text-primary">
+            {t(label)}
+          </Text>
+          <Icon size={16} color={color} />
+        </Flex>
+      )
+    }
+    Cell.displayName = 'TypeCell'
+    return Cell
+  }, [transferMap, t])
+
+  const rows = useMemo(
+    () =>
+      transfers.map(transfer => ({
+        id: transfer.id,
+        age: transfer.blockTimestamp * 1000,
+        txId: transfer.txId,
+        type: '',
+        from: transfer.from,
+        to: transfer.to,
+      })),
+    [transfers],
+  )
+
+  const columns = useMemo(
+    () =>
+      [
+        { key: 'age', label: t('Age'), Cell: ({ value }) => <AgeText timestamp={value as number} /> },
+        {
+          key: 'txId',
+          label: t('Tx ID'),
+          Cell: ({ value }) => <BaseLink href={`/transaction/${value}`}>{truncateHex(value as string)}</BaseLink>,
+        },
+        { key: 'type', label: t('Type'), Cell: TypeCell },
+        {
+          key: 'from',
+          label: t('From'),
+          Cell: ({ value }) => <CopyableAddressLink truncate address={value as AddressString} />,
+        },
+        {
+          key: 'to',
+          label: t('To'),
+          Cell: ({ value }) => <CopyableAddressLink truncate address={value as AddressString} />,
+        },
+      ] as Column<(typeof rows)[number]>[],
+    [t, TypeCell],
+  )
+
   return (
     <Card variant="secondary">
       <Heading as="h3" textStyle="displayXs">
@@ -78,68 +126,13 @@ export const NftTransfersSection = ({ contractAddress, tokenId }: NftTransfersSe
       </Heading>
 
       {isPending ? (
-        <Stack gap={3}>
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} height="60px" borderRadius="lg" />
-          ))}
-        </Stack>
+        <TableSkeleton />
       ) : !hasTransfers ? (
         <Text textStyle="bodyM" color="text-secondary">
           {t('No transfers')}
         </Text>
       ) : (
-        <Box overflow="hidden">
-          <Flex px={4} py={3} gap={4} display={{ base: 'none', md: 'flex' }}>
-            <Text textStyle="bodyM" color="text-primary" flex="1">
-              {t('Age')}
-            </Text>
-            <Text textStyle="bodyM" color="text-primary" flex="1">
-              {t('Tx ID')}
-            </Text>
-            <Text textStyle="bodyM" color="text-primary" flex="1">
-              {t('Type')}
-            </Text>
-            <Text textStyle="bodyM" color="text-primary" flex="2">
-              {t('From/To')}
-            </Text>
-          </Flex>
-
-          <Box overflow="hidden" borderWidth="1px" borderColor="border-primary" borderRadius="lg">
-            {transfers.map((transfer, index) => {
-              const type = getTransferType(transfer.from, transfer.to)
-              const isEven = index % 2 === 0
-
-              return (
-                <Flex
-                  key={transfer.id}
-                  px={4}
-                  py={4}
-                  gap={4}
-                  alignItems={{ base: 'flex-start', md: 'center' }}
-                  flexDirection={{ base: 'column', md: 'row' }}
-                  bg={isEven ? 'bg-alt-primary' : 'transparent'}
-                >
-                  <Box flex="1">
-                    <AgeText timestamp={transfer.blockTimestamp * 1000} />
-                  </Box>
-                  <Box flex="1">
-                    <BaseLink href={`/transaction/${transfer.txId}`}>{truncateHex(transfer.txId)}</BaseLink>
-                  </Box>
-
-                  <Box flex="1">
-                    <TransferTypeBadge type={type} />
-                  </Box>
-
-                  <Flex flex="2" gap={2} alignItems="center" flexWrap="wrap">
-                    <AddressLink address={transfer.from as AddressString} truncate />
-                    <HiArrowRight size={16} />
-                    <AddressLink address={transfer.to as AddressString} truncate />
-                  </Flex>
-                </Flex>
-              )
-            })}
-          </Box>
-        </Box>
+        <DataTable columns={columns} rows={rows} />
       )}
 
       {hasTransfers && (
