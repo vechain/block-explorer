@@ -18,7 +18,7 @@ export enum AccountTimeFrame {
 
 const accountTotalSchema = z.object({
   total: z.number(),
-  timeFrame: z.nativeEnum(AccountTimeFrame),
+  timeFrame: z.enum(AccountTimeFrame),
   dayOfMonth: z.number().nullable().optional(),
   weekOfYear: z.number().nullable().optional(),
   month: z.number().nullable().optional(),

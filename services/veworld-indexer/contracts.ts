@@ -5,6 +5,7 @@ import { zodParse } from '@/lib/utils/zod'
 import { keepPreviousData } from '@tanstack/react-query'
 import { resolveUrl } from '.'
 import { type IndexerGetContractsByMasterParams, indexerContractSchema, indexerResponseSchema } from './schemas'
+import { AddressString } from '@/lib/schemas/common'
 
 const CONTRACTS_BY_MASTER_QUERY_KEY = 'getContractsByMaster'
 
@@ -34,5 +35,27 @@ const getContractsByMaster = async ({
     data,
     schema: indexerResponseSchema(indexerContractSchema),
     errorMessage: 'Invalid contracts by master response from VeWorld Indexer',
+  })
+}
+
+const CONTRACT_QUERY_KEY = 'getContract'
+
+export const contractQueryOptions = (networkName: NetworkName, address: AddressString) => ({
+  queryKey: [CONTRACT_QUERY_KEY, networkName, address],
+  queryFn: () => getContract({ networkName, address }),
+  staleTime: Infinity,
+  placeholderData: keepPreviousData,
+})
+
+const getContract = async ({ networkName, address }: { networkName: NetworkName; address: AddressString }) => {
+  const { data } = await apiClient.get({
+    baseUrl: resolveUrl(networkName),
+    endPoint: `/contracts/${address}`,
+  })
+
+  return zodParse({
+    data,
+    schema: indexerContractSchema,
+    errorMessage: 'Invalid contract response from VeWorld Indexer',
   })
 }

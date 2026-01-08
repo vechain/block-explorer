@@ -11,6 +11,7 @@ import {
   legacyTransactionFieldsSchema,
   outputSchema,
   rawEventSchema,
+  timestampSchema,
   transactionIdSchema,
   transactionMetaSchema,
   transactionReceiptSchema,
@@ -129,20 +130,6 @@ export const indexerTransactionSchema = baseTransactionSchema
     reverted: z.boolean(),
   })
 
-export const indexerContractTransactionSchema = baseTransactionSchema
-  .omit({ meta: true, clauses: true })
-  .extend(indexerTransactionMetaSchema.shape)
-  .extend(transactionReceiptSchema.omit({ meta: true, outputs: true }).shape)
-  .extend({
-    gasPriceCoef: legacyTransactionFieldsSchema.shape.gasPriceCoef.nullable().optional(),
-    maxFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxFeePerGas.nullable().optional(),
-    maxPriorityFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxPriorityFeePerGas.nullable().optional(),
-    type: transactionTypeSchema,
-    clauses: z.array(withEmptyObjects(clauseSchema)).optional(),
-    outputs: z.array(withEmptyObjects(transactionOutputSchema)).optional(),
-    reverted: z.boolean(),
-  })
-
 const eventTypeSchema = z.enum({
   FUNGIBLE_TOKEN: 'FUNGIBLE_TOKEN',
   NFT: 'NFT',
@@ -173,7 +160,7 @@ export const indexerErc721Schema = z.object({
 
 export const indexerContractSchema = z.object({
   address: addressStringSchema,
-  createdOn: z.number(),
+  createdOn: timestampSchema,
   deploymentTxId: transactionIdSchema,
   deploymentClauseIndex: z.number(),
   master: addressStringSchema,
@@ -184,7 +171,6 @@ export const indexerContractSchema = z.object({
 
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
 export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
-export type IndexerContractTransaction = z.infer<typeof indexerContractTransactionSchema>
 export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>
 export type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParamsSchema>
 export type IndexerGetErc20ContractsParams = z.infer<typeof indexerGetErc20ContractsParamsSchema>

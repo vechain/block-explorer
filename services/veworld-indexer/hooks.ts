@@ -11,7 +11,7 @@ import { blockExpandedQueryOptions, bestBlockCompressedQueryOptions } from '@/se
 import { accountTotalsQueryOptions, AccountTimeFrame } from './account-totals'
 import { accountOverviewQueryOptions } from './account-overview'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
-import { contractsByMasterQueryOptions } from './contracts'
+import { contractQueryOptions, contractsByMasterQueryOptions } from './contracts'
 import { nftHoldersQueryOptions } from './nft-holders'
 import { accountErc721TokensQueryOptions } from './nfts'
 import type {
@@ -62,9 +62,15 @@ export const useAccountOverview = (address: string) => {
 
 export { AccountTimeFrame }
 
-export const useAccountTransactions = ({ params }: { params: IndexerGetTransactionsParams }) => {
+export const useAccountTransactions = ({
+  params,
+  enabled = true,
+}: {
+  params: IndexerGetTransactionsParams
+  enabled?: boolean
+}) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(accountTransactionsQueryOptions(activeNetwork.name, params))
+  return useQuery(accountTransactionsQueryOptions(activeNetwork.name, params, { enabled }))
 }
 
 const useAccountTransfers = ({ params }: { params: IndexerGetTransfersParams }) => {
@@ -93,9 +99,39 @@ export const useAccountTransfersWithTokens = ({ params }: { params: IndexerGetTr
   }
 }
 
-export const useContractTransactions = ({ params }: { params: IndexerGetContractTransactionsParams }) => {
+export const useContractTransactions = ({
+  params,
+  enabled = true,
+}: {
+  params: IndexerGetContractTransactionsParams
+  enabled?: boolean
+}) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(contractTransactionsQueryOptions(activeNetwork.name, params))
+  return useQuery(contractTransactionsQueryOptions(activeNetwork.name, params, { enabled }))
+}
+
+export const useAddressTransactions = ({
+  address,
+  hasCode,
+  page = 0,
+  size = 10,
+}: {
+  address: AddressString
+  hasCode: boolean | undefined
+  page?: number
+  size?: number
+}) => {
+  const contractTxs = useContractTransactions({
+    params: { contractAddress: address, page, size },
+    enabled: hasCode === true,
+  })
+
+  const accountTxs = useAccountTransactions({
+    params: { origin: address, page, size },
+    enabled: hasCode === false,
+  })
+
+  return hasCode ? contractTxs : accountTxs
 }
 
 export const useAccountErc20Contracts = ({ params }: { params: IndexerGetErc20ContractsParams }) => {
@@ -111,6 +147,11 @@ export const useAccountErc721 = ({ params }: { params: IndexerGetErc721Params })
 export const useContractsByMaster = ({ params }: { params: IndexerGetContractsByMasterParams }) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(contractsByMasterQueryOptions(activeNetwork.name, params))
+}
+
+export const useContract = ({ address }: { address: AddressString }) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(contractQueryOptions(activeNetwork.name, address))
 }
 
 export const useValidatorsCount = (status?: ValidatorStatus) => {

@@ -4,7 +4,7 @@ import { TxStatusBadge } from '@/components/TxStatus'
 import { BlockLink, TransactionClausesLink, TransactionLink } from '@/components/ui-legacy/Links'
 import { VnsBadgeOrAddressLink } from '@/components/ui-legacy/VnsBadge'
 import type { AddressString } from '@/lib/schemas'
-import type { IndexerContractTransaction, IndexerTransaction } from '@/services/veworld-indexer/schemas'
+import type { IndexerTransaction } from '@/services/veworld-indexer/schemas'
 import { useTranslation } from 'react-i18next'
 import { useFormatDate } from '@/hooks/useFormatting'
 import { TransactionStatus } from '@/lib/types'
@@ -14,7 +14,7 @@ export const TransactionsTable = ({
   transactions,
 }: {
   address: AddressString
-  transactions: IndexerContractTransaction[] | IndexerTransaction[]
+  transactions: IndexerTransaction[]
 }) => {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
