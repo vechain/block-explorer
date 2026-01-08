@@ -18,6 +18,11 @@ export const NftCollectionCards = ({ collection }: NftCollectionCardsProps) => {
   return tokens
     .filter(isNotNullish)
     .map(token => (
-      <NftCard key={`${collection.address}-${token.tokenId}`} token={token} collectionName={collection.name} />
+      <NftCard
+        key={`${collection.address}-${token.tokenId}`}
+        token={token}
+        collectionName={collection.name}
+        contractAddress={collection.address}
+      />
     ))
 }

@@ -1,4 +1,9 @@
-import { VEWORLD_INDEXER_MAINNET_URL, VEWORLD_INDEXER_TESTNET_URL } from '@/env.public'
+import {
+  VEWORLD_INDEXER_MAINNET_URL,
+  VEWORLD_INDEXER_TESTNET_URL,
+  VEWORLD_INDEXER_V2_MAINNET_URL,
+  VEWORLD_INDEXER_V2_TESTNET_URL,
+} from '@/env.public'
 import { NetworkName } from '@/lib/constants/network'
 
 export const resolveUrl = (networkName: NetworkName) => {
@@ -11,4 +16,9 @@ export const resolveUrl = (networkName: NetworkName) => {
   // }
 
   return VEWORLD_INDEXER_MAINNET_URL
+}
+
+export const resolveUrlV2 = (networkName: NetworkName) => {
+  if (networkName === NetworkName.TESTNET) return VEWORLD_INDEXER_V2_TESTNET_URL
+  return VEWORLD_INDEXER_V2_MAINNET_URL
 }

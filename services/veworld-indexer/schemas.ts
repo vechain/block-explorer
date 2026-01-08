@@ -169,6 +169,22 @@ export const indexerContractSchema = z.object({
   isErc1155: z.boolean(),
 })
 
+export const tokenHistorySchema = z.object({
+  id: z.string(),
+  blockId: blockIdSchema,
+  blockNumber: blockNumberSchema,
+  blockTimestamp: z.number(),
+  txId: transactionIdSchema,
+  origin: addressStringSchema,
+  gasPayer: addressStringSchema,
+  contractAddress: addressStringSchema,
+  tokenId: z.string(),
+  eventName: z.string(),
+  to: addressStringSchema,
+  from: addressStringSchema,
+})
+
+export type TokenHistory = z.infer<typeof tokenHistorySchema>
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
 export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
 export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>
