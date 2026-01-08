@@ -11,7 +11,7 @@ import { ZERO_ADDRESS } from '@vechain/sdk-core'
 const TOKEN_HISTORY_QUERY_KEY = 'getTokenHistory'
 
 interface TokenHistoryParams {
-  tokenId: string
+  tokenId: bigint
   contractAddress?: AddressString
   eventName?: string[]
   page?: number
@@ -61,7 +61,7 @@ export const useNftTransfers = ({
     queryKey: [TOKEN_HISTORY_QUERY_KEY, activeNetwork.name, contractAddress, tokenId.toString(), page, size],
     queryFn: () =>
       getTokenHistory(activeNetwork.name, {
-        tokenId: tokenId.toString(),
+        tokenId,
         contractAddress,
         page,
         size,
