@@ -4,7 +4,7 @@ import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrlV2 } from '.'
+import { resolveUrl, IndexerVersion } from '.'
 import { indexerResponseSchema, tokenHistorySchema } from './schemas'
 import { ZERO_ADDRESS } from '@vechain/sdk-core'
 
@@ -30,7 +30,7 @@ const getTokenHistory = async (networkName: NetworkName, params: TokenHistoryPar
   if (direction) searchParams.set('direction', direction)
 
   const { data } = await apiClient.get({
-    baseUrl: resolveUrlV2(networkName),
+    baseUrl: resolveUrl(networkName, IndexerVersion.V2),
     endPoint: `/history/token/${tokenId}`,
     params: Object.fromEntries(searchParams),
   })

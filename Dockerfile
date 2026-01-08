@@ -22,10 +22,8 @@ ENV NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION}
 ENV NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL=https://api.gateway-proxy.vechain.org
 ENV B32_URL=https://b32.vecha.in
 ENV NEXT_PUBLIC_COIN_API_URL=https://coin-api.veworld.vechain.org
-ENV NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL=https://indexer.mainnet.vechain.org/api/v1
-ENV NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL=https://indexer.testnet.vechain.org/api/v1
-ENV NEXT_PUBLIC_VEWORLD_INDEXER_V2_MAINNET_URL=https://indexer.mainnet.vechain.org/api/v2
-ENV NEXT_PUBLIC_VEWORLD_INDEXER_V2_TESTNET_URL=https://indexer.testnet.vechain.org/api/v2
+ENV NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL=https://indexer.mainnet.vechain.org
+ENV NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL=https://indexer.testnet.vechain.org
 
 ENV NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL=https://localhost:5000
 
