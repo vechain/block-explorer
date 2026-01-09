@@ -4,36 +4,24 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import { ABIEvent, ERC20_ABI } from '@vechain/sdk-core'
 import type { AddressString, ExpandedBlock } from '@/lib/schemas'
-import { isNotNullish } from '@/lib/type-predicates'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { type Erc20, useErc20Contracts } from '@/services/thor/tokens/erc20'
 import { blockExpandedQueryOptions, bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { accountTotalsQueryOptions, AccountTimeFrame } from './account-totals'
 import { accountOverviewQueryOptions } from './account-overview'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
-import { contractQueryOptions, contractsByMasterQueryOptions } from './contracts'
-import { nftHoldersQueryOptions } from './nft-holders'
+import { contractQueryOptions } from './contracts'
 import { accountErc721TokensQueryOptions } from './nfts'
 import type {
   IndexerGetContractTransactionsParams,
   IndexerGetErc20ContractsParams,
   IndexerGetErc721Params,
   IndexerGetTransactionsParams,
-  IndexerGetTransfersParams,
-  IndexerGetContractsByMasterParams,
 } from './schemas'
 import { totalVetStakedQueryOptions } from './total-vet-staked'
 import { type TotalVetStakedRange, totalVetStakedHistoricQueryOptions } from './total-vet-staked-historic'
-import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
 import { contractTransactionsQueryOptions } from './transactions-contract'
-import { accountTransfersQueryOptions } from './transfers'
 import { ALL_VALIDATORS_COUNT_QUERY_KEY, getAllValidatorsCount, ValidatorStatus } from './validators'
-
-export const useNftHolders = () => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(nftHoldersQueryOptions(activeNetwork.name))
-}
 
 export const useTotalVetStaked = () => {
   const { activeNetwork } = useSettingsStore()
@@ -43,11 +31,6 @@ export const useTotalVetStaked = () => {
 export const useTotalVetStakedHistoric = (range: TotalVetStakedRange) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(totalVetStakedHistoricQueryOptions(activeNetwork.name, range))
-}
-
-export const useTotalVthoClaimed = () => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(totalVthoClaimedQueryOptions(activeNetwork.name))
 }
 
 export const useAccountTotals = (timeFrame: AccountTimeFrame) => {
@@ -62,7 +45,7 @@ export const useAccountOverview = (address: string) => {
 
 export { AccountTimeFrame }
 
-export const useAccountTransactions = ({
+const useAccountTransactions = ({
   params,
   enabled = true,
 }: {
@@ -73,33 +56,7 @@ export const useAccountTransactions = ({
   return useQuery(accountTransactionsQueryOptions(activeNetwork.name, params, { enabled }))
 }
 
-const useAccountTransfers = ({ params }: { params: IndexerGetTransfersParams }) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(accountTransfersQueryOptions(activeNetwork.name, params))
-}
-
-export const useAccountTransfersWithTokens = ({ params }: { params: IndexerGetTransfersParams }) => {
-  const { data: transfers, isLoading, isError, error } = useAccountTransfers({ params })
-
-  const allTokenAddresses: AddressString[] = useMemo(
-    () => transfers?.data.map(transfer => transfer.tokenAddress).filter(isNotNullish) ?? [],
-    [transfers?.data],
-  )
-
-  const { data: erc20Map, isPending: isPendingErc20List } = useErc20Contracts({
-    contractAddressList: new Set<AddressString>(allTokenAddresses),
-  })
-
-  return {
-    transfers,
-    erc20Map: erc20Map ?? new Map<AddressString, Erc20>(),
-    isLoading: isLoading || isPendingErc20List,
-    isError,
-    error,
-  }
-}
-
-export const useContractTransactions = ({
+const useContractTransactions = ({
   params,
   enabled = true,
 }: {
@@ -142,11 +99,6 @@ export const useAccountErc20Contracts = ({ params }: { params: IndexerGetErc20Co
 export const useAccountErc721 = ({ params }: { params: IndexerGetErc721Params }) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(accountErc721TokensQueryOptions(activeNetwork.name, params))
-}
-
-export const useContractsByMaster = ({ params }: { params: IndexerGetContractsByMasterParams }) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(contractsByMasterQueryOptions(activeNetwork.name, params))
 }
 
 export const useContract = ({ address }: { address: AddressString }) => {

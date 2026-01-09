@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-VeChain Block Explorer - A Next.js-based blockchain explorer for the VeChain network. Supports both mainnet and testnet, with multi-language support (English, Spanish, French).
+VeChain Block Explorer - A Next.js-based blockchain explorer for the VeChain network. Supports both mainnet and testnet, with multi-language support (11 locales including English, Spanish, French, German, Italian, Japanese, Portuguese, Russian, Turkish, Chinese, Greek).
 
 ## Technology Stack
 
@@ -17,7 +17,7 @@ VeChain Block Explorer - A Next.js-based blockchain explorer for the VeChain net
 - **Testing**: Vitest with React Testing Library
 - **Linting**: ESLint with TypeScript, React, and i18next plugins
 - **Formatting**: Prettier
-- **Internationalization**: next-i18next with i18next
+- **Internationalization**: i18next with react-i18next and next-i18n-router
 - **Package Manager**: pnpm (v9.15.4)
 
 ## Development Commands
@@ -42,7 +42,7 @@ pnpm knip                # Check for unused dependencies/exports
 pnpm knip:fix            # Auto-fix knip issues
 
 # Full Validation
-pnpm validate            # Run build, test, lint, and format check
+pnpm validate            # Run build, test, lint, knip and format check
 ```
 
 ## Architecture
@@ -72,7 +72,7 @@ The app uses Next.js App Router with internationalized routes:
    - Zustand store in `lib/stores/settings.ts` manages:
      - Color mode (light/dark)
      - Active network (mainnet/testnet)
-     - Currency preference (USD/EUR/CNY)
+     - Currency preference (USD/EUR/GBP/CNY/JPY/AUD/CAD)
    - Persisted to localStorage
 
 3. **Query Client**
@@ -87,8 +87,8 @@ The app uses Next.js App Router with internationalized routes:
 - `components/theme/`: Chakra UI theme configuration
 - `components/navigation/`: Navigation components
   - `Header.tsx`: Main header with logo and navigation menu (client component)
-  - `NavigationMenu.tsx`: Glassmorphic navigation with Inspector link and NetworkSelect
   - `NetworkSelect.tsx`: Mainnet/Testnet toggle component
+  - `SearchBar.tsx`: Search component for blocks, transactions, addresses
 - `components/error/`: Error boundary components
 - Page-specific components live in `app/[locale]/[route]/components/`
 
@@ -122,7 +122,7 @@ Required environment variables (see `.env`):
 ### Internationalization
 
 - Configured via `i18n/config.ts` with next-i18n-router
-- Supported locales: EN, ES, FR (default: EN)
+- Supported locales: EN, ES, FR, IT, JA, PT, RU, TR, DE, ZH, EL (default: EN)
 - Middleware handles locale detection and routing
 - Translations loaded dynamically per route
 
