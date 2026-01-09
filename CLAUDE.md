@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-VeChain Block Explorer - A Next.js-based blockchain explorer for the VeChain network. Supports both mainnet and testnet, with multi-language support (English, Spanish, French).
+VeChain Block Explorer - A Next.js-based blockchain explorer for the VeChain network. Supports both mainnet and testnet, with multi-language support (11 locales including English, Spanish, French, German, Italian, Japanese, Portuguese, Russian, Turkish, Chinese, Greek).
 
 ## Technology Stack
 
@@ -15,8 +15,9 @@ VeChain Block Explorer - A Next.js-based blockchain explorer for the VeChain net
 - **Data Fetching**: TanStack Query (React Query)
 - **Blockchain SDK**: VeChain SDK (@vechain/sdk-core, @vechain/sdk-network)
 - **Testing**: Vitest with React Testing Library
-- **Linting/Formatting**: Biome
-- **Internationalization**: next-i18next with i18next
+- **Linting**: ESLint with TypeScript, React, and i18next plugins
+- **Formatting**: Prettier
+- **Internationalization**: i18next with react-i18next and next-i18n-router
 - **Package Manager**: pnpm (v9.15.4)
 
 ## Development Commands
@@ -34,14 +35,14 @@ pnpm test                # Run all tests
 pnpm test:watch          # Run tests in watch mode
 
 # Code Quality
-pnpm lint                # Check code with Biome
+pnpm lint                # Check code with ESLint
 pnpm lint:fix            # Fix linting issues
-pnpm format              # Format code with Biome
+pnpm format              # Format code with Prettier
 pnpm knip                # Check for unused dependencies/exports
 pnpm knip:fix            # Auto-fix knip issues
 
 # Full Validation
-pnpm validate            # Run build, test, lint, format, and knip
+pnpm validate            # Run build, test, lint, knip and format check
 ```
 
 ## Architecture
@@ -71,7 +72,7 @@ The app uses Next.js App Router with internationalized routes:
    - Zustand store in `lib/stores/settings.ts` manages:
      - Color mode (light/dark)
      - Active network (mainnet/testnet)
-     - Currency preference (USD/EUR/CNY)
+     - Currency preference (USD/EUR/GBP/CNY/JPY/AUD/CAD)
    - Persisted to localStorage
 
 3. **Query Client**
@@ -86,8 +87,8 @@ The app uses Next.js App Router with internationalized routes:
 - `components/theme/`: Chakra UI theme configuration
 - `components/navigation/`: Navigation components
   - `Header.tsx`: Main header with logo and navigation menu (client component)
-  - `NavigationMenu.tsx`: Glassmorphic navigation with Inspector link and NetworkSelect
   - `NetworkSelect.tsx`: Mainnet/Testnet toggle component
+  - `SearchBar.tsx`: Search component for blocks, transactions, addresses
 - `components/error/`: Error boundary components
 - Page-specific components live in `app/[locale]/[route]/components/`
 
@@ -121,20 +122,28 @@ Required environment variables (see `.env`):
 ### Internationalization
 
 - Configured via `i18n/config.ts` with next-i18n-router
-- Supported locales: EN, ES, FR (default: EN)
+- Supported locales: EN, ES, FR, IT, JA, PT, RU, TR, DE, ZH, EL (default: EN)
 - Middleware handles locale detection and routing
 - Translations loaded dynamically per route
 
 ## Code Style
 
-Biome configuration (`biome.json`):
+Prettier configuration (`.prettierrc`):
 
 - 2 space indentation
 - 120 character line width
-- Single quotes for JS/TS
-- No semicolons (asNeeded)
+- Single quotes for JS/TS (double quotes in JSX)
+- No semicolons
 - Trailing commas everywhere
-- Import organization enabled
+- LF line endings
+
+ESLint configuration (`.eslintrc.json`):
+
+- Extends Next.js, TypeScript, and React recommended rules
+- Enforces i18n for user-facing text (`i18next/no-literal-string`)
+- No unused variables (underscore prefix allowed)
+- No explicit `any` types
+- Console statements restricted (warn/error only)
 
 ## Important Patterns
 

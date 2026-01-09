@@ -3,7 +3,19 @@ import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
-import { nftNameSchema } from './nft-holders'
+
+const nftNameSchema = z.enum([
+  'Dawn',
+  'Strength',
+  'ThunderX',
+  'Flash',
+  'VeThorX',
+  'Lightning',
+  'StrengthX',
+  'MjolnirX',
+  'Mjolnir',
+  'Thunder',
+])
 
 const TOTAL_VET_STAKED_QUERY_KEY = 'getTotalVetStaked'
 

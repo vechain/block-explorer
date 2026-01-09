@@ -52,23 +52,6 @@ const getBlockExpanded = async ({ revision, networkName }: { revision: BlockRevi
   })
 }
 
-/**
- * Compressed block
- */
-
-export const blockCompressedQueryOptions = ({
-  networkName,
-  revision,
-}: {
-  networkName: NetworkName
-  revision: BlockRevision | undefined
-}) =>
-  queryOptions({
-    queryKey: [BLOCK_COMPRESSED_QUERY_KEY, networkName, revision],
-    queryFn: revision ? () => getBlockCompressed({ networkName, revision }) : skipToken,
-    staleTime: Infinity,
-  })
-
 export const getBlockCompressed = async ({
   revision,
   networkName,

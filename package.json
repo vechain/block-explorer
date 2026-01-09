@@ -16,7 +16,7 @@
     "knip:fix": "knip --fix",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "validate": "pnpm build && pnpm test && pnpm lint && pnpm format:check",
+    "validate": "pnpm build && pnpm test && pnpm lint && pnpm format:check && pnpm knip",
     "prepare": "husky",
     "translate": "dotenv -e .env npx translo-cli@latest",
     "ts-check": "tsc -p tsconfig.json --noEmit",
@@ -76,7 +76,8 @@
       "pnpm -s ts-check:staged"
     ],
     "*.{js,jsx,ts,tsx}": [
-      "eslint --fix"
+      "eslint --fix",
+      "node scripts/knip-check.mjs"
     ],
     "*.{js,jsx,ts,tsx,json,jsonc,md,css,scss}": [
       "prettier --write"

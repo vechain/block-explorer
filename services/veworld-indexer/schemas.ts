@@ -136,7 +136,7 @@ const eventTypeSchema = z.enum({
   VET: 'VET',
 })
 
-export const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTransactionMetaSchema.shape).extend({
+const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTransactionMetaSchema.shape).extend({
   id: z.string(),
   txId: transactionMetaSchema.shape.txID.nonoptional(),
   value: z.coerce.bigint(),
@@ -172,9 +172,9 @@ export const indexerContractSchema = z.object({
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
 export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
 export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>
-export type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParamsSchema>
+type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParamsSchema>
 export type IndexerGetErc20ContractsParams = z.infer<typeof indexerGetErc20ContractsParamsSchema>
 export type IndexerGetContractTransactionsParams = z.infer<typeof indexerGetContractTransactionsParamsSchema>
 export type IndexerGetErc721Params = z.infer<typeof indexerGetErc721ParamsSchema>
-export type IndexerGetContractsByMasterParams = z.infer<typeof indexerGetContractsByMasterParamsSchema>
+type IndexerGetContractsByMasterParams = z.infer<typeof indexerGetContractsByMasterParamsSchema>
 export type IndexerResponse<T extends z.ZodSchema> = z.infer<ReturnType<typeof indexerResponseSchema<T>>>
