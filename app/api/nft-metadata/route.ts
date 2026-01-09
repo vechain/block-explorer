@@ -18,14 +18,14 @@ export async function GET(request: NextRequest) {
     // API call
     const response = await apiClient.get<NftMetadata>({
       baseUrl: uri,
-      endPoint: `/`,
+      endPoint: '',
     })
 
     // Success response
     return NextResponse.json(response.data)
   } catch (error) {
     if (error instanceof ApiError) {
-      console.error('Error in nft-metadata route', error.response)
+      console.error('Error in nft-metadata route', error)
       return createErrorResponse(error)
     }
 

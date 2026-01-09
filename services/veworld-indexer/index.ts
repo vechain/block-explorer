@@ -1,14 +1,15 @@
 import { VEWORLD_INDEXER_MAINNET_URL, VEWORLD_INDEXER_TESTNET_URL } from '@/env.public'
 import { NetworkName } from '@/lib/constants/network'
 
-export const resolveUrl = (networkName: NetworkName) => {
-  if (networkName === NetworkName.TESTNET) return VEWORLD_INDEXER_TESTNET_URL
-  // if (networkName === NetworkName.SOLO) {
-  //   if (!VEWORLD_INDEXER_SOLO_URL) {
-  //     throw new Error('VEWORLD_INDEXER_SOLO_URL is not set')
-  //   }
-  //   return VEWORLD_INDEXER_SOLO_URL
-  // }
+export enum IndexerVersion {
+  V1 = 'v1',
+  V2 = 'v2',
+}
 
-  return VEWORLD_INDEXER_MAINNET_URL
+export const resolveUrl = (networkName: NetworkName, version: IndexerVersion = IndexerVersion.V1) => {
+  if (version === IndexerVersion.V1 || version === IndexerVersion.V2) {
+    if (networkName === NetworkName.TESTNET) return `${VEWORLD_INDEXER_TESTNET_URL}/api/${version}`
+    return `${VEWORLD_INDEXER_MAINNET_URL}/api/${version}`
+  }
+  throw new Error(`Invalid indexer version: ${version}`)
 }
