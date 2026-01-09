@@ -15,7 +15,8 @@ VeChain Block Explorer - A Next.js-based blockchain explorer for the VeChain net
 - **Data Fetching**: TanStack Query (React Query)
 - **Blockchain SDK**: VeChain SDK (@vechain/sdk-core, @vechain/sdk-network)
 - **Testing**: Vitest with React Testing Library
-- **Linting/Formatting**: Biome
+- **Linting**: ESLint with TypeScript, React, and i18next plugins
+- **Formatting**: Prettier
 - **Internationalization**: next-i18next with i18next
 - **Package Manager**: pnpm (v9.15.4)
 
@@ -34,14 +35,14 @@ pnpm test                # Run all tests
 pnpm test:watch          # Run tests in watch mode
 
 # Code Quality
-pnpm lint                # Check code with Biome
+pnpm lint                # Check code with ESLint
 pnpm lint:fix            # Fix linting issues
-pnpm format              # Format code with Biome
+pnpm format              # Format code with Prettier
 pnpm knip                # Check for unused dependencies/exports
 pnpm knip:fix            # Auto-fix knip issues
 
 # Full Validation
-pnpm validate            # Run build, test, lint, format, and knip
+pnpm validate            # Run build, test, lint, and format check
 ```
 
 ## Architecture
@@ -127,14 +128,22 @@ Required environment variables (see `.env`):
 
 ## Code Style
 
-Biome configuration (`biome.json`):
+Prettier configuration (`.prettierrc`):
 
 - 2 space indentation
 - 120 character line width
-- Single quotes for JS/TS
-- No semicolons (asNeeded)
+- Single quotes for JS/TS (double quotes in JSX)
+- No semicolons
 - Trailing commas everywhere
-- Import organization enabled
+- LF line endings
+
+ESLint configuration (`.eslintrc.json`):
+
+- Extends Next.js, TypeScript, and React recommended rules
+- Enforces i18n for user-facing text (`i18next/no-literal-string`)
+- No unused variables (underscore prefix allowed)
+- No explicit `any` types
+- Console statements restricted (warn/error only)
 
 ## Important Patterns
 
