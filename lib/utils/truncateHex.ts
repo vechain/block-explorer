@@ -6,7 +6,8 @@ export const isHexString = (hex: string): boolean => {
 
 export const truncateHex = (hex: string, startLength: number = 8, endLength: number = 6) => {
   if (!isHexString(hex)) {
-    return ''
+    console.error('Invalid hex string', hex)
+    return hex
   }
 
   return `${hex.slice(0, startLength)}...${endLength ? hex.slice(-endLength) : ''}`

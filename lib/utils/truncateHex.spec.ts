@@ -27,7 +27,7 @@ describe('truncateHex', () => {
   })
 
   it('returns empty string for invalid hex', () => {
-    expect(truncateHex('xyz123')).toBe('')
+    expect(truncateHex('xyz123')).toBe('xyz123')
     expect(truncateHex('')).toBe('')
   })
 })
