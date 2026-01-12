@@ -18,7 +18,9 @@ import { PriceCards } from './components/PriceCards'
 import { TokenTransfersSection } from './components/TokenTransfersSection'
 import { NFTTransfersSection } from './components/NFTTransfersSection'
 import { TotalStakedChart } from './components/TotalStakedChart'
+import { MarketCapChart } from './components/MarketCapChart'
 import { tokenDailyPricesQueryOptions } from '@/hooks/useTokenDailyPrices'
+import { marketCapQueryOptions, circulatingSupplyQueryOptions, MarketCapRange } from '@/hooks/useMarketCapData'
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
 import {
   totalVetStakedHistoricQueryOptions,
@@ -61,6 +63,9 @@ export default async function HomePage({
       queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.ACTIVE],
       queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.ACTIVE),
     }),
+    // Market cap prefetching
+    queryClient.prefetchQuery(marketCapQueryOptions('vechain', Currency.USD, MarketCapRange.DAY)),
+    queryClient.prefetchQuery(circulatingSupplyQueryOptions('vechain')),
   ])
 
   // Prefetch latest 5 expanded blocks for ActivitySection
@@ -89,6 +94,7 @@ export default async function HomePage({
       <Stack mt={8} gap={8}>
         <PriceCards />
         <Flex gap={4} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+          <MarketCapChart />
           <TotalStakedChart />
           <GeneralInformationCard />
         </Flex>
