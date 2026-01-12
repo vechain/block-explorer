@@ -5,6 +5,7 @@ import { memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, type TooltipContentProps, XAxis, YAxis } from 'recharts'
 import { Card } from '@/components/ui/Card'
+import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { useFormatCurrency, useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { MarketCapRange, useMarketCapData, type MarketCapToken } from '@/hooks/useMarketCapData'
 
@@ -15,10 +16,10 @@ type DataPoint = {
   marketCap: number
 }
 
-const TOKEN_OPTIONS: { id: MarketCapToken; label: string }[] = [
-  { id: 'vechain', label: 'VET' },
-  { id: 'vethor-token', label: 'VTHO' },
-  { id: 'vebetterdao', label: 'B3TR' },
+const TOKEN_OPTIONS: ToggleOption<MarketCapToken>[] = [
+  { value: 'vechain', label: 'VET' },
+  { value: 'vethor-token', label: 'VTHO' },
+  { value: 'vebetterdao', label: 'B3TR' },
 ]
 
 export const MarketCapChart = () => {
@@ -32,6 +33,12 @@ export const MarketCapChart = () => {
 
   const chartData: DataPoint[] = useMemo(() => data ?? [], [data])
 
+  const rangeOptions: ToggleOption<MarketCapRange>[] = [
+    { value: MarketCapRange.DAY, label: t('1D') },
+    { value: MarketCapRange.MONTH, label: t('1M') },
+    { value: MarketCapRange.YEAR, label: t('1Y') },
+  ]
+
   if (isLoading) return <Skeleton height="274px" width="415px" rounded="md" />
 
   return (
@@ -41,64 +48,13 @@ export const MarketCapChart = () => {
           {t('Market Cap')}
         </Heading>
 
-        <Flex
-          align="center"
-          gap={0}
-          bg="bg-primary"
-          borderRadius="full"
-          borderWidth="0.5px"
-          borderColor="border-primary"
-          p="4px"
-        >
-          <Flex
-            as="button"
-            align="center"
-            justify="center"
-            px={2}
-            py={1}
-            borderRadius="full"
-            bg={selectedRange === MarketCapRange.DAY ? 'white' : 'transparent'}
-            color={selectedRange === MarketCapRange.DAY ? 'text-alt-primary' : 'fg'}
-            textStyle="bodySSemibold"
-            cursor="pointer"
-            onClick={() => setSelectedRange(MarketCapRange.DAY)}
-            transition="all 0.2s"
-          >
-            {t('1D')}
-          </Flex>
-          <Flex
-            as="button"
-            align="center"
-            justify="center"
-            px={2}
-            py={1}
-            borderRadius="full"
-            bg={selectedRange === MarketCapRange.MONTH ? 'white' : 'transparent'}
-            color={selectedRange === MarketCapRange.MONTH ? 'text-alt-primary' : 'fg'}
-            textStyle="bodySSemibold"
-            cursor="pointer"
-            onClick={() => setSelectedRange(MarketCapRange.MONTH)}
-            transition="all 0.2s"
-          >
-            {t('1M')}
-          </Flex>
-          <Flex
-            as="button"
-            align="center"
-            justify="center"
-            px={2}
-            py={1}
-            borderRadius="full"
-            bg={selectedRange === MarketCapRange.YEAR ? 'white' : 'transparent'}
-            color={selectedRange === MarketCapRange.YEAR ? 'text-alt-primary' : 'fg'}
-            textStyle="bodySSemibold"
-            cursor="pointer"
-            onClick={() => setSelectedRange(MarketCapRange.YEAR)}
-            transition="all 0.2s"
-          >
-            {t('1Y')}
-          </Flex>
-        </Flex>
+        <ToggleGroup
+          options={rangeOptions}
+          value={selectedRange}
+          onChange={setSelectedRange}
+          layoutId="market-cap-range"
+          size="sm"
+        />
       </Flex>
 
       <Text textStyle="displayS" color="success-text" mt={-2}>
@@ -115,35 +71,13 @@ export const MarketCapChart = () => {
           <Text textStyle="bodyM">{formatNumber(circulatingSupply, { maximumFractionDigits: 0 })}</Text>
         </Stack>
 
-        <Flex
-          align="center"
-          gap={0}
-          bg="bg-primary"
-          borderRadius="full"
-          borderWidth="0.5px"
-          borderColor="border-primary"
-          p="4px"
-        >
-          {TOKEN_OPTIONS.map(token => (
-            <Flex
-              key={token.id}
-              as="button"
-              align="center"
-              justify="center"
-              px={2}
-              py={1}
-              borderRadius="full"
-              bg={selectedToken === token.id ? 'white' : 'transparent'}
-              color={selectedToken === token.id ? 'text-alt-primary' : 'fg'}
-              textStyle="bodySSemibold"
-              cursor="pointer"
-              onClick={() => setSelectedToken(token.id)}
-              transition="all 0.2s"
-            >
-              {token.label}
-            </Flex>
-          ))}
-        </Flex>
+        <ToggleGroup
+          options={TOKEN_OPTIONS}
+          value={selectedToken}
+          onChange={setSelectedToken}
+          layoutId="market-cap-token"
+          size="sm"
+        />
       </Flex>
     </Card>
   )
