@@ -184,7 +184,7 @@ export const tokenHistorySchema = z.object({
   from: addressStringSchema,
 })
 
-export type TokenHistory = z.infer<typeof tokenHistorySchema>
+type TokenHistory = z.infer<typeof tokenHistorySchema>
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
 export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
 export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>

@@ -145,7 +145,7 @@ export type Erc721 = {
   contract: Contract<typeof ERC721_ABI>
 }
 
-export type Erc721CollectionStats = {
+type Erc721CollectionStats = {
   totalSupply: bigint | null
 }
 
