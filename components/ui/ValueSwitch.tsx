@@ -44,7 +44,19 @@ const Item = ({
   return (
     <Flex p={2} cursor="pointer" position="relative" onClick={() => onChange(value)}>
       {isActive && (
-        <MotionBox position="absolute" layoutId={layoutId} inset="0" bg="white" color="bg-primary" rounded="full" />
+        <MotionBox
+          position="absolute"
+          layoutId={layoutId}
+          inset="0"
+          bg="white"
+          color="bg-primary"
+          rounded="full"
+          transition={{
+            type: 'spring',
+            bounce: 0.2,
+            duration: 0.4,
+          }}
+        />
       )}
 
       <Text

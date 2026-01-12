@@ -2,6 +2,7 @@ if (!process.env.NEXT_PUBLIC_COIN_API_URL) {
   throw new Error('NEXT_PUBLIC_COIN_API_URL is not set')
 }
 
+// coingecko api proxy
 export const COIN_API_URL = process.env.NEXT_PUBLIC_COIN_API_URL
 
 if (!process.env.NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL) {

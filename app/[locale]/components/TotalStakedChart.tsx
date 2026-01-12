@@ -8,6 +8,7 @@ import { formatEther } from 'viem'
 import { useTotalVetStaked, useTotalVetStakedHistoric } from '@/services/veworld-indexer/hooks'
 import { TotalVetStakedRange } from '@/services/veworld-indexer/total-vet-staked-historic'
 import { Card } from '@/components/ui/Card'
+import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { useFormatAbbreviated, useFormatAmount, useFormatDate } from '@/hooks/useFormatting'
 
 const chartHeight = 140
@@ -25,7 +26,6 @@ export const TotalStakedChart = () => {
   const { data: historicData, isLoading } = useTotalVetStakedHistoric(selectedRange)
   const { data: currentTotal } = useTotalVetStaked()
 
-  // Transform API data to chart format - memoized to avoid recalculation
   const chartData: DataPoint[] = useMemo(
     () =>
       historicData?.map((point: { timestamp: number; value: string }) => {
@@ -43,6 +43,12 @@ export const TotalStakedChart = () => {
   const latestValue = chartData.length > 0 ? chartData[chartData.length - 1] : null
   const displayValue = currentTotal?.total ?? (latestValue ? latestValue.value : 0n)
 
+  const rangeOptions: ToggleOption<TotalVetStakedRange>[] = [
+    { value: TotalVetStakedRange.DAY, label: t('1D') },
+    { value: TotalVetStakedRange.MONTH, label: t('1M') },
+    { value: TotalVetStakedRange.YEAR, label: t('1Y') },
+  ]
+
   if (isLoading) return <Skeleton height="274px" width="415px" rounded="md" />
 
   return (
@@ -52,64 +58,13 @@ export const TotalStakedChart = () => {
           {t('Total Staked')}
         </Heading>
 
-        <Flex
-          align="center"
-          gap={1}
-          bg="bg-primary"
-          borderRadius="full"
-          borderWidth="0.5px"
-          borderColor="border-primary"
-          p="4px"
-        >
-          <Flex
-            as="button"
-            align="center"
-            justify="center"
-            px={3}
-            py={1}
-            borderRadius="full"
-            bg={selectedRange === TotalVetStakedRange.DAY ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.DAY ? 'text-alt-primary' : 'fg'}
-            textStyle="bodySSemibold"
-            cursor="pointer"
-            onClick={() => setSelectedRange(TotalVetStakedRange.DAY)}
-            transition="all 0.2s"
-          >
-            {t('1D')}
-          </Flex>
-          <Flex
-            as="button"
-            align="center"
-            justify="center"
-            px={3}
-            py={1}
-            borderRadius="full"
-            bg={selectedRange === TotalVetStakedRange.MONTH ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.MONTH ? 'text-alt-primary' : 'fg'}
-            textStyle="bodySSemibold"
-            cursor="pointer"
-            onClick={() => setSelectedRange(TotalVetStakedRange.MONTH)}
-            transition="all 0.2s"
-          >
-            {t('1M')}
-          </Flex>
-          <Flex
-            as="button"
-            align="center"
-            justify="center"
-            px={3}
-            py={1}
-            borderRadius="full"
-            bg={selectedRange === TotalVetStakedRange.YEAR ? 'white' : 'transparent'}
-            color={selectedRange === TotalVetStakedRange.YEAR ? 'text-alt-primary' : 'fg'}
-            textStyle="bodySSemibold"
-            cursor="pointer"
-            onClick={() => setSelectedRange(TotalVetStakedRange.YEAR)}
-            transition="all 0.2s"
-          >
-            {t('1Y')}
-          </Flex>
-        </Flex>
+        <ToggleGroup
+          options={rangeOptions}
+          value={selectedRange}
+          onChange={setSelectedRange}
+          layoutId="total-staked-range"
+          size="sm"
+        />
       </Flex>
 
       <Text textStyle="displayS" color="accent-primary">
