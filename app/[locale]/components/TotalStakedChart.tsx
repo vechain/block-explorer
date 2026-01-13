@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Box, Flex, Heading, Stack, Text } from '@chakra-ui/react'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, type TooltipContentProps, XAxis, YAxis } from 'recharts'
@@ -23,7 +23,7 @@ export const TotalStakedChart = () => {
   const { t } = useTranslation()
   const formatAbbreviated = useFormatAbbreviated()
   const [selectedRange, setSelectedRange] = useState<TotalVetStakedRange>(TotalVetStakedRange.DAY)
-  const { data: historicData, isLoading } = useTotalVetStakedHistoric(selectedRange)
+  const { data: historicData } = useTotalVetStakedHistoric(selectedRange)
   const { data: currentTotal } = useTotalVetStaked()
 
   const chartData: DataPoint[] = useMemo(
@@ -48,8 +48,6 @@ export const TotalStakedChart = () => {
     { value: TotalVetStakedRange.MONTH, label: t('1M') },
     { value: TotalVetStakedRange.YEAR, label: t('1Y') },
   ]
-
-  if (isLoading) return <Skeleton height="274px" width="415px" rounded="md" />
 
   return (
     <Card width="415px" height="274px">

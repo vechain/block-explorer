@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Box, Flex, Heading, Stack, Text } from '@chakra-ui/react'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, type TooltipContentProps, XAxis, YAxis } from 'recharts'
@@ -29,7 +29,7 @@ export const MarketCapChart = () => {
   const [selectedToken, setSelectedToken] = useState<MarketCapToken>('vechain')
   const [selectedRange, setSelectedRange] = useState<MarketCapRange>(MarketCapRange.DAY)
 
-  const { data, circulatingSupply, currentMarketCap, isLoading } = useMarketCapData(selectedToken, selectedRange)
+  const { data, circulatingSupply, currentMarketCap } = useMarketCapData(selectedToken, selectedRange)
 
   const chartData: DataPoint[] = useMemo(() => data ?? [], [data])
 
@@ -38,8 +38,6 @@ export const MarketCapChart = () => {
     { value: MarketCapRange.MONTH, label: t('1M') },
     { value: MarketCapRange.YEAR, label: t('1Y') },
   ]
-
-  if (isLoading) return <Skeleton height="274px" width="415px" rounded="md" />
 
   return (
     <Card width="415px" height="274px" gap={3}>
