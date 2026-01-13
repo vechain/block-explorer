@@ -63,6 +63,10 @@ export default async function HomePage({
       queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.ACTIVE],
       queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.ACTIVE),
     }),
+    queryClient.prefetchQuery({
+      queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.EXITING],
+      queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.EXITING),
+    }),
     // Market cap prefetching
     queryClient.prefetchQuery(marketCapQueryOptions('vechain', Currency.USD, MarketCapRange.DAY)),
     queryClient.prefetchQuery(circulatingSupplyQueryOptions('vechain')),
