@@ -63,7 +63,7 @@ export const TransactionInsight = ({
   const confirmations = getConfirmations(bestBlock?.number, transaction.meta.blockNumber)
   const confirmationsStatus = getConfirmationsStatus(confirmations)
   const VETValue = BigInt(
-    transaction.clauses.reduce((acc, clause) => acc.plus(clause.value), new BigNumber(0)).toString(),
+    transaction.clauses.reduce((acc, clause) => acc.plus(clause.value), new BigNumber(0)).toFixed(0),
   )
 
   const TransactionDate = () => {
