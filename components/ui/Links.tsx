@@ -4,6 +4,7 @@ import type { AddressString } from '@/lib/schemas'
 import { truncateAddress } from '@/lib/utils/address'
 import { CopyToClipBoard } from './CopyToClipBoard'
 import { useVnsName } from '@/services/thor/hooks'
+import { useMemo } from 'react'
 interface BaseLinkProps extends Omit<ChakraLinkProps, 'href'> {
   href: NextLinkProps['href']
 }
@@ -64,8 +65,24 @@ interface CopyableAddressLinkProps extends Omit<BaseLinkProps, 'href'> {
   truncate?: boolean
 }
 
-export const CopyableAddressLink = ({ address, truncate = false, ...props }: CopyableAddressLinkProps) => {
+const MAX_VNS_NAME_LENGTH = 20
+
+export const CopyableAddressLink = ({ address, truncate = true, ...props }: CopyableAddressLinkProps) => {
   const { data: vnsName, isPending } = useVnsName(address)
+
+  const displayAddress = useMemo(() => {
+    if (vnsName) {
+      if (truncate) {
+        if (vnsName.length < MAX_VNS_NAME_LENGTH) {
+          return vnsName
+        }
+        return `${vnsName.slice(0, MAX_VNS_NAME_LENGTH)}...${vnsName.slice(-6)}`
+      }
+      return vnsName
+    }
+    if (truncate) return truncateAddress(address)
+    return address
+  }, [vnsName, truncate, address])
 
   if (isPending) {
     return <Skeleton height="16px" width="100%" />
@@ -73,7 +90,7 @@ export const CopyableAddressLink = ({ address, truncate = false, ...props }: Cop
 
   return (
     <CopyableLink href={`/address/${address}`} value={address} {...props}>
-      {vnsName ? vnsName : truncate ? truncateAddress(address) : address}
+      {displayAddress}
     </CopyableLink>
   )
 }

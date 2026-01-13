@@ -23,8 +23,8 @@ export const GeneralInformationCard = () => {
   const validators = validatorsCount ?? 0
 
   return (
-    <Card width="208px" height="274px">
-      <Stack gap={2} flex="1" justifyContent="space-between">
+    <Card width={{ base: '100%', md: '208px' }}>
+      <Stack gap={{ base: 8, md: 2 }} flex="1" justifyContent="space-between">
         <Stack>
           <Text textStyle="bodyM" color="text-secondary">
             {t('Total Accounts')}
