@@ -12,6 +12,7 @@ import type { TransferFromBlock } from '@/services/veworld-indexer/hooks'
 import { useErc20Contracts } from '@/services/thor/tokens/erc20'
 import { useErc721Contracts } from '@/services/thor/tokens/erc721'
 import { isNotNullish } from '@/lib/type-predicates'
+import { truncateString } from '@/lib/utils/truncateString'
 
 type TransferType = 'FUNGIBLE_TOKEN' | 'NFT' | 'VET' | 'all'
 
@@ -78,8 +79,10 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
       // Handle NFT transfers
       if (transfer.eventType === 'NFT') {
         const erc721 = transfer.tokenAddress ? erc721Map?.get(transfer.tokenAddress) : null
-        const collectionName = erc721?.name ?? (transfer.tokenAddress ? '-' : '')
-        const tokenId = transfer.tokenId ?? '-'
+        const rawCollectionName = erc721?.name ?? (transfer.tokenAddress ? '-' : '')
+        const rawTokenId = transfer.tokenId ?? '-'
+        const collectionName = rawCollectionName ? truncateString(rawCollectionName, 16, 4) : ''
+        const tokenId = rawTokenId !== '-' ? truncateString(rawTokenId, 12, 4) : '-'
 
         return (
           <Flex alignItems="center" gap={1} flexWrap="wrap">
