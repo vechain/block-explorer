@@ -8,13 +8,13 @@ import { DataCard } from '@/components/ui/DataCard'
 import { IDChip } from '@/components/ui/IDChip'
 import { AddressLink, BaseLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
-import type { BlockId } from '@/lib/schemas'
+import type { BlockRevision } from '@/lib/schemas'
 import { useBlockExpanded } from '@/services/thor/hooks'
 import { useFormatNumber } from '@/hooks/useFormatting'
 import { TransactionsTable } from '../../../components/TransactionsTable'
 import { BlockInsight } from '../../components/BlockInsights'
 
-export const BlockDetails = ({ blockId }: { blockId: BlockId }) => {
+export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
   const { data: block, isPending } = useBlockExpanded(blockId)
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
