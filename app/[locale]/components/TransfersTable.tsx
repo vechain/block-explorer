@@ -13,6 +13,8 @@ import { useErc20Contracts } from '@/services/thor/tokens/erc20'
 import { useErc721Contracts } from '@/services/thor/tokens/erc721'
 import { isNotNullish } from '@/lib/type-predicates'
 import { truncateString } from '@/lib/utils/truncateString'
+import { getKnownToken } from '@/lib/constants/tokens'
+import { useSettingsStore } from '@/lib/stores/settings'
 
 type TransferType = 'FUNGIBLE_TOKEN' | 'NFT' | 'VET' | 'all'
 
@@ -26,6 +28,7 @@ type TransfersTableProps = {
 
 export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTableProps) => {
   const { t } = useTranslation()
+  const { activeNetwork } = useSettingsStore()
 
   // Filter transfers by type if specified
   const filteredTransfers = useMemo(() => {
@@ -107,9 +110,16 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
 
       // Handle fungible token transfers (FUNGIBLE_TOKEN or VET)
       const token = transfer.tokenAddress ? erc20Map?.get(transfer.tokenAddress) : null
-      const decimals = token?.decimals ?? 18
+      // Fallback to known tokens list if ERC20 contract lookup fails or is pending
+      const knownToken =
+        transfer.tokenAddress && !token
+          ? getKnownToken(transfer.tokenAddress, activeNetwork.name as 'mainnet' | 'testnet')
+          : null
+      const decimals = token?.decimals ?? knownToken?.decimals ?? 18
       const tokenSymbol =
-        transfer.eventType === 'VET' ? 'VET' : (token?.symbol ?? (transfer.tokenAddress ? '-' : 'VET'))
+        transfer.eventType === 'VET'
+          ? 'VET'
+          : (token?.symbol ?? knownToken?.symbol ?? (transfer.tokenAddress ? '-' : 'VET'))
 
       return (
         <Flex alignItems="center" gap={1}>
@@ -124,7 +134,7 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
     }
     CellComponent.displayName = 'LastColumnCell'
     return CellComponent
-  }, [transferMap, erc20Map, erc721Map])
+  }, [transferMap, erc20Map, erc721Map, activeNetwork.name])
 
   const rows = useMemo(
     () =>
