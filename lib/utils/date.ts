@@ -1,7 +1,17 @@
 import { Locale } from '@/i18n/config'
 
+/**
+ * Converts a timestamp to milliseconds if it's in seconds.
+ * Unix timestamps in seconds are typically 10 digits (< 10^12),
+ * while millisecond timestamps are 13 digits (>= 10^12).
+ */
+const toMilliseconds = (timestamp: number): number => {
+  // If timestamp is less than 10^12, it's likely in seconds
+  return timestamp < 1e12 ? timestamp * 1000 : timestamp
+}
+
 export const formatDateFromTimestamp = (timestamp: number, locale?: Locale, options?: Intl.DateTimeFormatOptions) => {
-  return new Date(timestamp).toLocaleString(locale || Locale.EN, {
+  return new Date(toMilliseconds(timestamp)).toLocaleString(locale || Locale.EN, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
