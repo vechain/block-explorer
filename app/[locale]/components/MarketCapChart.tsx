@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Heading, Stack, Text } from '@chakra-ui/react'
+import { Box, Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, type TooltipContentProps, XAxis, YAxis } from 'recharts'
@@ -29,7 +29,7 @@ export const MarketCapChart = () => {
   const [selectedToken, setSelectedToken] = useState<MarketCapToken>('vechain')
   const [selectedRange, setSelectedRange] = useState<MarketCapRange>(MarketCapRange.DAY)
 
-  const { data, circulatingSupply, currentMarketCap } = useMarketCapData(selectedToken, selectedRange)
+  const { data, circulatingSupply, currentMarketCap, isLoading } = useMarketCapData(selectedToken, selectedRange)
 
   const chartData: DataPoint[] = useMemo(() => data ?? [], [data])
 
@@ -55,9 +55,13 @@ export const MarketCapChart = () => {
         />
       </Flex>
 
-      <Text textStyle="displayS" color="success-text" mt={-2}>
-        {formatCurrency(currentMarketCap ?? 0, { maximumFractionDigits: 0 })}
-      </Text>
+      {isLoading || currentMarketCap === undefined ? (
+        <Skeleton height="28px" width="160px" mt={-2} />
+      ) : (
+        <Text textStyle="displayS" color="success-text" mt={-2}>
+          {formatCurrency(currentMarketCap, { maximumFractionDigits: 0 })}
+        </Text>
+      )}
 
       <MarketCapChartVisualization data={chartData} />
 
