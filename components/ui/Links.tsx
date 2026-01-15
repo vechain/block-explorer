@@ -1,11 +1,13 @@
 import { Link as ChakraLink, type LinkProps as ChakraLinkProps, Flex, Skeleton, Text } from '@chakra-ui/react'
 import Link, { type LinkProps as NextLinkProps } from 'next/link'
+import { LuArrowRight } from 'react-icons/lu'
 import type { AddressString } from '@/lib/schemas'
 import { truncateAddress } from '@/lib/utils/address'
 import { truncateString } from '@/lib/utils/truncateString'
 import { CopyToClipBoard } from './CopyToClipBoard'
 import { useVnsName } from '@/services/thor/hooks'
 import { useMemo } from 'react'
+
 interface BaseLinkProps extends Omit<ChakraLinkProps, 'href'> {
   href: NextLinkProps['href']
 }
@@ -22,6 +24,28 @@ export const BaseLink = ({ children, href, ...props }: BaseLinkProps) => {
       {...props}
     >
       <Link href={href}>{children}</Link>
+    </ChakraLink>
+  )
+}
+
+export const ViewAllLink = ({ children, href, ...props }: BaseLinkProps) => {
+  return (
+    <ChakraLink
+      asChild
+      color="text-link"
+      textDecoration="none"
+      textStyle="bodyMSemibold"
+      display="inline-flex"
+      alignItems="center"
+      gap={1}
+      _focus={{ outline: 'none' }}
+      _hover={{ textDecoration: 'underline' }}
+      {...props}
+    >
+      <Link href={href}>
+        {children}
+        <LuArrowRight />
+      </Link>
     </ChakraLink>
   )
 }
