@@ -27,13 +27,7 @@ export const accountOverviewQueryOptions = (networkName: NetworkName, address: s
   staleTime: 3 * 1000, // Consider data fresh for 3 seconds
   refetchInterval: 60 * 1000, // Refetch every minute
   placeholderData: keepPreviousData, // Prevent UI flickering during refetches
-  retry: (failureCount: number, error: Error) => {
-    if (failureCount < 3 && (error as Error)?.message?.includes('fetch')) {
-      return true
-    }
-    return false
-  },
-  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff, max 30s
+  retry: false,
 })
 
 const getAccountOverview = async ({ networkName, address }: { networkName: NetworkName; address: string }) => {
@@ -45,5 +39,17 @@ const getAccountOverview = async ({ networkName, address }: { networkName: Netwo
     data,
     schema: accountOverviewSchema,
     errorMessage: 'Invalid account overview response from VeWorld Indexer',
+    fallbackData: {
+      address,
+      firstSeen: 0,
+      lastSeen: 0,
+      transactionsSent: 0,
+      clausesSent: 0,
+      vthoBurned: '0',
+      vthoDelegated: '0',
+      gasUsed: '0',
+      vetSent: '0',
+      vetReceived: '0',
+    },
   })
 }
