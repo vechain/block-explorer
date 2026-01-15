@@ -3,7 +3,7 @@
 import { notFound } from 'next/navigation'
 import type { AddressString } from '@/lib/schemas'
 import { useAccount } from '@/services/thor/hooks'
-import { Stack } from '@chakra-ui/react'
+import { Skeleton, Stack } from '@chakra-ui/react'
 import { AccountSummary } from './AccountSummary'
 import { AccountTransactionsSection } from './sections/AccountTransactionsSection'
 import { AccountNftsSection } from './sections/AccountNftsSection'
@@ -12,7 +12,7 @@ import { ContractSummary } from './ContractSummary'
 export const AddressPageContent = ({ address }: { address: AddressString }) => {
   const { data: account, isLoading: isAccountLoading } = useAccount(address)
 
-  if (isAccountLoading) return <div>Loading...</div>
+  if (isAccountLoading) return <Skeleton height="400px" width="100%" />
 
   if (!account) {
     notFound()

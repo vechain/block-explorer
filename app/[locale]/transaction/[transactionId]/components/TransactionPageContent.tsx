@@ -1,6 +1,6 @@
 'use client'
 
-import { Flex, Heading, Text } from '@chakra-ui/react'
+import { Flex, Heading, Skeleton, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { notFound, useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
@@ -27,7 +27,7 @@ export const TransactionPageContent = ({
   const { data: receipt, isPending: isReceiptPending } = useTransactionReceipt(transactionId)
   const router = useRouter()
 
-  if (isTransactionPending || isReceiptPending) return <div>Loading...</div>
+  if (isTransactionPending || isReceiptPending) return <Skeleton height="400px" width="100%" />
 
   if (!transaction) {
     notFound()
