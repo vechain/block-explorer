@@ -30,8 +30,9 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
 
   const isPending = isOverviewPending || isPendingTokens
 
-  const firstSeenDate = overview ? formatDate(overview.firstSeen * 1000) : ''
-  const lastSeenDate = overview ? formatDate(overview.lastSeen * 1000) : ''
+  // Show "Never seen" for accounts that haven't been indexed yet (firstSeen/lastSeen = 0)
+  const firstSeenDate = overview && overview.firstSeen > 0 ? formatDate(overview.firstSeen * 1000) : null
+  const lastSeenDate = overview && overview.lastSeen > 0 ? formatDate(overview.lastSeen * 1000) : null
 
   return (
     <Stack gap="8">
@@ -53,8 +54,8 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
             {isPending ? (
               <Skeleton height="24px" width="120px" />
             ) : (
-              <Text textStyle="bodyL" color="text-primary">
-                {firstSeenDate}
+              <Text textStyle="bodyL" color={firstSeenDate ? 'text-primary' : 'text-secondary'}>
+                {firstSeenDate ?? t('Never seen')}
               </Text>
             )}
           </DataCard>
@@ -68,8 +69,8 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
             {isPending ? (
               <Skeleton height="24px" width="120px" />
             ) : (
-              <Text textStyle="bodyL" color="text-primary">
-                {lastSeenDate}
+              <Text textStyle="bodyL" color={lastSeenDate ? 'text-primary' : 'text-secondary'}>
+                {lastSeenDate ?? t('Never seen')}
               </Text>
             )}
           </DataCard>
