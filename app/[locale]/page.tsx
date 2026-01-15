@@ -1,11 +1,10 @@
-import { Container, Flex, Stack } from '@chakra-ui/react'
+import { Flex, Stack } from '@chakra-ui/react'
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import z from 'zod'
 
 // Force dynamic rendering - ensures SSR data prefetching works in production
 export const dynamic = 'force-dynamic'
 import { GeneralInformationCard } from '@/components/ui/GeneralInformationCard'
-import { SearchBar } from '@/components/navigation/SearchBar'
 import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
 
@@ -91,10 +90,6 @@ export default async function HomePage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Container p="0" mt={4} hideFrom="md">
-        <SearchBar />
-      </Container>
-
       <Stack mt={8} gap={8}>
         <PriceCards />
         <Flex gap={4} flexWrap={{ base: 'wrap', md: 'nowrap' }}>

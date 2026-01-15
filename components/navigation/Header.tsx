@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, HStack, Separator, Text } from '@chakra-ui/react'
+import { Box, Flex, HStack, Separator, Text, VStack } from '@chakra-ui/react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
@@ -21,15 +21,16 @@ import { CURRENCIES } from '@/lib/constants/currencies'
 export const Header = () => {
   useColorMode()
   return (
-    <Flex as="header" justify="space-between" align="center" py={{ base: 0, md: 4 }} gap={6}>
-      <Box hideBelow="md">
+    <VStack alignItems="stretch">
+      <Flex as="header" justify="space-between" align="center" py={{ base: 0, md: 4 }} gap={6}>
         <Logo />
-      </Box>
 
-      <SearchBar hideBelow="md" flex={1} />
+        <SearchBar hideBelow="md" flex={1} />
 
-      <NavigationMenu />
-    </Flex>
+        <NavigationMenu />
+      </Flex>
+      <SearchBar hideFrom="md" flex={1} />
+    </VStack>
   )
 }
 
@@ -75,17 +76,12 @@ const NavigationMenu = () => {
   return (
     <>
       <Flex
-        flex={{ base: 1, md: 0 }}
         justifyContent={{ base: 'space-between', md: 'flex-end' }}
         gap={{ base: 2, md: 4 }}
         alignItems="center"
         py={2}
         position="relative"
       >
-        <Box hideFrom="md" display="flex" alignItems="center" gap={2}>
-          <Logo />
-        </Box>
-
         <NetworkSelect />
         <Box ref={menuRef}>
           <Box position="relative">
