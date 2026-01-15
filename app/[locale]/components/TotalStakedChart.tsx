@@ -50,7 +50,7 @@ export const TotalStakedChart = () => {
   ]
 
   return (
-    <Card width="415px" height="274px">
+    <Card width="415px" minWidth="415px" height="274px" flexShrink={0}>
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL">
           {t('Total Staked')}

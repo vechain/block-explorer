@@ -31,7 +31,7 @@ export const GeneralInformationCard = () => {
   const validators = activeValidators + exitingValidators
 
   return (
-    <Card width={{ base: '100%', md: '208px' }}>
+    <Card width={{ base: '320px', md: '208px' }} minWidth={{ base: '320px', md: '208px' }} flexShrink={0}>
       <Stack direction={{ base: 'row', md: 'column' }} gap={{ base: 8, md: 2 }} flex="1" justifyContent="space-between">
         <Stack>
           <Text textStyle="bodyM" color="text-secondary">
