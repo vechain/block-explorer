@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
-import { BaseLink } from '@/components/ui/Links'
+import { ViewAllLink } from '@/components/ui/Links'
 import { useRecentBlocksExpanded } from '@/services/veworld-indexer/hooks'
 import { BlocksTable } from './BlocksTable'
 import { ActivityTransactionsTable } from './ActivityTransactionsTable'
@@ -68,9 +68,7 @@ export const ActivitySection = () => {
             size="sm"
           />
         </HStack>
-        <BaseLink href={viewAllHref} textStyle="bodyMSemibold" color="text-link">
-          {t('View all')}
-        </BaseLink>
+        <ViewAllLink href={viewAllHref}>{t('View all')}</ViewAllLink>
       </Flex>
       <Box minHeight="320px">{renderContent()}</Box>
     </Card>
