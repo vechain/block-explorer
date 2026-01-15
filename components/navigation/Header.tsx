@@ -3,7 +3,7 @@
 import { Box, Flex, HStack, Separator, Text } from '@chakra-ui/react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FiArrowUpRight, FiMenu } from 'react-icons/fi'
 import { i18nConfig, type Locale } from '@/i18n/config'
@@ -38,10 +38,28 @@ const NavigationMenu = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false)
   const [isCurrencyModalOpen, setIsCurrencyModalOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const params = useParams()
   const currentLocale = (params.locale as Locale) || i18nConfig.defaultLocale
   const currentLanguage = languageNames[currentLocale]
   const { currency } = useSettingsStore()
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isMenuOpen])
 
   const handleLanguageClick = () => {
     setIsMenuOpen(false)
@@ -69,7 +87,7 @@ const NavigationMenu = () => {
         </Box>
 
         <NetworkSelect />
-        <Box>
+        <Box ref={menuRef}>
           <Box position="relative">
             <Box
               as="button"
