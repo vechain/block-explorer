@@ -28,10 +28,8 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
     isPendingAll: isPendingAllTokens,
   } = useAccountTokens(address)
 
-  const isPending = isOverviewPending || isPendingTokens
-
-  const firstSeenDate = overview ? formatDate(overview.firstSeen * 1000) : ''
-  const lastSeenDate = overview ? formatDate(overview.lastSeen * 1000) : ''
+  const firstSeenDate = overview && overview.firstSeen > 0 ? formatDate(overview.firstSeen * 1000) : null
+  const lastSeenDate = overview && overview.lastSeen > 0 ? formatDate(overview.lastSeen * 1000) : null
 
   return (
     <Stack gap="8">
@@ -50,11 +48,11 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
             title={t('First Seen')}
             tooltip={t('Information coming soon')}
           >
-            {isPending ? (
+            {isOverviewPending ? (
               <Skeleton height="24px" width="120px" />
             ) : (
-              <Text textStyle="bodyL" color="text-primary">
-                {firstSeenDate}
+              <Text textStyle="bodyL" color={firstSeenDate ? 'text-primary' : 'text-secondary'}>
+                {firstSeenDate ?? '-'}
               </Text>
             )}
           </DataCard>
@@ -65,11 +63,11 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
             title={t('Last Seen')}
             tooltip={t('Information coming soon')}
           >
-            {isPending ? (
+            {isOverviewPending ? (
               <Skeleton height="24px" width="120px" />
             ) : (
-              <Text textStyle="bodyL" color="text-primary">
-                {lastSeenDate}
+              <Text textStyle="bodyL" color={lastSeenDate ? 'text-primary' : 'text-secondary'}>
+                {lastSeenDate ?? '-'}
               </Text>
             )}
           </DataCard>
@@ -81,7 +79,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
             tooltip={t('Information coming soon')}
             pb={0}
           >
-            {isPending ? (
+            {isOverviewPending ? (
               <Skeleton height="24px" width="80px" />
             ) : (
               <Text textStyle="bodyL" color="text-primary" mb={0}>
@@ -97,7 +95,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
             tooltip={t('Information coming soon')}
             pb={0}
           >
-            {isPending ? (
+            {isOverviewPending ? (
               <Skeleton height="24px" width="80px" />
             ) : (
               <Text textStyle="bodyL" color="text-primary" mb={0}>
