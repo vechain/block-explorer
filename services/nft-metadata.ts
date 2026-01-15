@@ -45,6 +45,11 @@ export const parseNftMetadataUri = (uri: string) => {
   if (ipfsUriResult.success) {
     return ipfsUriResult.data
   }
+  // Log failed URI transformation for debugging broken NFT metadata
+  console.warn('[NFT Metadata] Failed to transform URI:', {
+    originalUri: uri,
+    error: ipfsUriResult.error.flatten(),
+  })
   return uri
 }
 
@@ -53,10 +58,12 @@ const nftMetadataUriSchema = z
   .transform(url => url.replace('ipfs://', `${IPFS_GATEWAY_PROXY_URL}/ipfs/`).replace('ar://', 'https://arweave.net/'))
 
 // ****************************** NFT Metadata schema ******************************
+const nftAttributeValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()])
+
 const nftAttributeSchema = z
   .object({
     trait_type: z.string(),
-    value: z.any(),
+    value: nftAttributeValueSchema,
   })
   .transform(data => ({
     traitType: data.trait_type,
