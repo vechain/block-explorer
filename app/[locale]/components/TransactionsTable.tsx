@@ -30,9 +30,9 @@ export const TransactionsTable = ({ transactions }: { transactions: ExpandedBloc
       key: 'id',
       label: t('Tx ID'),
       Cell: ({ row }) => (
-        <BaseLink href={`/transaction/${row.txId}`} maxW="150px">
+        <BaseLink href={`/transaction/${row.id}`} maxW="150px">
           <Text overflow="hidden" textOverflow="ellipsis">
-            {row.txId}
+            {row.id}
           </Text>
         </BaseLink>
       ),
