@@ -36,11 +36,12 @@ export const PriceCards = () => {
   return (
     <Flex
       gap={4}
-      overflowX={{ base: 'auto', md: 'visible' }}
-      flexWrap={{ base: 'nowrap', md: 'nowrap' }}
-      pb={{ base: 2, md: 0 }}
-      mx={{ base: -4, md: 0 }}
-      px={{ base: 4, md: 0 }}
+      flexDirection={{ base: 'column', sm: 'row' }}
+      flexWrap={{ base: 'nowrap', sm: 'nowrap' }}
+      overflowX={{ base: 'visible', sm: 'auto', md: 'visible' }}
+      pb={{ base: 0, sm: 2, md: 0 }}
+      mx={{ base: 0, sm: -4, md: 0 }}
+      px={{ base: 0, sm: 4, md: 0 }}
       css={{
         '&::-webkit-scrollbar': {
           display: 'none',
@@ -88,9 +89,10 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
   return (
     <Card
       alignItems="flex-start"
-      flex={{ base: '0 0 auto', md: 1 }}
+      flex={{ base: '1', sm: '0 0 auto', md: 1 }}
       flexShrink={0}
-      minW={{ base: '75%', md: '0' }}
+      minW={{ base: 'auto', sm: '75%', md: '0' }}
+      width={{ base: '100%', sm: 'auto' }}
       py={5}
       px={4}
       gap={6}
