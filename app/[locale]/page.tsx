@@ -97,20 +97,7 @@ export default async function HomePage({
 
       <Stack mt={8} gap={8}>
         <PriceCards />
-        <Flex
-          gap={4}
-          flexWrap="nowrap"
-          overflowX={{ base: 'auto', md: 'visible' }}
-          pb={{ base: 2, md: 0 }}
-          mx={{ base: -4, md: 0 }}
-          px={{ base: 4, md: 0 }}
-          css={{
-            '&::-webkit-scrollbar': {
-              display: 'none',
-            },
-            scrollbarWidth: 'none',
-          }}
-        >
+        <Flex gap={4} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
           <MarketCapChart />
           <TotalStakedChart />
           <GeneralInformationCard />
