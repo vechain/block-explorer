@@ -161,9 +161,6 @@ const MobileCard = <T extends TableRow = TableRow>({
   columns: Column<T>[]
   rowIndex: number
 }) => {
-  // First column is typically the primary identifier, show it prominently
-  const [firstColumn, ...restColumns] = columns
-
   return (
     <Box
       bg={rowIndex % 2 === 0 ? 'row-odd-bg-primary' : 'row-even-bg-primary'}
@@ -173,26 +170,9 @@ const MobileCard = <T extends TableRow = TableRow>({
       role="article"
     >
       <Stack gap={3}>
-        {/* First column as header */}
-        {firstColumn && (
-          <Flex justifyContent="space-between" alignItems="center" borderBottom={border} pb={3}>
-            <Text color="text-secondary" textStyle="bodyS" fontWeight="medium">
-              {firstColumn.label}
-            </Text>
-            <Box textStyle="bodyM">
-              {firstColumn.Cell ? (
-                <firstColumn.Cell value={row[firstColumn.key]} row={row} columnKey={firstColumn.key} />
-              ) : (
-                <TableText>{row[firstColumn.key]}</TableText>
-              )}
-            </Box>
-          </Flex>
-        )}
-
-        {/* Rest of the columns as key-value pairs */}
-        {restColumns.map(column => (
+        {columns.map(column => (
           <Flex key={column.key} justifyContent="space-between" alignItems="center" gap={2}>
-            <Text color="text-secondary" textStyle="bodyS" flexShrink={0}>
+            <Text color="text-secondary" textStyle="bodyS" flexShrink={0} fontWeight="medium">
               {column.label}
             </Text>
             <Box textStyle="bodyM" textAlign="right" overflow="hidden">
