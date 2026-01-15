@@ -1,9 +1,10 @@
 'use client'
 
-import { Box, Center, Heading, Text } from '@chakra-ui/react'
+import { Box, Center, Flex, Heading, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
+import { BaseLink } from '@/components/ui/Links'
 import { useRecentNFTTransfers } from '@/services/veworld-indexer/hooks'
 import { NFTTransfersTable } from './NFTTransfersTable'
 
@@ -17,9 +18,14 @@ export const NFTTransfersSection = () => {
 
   return (
     <Card>
-      <Heading as="h3" textStyle="displayXs">
-        {t('NFT Transfers')}
-      </Heading>
+      <Flex justify="space-between" align="center">
+        <Heading as="h3" textStyle="displayXs">
+          {t('NFT Transfers')}
+        </Heading>
+        <BaseLink href="/transfers/nft" textStyle="bodyMSemibold" color="text-link">
+          {t('View all')}
+        </BaseLink>
+      </Flex>
       <Box minHeight="320px">
         {isPending ? (
           <TableSkeleton />
