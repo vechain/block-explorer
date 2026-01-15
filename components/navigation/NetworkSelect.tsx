@@ -18,9 +18,24 @@ export const NetworkSelect = () => {
       return
     }
 
+    const oldNetworkName = activeNetwork.name
     setActiveNetwork(NETWORKS[newNetworkName])
 
-    queryClient.invalidateQueries()
+    // Cancel ongoing queries and remove cached data for the old network
+    // This prevents unnecessary refetches when switching networks
+    queryClient.cancelQueries({
+      predicate: query => {
+        const queryKey = query.queryKey
+        // Check if the query key contains the old network name (typically at index 1)
+        return Array.isArray(queryKey) && queryKey[1] === oldNetworkName
+      },
+    })
+    queryClient.removeQueries({
+      predicate: query => {
+        const queryKey = query.queryKey
+        return Array.isArray(queryKey) && queryKey[1] === oldNetworkName
+      },
+    })
   }
 
   const handleNetworkToggle = () => {
