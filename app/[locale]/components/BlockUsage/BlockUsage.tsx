@@ -281,7 +281,7 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
             stroke="white"
           />
           <YAxis
-            unit="M"
+            unit=" M"
             dataKey="gasLimit"
             tickFormatter={formatYAxisTick}
             tick={{ style: { fontSize: '.8rem' } }}
