@@ -4,7 +4,7 @@ import { Flex, Text } from '@chakra-ui/react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AgeText } from '@/components/ui/AgeText'
-import { CopyableAddressLink } from '@/components/ui/Links'
+import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import { type CellComponentProps, type Column, DataTable } from '@/components/ui/Table'
 import { AmountWithHover } from '@/components/ui-legacy/AmountWithHover'
 import type { IndexerTransfer } from '@/services/veworld-indexer/schemas'
@@ -131,6 +131,7 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
       filteredTransfers.map(transfer => ({
         id: transfer.id,
         age: transfer.blockTimestamp,
+        txId: transfer.txId,
         from: transfer.from,
         to: transfer.to,
         lastColumn: '',
@@ -150,6 +151,11 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
     () =>
       [
         { key: 'age', label: t('Age'), Cell: ({ value }) => <AgeText timestamp={value as number} /> },
+        {
+          key: 'txId',
+          label: t('Tx ID'),
+          Cell: ({ value }) => <CopyableTransactionIdLink txId={value as `0x${string}`} />,
+        },
         {
           key: 'from',
           label: t('From'),

@@ -1,9 +1,8 @@
 'use client'
 
-import { Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { AgeText } from '@/components/ui/AgeText'
-import { BaseLink, CopyableAddressLink } from '@/components/ui/Links'
+import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import { type Column, DataTable, type TableRow } from '@/components/ui/Table'
 import { TxTypeBadge } from '@/components/ui/TxTypeBadge'
 import type { AddressString, ExpandedBlock, HexString, TransactionType } from '@/lib/schemas'
@@ -29,13 +28,7 @@ export const ActivityTransactionsTable = ({ transactions }: { transactions: Tran
     {
       key: 'id',
       label: t('Tx ID'),
-      Cell: ({ row }) => (
-        <BaseLink href={`/transaction/${row.id}`} maxW="150px">
-          <Text overflow="hidden" textOverflow="ellipsis">
-            {row.id}
-          </Text>
-        </BaseLink>
-      ),
+      Cell: ({ row }) => <CopyableTransactionIdLink txId={row.id} />,
     },
     {
       key: 'type',

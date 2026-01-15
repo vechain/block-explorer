@@ -1,10 +1,10 @@
 'use client'
 
-import { Text, useBreakpointValue } from '@chakra-ui/react'
+import { useBreakpointValue } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { NoTransactions } from '@/components/NoResults'
 import { AgeText } from '@/components/ui/AgeText'
-import { BaseLink, CopyableAddressLink } from '@/components/ui/Links'
+import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import { type Column, DataTable, TableRow, TableSkeleton } from '@/components/ui/Table'
 import type { AddressString, HexString, TransactionType } from '@/lib/schemas'
 import { TxStatusIcon } from '@/components/TxStatus'
@@ -42,13 +42,7 @@ export const AccountTransactionsTable = ({
     {
       key: 'id',
       label: t('Tx ID'),
-      Cell: ({ row }) => (
-        <BaseLink href={`/transaction/${row.id}`} maxW="110px">
-          <Text overflow="hidden" textOverflow="ellipsis">
-            {row.id}
-          </Text>
-        </BaseLink>
-      ),
+      Cell: ({ row }) => <CopyableTransactionIdLink txId={row.id} />,
     },
     {
       key: 'type',

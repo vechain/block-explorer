@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Heading, HStack } from '@chakra-ui/react'
+import { Box, Flex, Heading } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
@@ -56,18 +56,16 @@ export const ActivitySection = () => {
   return (
     <Card>
       <Flex justify="space-between" align="center" flexWrap="wrap" gap={2}>
-        <HStack gap={4}>
-          <Heading as="h3" textStyle="displayXs">
-            {t('Activity')}
-          </Heading>
-          <ToggleGroup
-            options={viewOptions}
-            value={selectedView}
-            onChange={setSelectedView}
-            layoutId="activity-view"
-            size="sm"
-          />
-        </HStack>
+        <Heading as="h3" textStyle="displayXs">
+          {t('Activity')}
+        </Heading>
+        <ToggleGroup
+          options={viewOptions}
+          value={selectedView}
+          onChange={setSelectedView}
+          layoutId="activity-view"
+          size="sm"
+        />
         <ViewAllLink href={viewAllHref}>{t('View all')}</ViewAllLink>
       </Flex>
       <Box minHeight="320px">{renderContent()}</Box>

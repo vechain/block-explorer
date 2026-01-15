@@ -5,14 +5,13 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HiArrowRight, HiOutlineFire, HiOutlineSparkles } from 'react-icons/hi2'
 import { Card } from '@/components/ui/Card'
-import { CopyableAddressLink, BaseLink } from '@/components/ui/Links'
+import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import { AgeText } from '@/components/ui/AgeText'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { type Column, DataTable, TableSkeleton } from '@/components/ui/Table'
 import type { AddressString } from '@/lib/schemas'
 import { useNftTransfers } from '@/services/veworld-indexer/nft-transfers'
 import { ZERO_ADDRESS } from '@vechain/sdk-core'
-import { truncateHex } from '@/lib/utils/truncateHex'
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50] as const
 
@@ -102,7 +101,7 @@ export const NftTransfersSection = ({ contractAddress, tokenId }: NftTransfersSe
         {
           key: 'txId',
           label: t('Tx ID'),
-          Cell: ({ value }) => <BaseLink href={`/transaction/${value}`}>{truncateHex(value as string)}</BaseLink>,
+          Cell: ({ value }) => <CopyableTransactionIdLink txId={value as `0x${string}`} />,
         },
         { key: 'type', label: t('Type'), Cell: TypeCell },
         {

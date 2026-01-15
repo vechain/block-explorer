@@ -1,9 +1,10 @@
 import { Link as ChakraLink, type LinkProps as ChakraLinkProps, Flex, Skeleton, Text } from '@chakra-ui/react'
 import Link, { type LinkProps as NextLinkProps } from 'next/link'
 import { LuArrowRight } from 'react-icons/lu'
-import type { AddressString } from '@/lib/schemas'
+import type { AddressString, HexString } from '@/lib/schemas'
 import { truncateAddress } from '@/lib/utils/address'
 import { truncateString } from '@/lib/utils/truncateString'
+import { truncateHex } from '@/lib/utils/truncateHex'
 import { CopyToClipBoard } from './CopyToClipBoard'
 import { useVnsName } from '@/services/thor/hooks'
 import { useMemo } from 'react'
@@ -110,6 +111,28 @@ export const CopyableAddressLink = ({ address, truncate = true, ...props }: Copy
   return (
     <CopyableLink href={`/address/${address}`} value={address} {...props}>
       {displayAddress}
+    </CopyableLink>
+  )
+}
+
+interface CopyableTransactionIdLinkProps extends Omit<BaseLinkProps, 'href'> {
+  txId: HexString
+  truncate?: boolean
+}
+
+export const CopyableTransactionIdLink = ({ txId, truncate = true, ...props }: CopyableTransactionIdLinkProps) => {
+  const displayTxId = useMemo(() => {
+    if (!txId) return '-'
+    return truncate ? truncateHex(txId) : txId
+  }, [txId, truncate])
+
+  if (!txId) {
+    return <Text color="text-secondary">-</Text>
+  }
+
+  return (
+    <CopyableLink href={`/transaction/${txId}`} value={txId} {...props}>
+      {displayTxId}
     </CopyableLink>
   )
 }
