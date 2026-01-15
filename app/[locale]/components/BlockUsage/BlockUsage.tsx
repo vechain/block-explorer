@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Stack, Text } from '@chakra-ui/react'
+import { Box, Flex, Stack, Text, useBreakpointValue } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { getUnixTime } from 'date-fns'
 import { useRouter } from 'next/navigation'
@@ -24,7 +24,6 @@ import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { BlockUsageHeader } from './components/BlockUsageHeader/BlockUsageHeader'
 import { TIME_RANGES, type TimeRangeKey } from './constants'
 
-const chartHeight = '420px'
 const mainColor = '#E782FF'
 
 // Use the type from the utility file
@@ -200,6 +199,8 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
 
   // Memoized tick formatter for YAxis
   const formatYAxisTick = useCallback((value: number) => formatNumber(Number(value) / 10 ** 6), [formatNumber])
+
+  const chartHeight = useBreakpointValue({ base: '250px', md: '300px' })
 
   // Format X-axis labels based on the selected time range
   const formatXAxis = useCallback(
