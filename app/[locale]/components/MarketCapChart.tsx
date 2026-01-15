@@ -40,7 +40,7 @@ export const MarketCapChart = () => {
   ]
 
   return (
-    <Card width="415px" minWidth="415px" height="274px" gap={3} flexShrink={0}>
+    <Card width="415px" height="274px" gap={3}>
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL">
           {t('Market Cap')}
