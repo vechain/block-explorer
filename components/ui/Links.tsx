@@ -1,4 +1,4 @@
-import { Link as ChakraLink, type LinkProps as ChakraLinkProps, Flex, Skeleton } from '@chakra-ui/react'
+import { Link as ChakraLink, type LinkProps as ChakraLinkProps, Flex, Skeleton, Text } from '@chakra-ui/react'
 import Link, { type LinkProps as NextLinkProps } from 'next/link'
 import type { AddressString } from '@/lib/schemas'
 import { truncateAddress } from '@/lib/utils/address'
@@ -70,12 +70,17 @@ export const CopyableAddressLink = ({ address, truncate = true, ...props }: Copy
   const { data: vnsName, isPending } = useVnsName(address)
 
   const displayAddress = useMemo(() => {
+    if (!address) return '-'
     if (vnsName) return truncate ? truncateString(vnsName, 20, 6) : vnsName
     return truncate ? truncateAddress(address) : address
   }, [vnsName, truncate, address])
 
   if (isPending) {
-    return <Skeleton height="16px" width="100%" />
+    return <Skeleton height="16px" width="100px" />
+  }
+
+  if (!address) {
+    return <Text color="text-secondary">-</Text>
   }
 
   return (

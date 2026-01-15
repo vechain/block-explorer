@@ -6,7 +6,7 @@ import z from 'zod'
 export const dynamic = 'force-dynamic'
 import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
-import { type BlockId, blockIdSchema } from '@/lib/schemas'
+import { type BlockRevision, blockRevisionSchema } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
 import { blockExpandedQueryOptions } from '@/services/thor/block'
 import { BlockDetails } from './components/BlockDetails'
@@ -15,13 +15,21 @@ export default async function BlockPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ blockId: BlockId }>
+  params: Promise<{ blockId: string }>
   searchParams: Promise<{ network: NetworkName | undefined }>
 }) {
-  const { blockId } = await params
+  const { blockId: blockIdParam } = await params
   const networkName = (await searchParams).network || NetworkName.MAINNET
 
-  if (!blockId || !blockIdSchema.safeParse(blockId).success) {
+  // Parse blockId - accept both numeric block numbers and hex block hashes
+  const blockId = zodParse({
+    data: blockIdParam,
+    schema: blockRevisionSchema,
+    errorMessage: 'Invalid block ID',
+    fallbackData: null,
+  }) as BlockRevision | null
+
+  if (!blockId) {
     notFound()
   }
 
