@@ -87,7 +87,9 @@ const NavigationMenu = () => {
           <Box position="relative">
             <Box
               as="button"
-              aria-label="Open navigation menu"
+              aria-label={isMenuOpen ? t('Close navigation menu') : t('Open navigation menu')}
+              aria-expanded={isMenuOpen}
+              aria-haspopup="menu"
               onClick={() => setIsMenuOpen(prev => !prev)}
               bg="transparent"
               cursor="pointer"
@@ -96,7 +98,7 @@ const NavigationMenu = () => {
               borderColor="border-primary"
               p={2}
             >
-              <FiMenu size={20} />
+              <FiMenu size={20} aria-hidden="true" />
             </Box>
             {isMenuOpen && (
               <MotionBox
@@ -130,9 +132,15 @@ const NavigationMenu = () => {
                   </Flex>
                 </Link>
                 <Separator />
-                <Box as="button" onClick={handleLanguageClick} w="100%" cursor="pointer">
+                <Box
+                  as="button"
+                  onClick={handleLanguageClick}
+                  w="100%"
+                  cursor="pointer"
+                  aria-label={t('Change language, current: {{language}}', { language: currentLanguage.native })}
+                >
                   <Flex gap={2} alignItems="center" py={2}>
-                    <Text fontSize="body-m" whiteSpace="nowrap">
+                    <Text fontSize="body-m" whiteSpace="nowrap" aria-hidden="true">
                       {currentLanguage.flag}
                     </Text>
                     <Text fontSize="body-m" whiteSpace="nowrap">
@@ -142,9 +150,17 @@ const NavigationMenu = () => {
                 </Box>
                 <Separator />
 
-                <Box as="button" onClick={handleCurrencyClick} w="100%" cursor="pointer">
+                <Box
+                  as="button"
+                  onClick={handleCurrencyClick}
+                  w="100%"
+                  cursor="pointer"
+                  aria-label={t('Change currency, current: {{currency}}', {
+                    currency: currencyInfo.code.toUpperCase(),
+                  })}
+                >
                   <HStack gap={2} alignItems="center" py={2}>
-                    <Text fontSize="body-m" whiteSpace="nowrap">
+                    <Text fontSize="body-m" whiteSpace="nowrap" aria-hidden="true">
                       {currencyInfo.symbol}
                     </Text>
                     <Text fontSize="body-m" whiteSpace="nowrap" textTransform="uppercase">

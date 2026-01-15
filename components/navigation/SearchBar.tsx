@@ -29,17 +29,35 @@ export const SearchBar = (props: FlexProps) => {
   }
 
   return (
-    <Flex border="1px solid" borderColor="border-primary" bg="bg-primary" rounded="full" p="3.5" gap="4" {...props}>
-      <LuSearch size={20} color="text-primary" onClick={handleSearch} />
+    <Flex
+      border="1px solid"
+      borderColor="border-primary"
+      bg="bg-primary"
+      rounded="full"
+      p="3.5"
+      gap="4"
+      role="search"
+      {...props}
+    >
+      <button
+        type="button"
+        onClick={handleSearch}
+        aria-label={t('Search')}
+        style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+      >
+        <LuSearch size={20} color="text-primary" aria-hidden="true" />
+      </button>
       <Field.Root as="form" onSubmit={handleSubmit} invalid={!!error} flex="1" gap="0">
         <Input
           px="0"
           rounded="none"
           type="search"
           name="q"
+          id="search-input"
           h="full"
           border="none"
           placeholder={t('Search for blocks, transactions or accounts')}
+          aria-label={t('Search for blocks, transactions or accounts')}
           variant="outline"
           textStyle="bodyM"
           focusVisibleRing="none"
