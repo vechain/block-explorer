@@ -6,6 +6,7 @@ import {
   GridProps,
   Skeleton,
   type SkeletonProps,
+  Stack,
   Text,
   type TextProps,
 } from '@chakra-ui/react'
@@ -86,57 +87,127 @@ export const DataTable = <T extends TableRow = TableRow>({
   gridProps,
   containerProps,
 }: DataTableProps<T>) => (
-  <Box overflowX="auto" {...containerProps}>
-    <Grid
-      templateColumns={getTemplateColumns(columns.length)}
-      textStyle="bodyM"
-      role="table"
-      aria-rowcount={rows.length + 1}
-      {...gridProps}
-    >
-      {/* Header Row */}
-      <Grid gridColumn="1 / -1" templateColumns="subgrid" role="row" aria-rowindex={1}>
-        {columns.map(column => (
-          <Box key={column.key} whiteSpace="nowrap" textAlign="center" color="text-primary" p={4} role="columnheader">
-            {column.label}
-          </Box>
-        ))}
-      </Grid>
-
-      {/* Data Rows */}
-      {rows.map((row, rowIndex) => (
-        <Grid
-          key={row.id}
-          gridColumn="1 / -1"
-          templateColumns="subgrid"
-          bg={rowIndex % 2 === 0 ? 'row-odd-bg-primary' : 'row-even-bg-primary'}
-          role="row"
-          aria-rowindex={rowIndex + 2}
-        >
-          {columns.map((column, colIndex) => (
-            <Box
-              key={`${row.id}-${column.key}`}
-              whiteSpace="nowrap"
-              p={4}
-              textAlign="center"
-              {...getCellBorders(rowIndex, colIndex, columns.length)}
-              {...getCellBorderRadius(rowIndex, colIndex, rows.length, columns.length)}
-              role="cell"
-            >
-              <Flex justifyContent="center" alignItems="center" h="full">
-                {column.Cell ? (
-                  <column.Cell value={row[column.key]} row={row} columnKey={column.key} />
-                ) : (
-                  <TableText>{row[column.key]}</TableText>
-                )}
-              </Flex>
+  <>
+    {/* Desktop/Tablet: Grid Table View */}
+    <Box overflowX="auto" hideBelow="md" {...containerProps}>
+      <Grid
+        templateColumns={getTemplateColumns(columns.length)}
+        textStyle="bodyM"
+        role="table"
+        aria-rowcount={rows.length + 1}
+        {...gridProps}
+      >
+        {/* Header Row */}
+        <Grid gridColumn="1 / -1" templateColumns="subgrid" role="row" aria-rowindex={1}>
+          {columns.map(column => (
+            <Box key={column.key} whiteSpace="nowrap" textAlign="center" color="text-primary" p={4} role="columnheader">
+              {column.label}
             </Box>
           ))}
         </Grid>
+
+        {/* Data Rows */}
+        {rows.map((row, rowIndex) => (
+          <Grid
+            key={row.id}
+            gridColumn="1 / -1"
+            templateColumns="subgrid"
+            bg={rowIndex % 2 === 0 ? 'row-odd-bg-primary' : 'row-even-bg-primary'}
+            role="row"
+            aria-rowindex={rowIndex + 2}
+          >
+            {columns.map((column, colIndex) => (
+              <Box
+                key={`${row.id}-${column.key}`}
+                whiteSpace="nowrap"
+                p={4}
+                textAlign="center"
+                {...getCellBorders(rowIndex, colIndex, columns.length)}
+                {...getCellBorderRadius(rowIndex, colIndex, rows.length, columns.length)}
+                role="cell"
+              >
+                <Flex justifyContent="center" alignItems="center" h="full">
+                  {column.Cell ? (
+                    <column.Cell value={row[column.key]} row={row} columnKey={column.key} />
+                  ) : (
+                    <TableText>{row[column.key]}</TableText>
+                  )}
+                </Flex>
+              </Box>
+            ))}
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
+
+    {/* Mobile: Card View */}
+    <Stack gap={3} hideFrom="md">
+      {rows.map((row, rowIndex) => (
+        <MobileCard key={row.id} row={row} columns={columns} rowIndex={rowIndex} />
       ))}
-    </Grid>
-  </Box>
+    </Stack>
+  </>
 )
+
+/**
+ * Mobile card component for displaying a single row as a card
+ */
+const MobileCard = <T extends TableRow = TableRow>({
+  row,
+  columns,
+  rowIndex,
+}: {
+  row: T
+  columns: Column<T>[]
+  rowIndex: number
+}) => {
+  // First column is typically the primary identifier, show it prominently
+  const [firstColumn, ...restColumns] = columns
+
+  return (
+    <Box
+      bg={rowIndex % 2 === 0 ? 'row-odd-bg-primary' : 'row-even-bg-primary'}
+      border={border}
+      borderRadius="lg"
+      p={4}
+      role="article"
+    >
+      <Stack gap={3}>
+        {/* First column as header */}
+        {firstColumn && (
+          <Flex justifyContent="space-between" alignItems="center" borderBottom={border} pb={3}>
+            <Text color="text-secondary" textStyle="bodyS" fontWeight="medium">
+              {firstColumn.label}
+            </Text>
+            <Box textStyle="bodyM">
+              {firstColumn.Cell ? (
+                <firstColumn.Cell value={row[firstColumn.key]} row={row} columnKey={firstColumn.key} />
+              ) : (
+                <TableText>{row[firstColumn.key]}</TableText>
+              )}
+            </Box>
+          </Flex>
+        )}
+
+        {/* Rest of the columns as key-value pairs */}
+        {restColumns.map(column => (
+          <Flex key={column.key} justifyContent="space-between" alignItems="center" gap={2}>
+            <Text color="text-secondary" textStyle="bodyS" flexShrink={0}>
+              {column.label}
+            </Text>
+            <Box textStyle="bodyM" textAlign="right" overflow="hidden">
+              {column.Cell ? (
+                <column.Cell value={row[column.key]} row={row} columnKey={column.key} />
+              ) : (
+                <TableText>{row[column.key]}</TableText>
+              )}
+            </Box>
+          </Flex>
+        ))}
+      </Stack>
+    </Box>
+  )
+}
 
 export const TableSkeleton = (props: SkeletonProps) => {
   return <Skeleton height="320px" width="100%" bg="bg-primary" {...props} />
