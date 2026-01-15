@@ -30,8 +30,8 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
 
   const isPending = isOverviewPending || isPendingTokens
 
-  const firstSeenDate = overview ? formatDate(overview.firstSeen) : ''
-  const lastSeenDate = overview ? formatDate(overview.lastSeen) : ''
+  const firstSeenDate = overview ? formatDate(overview.firstSeen * 1000) : ''
+  const lastSeenDate = overview ? formatDate(overview.lastSeen * 1000) : ''
 
   return (
     <Stack gap="8">
