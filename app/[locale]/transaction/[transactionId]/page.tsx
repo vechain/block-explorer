@@ -8,6 +8,7 @@ import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
 import { type TransactionId, transactionIdSchema } from '@/lib/schemas'
 import { parseNetworkFromParams } from '@/lib/utils/network'
+import { logPrefetchFailures } from '@/lib/utils/prefetch'
 import { transactionQueryOptions, transactionReceiptQueryOptions } from '@/services/thor/transaction'
 import { TransactionPageContent } from './components/TransactionPageContent'
 
@@ -29,10 +30,12 @@ export default async function TransactionPage({
 
   const queryClient = getQueryClient()
 
-  await Promise.allSettled([
+  const prefetchResults = await Promise.allSettled([
     queryClient.prefetchQuery(transactionQueryOptions(activeNetworkName, transactionId)),
     queryClient.prefetchQuery(transactionReceiptQueryOptions(activeNetworkName, transactionId)),
   ])
+
+  logPrefetchFailures(prefetchResults, ['transaction', 'transactionReceipt'])
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

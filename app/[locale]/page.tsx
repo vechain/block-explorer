@@ -8,6 +8,7 @@ import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
 
 import { parseNetworkFromParams } from '@/lib/utils/network'
+import { logPrefetchFailures } from '@/lib/utils/prefetch'
 import { bestBlockCompressedQueryOptions, blockExpandedQueryOptions } from '@/services/thor/block'
 import type { CompressedBlock } from '@/lib/schemas'
 import { ActivitySection } from './components/ActivitySection'
@@ -40,7 +41,7 @@ export default async function HomePage({
   const activeNetworkName = await parseNetworkFromParams(searchParams)
 
   const queryClient = getQueryClient()
-  await Promise.allSettled([
+  const prefetchResults = await Promise.allSettled([
     queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', 'usd' as Currency)),
     queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', 'usd' as Currency)),
@@ -63,20 +64,35 @@ export default async function HomePage({
     queryClient.prefetchQuery(circulatingSupplyQueryOptions('vechain')),
   ])
 
+  logPrefetchFailures(prefetchResults, [
+    'bestBlockCompressed',
+    'tokenDailyPrices:vechain',
+    'tokenDailyPrices:vethor-token',
+    'tokenDailyPrices:vebetterdao',
+    'totalVetStaked',
+    'totalVetStakedHistoric:DAY',
+    'totalVetStakedHistoric:MONTH',
+    'totalVetStakedHistoric:YEAR',
+    'accountTotals',
+    'validatorsCount:ACTIVE',
+    'validatorsCount:EXITING',
+    'marketCap',
+    'circulatingSupply',
+  ])
+
   // Prefetch latest 5 expanded blocks for ActivitySection
   const bestBlock = queryClient.getQueryData<CompressedBlock>(
     bestBlockCompressedQueryOptions(activeNetworkName).queryKey,
   )
   if (bestBlock?.number) {
     const BLOCKS_TO_DISPLAY = 5
-    await Promise.allSettled(
-      Array.from({ length: BLOCKS_TO_DISPLAY }, (_, i) => {
-        const revision = bestBlock.number - i
-        if (revision > 0) {
-          return queryClient.prefetchQuery(blockExpandedQueryOptions(activeNetworkName, revision))
-        }
-        return Promise.resolve()
-      }),
+    const blockRevisions = Array.from({ length: BLOCKS_TO_DISPLAY }, (_, i) => bestBlock.number - i).filter(r => r > 0)
+    const blockResults = await Promise.allSettled(
+      blockRevisions.map(revision => queryClient.prefetchQuery(blockExpandedQueryOptions(activeNetworkName, revision))),
+    )
+    logPrefetchFailures(
+      blockResults,
+      blockRevisions.map(r => `blockExpanded:${r}`),
     )
   }
 
