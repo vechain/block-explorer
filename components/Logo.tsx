@@ -1,11 +1,11 @@
 'use client'
 
-import { Link } from '@chakra-ui/react'
 import { Flex, Image, ImageProps, Text } from '@chakra-ui/react'
+import Link from 'next/link'
 
 export const Logo = ({ h = { base: '18px', md: '30px' } }: { h?: ImageProps['h'] }) => {
   return (
-    <Link href="/" _focus={{ outline: 'none' }}>
+    <Link href="/">
       <Flex gap={2} alignItems="baseline">
         <Image src="/vechain-light.svg" alt="VeChain logo" h={h} w="auto" />
 
