@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { PaginationControls } from '@/components/ui/PaginationControls'
+import { NoTokenTransfers } from '@/components/NoResults'
 import { useRecentTokenTransfers } from '@/services/veworld-indexer/hooks'
 import { TokenTransfersTable } from '../../components/TokenTransfersTable'
 
@@ -33,6 +34,8 @@ export default function TokenTransfersPage() {
     return allTransfers.length > (page + 1) * pageSize
   }, [allTransfers, page, pageSize])
 
+  const hasNoTransfers = !isPending && (!allTransfers || allTransfers.length === 0)
+
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
     setPage(0)
@@ -45,7 +48,13 @@ export default function TokenTransfersPage() {
           {t('Token Transfers')}
         </Heading>
         <Box minHeight="400px">
-          {isPending ? <TableSkeleton /> : <TokenTransfersTable transfers={paginatedTransfers} />}
+          {isPending ? (
+            <TableSkeleton />
+          ) : hasNoTransfers ? (
+            <NoTokenTransfers />
+          ) : (
+            <TokenTransfersTable transfers={paginatedTransfers} />
+          )}
         </Box>
         <PaginationControls
           page={page}

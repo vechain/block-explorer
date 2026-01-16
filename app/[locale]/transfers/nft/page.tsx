@@ -1,11 +1,12 @@
 'use client'
 
-import { Box, Center, Heading, Stack, Text } from '@chakra-ui/react'
+import { Box, Heading, Stack } from '@chakra-ui/react'
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { PaginationControls } from '@/components/ui/PaginationControls'
+import { NoNFTTransfers } from '@/components/NoResults'
 import { useRecentNFTTransfers } from '@/services/veworld-indexer/hooks'
 import { NFTTransfersTable } from '../../components/NFTTransfersTable'
 
@@ -50,9 +51,7 @@ export default function NFTTransfersPage() {
           {isPending ? (
             <TableSkeleton />
           ) : hasNoTransfers ? (
-            <Center h="400px">
-              <Text color="text-secondary">{t('No transfers')}</Text>
-            </Center>
+            <NoNFTTransfers />
           ) : (
             <NFTTransfersTable transfers={paginatedTransfers} />
           )}

@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { ViewAllLink } from '@/components/ui/Links'
+import { NoBlocks, NoTransactions } from '@/components/NoResults'
 import { useRecentBlocksExpanded } from '@/services/veworld-indexer/hooks'
 import { BlocksTable } from './BlocksTable'
 import { ActivityTransactionsTable } from './ActivityTransactionsTable'
@@ -42,13 +43,18 @@ export const ActivitySection = () => {
 
   const viewAllHref = selectedView === 'blocks' ? '/activity/blocks' : '/activity/transactions'
 
+  const hasNoBlocks = !isPending && (!latestBlocks || latestBlocks.length === 0)
+  const hasNoTransactions = !isPending && recentTransactions.length === 0
+
   const renderContent = () => {
     if (isPending) return <TableSkeleton />
 
     switch (selectedView) {
       case 'blocks':
+        if (hasNoBlocks) return <NoBlocks />
         return <BlocksTable blocks={latestBlocks ?? []} />
       case 'transactions':
+        if (hasNoTransactions) return <NoTransactions />
         return <ActivityTransactionsTable transactions={recentTransactions} />
     }
   }
