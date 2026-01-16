@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { PaginationControls } from '@/components/ui/PaginationControls'
+import { NoTransactions } from '@/components/NoResults'
 import { useRecentBlocksExpanded } from '@/services/veworld-indexer/hooks'
 import { ActivityTransactionsTable } from '../../components/ActivityTransactionsTable'
 
@@ -44,6 +45,8 @@ export default function AllTransactionsPage() {
     return allTransactions.length > (page + 1) * pageSize
   }, [allTransactions, page, pageSize])
 
+  const hasNoTransactions = !isPending && allTransactions.length === 0
+
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
     setPage(0)
@@ -56,7 +59,13 @@ export default function AllTransactionsPage() {
           {t('Transactions')}
         </Heading>
         <Box minHeight="400px">
-          {isPending ? <TableSkeleton /> : <ActivityTransactionsTable transactions={paginatedTransactions} />}
+          {isPending ? (
+            <TableSkeleton />
+          ) : hasNoTransactions ? (
+            <NoTransactions />
+          ) : (
+            <ActivityTransactionsTable transactions={paginatedTransactions} />
+          )}
         </Box>
         <PaginationControls
           page={page}

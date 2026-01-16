@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { PaginationControls } from '@/components/ui/PaginationControls'
+import { NoBlocks } from '@/components/NoResults'
 import { useRecentBlocksExpanded } from '@/services/veworld-indexer/hooks'
 import { BlocksTable } from '../../components/BlocksTable'
 
@@ -33,6 +34,8 @@ export default function AllBlocksPage() {
     return allBlocks.length > (page + 1) * pageSize
   }, [allBlocks, page, pageSize])
 
+  const hasNoBlocks = !isPending && (!allBlocks || allBlocks.length === 0)
+
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
     setPage(0)
@@ -44,7 +47,9 @@ export default function AllBlocksPage() {
         <Heading as="h2" textStyle="displayXs">
           {t('Blocks')}
         </Heading>
-        <Box minHeight="400px">{isPending ? <TableSkeleton /> : <BlocksTable blocks={paginatedBlocks} />}</Box>
+        <Box minHeight="400px">
+          {isPending ? <TableSkeleton /> : hasNoBlocks ? <NoBlocks /> : <BlocksTable blocks={paginatedBlocks} />}
+        </Box>
         <PaginationControls
           page={page}
           pageSize={pageSize}

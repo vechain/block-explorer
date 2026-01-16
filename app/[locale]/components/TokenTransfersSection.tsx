@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { ViewAllLink } from '@/components/ui/Links'
+import { NoTokenTransfers } from '@/components/NoResults'
 import { useRecentTokenTransfers } from '@/services/veworld-indexer/hooks'
 import { TokenTransfersTable } from './TokenTransfersTable'
 
@@ -14,6 +15,8 @@ export const TokenTransfersSection = () => {
   const { t } = useTranslation()
   const { data: transfers, isPending } = useRecentTokenTransfers({ count: TRANSFERS_TO_DISPLAY })
 
+  const hasNoTransfers = !isPending && (!transfers || transfers.length === 0)
+
   return (
     <Card>
       <Flex justify="space-between" align="center">
@@ -22,7 +25,15 @@ export const TokenTransfersSection = () => {
         </Heading>
         <ViewAllLink href="/transfers/token">{t('View all')}</ViewAllLink>
       </Flex>
-      <Box minHeight="320px">{isPending ? <TableSkeleton /> : <TokenTransfersTable transfers={transfers ?? []} />}</Box>
+      <Box minHeight="320px">
+        {isPending ? (
+          <TableSkeleton />
+        ) : hasNoTransfers ? (
+          <NoTokenTransfers />
+        ) : (
+          <TokenTransfersTable transfers={transfers ?? []} />
+        )}
+      </Box>
     </Card>
   )
 }

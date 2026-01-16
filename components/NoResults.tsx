@@ -1,29 +1,71 @@
 'use client'
 
-import { EmptyState } from '@chakra-ui/react'
+import { EmptyState, VStack } from '@chakra-ui/react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AiOutlineStop } from 'react-icons/ai'
+import { LuArrowLeftRight, LuBox, LuCoins, LuImage } from 'react-icons/lu'
+
+interface EmptyStateContainerProps {
+  title: string
+  description: string
+  icon: ReactNode
+}
+
+const EmptyStateContainer = ({ title, description, icon }: EmptyStateContainerProps) => {
+  return (
+    <EmptyState.Root>
+      <EmptyState.Content>
+        <EmptyState.Indicator>{icon}</EmptyState.Indicator>
+        <VStack textAlign="center" gap={1}>
+          <EmptyState.Title>{title}</EmptyState.Title>
+          <EmptyState.Description>{description}</EmptyState.Description>
+        </VStack>
+      </EmptyState.Content>
+    </EmptyState.Root>
+  )
+}
 
 export const NoTransactions = () => {
   const { t } = useTranslation()
-  return <NoResults title={t('No transactions')} description={t('This account has not made any transactions yet')} />
+  return (
+    <EmptyStateContainer
+      icon={<LuArrowLeftRight />}
+      title={t('No transactions')}
+      description={t('This account has not made any transactions yet')}
+    />
+  )
 }
 
 export const NoTokens = () => {
   const { t } = useTranslation()
-  return <NoResults title={t('No tokens')} description={t('This account has no tokens')} />
+  return <EmptyStateContainer icon={<LuCoins />} title={t('No tokens')} description={t('This account has no tokens')} />
 }
 
-const NoResults = ({ title, description }: { title: string; description: string }) => {
+export const NoTokenTransfers = () => {
+  const { t } = useTranslation()
   return (
-    <EmptyState.Root>
-      <EmptyState.Content>
-        <EmptyState.Indicator>
-          <AiOutlineStop />
-        </EmptyState.Indicator>
-        <EmptyState.Title>{title}</EmptyState.Title>
-        <EmptyState.Description>{description}</EmptyState.Description>
-      </EmptyState.Content>
-    </EmptyState.Root>
+    <EmptyStateContainer
+      icon={<LuCoins />}
+      title={t('No token transfers')}
+      description={t('No token transfers have been recorded yet')}
+    />
+  )
+}
+
+export const NoNFTTransfers = () => {
+  const { t } = useTranslation()
+  return (
+    <EmptyStateContainer
+      icon={<LuImage />}
+      title={t('No NFT transfers')}
+      description={t('No NFT transfers have been recorded yet')}
+    />
+  )
+}
+
+export const NoBlocks = () => {
+  const { t } = useTranslation()
+  return (
+    <EmptyStateContainer icon={<LuBox />} title={t('No blocks')} description={t('No blocks have been recorded yet')} />
   )
 }
