@@ -11,7 +11,6 @@ export const useAbi = (signature: string) => {
 const abiQueryOptions = (signature: string) => ({
   queryKey: [ABI_QUERY_KEY, signature],
   queryFn: () => getAbi({ signature }),
-  retry: false,
 })
 
 const getAbi = async ({ signature }: { signature: string }) => {

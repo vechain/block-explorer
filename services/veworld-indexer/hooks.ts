@@ -112,14 +112,6 @@ export const useValidatorsCount = (status?: ValidatorStatus) => {
     queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetwork.name, status],
     queryFn: () => getAllValidatorsCount(activeNetwork.name, status),
     refetchInterval: 60 * 1000, // Refetch every 60 seconds
-    retry: (failureCount: number, error: Error) => {
-      // Retry up to 3 times for network errors
-      if (failureCount < 3 && error?.message?.includes('fetch')) {
-        return true
-      }
-      return false
-    },
-    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff with 30s max
   })
 }
 

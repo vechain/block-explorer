@@ -27,7 +27,6 @@ export const accountOverviewQueryOptions = (networkName: NetworkName, address: s
   staleTime: 3 * 1000, // Consider data fresh for 3 seconds
   refetchInterval: 60 * 1000, // Refetch every minute
   placeholderData: keepPreviousData, // Prevent UI flickering during refetches
-  retry: false,
 })
 
 const getAccountOverview = async ({ networkName, address }: { networkName: NetworkName; address: string }) => {
