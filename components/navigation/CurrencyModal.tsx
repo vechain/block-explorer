@@ -1,6 +1,7 @@
 'use client'
 
 import { Box, Button, Dialog, Flex, Portal, Text, VStack } from '@chakra-ui/react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { LuCheck, LuX } from 'react-icons/lu'
 import { Currency, useSettingsStore } from '@/lib/stores/settings'
@@ -13,10 +14,17 @@ interface CurrencyModalProps {
 
 export const CurrencyModal = ({ isOpen, onClose }: CurrencyModalProps) => {
   const { t } = useTranslation()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { currency, setCurrency } = useSettingsStore()
 
   const handleCurrencyChange = (next: Currency) => {
     setCurrency(next)
+    // Update the URL with the new currency parameter
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('currency', next)
+    router.push(`${pathname}?${params.toString()}`)
     onClose()
   }
 

@@ -7,7 +7,7 @@ import { GeneralInformationCard } from '@/components/ui/GeneralInformationCard'
 import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
 
-import { parseNetworkFromParams } from '@/lib/utils/network'
+import { parseCurrencyFromParams, parseNetworkFromParams } from '@/lib/utils/network'
 import { logPrefetchFailures } from '@/lib/utils/prefetch'
 import { bestBlockCompressedQueryOptions, blockExpandedQueryOptions } from '@/services/thor/block'
 import type { CompressedBlock } from '@/lib/schemas'
@@ -36,16 +36,17 @@ import { Currency } from '@/lib/stores/settings'
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ network: NetworkName | undefined }>
+  searchParams: Promise<{ network: NetworkName | undefined; currency: Currency | undefined }>
 }) {
   const activeNetworkName = await parseNetworkFromParams(searchParams)
+  const activeCurrency = await parseCurrencyFromParams(searchParams)
 
   const queryClient = getQueryClient()
   const prefetchResults = await Promise.allSettled([
     queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', 'usd' as Currency)),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', 'usd' as Currency)),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', 'usd' as Currency)),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', activeCurrency)),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', activeCurrency)),
+    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', activeCurrency)),
     queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.DAY)),
     queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.MONTH)),
@@ -60,7 +61,7 @@ export default async function HomePage({
       queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.EXITING),
     }),
     // Market cap prefetching
-    queryClient.prefetchQuery(marketCapQueryOptions('vechain', Currency.USD, MarketCapRange.DAY)),
+    queryClient.prefetchQuery(marketCapQueryOptions('vechain', activeCurrency, MarketCapRange.DAY)),
     queryClient.prefetchQuery(circulatingSupplyQueryOptions('vechain')),
   ])
 
