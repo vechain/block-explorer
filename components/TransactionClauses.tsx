@@ -43,14 +43,14 @@ export function TransactionClauses({
                 <ClauseTypeBadge />
               </Flex>
             </Accordion.ItemTrigger>
-            <CopyableAddressLink truncate={isMobile} address={clause.to ?? '0x'} />
+            <CopyableAddressLink truncate={isMobile} address={clause.to ?? '0x'} fontSize={'sm'} />
             <Accordion.ItemTrigger p="0" justifyContent="center" cursor="pointer">
               <VETBalance balance={clause.value} flex="1" textAlign="center" />
               <Accordion.ItemIndicator _icon={{ width: '16px', height: '16px', color: 'text-primary' }} />
             </Accordion.ItemTrigger>
           </Flex>
 
-          <ClauseContent index={index} clause={clause} eventLogs={receipt?.outputs[index].events ?? []} />
+          <ClauseContent index={index} clause={clause} eventLogs={receipt?.outputs[index]?.events ?? []} />
         </Accordion.Item>
       ))}
     </Accordion.Root>
@@ -64,7 +64,7 @@ const ClauseContent = ({ clause, eventLogs, index }: { clause: Clause; eventLogs
   const viewOptions: ToggleOption<ClauseView>[] = useMemo(
     () => [
       { value: ClauseView.INPUT_DATA, label: t('Input data') },
-      { value: ClauseView.EVENTS, label: t('events') },
+      { value: ClauseView.EVENTS, label: t('Events') },
     ],
     [t],
   )
@@ -72,14 +72,9 @@ const ClauseContent = ({ clause, eventLogs, index }: { clause: Clause; eventLogs
   return (
     <Accordion.ItemContent>
       <Accordion.ItemBody py={{ base: '4', md: '6' }} display="flex" flexDirection="column" gap="4">
-        <ToggleGroup
-          layoutId={`clause-${index}`}
-          bg="bg-secondary"
-          options={viewOptions}
-          value={view}
-          onChange={setView}
-          size="sm"
-        />
+        <Flex>
+          <ToggleGroup layoutId={`clause-${index}`} options={viewOptions} value={view} onChange={setView} size="sm" />
+        </Flex>
         {view === ClauseView.INPUT_DATA && <InputData clauseIndex={index} data={clause.data} />}
         {view === ClauseView.EVENTS && <EventsList clauseIndex={index} eventLogs={eventLogs} />}
       </Accordion.ItemBody>
