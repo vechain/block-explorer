@@ -24,6 +24,7 @@ const config = defineConfig({
         'text-alt-secondary': { value: 'rgba(186, 196, 220, 1)' },
 
         // Background
+        'bg-base': { value: '#0B0C10' },
         'bg-primary': { value: 'rgba(50, 50, 50, 0.06)' },
         'bg-secondary': { value: 'rgba(0,0,0, 0.4)' },
         'bg-alt-primary': { value: 'rgba(255, 255, 255, 0.06)' },

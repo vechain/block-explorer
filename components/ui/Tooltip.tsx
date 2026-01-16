@@ -24,8 +24,6 @@ export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(function T
             ref={ref}
             css={{
               '--tooltip-bg': 'colors.gray.800',
-              // TODO fix arrow styling
-              // '--arrow-background': 'red.500',
               color: 'text-primary',
               textStyle: 'bodyM',
               px: '2',
@@ -36,7 +34,7 @@ export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(function T
             }}
             {...contentProps}
           >
-            <ChakraTooltip.Arrow>
+            <ChakraTooltip.Arrow css={{ '--arrow-background': 'colors.gray.800' }}>
               <ChakraTooltip.ArrowTip />
             </ChakraTooltip.Arrow>
             {content}

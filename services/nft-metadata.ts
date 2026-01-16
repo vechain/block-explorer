@@ -55,7 +55,7 @@ const nftMetadataUriSchema = z
 const nftAttributeSchema = z
   .object({
     trait_type: z.string(),
-    value: z.any(),
+    value: z.union([z.string(), z.number(), z.boolean(), z.null()]),
   })
   .transform(data => ({
     traitType: data.trait_type,

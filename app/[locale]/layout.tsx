@@ -46,8 +46,7 @@ export default async function RootLayout({
             color="text-primary"
             bgSize="100%"
             bgRepeat="no-repeat"
-            // TODO: Update background color with theme once implemented
-            backgroundColor="#0B0C10"
+            backgroundColor="bg-base"
             overflowY="auto"
             overflowX="hidden"
             justifyContent="space-between"
