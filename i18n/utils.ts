@@ -1,10 +1,17 @@
-import { Locale } from './config'
+import { i18nConfig, Locale } from './config'
 
 export function getLocalePath(locale: Locale, pathname: string): string {
   const segments = pathname.split('/')
-  // The locale is always the first segment after the leading slash
-  if (segments.length > 1) {
+  // Check if the first segment after the leading slash is already a locale
+  const firstSegment = segments[1]
+  const isLocaleInPath = firstSegment && i18nConfig.locales.includes(firstSegment as Locale)
+
+  if (isLocaleInPath) {
+    // Replace the existing locale
     segments[1] = locale
+  } else {
+    // Insert the new locale at the beginning (after the leading empty string)
+    segments.splice(1, 0, locale)
   }
   return segments.join('/')
 }
