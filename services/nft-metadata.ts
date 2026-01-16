@@ -24,7 +24,6 @@ const nftMetadataQueryOptions = (uri: string) => ({
   queryKey: [NFT_METADATA_QUERY_KEY, uri],
   queryFn: () => getNftMetadata(uri),
   staleTime: Infinity,
-  retry: false,
 })
 
 export const useNftMetadata = (uri: string) => {

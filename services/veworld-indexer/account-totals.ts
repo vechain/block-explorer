@@ -32,13 +32,6 @@ export const accountTotalsQueryOptions = (networkName: NetworkName, timeFrame: A
   queryFn: () => getAccountTotals({ networkName, timeFrame }),
   refetchInterval: 5 * 1000, // Refetch every 5 seconds
   placeholderData: keepPreviousData, // Prevent UI flickering during refetches
-  retry: (failureCount: number, error: Error) => {
-    if (failureCount < 3 && (error as Error)?.message?.includes('fetch')) {
-      return true
-    }
-    return false
-  },
-  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff, max 30s
 })
 
 const getAccountTotals = async ({

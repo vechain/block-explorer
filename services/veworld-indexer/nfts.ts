@@ -23,7 +23,6 @@ export const accountErc721TokensQueryOptions = (networkName: NetworkName, params
   gcTime: 10 * 60_000,
   refetchInterval: 2 * 60_000,
   refetchOnWindowFocus: true,
-  retry: 2,
 
   select: (data: IndexerResponse<typeof indexerErc721Schema>) => {
     const tokenIdsMap = data.data.reduce((acc, nft) => {
