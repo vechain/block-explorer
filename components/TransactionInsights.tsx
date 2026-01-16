@@ -71,13 +71,13 @@ export const TransactionInsight = ({
   }
 
   return (
-    <Card variant="tertiary">
+    <Card variant="secondary">
       <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gapX="2" gapY="4">
         <Heading as="h2" textStyle="displayXs">
           {t('Transaction Insights')}
         </Heading>
 
-        <HStack alignItems="center" justifyContent="space-between">
+        <HStack alignItems="center" justifyContent="space-between" gap="4">
           {!isMobile && <TransactionDate />}
           <TxStatusBadge status={status} />
         </HStack>
@@ -99,18 +99,21 @@ export const TransactionInsight = ({
               <Flex
                 alignItems="center"
                 py="4"
-                pl="6"
-                whiteSpace="nowrap"
+                pl="4"
+                pr="2"
+                flexWrap="wrap"
                 borderBottom={
                   index !== transactionInsights.length - 1 ? '1px solid var(--chakra-colors-border-primary)' : 'none'
                 }
               >
-                <Text width="130px">{insight.label}</Text>
+                <Text>{insight.label}</Text>
               </Flex>
               <Flex
                 alignItems="center"
                 py="4"
-                pr="6"
+                pr="4"
+                pl="2"
+                flexWrap="wrap"
                 borderBottom={
                   index !== transactionInsights.length - 1 ? '1px solid var(--chakra-colors-border-primary)' : 'none'
                 }

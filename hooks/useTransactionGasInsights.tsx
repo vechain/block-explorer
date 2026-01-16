@@ -6,7 +6,7 @@ import { useFormatNumber } from '@/hooks/useFormatting'
 import type { InsightType } from '@/lib/types'
 import { useTranslation } from 'react-i18next'
 import { GasUsed, TxFeePaid } from '@/components/ui/GasFees'
-import { HStack, Skeleton, Text } from '@chakra-ui/react'
+import { HStack, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { formatPercentage } from '@/lib/utils/units'
 
 export type TxGasFeesResult =
@@ -81,14 +81,18 @@ export const useTransactionGasInsights = ({
       {
         label: t('Priority Fee per Gas'),
         value: (
-          <HStack alignItems="center" gap="8">
+          <Stack
+            direction={{ base: 'column', md: 'row' }}
+            alignItems={{ base: 'flex-start', md: 'center' }}
+            gap={{ base: 2, md: 4 }}
+          >
             <Text>
               {formatNumber(Number(formatGwei(txGasFees.priorityFeePerGas)))} {' Gwei'}
             </Text>
             <Text color="text-alt-secondary">
               {'Max :'} {formatNumber(Number(formatGwei(txGasFees.maxFeePerGas)))} {'Gwei'}
             </Text>
-          </HStack>
+          </Stack>
         ),
       },
     ]

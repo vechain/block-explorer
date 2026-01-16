@@ -90,6 +90,8 @@
   "ID": "ID",
   "Index": "Index",
   "Indexed": "Indexed",
+  "Raw": "Raw",
+  "Decoded": "Decoded",
   "Input data": "Input data",
   "Inspect tool": "Inspect tool",
   "Last Seen": "Last Seen",

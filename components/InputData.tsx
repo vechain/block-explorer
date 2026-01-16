@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Grid, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Box, Flex, Grid, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { InputData as InputDataType } from '@/hooks/useDecodeInputData'
@@ -22,22 +22,23 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
 
   const viewOptions: ToggleOption<InputDataView>[] = useMemo(
     () => [
-      { value: InputDataView.RAW, label: t('raw') },
-      { value: InputDataView.DECODED, label: t('decoded') },
+      { value: InputDataView.RAW, label: t('Raw') },
+      { value: InputDataView.DECODED, label: t('Decoded') },
     ],
     [t],
   )
 
   return (
     <Card variant="secondary">
-      <ToggleGroup
-        layoutId={`input-data-${clauseIndex}`}
-        bg="bg-secondary"
-        options={viewOptions}
-        value={view}
-        onChange={setView}
-        size="sm"
-      />
+      <Flex>
+        <ToggleGroup
+          layoutId={`input-data-${clauseIndex}`}
+          options={viewOptions}
+          value={view}
+          onChange={setView}
+          size="sm"
+        />
+      </Flex>
       {isLoading ? (
         <Card variant="outline">
           <Skeleton height="320px" width="100%" />

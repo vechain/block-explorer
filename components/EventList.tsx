@@ -8,11 +8,6 @@ import { AddressLink } from './ui/Links'
 import { Card } from './ui/Card'
 import { ToggleGroup, type ToggleOption } from './ui/ToggleGroup'
 
-enum EventView {
-  RAW = 'raw',
-  DECODED = 'decoded',
-}
-
 export const EventsList = ({ clauseIndex, eventLogs }: { clauseIndex: number; eventLogs: RawEvent[] }) => {
   const { t } = useTranslation()
 
@@ -39,12 +34,12 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
 
   const isDecoded = event.type === EventType.DECODED
 
-  const [view, setView] = useState<EventView>(() => (isDecoded ? EventView.DECODED : EventView.RAW))
+  const [view, setView] = useState<EventType>(() => (isDecoded ? EventType.DECODED : EventType.RAW))
 
-  const viewOptions: ToggleOption<EventView>[] = useMemo(
+  const viewOptions: ToggleOption<EventType>[] = useMemo(
     () => [
-      { value: EventView.RAW, label: t('raw') },
-      { value: EventView.DECODED, label: t('decoded') },
+      { value: EventType.RAW, label: t('Raw') },
+      { value: EventType.DECODED, label: t('Decoded') },
     ],
     [t],
   )
@@ -68,8 +63,9 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
           gap="5"
           rounded="full"
           whiteSpace="nowrap"
-          py="2"
-          px="4"
+          p={0}
+          py={2}
+          px={4}
         >
           <Text>#{index}</Text>
           <HStack gap="2">
@@ -77,18 +73,19 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
             <AddressLink address={event.raw.address} truncate={isMobile} />
           </HStack>
         </Card>
-        <ToggleGroup
-          layoutId={layoutId}
-          bg="bg-outline"
-          options={viewOptions}
-          value={view}
-          onChange={setView}
-          mt={{ base: '4', md: '0' }}
-          size="sm"
-        />
+        <Flex>
+          <ToggleGroup
+            layoutId={layoutId}
+            options={viewOptions}
+            value={view}
+            onChange={setView}
+            mt={{ base: '4', md: '0' }}
+            size="sm"
+          />
+        </Flex>
       </Flex>
 
-      {view === EventView.DECODED ? (
+      {view === EventType.DECODED ? (
         <DecodedEventCard event={event.type === EventType.DECODED ? event.decoded : undefined} />
       ) : (
         <RawEventCard event={event.raw} />

@@ -70,9 +70,9 @@ const TransactionDetails = ({
 
   const viewOptions: ToggleOption<TransactionDetailsView>[] = useMemo(
     () => [
-      { value: TransactionDetailsView.TRANSACTION, label: t('details') },
+      { value: TransactionDetailsView.TRANSACTION, label: t('Transaction') },
       { value: TransactionDetailsView.CLAUSES, label: t('Clauses') },
-      { value: TransactionDetailsView.EVENTS, label: t('events') },
+      { value: TransactionDetailsView.EVENTS, label: t('Events') },
     ],
     [t],
   )
@@ -107,7 +107,7 @@ const TransactionDetails = ({
         </DataCard>
       </Flex>
 
-      <Card variant="secondary">
+      <Flex>
         <ToggleGroup
           layoutId="transaction-view-switch"
           options={viewOptions}
@@ -115,9 +115,9 @@ const TransactionDetails = ({
           onChange={onViewChange}
           size="sm"
         />
+      </Flex>
 
-        <TransactionViews transaction={transaction} receipt={receipt} view={view} />
-      </Card>
+      <TransactionViews transaction={transaction} receipt={receipt} view={view} />
     </Card>
   )
 }
