@@ -29,7 +29,7 @@ export const Header = () => {
 
         <NavigationMenu />
       </Flex>
-      <SearchBar hideFrom="md" flex={1} />
+      <SearchBar hideFrom="md" flex={1} mb={8} />
     </VStack>
   )
 }

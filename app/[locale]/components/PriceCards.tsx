@@ -39,7 +39,6 @@ export const PriceCards = () => {
       flexDirection="row"
       flexWrap="nowrap"
       overflowX={{ base: 'auto', md: 'visible' }}
-      pb={{ base: 2, md: 0 }}
       mx={{ base: -4, md: 0 }}
       px={{ base: 4, md: 0 }}
       css={{
