@@ -91,32 +91,16 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
         </Grid>
 
         <Grid templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }} flex="1" alignSelf="center" gap="4">
-          <DataCard
-            icon={<Image src="/icons/coin.svg" alt="VTHO Paid" />}
-            title={t('VTHO Paid')}
-            tooltip={t('Information coming soon')}
-          >
+          <DataCard icon={<Image src="/icons/coin.svg" alt="VTHO Paid" />} title={t('VTHO Paid')}>
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
-          <DataCard
-            icon={<Image src="/icons/flash.svg" alt="VTHO Burned" />}
-            title={t('VTHO Burned')}
-            tooltip={t('Information coming soon')}
-          >
+          <DataCard icon={<Image src="/icons/flash.svg" alt="VTHO Burned" />} title={t('VTHO Burned')}>
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
-          <DataCard
-            icon={<Image src="/icons/reward.svg" alt="VTHO Rewarded" />}
-            title={t('VTHO Rewarded')}
-            tooltip={t('Information coming soon')}
-          >
+          <DataCard icon={<Image src="/icons/reward.svg" alt="VTHO Rewarded" />} title={t('VTHO Rewarded')}>
             <Text>{'123.456'} VTHO</Text>
           </DataCard>
-          <DataCard
-            icon={<Image src="/icons/co2e.svg" alt="CO2 emitted" />}
-            title={t('CO2e emitted')}
-            tooltip={t('Information coming soon')}
-          >
+          <DataCard icon={<Image src="/icons/co2e.svg" alt="CO2 emitted" />} title={t('CO2e emitted')}>
             <Text>
               {'123.456'} {t('g')}
             </Text>

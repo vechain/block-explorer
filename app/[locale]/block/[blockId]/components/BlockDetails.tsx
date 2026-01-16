@@ -41,7 +41,6 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
             variant="secondary"
             icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
             title={t('Block Number')}
-            tooltip={t('Information coming soon')}
           >
             <Text textStyle="bodyL" color="text-primary">
               #{formatNumber(block.number)}
@@ -53,18 +52,12 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
             variant="secondary"
             icon={<Image src="/icons/clause.svg" alt="Clauses" />}
             title={t('Total Clauses')}
-            tooltip={t('Information coming soon')}
           >
             <Text>{block.transactions.reduce((acc, tx) => acc + tx.clauses.length, 0)}</Text>
           </DataCard>
 
           {/* Block signer */}
-          <DataCard
-            variant="secondary"
-            icon={<Image src="/icons/link.svg" alt="Signer" />}
-            title={t('Block Signer')}
-            tooltip={t('Information coming soon')}
-          >
+          <DataCard variant="secondary" icon={<Image src="/icons/link.svg" alt="Signer" />} title={t('Block Signer')}>
             <AddressLink address={block.signer} truncate />
           </DataCard>
 
@@ -73,7 +66,6 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
             variant="secondary"
             icon={<Image src="/icons/link.svg" alt="Parent block" />}
             title={t('Parent block')}
-            tooltip={t('Information coming soon')}
           >
             <BaseLink href={`/block/${block.parentID}`}>#{formatNumber(block.number - 1)}</BaseLink>
           </DataCard>

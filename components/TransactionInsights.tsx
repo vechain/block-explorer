@@ -126,7 +126,6 @@ export const TransactionInsight = ({
             minWidth={{ base: '100%', md: '45%' }}
             icon={<Image src="/icons/vet-value.svg" alt="Expiration" />}
             title={t('Value')}
-            tooltip={t('Information coming soon')}
           >
             <VETBalance balance={VETValue} justifyContent="flex-start" />
           </DataCard>
@@ -135,7 +134,6 @@ export const TransactionInsight = ({
             minWidth={{ base: '100%', md: '45%' }}
             icon={<Image src="/icons/confirmations.svg" alt="Expiration" />}
             title={t('Confirmations')}
-            tooltip={t('Information coming soon')}
           >
             <Box>
               {isBestBlockPending ? (
@@ -164,7 +162,6 @@ export const TransactionInsight = ({
             minWidth={{ base: '100%', md: '45%' }}
             icon={<Image src="/icons/clock.svg" alt="Expiration" />}
             title={t('Expiration')}
-            tooltip={t('Information coming soon')}
           >
             <Text>
               {formatNumber(transaction.expiration)} {t('Blocks')}
@@ -175,7 +172,6 @@ export const TransactionInsight = ({
             minWidth={{ base: '100%', md: '45%' }}
             icon={<Image src="/icons/link.svg" alt="Chain Tag" />}
             title="Nonce"
-            tooltip={t('Information coming soon')}
           >
             <Text color="text-secondary">{transaction.nonce}</Text>
           </DataCard>

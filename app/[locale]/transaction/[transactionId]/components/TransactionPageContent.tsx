@@ -81,28 +81,17 @@ const TransactionDetails = ({
           variant="secondary"
           icon={<Image src="/icons/block-number.svg" alt="Block Number" />}
           title={t('Block Number')}
-          tooltip="Information coming soon"
         >
           <BaseLink href={`/block/${transaction.meta.blockID}`}>#{formatNumber(transaction.meta.blockNumber)}</BaseLink>
         </DataCard>
 
         {/* Total Clauses */}
-        <DataCard
-          variant="secondary"
-          icon={<Image src="/icons/clause.svg" alt="Clauses" />}
-          title={t('Total Clauses')}
-          tooltip={t('Information coming soon')}
-        >
+        <DataCard variant="secondary" icon={<Image src="/icons/clause.svg" alt="Clauses" />} title={t('Total Clauses')}>
           <BaseLink href={`/transaction/${transaction.id}?view=clauses`}>{transaction.clauses.length}</BaseLink>
         </DataCard>
 
         {/* Rewards */}
-        <DataCard
-          variant="secondary"
-          icon={<Image src="/icons/reward.svg" alt="Rewards" />}
-          title={t('Rewards')}
-          tooltip={t('Information coming soon')}
-        >
+        <DataCard variant="secondary" icon={<Image src="/icons/reward.svg" alt="Rewards" />} title={t('Rewards')}>
           {receipt ? <VETBalance balance={receipt.reward} justifyContent="flex-start" /> : <Text>-</Text>}
         </DataCard>
       </Flex>

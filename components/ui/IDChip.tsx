@@ -1,7 +1,7 @@
 'use client'
 
 import type { FlexProps } from '@chakra-ui/react'
-import { Flex, Text } from '@chakra-ui/react'
+import { Flex, Image, Text } from '@chakra-ui/react'
 import { forwardRef } from 'react'
 import { CopyToClipBoard } from './CopyToClipBoard'
 
@@ -16,7 +16,7 @@ export const IDChip = forwardRef<HTMLDivElement, IDChipProps>(({ value, vnsName,
     <Flex
       ref={ref}
       py="2"
-      px="4"
+      px="2"
       gap="2"
       alignItems="center"
       bg="bg-primary"
@@ -27,6 +27,7 @@ export const IDChip = forwardRef<HTMLDivElement, IDChipProps>(({ value, vnsName,
       maxW="full"
       {...props}
     >
+      <Image src="/images/sphere.png" alt="Sphere" width={4} height={4} />
       <Text
         color="text-primary"
         maxWidth="full"

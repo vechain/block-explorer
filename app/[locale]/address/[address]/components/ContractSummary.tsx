@@ -45,7 +45,6 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
             variant="secondary"
             icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
             title={t('Contract creation')}
-            tooltip={t('Information coming soon')}
           >
             {isPending ? (
               <Skeleton height="24px" width="120px" />
@@ -60,7 +59,6 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
             variant="secondary"
             icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
             title={t('Contract Master')}
-            tooltip={t('Information coming soon')}
           >
             {isPending ? (
               <Skeleton height="24px" width="120px" />
@@ -73,7 +71,6 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
             variant="secondary"
             icon={<Image src="/icons/transaction.svg" alt="Transactions" />}
             title={t('Creation Transaction')}
-            tooltip={t('Information coming soon')}
           >
             {isPending ? (
               <Skeleton height="24px" width="120px" />
