@@ -1,4 +1,4 @@
-import { Flex, Stack } from '@chakra-ui/react'
+import { Flex, VStack } from '@chakra-ui/react'
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 
 // Force dynamic rendering - ensures SSR data prefetching works in production
@@ -98,19 +98,21 @@ export default async function HomePage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Stack mt={8} gap={8}>
-        <PriceCards />
-        <Flex gap={4} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
-          <MarketCapChart />
-          <TotalStakedChart />
-          <GeneralInformationCard />
-        </Flex>
+      <VStack gap={8} alignItems="stretch">
+        <VStack gap={{ base: 8, md: 4 }} alignItems="stretch">
+          <PriceCards />
+          <Flex gap={{ base: 8, md: 4 }} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+            <MarketCapChart />
+            <TotalStakedChart />
+            <GeneralInformationCard />
+          </Flex>
+        </VStack>
         <BlockUsage />
 
         <ActivitySection />
         <TokenTransfersSection />
         <NFTTransfersSection />
-      </Stack>
+      </VStack>
     </HydrationBoundary>
   )
 }
