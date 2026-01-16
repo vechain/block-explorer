@@ -1,12 +1,12 @@
 import { Box, Flex, Grid, HStack, ScrollArea, Skeleton, Text, useBreakpointValue } from '@chakra-ui/react'
-import { Fragment, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from '@/components/ui-legacy/ErrorBoundary'
 import { type DecodedEvent, useDecodeEvent } from '@/hooks/useDecodeEvent'
 import { EventType, type RawEvent } from '@/lib/schemas'
 import { AddressLink } from './ui/Links'
 import { Card } from './ui/Card'
-import { ValueSwitch } from './ui/ValueSwitch'
-import { useTranslation } from 'react-i18next'
+import { ToggleGroup, type ToggleOption } from './ui/ToggleGroup'
 
 enum EventView {
   RAW = 'raw',
@@ -39,7 +39,15 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
 
   const isDecoded = event.type === EventType.DECODED
 
-  const [view, setView] = useState<string>(() => (isDecoded ? EventView.DECODED : EventView.RAW))
+  const [view, setView] = useState<EventView>(() => (isDecoded ? EventView.DECODED : EventView.RAW))
+
+  const viewOptions: ToggleOption<EventView>[] = useMemo(
+    () => [
+      { value: EventView.RAW, label: t('raw') },
+      { value: EventView.DECODED, label: t('decoded') },
+    ],
+    [t],
+  )
 
   if (isPending) {
     return (
@@ -69,13 +77,14 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
             <AddressLink address={event.raw.address} truncate={isMobile} />
           </HStack>
         </Card>
-        <ValueSwitch
+        <ToggleGroup
           layoutId={layoutId}
           bg="bg-outline"
-          values={[EventView.RAW, EventView.DECODED]}
-          activeValue={view}
+          options={viewOptions}
+          value={view}
           onChange={setView}
           mt={{ base: '4', md: '0' }}
+          size="sm"
         />
       </Flex>
 

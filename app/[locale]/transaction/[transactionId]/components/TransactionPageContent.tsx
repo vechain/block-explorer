@@ -3,6 +3,7 @@
 import { Flex, Heading, Skeleton, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { notFound, useRouter } from 'next/navigation'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TransactionViews } from '@/components/TransactionViews'
 import { VETBalance } from '@/components/ui/Balance'
@@ -10,7 +11,7 @@ import { DataCard } from '@/components/ui/DataCard'
 import { IDChip } from '@/components/ui/IDChip'
 import { BaseLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
-import { ValueSwitch } from '@/components/ui/ValueSwitch'
+import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/hooks'
 import { useFormatNumber } from '@/hooks/useFormatting'
@@ -66,6 +67,16 @@ const TransactionDetails = ({
 }) => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
+
+  const viewOptions: ToggleOption<TransactionDetailsView>[] = useMemo(
+    () => [
+      { value: TransactionDetailsView.TRANSACTION, label: t('details') },
+      { value: TransactionDetailsView.CLAUSES, label: t('Clauses') },
+      { value: TransactionDetailsView.EVENTS, label: t('events') },
+    ],
+    [t],
+  )
+
   return (
     <Card variant="primary">
       <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
@@ -97,11 +108,12 @@ const TransactionDetails = ({
       </Flex>
 
       <Card variant="secondary">
-        <ValueSwitch
+        <ToggleGroup
           layoutId="transaction-view-switch"
-          values={[TransactionDetailsView.TRANSACTION, TransactionDetailsView.CLAUSES, TransactionDetailsView.EVENTS]}
-          activeValue={view}
-          onChange={value => onViewChange(value as TransactionDetailsView)}
+          options={viewOptions}
+          value={view}
+          onChange={onViewChange}
+          size="sm"
         />
 
         <TransactionViews transaction={transaction} receipt={receipt} view={view} />

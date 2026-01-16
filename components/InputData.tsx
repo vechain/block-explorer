@@ -1,13 +1,13 @@
 'use client'
 
 import { Box, Grid, Skeleton, Stack, Text } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { InputData as InputDataType } from '@/hooks/useDecodeInputData'
 import { type DecodedInputData, useDecodeInputData } from '@/hooks/useDecodeInputData'
 import type { HexString } from '@/lib/schemas'
 import { Card } from './ui/Card'
-import { ValueSwitch } from './ui/ValueSwitch'
+import { ToggleGroup, type ToggleOption } from './ui/ToggleGroup'
 
 enum InputDataView {
   RAW = 'raw',
@@ -15,25 +15,35 @@ enum InputDataView {
 }
 
 export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: HexString }) => {
+  const { t } = useTranslation()
   const { data: inputData, isLoading } = useDecodeInputData(data)
   const isDecoded = !!inputData?.decoded
-  const [view, setView] = useState<string>(() => (isDecoded ? InputDataView.DECODED : InputDataView.RAW))
+  const [view, setView] = useState<InputDataView>(() => (isDecoded ? InputDataView.DECODED : InputDataView.RAW))
+
+  const viewOptions: ToggleOption<InputDataView>[] = useMemo(
+    () => [
+      { value: InputDataView.RAW, label: t('raw') },
+      { value: InputDataView.DECODED, label: t('decoded') },
+    ],
+    [t],
+  )
 
   return (
     <Card variant="secondary">
-      <ValueSwitch
+      <ToggleGroup
         layoutId={`input-data-${clauseIndex}`}
         bg="bg-secondary"
-        values={[InputDataView.RAW, InputDataView.DECODED]}
-        activeValue={view}
+        options={viewOptions}
+        value={view}
         onChange={setView}
+        size="sm"
       />
       {isLoading ? (
         <Card variant="outline">
           <Skeleton height="320px" width="100%" />
         </Card>
       ) : (
-        <InputDataViews inputData={inputData} activeView={view as InputDataView} />
+        <InputDataViews inputData={inputData} activeView={view} />
       )}
     </Card>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { Accordion, Box, Flex, Text, useBreakpointValue } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RawEvent } from '@/lib/schemas/events'
 import type { Clause, Transaction, TransactionReceipt } from '@/lib/schemas/transactions'
@@ -9,7 +9,7 @@ import { EventsList } from './EventList'
 import { InputData } from './InputData'
 import { VETBalance } from './ui/Balance'
 import { CopyableAddressLink } from './ui/Links'
-import { ValueSwitch } from './ui/ValueSwitch'
+import { ToggleGroup, type ToggleOption } from './ui/ToggleGroup'
 
 enum ClauseView {
   INPUT_DATA = 'input-data',
@@ -58,17 +58,27 @@ export function TransactionClauses({
 }
 
 const ClauseContent = ({ clause, eventLogs, index }: { clause: Clause; eventLogs: RawEvent[]; index: number }) => {
-  const [view, setView] = useState<string>(ClauseView.INPUT_DATA)
+  const { t } = useTranslation()
+  const [view, setView] = useState<ClauseView>(ClauseView.INPUT_DATA)
+
+  const viewOptions: ToggleOption<ClauseView>[] = useMemo(
+    () => [
+      { value: ClauseView.INPUT_DATA, label: t('Input data') },
+      { value: ClauseView.EVENTS, label: t('events') },
+    ],
+    [t],
+  )
 
   return (
     <Accordion.ItemContent>
       <Accordion.ItemBody py={{ base: '4', md: '6' }} display="flex" flexDirection="column" gap="4">
-        <ValueSwitch
+        <ToggleGroup
           layoutId={`clause-${index}`}
           bg="bg-secondary"
-          values={[ClauseView.INPUT_DATA, ClauseView.EVENTS]}
-          activeValue={view}
+          options={viewOptions}
+          value={view}
           onChange={setView}
+          size="sm"
         />
         {view === ClauseView.INPUT_DATA && <InputData clauseIndex={index} data={clause.data} />}
         {view === ClauseView.EVENTS && <EventsList clauseIndex={index} eventLogs={eventLogs} />}
