@@ -1,6 +1,6 @@
 'use client'
 
-import { Flex, Heading, Stack, Text } from '@chakra-ui/react'
+import { Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
@@ -19,7 +19,7 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
 
-  if (isPending) return <div>Loading...</div>
+  if (isPending) return <Skeleton height="400px" width="100%" />
 
   if (!block) {
     notFound()
