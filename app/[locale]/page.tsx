@@ -1,6 +1,5 @@
 import { Flex, Stack } from '@chakra-ui/react'
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
-import z from 'zod'
 
 // Force dynamic rendering - ensures SSR data prefetching works in production
 export const dynamic = 'force-dynamic'
@@ -8,7 +7,7 @@ import { GeneralInformationCard } from '@/components/ui/GeneralInformationCard'
 import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
 
-import { zodParse } from '@/lib/utils/zod'
+import { parseNetworkFromParams } from '@/lib/utils/network'
 import { bestBlockCompressedQueryOptions, blockExpandedQueryOptions } from '@/services/thor/block'
 import type { CompressedBlock } from '@/lib/schemas'
 import { ActivitySection } from './components/ActivitySection'
@@ -38,14 +37,7 @@ export default async function HomePage({
 }: {
   searchParams: Promise<{ network: NetworkName | undefined }>
 }) {
-  const networkName = (await searchParams).network || NetworkName.MAINNET
-
-  const activeNetworkName = zodParse({
-    data: networkName,
-    schema: z.enum(Object.values(NetworkName)),
-    errorMessage: 'Invalid network name',
-    fallbackData: NetworkName.MAINNET,
-  })
+  const activeNetworkName = await parseNetworkFromParams(searchParams)
 
   const queryClient = getQueryClient()
   await Promise.allSettled([
