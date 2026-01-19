@@ -98,7 +98,35 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
 const RawEventCard = ({ event }: { event: RawEvent }) => {
   const firstColumnWidth = '100px'
   const { t } = useTranslation()
+  const isMobile = useBreakpointValue({ base: true, md: false })
 
+  // Mobile: Stack layout with cards
+  if (isMobile) {
+    return (
+      <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
+        {event.topics.map((topic, index) => (
+          <Box key={index} p="3" borderBottomWidth="1px" borderColor="border-primary" _last={{ borderBottom: 'none' }}>
+            <Text fontWeight="semibold" fontSize="sm" color="text-alt" mb="1">
+              {t('Topic')} [{index}]
+            </Text>
+            <Text wordBreak="break-all" fontSize="sm">
+              {topic}
+            </Text>
+          </Box>
+        ))}
+        <Box p="3" borderTopWidth="1px" borderColor="border-primary">
+          <Text fontWeight="semibold" fontSize="sm" color="text-alt" mb="1">
+            {t('Data')}
+          </Text>
+          <Text wordBreak="break-all" fontSize="sm">
+            {event.data}
+          </Text>
+        </Box>
+      </Box>
+    )
+  }
+
+  // Desktop: Grid layout with horizontal scroll
   return (
     <ScrollArea.Root size="sm" variant="hover">
       <ScrollArea.Viewport borderWidth="1px" borderColor="border-primary" borderRadius="md">
@@ -132,6 +160,7 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
 
 const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
   const { t } = useTranslation()
+  const isMobile = useBreakpointValue({ base: true, md: false })
 
   if (!event) {
     return (
@@ -141,6 +170,47 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
     )
   }
 
+  // Mobile: Stack layout with cards
+  if (isMobile) {
+    return (
+      <Card variant="outline">
+        <Text textStyle="bodyL" mb="3">
+          {event.signature.split('(')[0]}
+        </Text>
+        <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
+          {event.inputs.map((input, index) => (
+            <Box
+              key={`${index}-${input.name}`}
+              p="3"
+              borderBottomWidth={index < event.inputs.length - 1 ? '1px' : '0'}
+              borderColor="border-primary"
+            >
+              <Flex justifyContent="space-between" alignItems="center" mb="2">
+                <Text fontWeight="semibold" fontSize="sm">
+                  #{index} {input.name}
+                </Text>
+                <Flex gap="1" alignItems="center">
+                  <Text fontSize="xs" color="text-alt">
+                    {input.type}
+                  </Text>
+                  {input.indexed && (
+                    <Text fontSize="xs" color="accent-primary">
+                      {t('indexed')}
+                    </Text>
+                  )}
+                </Flex>
+              </Flex>
+              <Text wordBreak="break-all" fontSize="sm">
+                {input.name ? event.args[input.name] : 'N/A'}
+              </Text>
+            </Box>
+          ))}
+        </Box>
+      </Card>
+    )
+  }
+
+  // Desktop: Grid layout with horizontal scroll
   return (
     <Card variant="outline">
       <Text textStyle="bodyL">{event.signature.split('(')[0]}</Text>

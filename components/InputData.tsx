@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, Grid, ScrollArea, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Box, Flex, Grid, ScrollArea, Skeleton, Stack, Text, useBreakpointValue } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { InputData as InputDataType } from '@/hooks/useDecodeInputData'
@@ -64,6 +64,7 @@ const InputDataViews = ({ inputData, activeView }: { inputData: InputDataType; a
 
 const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: DecodedInputData | undefined }) => {
   const { t } = useTranslation()
+  const isMobile = useBreakpointValue({ base: true, md: false })
 
   if (!decodedInputData) {
     return (
@@ -75,6 +76,42 @@ const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: Decoded
 
   const templateColumns = '60px 160px 160px 1fr'
 
+  // Mobile: Stack layout with cards
+  if (isMobile) {
+    return (
+      <Stack>
+        <Box p="1" bg="bg-primary" borderRadius="4px" width="fit-content">
+          <Text textStyle="bodyS" wordBreak="break-all">
+            {decodedInputData.signature}
+          </Text>
+        </Box>
+        <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
+          {decodedInputData.inputs.map((input, index) => (
+            <Box
+              key={`${index}-${input.name}`}
+              p="3"
+              borderBottomWidth={index < decodedInputData.inputs.length - 1 ? '1px' : '0'}
+              borderColor="border-primary"
+            >
+              <Flex justifyContent="space-between" alignItems="center" mb="2">
+                <Text fontWeight="semibold" fontSize="sm">
+                  #{index} {input.name}
+                </Text>
+                <Text fontSize="xs" color="text-alt">
+                  {input.type}
+                </Text>
+              </Flex>
+              <Text wordBreak="break-all" fontSize="sm">
+                {decodedInputData.args?.[index] ?? '0x'}
+              </Text>
+            </Box>
+          ))}
+        </Box>
+      </Stack>
+    )
+  }
+
+  // Desktop: Grid layout with horizontal scroll
   return (
     <Stack>
       <Box p="1" bg="bg-primary" borderRadius="4px" width="fit-content">
