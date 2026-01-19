@@ -71,7 +71,7 @@ export const TransactionInsight = ({
   }
 
   return (
-    <Card variant="secondary">
+    <Card variant="tertiary">
       <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gapX="2" gapY="4">
         <Heading as="h2" textStyle="displayXs">
           {t('Transaction Insights')}

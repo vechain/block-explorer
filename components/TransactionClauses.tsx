@@ -34,6 +34,8 @@ export function TransactionClauses({
           px="4"
           py="5"
           border="none"
+          borderTopWidth={index !== 0 ? '1px solid' : 'none'}
+          borderColor="border-primary"
           bg={index % 2 === 0 ? 'row-even-bg-primary' : 'row-odd-bg-primary'}
         >
           <Flex>

@@ -29,7 +29,7 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
   )
 
   return (
-    <Card variant="secondary">
+    <Card variant="tertiary">
       <Flex>
         <ToggleGroup
           layoutId={`input-data-${clauseIndex}`}
