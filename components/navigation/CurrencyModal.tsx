@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { LuCheck, LuX } from 'react-icons/lu'
 import { Currency, useSettingsStore } from '@/lib/stores/settings'
 import { CURRENCIES } from '@/lib/constants/currencies'
+import { currencyConfig } from '@/lib/constants/currency-config'
 
 interface CurrencyModalProps {
   isOpen: boolean
@@ -21,6 +22,8 @@ export const CurrencyModal = ({ isOpen, onClose }: CurrencyModalProps) => {
 
   const handleCurrencyChange = (next: Currency) => {
     setCurrency(next)
+    // Set the currency cookie for middleware/SSR to read
+    document.cookie = `${currencyConfig.cookieName}=${next}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
     // Update the URL with the new currency parameter
     const params = new URLSearchParams(searchParams.toString())
     params.set('currency', next)
