@@ -1,8 +1,8 @@
 'use client'
 
 import { Flex, Grid, Heading, Skeleton, Stack } from '@chakra-ui/react'
-import { notFound } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
+import { NotFound } from '@/components/error/NotFound'
 import { Card } from '@/components/ui/Card'
 import type { AddressString } from '@/lib/schemas'
 import { parseNftMetadataUri, useNftMetadata } from '@/services/nft-metadata'
@@ -39,7 +39,7 @@ export const NftDetailPageContent = ({
   }
 
   if (!collection) {
-    notFound()
+    return <NotFound title={t('NFT not found')} description={t('The NFT you are looking for does not exist')} />
   }
 
   const nftImage = metadata?.image ? parseNftMetadataUri(metadata.image) : '/no-image.png'

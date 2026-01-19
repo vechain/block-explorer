@@ -2,9 +2,10 @@
 
 import { Flex, Heading, Skeleton, Text } from '@chakra-ui/react'
 import Image from 'next/image'
-import { notFound, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { NotFound } from '@/components/error/NotFound'
 import { TransactionViews } from '@/components/TransactionViews'
 import { VETBalance } from '@/components/ui/Balance'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
@@ -24,6 +25,7 @@ export const TransactionPageContent = ({
   transactionId: TransactionId
   view: string | undefined
 }) => {
+  const { t } = useTranslation()
   const { data: transaction, isPending: isTransactionPending } = useTransaction(transactionId)
   const { data: receipt, isPending: isReceiptPending } = useTransactionReceipt(transactionId)
   const router = useRouter()
@@ -31,7 +33,12 @@ export const TransactionPageContent = ({
   if (isTransactionPending || isReceiptPending) return <Skeleton height="400px" width="100%" />
 
   if (!transaction) {
-    notFound()
+    return (
+      <NotFound
+        title={t('Transaction not found')}
+        description={t('The transaction you are looking for does not exist')}
+      />
+    )
   }
 
   const handleViewChange = (newView: TransactionDetailsView) => {
