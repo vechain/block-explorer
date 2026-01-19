@@ -7,7 +7,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TransactionViews } from '@/components/TransactionViews'
 import { VETBalance } from '@/components/ui/Balance'
-import { DataCard } from '@/components/ui/DataCard'
+import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
 import { BaseLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
@@ -87,24 +87,37 @@ const TransactionDetails = ({
       </Flex>
 
       <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
-        {/* Block Number */}
-        <DataCard
-          variant="secondary"
-          icon={<Image src="/icons/block-number.svg" alt="Block Number" />}
-          title={t('Block Number')}
-        >
-          <BaseLink href={`/block/${transaction.meta.blockID}`}>#{formatNumber(transaction.meta.blockNumber)}</BaseLink>
-        </DataCard>
-
-        {/* Total Clauses */}
-        <DataCard variant="secondary" icon={<Image src="/icons/clause.svg" alt="Clauses" />} title={t('Total Clauses')}>
-          <BaseLink href={`/transaction/${transaction.id}?view=clauses`}>{transaction.clauses.length}</BaseLink>
-        </DataCard>
-
-        {/* Rewards */}
-        <DataCard variant="secondary" icon={<Image src="/icons/reward.svg" alt="Rewards" />} title={t('Rewards')}>
-          {receipt ? <VETBalance balance={receipt.reward} justifyContent="flex-start" /> : <Text>-</Text>}
-        </DataCard>
+        <DataCardGroup
+          items={
+            [
+              {
+                icon: <Image src="/icons/block-number.svg" alt="Block Number" />,
+                title: t('Block Number'),
+                children: (
+                  <BaseLink href={`/block/${transaction.meta.blockID}`}>
+                    #{formatNumber(transaction.meta.blockNumber)}
+                  </BaseLink>
+                ),
+              },
+              {
+                icon: <Image src="/icons/clause.svg" alt="Clauses" />,
+                title: t('Total Clauses'),
+                children: (
+                  <BaseLink href={`/transaction/${transaction.id}?view=clauses`}>{transaction.clauses.length}</BaseLink>
+                ),
+              },
+              {
+                icon: <Image src="/icons/reward.svg" alt="Rewards" />,
+                title: t('Rewards'),
+                children: receipt ? (
+                  <VETBalance balance={receipt.reward} justifyContent="flex-start" />
+                ) : (
+                  <Text>-</Text>
+                ),
+              },
+            ] as DataCardGroupItem[]
+          }
+        />
       </Flex>
 
       <Flex>
