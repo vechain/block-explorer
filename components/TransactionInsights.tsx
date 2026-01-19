@@ -85,7 +85,7 @@ export const TransactionInsight = ({
         {isMobile && <TransactionDate />}
       </Flex>
 
-      <Flex alignItems="start" flexDirection={{ base: 'column', md: 'row' }} gap="4" justifyContent="normal">
+      <Flex alignItems="start" flexDirection={{ base: 'column-reverse', md: 'row' }} gap="4" justifyContent="normal">
         <Grid
           flex="1"
           rounded="md"
@@ -124,7 +124,7 @@ export const TransactionInsight = ({
           ))}
         </Grid>
 
-        <Flex flex="1" gap="4" alignItems="stretch" flexWrap="wrap">
+        <Flex flex="1" gap="4" alignItems="stretch" flexWrap="wrap" w={{ base: '100%', md: 'auto' }}>
           <DataCardGroup
             variant="outline"
             cardProps={{ minWidth: { base: '100%', md: '45%' } }}

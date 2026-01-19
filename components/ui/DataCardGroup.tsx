@@ -20,9 +20,17 @@ interface DataCardGroupProps {
   variant?: CardVariant
   /** Additional props passed to each card in desktop mode */
   cardProps?: FlexProps
+  /** Additional props passed to each card in mobile mode */
+  mobileCardProps?: FlexProps
 }
 
-export const DataCardGroup = ({ items, iconSize = 12, variant = 'secondary', cardProps }: DataCardGroupProps) => {
+export const DataCardGroup = ({
+  items,
+  iconSize = 12,
+  variant = 'secondary',
+  cardProps,
+  mobileCardProps,
+}: DataCardGroupProps) => {
   const isMobile = useBreakpointValue({ base: true, md: false })
 
   // Desktop: render separate cards
@@ -52,30 +60,23 @@ export const DataCardGroup = ({ items, iconSize = 12, variant = 'secondary', car
 
   // Mobile: render single card with separator lines
   return (
-    <Card variant={variant} width="100%">
+    <Card variant={variant} width="100%" gap="0" py="1" {...mobileCardProps}>
       {items.map((item, index) => {
         const Icon = React.cloneElement(item.icon, { ...item.icon.props, width: iconSize, height: iconSize })
         const isLast = index === items.length - 1
 
         return (
-          <Box
-            key={index}
-            py="3"
-            borderBottomWidth={isLast ? '0' : '1px'}
-            borderColor="border-primary"
-            _first={{ pt: 0 }}
-            _last={{ pb: 0 }}
-          >
-            <Flex alignItems="center" justifyContent="space-between" mb="2">
+          <Box key={index} py="3" borderBottomWidth={isLast ? '0' : '1px'} borderColor="border-primary">
+            <Flex alignItems="center" justifyContent="space-between">
               <Group>
                 <IconInCircle icon={Icon} p="1" />
                 <Text whiteSpace="nowrap" textStyle="bodyM" color="text-primary">
                   {item.title}
                 </Text>
               </Group>
+              {item.children}
               {item.tooltip && <InfoTip tooltip={item.tooltip} />}
             </Flex>
-            {item.children}
           </Box>
         )
       })}
