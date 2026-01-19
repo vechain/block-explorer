@@ -2,8 +2,8 @@
 
 import { Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import Image from 'next/image'
-import { notFound } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
+import { NotFound } from '@/components/error/NotFound'
 import { DataCard } from '@/components/ui/DataCard'
 import { IDChip } from '@/components/ui/IDChip'
 import { AddressLink, BaseLink } from '@/components/ui/Links'
@@ -22,7 +22,7 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
   if (isPending) return <Skeleton height="400px" width="100%" />
 
   if (!block) {
-    notFound()
+    return <NotFound title={t('Block not found')} description={t('The block you are looking for does not exist')} />
   }
 
   return (
