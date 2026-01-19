@@ -4,7 +4,7 @@ import { Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
-import { DataCard } from '@/components/ui/DataCard'
+import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
 import { AddressLink, BaseLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
@@ -36,39 +36,36 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
         </Flex>
 
         <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
-          {/* Date and time */}
-          <DataCard
-            variant="secondary"
-            icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
-            title={t('Block Number')}
-          >
-            <Text textStyle="bodyL" color="text-primary">
-              #{formatNumber(block.number)}
-            </Text>
-          </DataCard>
-
-          {/* Clauses count */}
-          <DataCard
-            variant="secondary"
-            icon={<Image src="/icons/clause.svg" alt="Clauses" />}
-            title={t('Total Clauses')}
-          >
-            <Text>{block.transactions.reduce((acc, tx) => acc + tx.clauses.length, 0)}</Text>
-          </DataCard>
-
-          {/* Block signer */}
-          <DataCard variant="secondary" icon={<Image src="/icons/link.svg" alt="Signer" />} title={t('Block Signer')}>
-            <AddressLink address={block.signer} truncate />
-          </DataCard>
-
-          {/* Parent block */}
-          <DataCard
-            variant="secondary"
-            icon={<Image src="/icons/link.svg" alt="Parent block" />}
-            title={t('Parent block')}
-          >
-            <BaseLink href={`/block/${block.parentID}`}>#{formatNumber(block.number - 1)}</BaseLink>
-          </DataCard>
+          <DataCardGroup
+            items={
+              [
+                {
+                  icon: <Image src="/icons/calendar.svg" alt="Calendar" />,
+                  title: t('Block Number'),
+                  children: (
+                    <Text textStyle="bodyL" color="text-primary">
+                      #{formatNumber(block.number)}
+                    </Text>
+                  ),
+                },
+                {
+                  icon: <Image src="/icons/clause.svg" alt="Clauses" />,
+                  title: t('Total Clauses'),
+                  children: <Text>{block.transactions.reduce((acc, tx) => acc + tx.clauses.length, 0)}</Text>,
+                },
+                {
+                  icon: <Image src="/icons/link.svg" alt="Signer" />,
+                  title: t('Block Signer'),
+                  children: <AddressLink address={block.signer} truncate />,
+                },
+                {
+                  icon: <Image src="/icons/link.svg" alt="Parent block" />,
+                  title: t('Parent block'),
+                  children: <BaseLink href={`/block/${block.parentID}`}>#{formatNumber(block.number - 1)}</BaseLink>,
+                },
+              ] as DataCardGroupItem[]
+            }
+          />
         </Flex>
 
         <BlockInsight block={block} />

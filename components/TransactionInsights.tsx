@@ -5,7 +5,7 @@ import { Badge, Box, Flex, Grid, Heading, HStack, Skeleton, Text } from '@chakra
 import Image from 'next/image'
 import { LuChevronRight } from 'react-icons/lu'
 import { useTranslation } from 'react-i18next'
-import { DataCard } from '@/components/ui/DataCard'
+import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { AddressLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
@@ -85,7 +85,7 @@ export const TransactionInsight = ({
         {isMobile && <TransactionDate />}
       </Flex>
 
-      <Flex alignItems="start" flexDirection={{ base: 'column', md: 'row' }} gap="4" justifyContent="normal">
+      <Flex alignItems="start" flexDirection={{ base: 'column-reverse', md: 'row' }} gap="4" justifyContent="normal">
         <Grid
           flex="1"
           rounded="md"
@@ -124,60 +124,61 @@ export const TransactionInsight = ({
           ))}
         </Grid>
 
-        <Flex flex="1" gap="4" alignItems="stretch" flexWrap="wrap">
-          <DataCard
-            minWidth={{ base: '100%', md: '45%' }}
-            icon={<Image src="/icons/vet-value.svg" alt="Expiration" />}
-            title={t('Value')}
-          >
-            <VETBalance balance={VETValue} justifyContent="flex-start" />
-          </DataCard>
-
-          <DataCard
-            minWidth={{ base: '100%', md: '45%' }}
-            icon={<Image src="/icons/confirmations.svg" alt="Expiration" />}
-            title={t('Confirmations')}
-          >
-            <Box>
-              {isBestBlockPending ? (
-                <Skeleton width="52px" height="29px" rounded="full" />
-              ) : (
-                <Badge
-                  textStyle="bodyM"
-                  minWidth="30px"
-                  justifyContent="center"
-                  bg={`${confirmationsStatus}-surface`}
-                  color={`${confirmationsStatus}-text`}
-                  gap="1"
-                  py="1"
-                  px="2"
-                  rounded="full"
-                  flexShrink={1}
-                >
-                  {confirmations && confirmations >= 12 && <LuChevronRight />}
-                  {getConfirmations(bestBlock?.number, transaction.meta.blockNumber)}
-                </Badge>
-              )}
-            </Box>
-          </DataCard>
-
-          <DataCard
-            minWidth={{ base: '100%', md: '45%' }}
-            icon={<Image src="/icons/clock.svg" alt="Expiration" />}
-            title={t('Expiration')}
-          >
-            <Text>
-              {formatNumber(transaction.expiration)} {t('Blocks')}
-            </Text>
-          </DataCard>
-
-          <DataCard
-            minWidth={{ base: '100%', md: '45%' }}
-            icon={<Image src="/icons/link.svg" alt="Chain Tag" />}
-            title="Nonce"
-          >
-            <Text color="text-secondary">{transaction.nonce}</Text>
-          </DataCard>
+        <Flex flex="1" gap="4" alignItems="stretch" flexWrap="wrap" w={{ base: '100%', md: 'auto' }}>
+          <DataCardGroup
+            variant="outline"
+            cardProps={{ minWidth: { base: '100%', md: '45%' } }}
+            items={
+              [
+                {
+                  icon: <Image src="/icons/vet-value.svg" alt="Value" />,
+                  title: t('Value'),
+                  children: <VETBalance balance={VETValue} justifyContent="flex-start" />,
+                },
+                {
+                  icon: <Image src="/icons/confirmations.svg" alt="Confirmations" />,
+                  title: t('Confirmations'),
+                  children: (
+                    <Box>
+                      {isBestBlockPending ? (
+                        <Skeleton width="52px" height="29px" rounded="full" />
+                      ) : (
+                        <Badge
+                          textStyle="bodyM"
+                          minWidth="30px"
+                          justifyContent="center"
+                          bg={`${confirmationsStatus}-surface`}
+                          color={`${confirmationsStatus}-text`}
+                          gap="1"
+                          py="1"
+                          px="2"
+                          rounded="full"
+                          flexShrink={1}
+                        >
+                          {confirmations && confirmations >= 12 && <LuChevronRight />}
+                          {getConfirmations(bestBlock?.number, transaction.meta.blockNumber)}
+                        </Badge>
+                      )}
+                    </Box>
+                  ),
+                },
+                {
+                  icon: <Image src="/icons/clock.svg" alt="Expiration" />,
+                  title: t('Expiration'),
+                  children: (
+                    <Text>
+                      {formatNumber(transaction.expiration)} {t('Blocks')}
+                    </Text>
+                  ),
+                },
+                {
+                  icon: <Image src="/icons/link.svg" alt="Nonce" />,
+                  title: 'Nonce',
+                  children: <Text color="text-secondary">{transaction.nonce}</Text>,
+                },
+              ] as DataCardGroupItem[]
+            }
+          />
         </Flex>
       </Flex>
     </Card>
