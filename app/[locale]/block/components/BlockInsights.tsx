@@ -3,7 +3,7 @@
 import { Flex, Grid, Heading, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
-import { DataCard } from '@/components/ui/DataCard'
+import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { GasUsed } from '@/components/ui/GasFees'
 import { Card } from '@/components/ui/Card'
 import type { ExpandedBlock } from '@/lib/schemas'
@@ -83,6 +83,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
                 borderBottom={
                   index !== blockInsights.length - 1 ? '1px solid var(--chakra-colors-border-primary)' : 'none'
                 }
+                flexWrap="wrap"
               >
                 {insight.value}
               </Flex>
@@ -90,21 +91,34 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
           ))}
         </Grid>
 
-        <Grid templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }} flex="1" alignSelf="center" gap="4">
-          <DataCard icon={<Image src="/icons/coin.svg" alt="VTHO Paid" />} title={t('VTHO Paid')}>
-            <Text>{'123.456'} VTHO</Text>
-          </DataCard>
-          <DataCard icon={<Image src="/icons/flash.svg" alt="VTHO Burned" />} title={t('VTHO Burned')}>
-            <Text>{'123.456'} VTHO</Text>
-          </DataCard>
-          <DataCard icon={<Image src="/icons/reward.svg" alt="VTHO Rewarded" />} title={t('VTHO Rewarded')}>
-            <Text>{'123.456'} VTHO</Text>
-          </DataCard>
-          <DataCard icon={<Image src="/icons/co2e.svg" alt="CO2 emitted" />} title={t('CO2e emitted')}>
-            <Text>
-              {'123.456'} {t('g')}
-            </Text>
-          </DataCard>
+        <Grid
+          templateColumns={{ base: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }}
+          flex="1"
+          alignSelf="flex-start"
+          gap="4"
+          w={{ base: '100%', md: 'auto' }}
+        >
+          <DataCardGroup
+            items={
+              [
+                {
+                  icon: <Image src="/icons/coin.svg" alt="VTHO Paid" width={24} height={24} />,
+                  title: t('VTHO Paid'),
+                  children: <Text>{'123.456'} VTHO</Text>,
+                },
+                {
+                  icon: <Image src="/icons/flash.svg" alt="VTHO Burned" width={24} height={24} />,
+                  title: t('VTHO Burned'),
+                  children: <Text>{'123.456'} VTHO</Text>,
+                },
+                {
+                  icon: <Image src="/icons/reward.svg" alt="VTHO Rewarded" width={24} height={24} />,
+                  title: t('VTHO Rewarded'),
+                  children: <Text>{'123.456'} VTHO</Text>,
+                },
+              ] satisfies DataCardGroupItem[]
+            }
+          />
         </Grid>
       </Flex>
     </Card>

@@ -44,6 +44,7 @@ const BaseTxBadge = (props: BadgeProps) => {
       px="2"
       py="1"
       rounded="8px"
+      whiteSpace="wrap"
       {...props}
     />
   )
