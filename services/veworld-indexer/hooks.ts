@@ -289,7 +289,10 @@ export const useRecentBlocksExpanded = ({ count }: { count: number }) => {
 
   return {
     data: latestBlocks,
-    isPending: blocksPending && latestBlocks.length === 0,
+    // isPending is true when any queries are still loading
+    isPending: blocksPending,
+    // isInitialLoading is true only when we have no data yet (for initial skeleton)
+    isInitialLoading: blocksPending && latestBlocks.length === 0,
   }
 }
 
@@ -297,7 +300,13 @@ export const useRecentBlocksExpanded = ({ count }: { count: number }) => {
  * Extract token transfers (VET + ERC20) from expanded blocks
  */
 export const useRecentTokenTransfers = ({ count }: { count: number }) => {
-  const { data: blocks, isPending } = useRecentBlocksExpanded({ count: Math.max(count * 2, 20) })
+  const {
+    data: blocks,
+    isPending: isBlocksPending,
+    isInitialLoading,
+  } = useRecentBlocksExpanded({
+    count: Math.max(count * 2, 20),
+  })
 
   const transfers = useMemo(() => {
     if (!blocks || blocks.length === 0) return []
@@ -323,6 +332,10 @@ export const useRecentTokenTransfers = ({ count }: { count: number }) => {
       .slice(0, count)
   }, [blocks, count])
 
+  // Consider pending until we have enough transfers OR all blocks have finished loading
+  // This prevents showing partial data while blocks are still loading
+  const isPending = isInitialLoading || (isBlocksPending && transfers.length < count)
+
   return {
     data: transfers,
     isPending,
@@ -333,7 +346,13 @@ export const useRecentTokenTransfers = ({ count }: { count: number }) => {
  * Extract NFT transfers from expanded blocks
  */
 export const useRecentNFTTransfers = ({ count }: { count: number }) => {
-  const { data: blocks, isPending } = useRecentBlocksExpanded({ count: Math.max(count * 10, 50) })
+  const {
+    data: blocks,
+    isPending: isBlocksPending,
+    isInitialLoading,
+  } = useRecentBlocksExpanded({
+    count: Math.max(count * 10, 50),
+  })
 
   const transfers = useMemo(() => {
     if (!blocks || blocks.length === 0) return []
@@ -355,6 +374,10 @@ export const useRecentNFTTransfers = ({ count }: { count: number }) => {
       })
       .slice(0, count)
   }, [blocks, count])
+
+  // Consider pending until we have enough transfers OR all blocks have finished loading
+  // This prevents the "half empty" table issue where we show partial data
+  const isPending = isInitialLoading || (isBlocksPending && transfers.length < count)
 
   return {
     data: transfers,
