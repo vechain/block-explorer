@@ -8,15 +8,23 @@ interface TooltipProps extends ChakraTooltip.RootProps {
   content: React.ReactNode
   contentProps?: ChakraTooltip.ContentProps
   disabled?: boolean
+  interactive?: boolean
 }
 
 export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(function Tooltip(props, ref) {
-  const { children, disabled, portalled = true, content, contentProps, portalRef, ...rest } = props
+  const { children, disabled, portalled = true, content, contentProps, portalRef, interactive, ...rest } = props
 
   if (disabled) return children
 
   return (
-    <ChakraTooltip.Root openDelay={0} closeDelay={0} positioning={{ placement: 'top' }} {...rest}>
+    <ChakraTooltip.Root
+      openDelay={0}
+      closeDelay={interactive ? 100 : 0}
+      closeOnPointerDown={!interactive}
+      positioning={{ placement: 'top' }}
+      interactive={interactive}
+      {...rest}
+    >
       <ChakraTooltip.Trigger asChild>{children}</ChakraTooltip.Trigger>
       <Portal disabled={!portalled} container={portalRef}>
         <ChakraTooltip.Positioner>
