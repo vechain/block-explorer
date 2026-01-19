@@ -53,22 +53,23 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
   }
 
   return (
-    <Card variant="tertiary">
-      <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap">
+    <Card variant="tertiary" overflow="hidden">
+      <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap" gap="2">
         <Card
           variant="outline"
           flexDirection="row"
           display="flex"
           alignItems="center"
-          gap="5"
+          gap={{ base: '2', md: '5' }}
           rounded="full"
           whiteSpace="nowrap"
           p={0}
           py={2}
-          px={4}
+          px={{ base: 2, md: 4 }}
+          maxW="100%"
         >
           <Text>#{index}</Text>
-          <HStack gap="2">
+          <HStack gap="2" overflow="hidden">
             <Text>{t('emitter')}</Text>
             <AddressLink address={event.raw.address} truncate={isMobile} />
           </HStack>
@@ -95,7 +96,7 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
 }
 
 const RawEventCard = ({ event }: { event: RawEvent }) => {
-  const firstColumnWidth = '140px'
+  const firstColumnWidth = '100px'
   const { t } = useTranslation()
 
   return (
@@ -105,6 +106,7 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
           <Grid
             templateColumns={`${firstColumnWidth} 30px 1fr`}
             p="4"
+            minW="400px"
             borderBottomWidth="1px"
             borderColor="border-primary"
           >
@@ -112,14 +114,14 @@ const RawEventCard = ({ event }: { event: RawEvent }) => {
               <Fragment key={index}>
                 {index === 0 ? <Text>{t('Topic')}</Text> : <br />}
                 <Text>[{index}]</Text>
-                <Text>{topic}</Text>
+                <Text wordBreak="break-all">{topic}</Text>
               </Fragment>
             ))}
           </Grid>
 
-          <Grid templateColumns={`${firstColumnWidth} 1fr`} p="4">
+          <Grid templateColumns={`${firstColumnWidth} 1fr`} p="4" minW="400px">
             <Text>{t('Data')}</Text>
-            <Text>{event.data}</Text>
+            <Text wordBreak="break-all">{event.data}</Text>
           </Grid>
         </ScrollArea.Content>
       </ScrollArea.Viewport>
@@ -142,39 +144,47 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
   return (
     <Card variant="outline">
       <Text textStyle="bodyL">{event.signature.split('(')[0]}</Text>
-      <Box textAlign="center">
-        <Grid templateColumns="60px 160px 160px 1fr" p="4">
-          <Text>#</Text>
-          <Text>{t('Name')}</Text>
-          <Text>{t('Type')}</Text>
-          <Text textAlign="left" pl="4">
-            {t('Data')}
-          </Text>
-        </Grid>
+      <ScrollArea.Root size="sm" variant="hover">
+        <ScrollArea.Viewport>
+          <ScrollArea.Content>
+            <Box textAlign="center" minW="fit-content">
+              <Grid templateColumns="60px 160px 160px 1fr" p="4" minW="500px">
+                <Text>#</Text>
+                <Text>{t('Name')}</Text>
+                <Text>{t('Type')}</Text>
+                <Text textAlign="left" pl="4">
+                  {t('Data')}
+                </Text>
+              </Grid>
 
-        <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
-          {event.inputs.map((input, index) => (
-            <Grid
-              key={`${index}-${input.name}`}
-              templateColumns="60px 160px 160px 1fr"
-              p="4"
-              borderBottomWidth={index < event.inputs.length - 1 ? '1px' : '0'}
-              borderColor="border-primary"
-            >
-              <Text>{index}</Text>
-              <Text>{input.name}</Text>
-              <Flex gap="1">
-                <Text>{input.type}</Text>
-                {input.indexed && <Text fontSize="xs">{t('indexed')}</Text>}
-              </Flex>
+              <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
+                {event.inputs.map((input, index) => (
+                  <Grid
+                    key={`${index}-${input.name}`}
+                    templateColumns="60px 160px 160px 1fr"
+                    p="4"
+                    minW="500px"
+                    borderBottomWidth={index < event.inputs.length - 1 ? '1px' : '0'}
+                    borderColor="border-primary"
+                  >
+                    <Text>{index}</Text>
+                    <Text>{input.name}</Text>
+                    <Flex gap="1">
+                      <Text>{input.type}</Text>
+                      {input.indexed && <Text fontSize="xs">{t('indexed')}</Text>}
+                    </Flex>
 
-              <Text textAlign="left" pl="4">
-                {input.name ? event.args[input.name] : 'N/A'}
-              </Text>
-            </Grid>
-          ))}
-        </Box>
-      </Box>
+                    <Text textAlign="left" pl="4">
+                      {input.name ? event.args[input.name] : 'N/A'}
+                    </Text>
+                  </Grid>
+                ))}
+              </Box>
+            </Box>
+          </ScrollArea.Content>
+        </ScrollArea.Viewport>
+        <ScrollArea.Scrollbar orientation="horizontal" />
+      </ScrollArea.Root>
     </Card>
   )
 }
