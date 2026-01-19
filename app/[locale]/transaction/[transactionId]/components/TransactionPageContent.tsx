@@ -93,39 +93,34 @@ const TransactionDetails = ({
         <IDChip value={transaction.id} />
       </Flex>
 
-      <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
-        <DataCardGroup
-          items={
-            [
-              {
-                icon: <Image src="/icons/block-number.svg" alt="Block Number" />,
-                title: t('Block Number'),
-                children: (
-                  <BaseLink href={`/block/${transaction.meta.blockID}`}>
-                    #{formatNumber(transaction.meta.blockNumber)}
-                  </BaseLink>
-                ),
-              },
-              {
-                icon: <Image src="/icons/clause.svg" alt="Clauses" />,
-                title: t('Total Clauses'),
-                children: (
-                  <BaseLink href={`/transaction/${transaction.id}?view=clauses`}>{transaction.clauses.length}</BaseLink>
-                ),
-              },
-              {
-                icon: <Image src="/icons/reward.svg" alt="Rewards" />,
-                title: t('Rewards'),
-                children: receipt ? (
-                  <VETBalance balance={receipt.reward} justifyContent="flex-start" />
-                ) : (
-                  <Text>-</Text>
-                ),
-              },
-            ] as DataCardGroupItem[]
-          }
-        />
-      </Flex>
+      <DataCardGroup
+        desktopColumns={3}
+        items={
+          [
+            {
+              icon: <Image src="/icons/block-number.svg" alt="Block Number" />,
+              title: t('Block Number'),
+              children: (
+                <BaseLink href={`/block/${transaction.meta.blockID}`}>
+                  #{formatNumber(transaction.meta.blockNumber)}
+                </BaseLink>
+              ),
+            },
+            {
+              icon: <Image src="/icons/clause.svg" alt="Clauses" />,
+              title: t('Total Clauses'),
+              children: (
+                <BaseLink href={`/transaction/${transaction.id}?view=clauses`}>{transaction.clauses.length}</BaseLink>
+              ),
+            },
+            {
+              icon: <Image src="/icons/reward.svg" alt="Rewards" />,
+              title: t('Rewards'),
+              children: receipt ? <VETBalance balance={receipt.reward} justifyContent="flex-start" /> : <Text>-</Text>,
+            },
+          ] as DataCardGroupItem[]
+        }
+      />
 
       <Flex>
         <ToggleGroup
