@@ -68,6 +68,60 @@ export const TransactionInsight = ({
     return <Text color="text-secondary">{formatDate(transaction.meta.blockTimestamp)}</Text>
   }
 
+  const additionalInsights: DataCardGroupItem[] = [
+    {
+      icon: <Image src="/icons/vet-value.svg" alt="Value" />,
+      title: t('Value'),
+      children: <VETBalance balance={VETValue} justifyContent="flex-start" />,
+    },
+    {
+      icon: <Image src="/icons/confirmations.svg" alt="Confirmations" />,
+      title: t('Confirmations'),
+      children: (
+        <Box>
+          {isBestBlockPending ? (
+            <Skeleton width="52px" height="29px" rounded="full" />
+          ) : (
+            <Badge
+              textStyle="bodyM"
+              minWidth="30px"
+              justifyContent="center"
+              bg={`${confirmationsStatus}-surface`}
+              color={`${confirmationsStatus}-text`}
+              gap="1"
+              py="1"
+              px="2"
+              rounded="full"
+              flexShrink={1}
+            >
+              {confirmations && confirmations >= 12 && <LuChevronRight />}
+              {getConfirmations(bestBlock?.number, transaction.meta.blockNumber)}
+            </Badge>
+          )}
+        </Box>
+      ),
+    },
+    {
+      icon: <Image src="/icons/clock.svg" alt="Expiration" />,
+      title: t('Expiration'),
+      children: (
+        <Text>
+          {formatNumber(transaction.expiration)} {t('Blocks')}
+        </Text>
+      ),
+    },
+    {
+      icon: <Image src="/icons/link.svg" alt="Nonce" />,
+      title: 'Nonce',
+      children: <Text color="text-secondary">{transaction.nonce}</Text>,
+    },
+  ]
+
+  const mainInsights: DataCardGroupItem[] = transactionInsights.map(insight => ({
+    title: insight.label,
+    children: insight.value,
+  }))
+
   return (
     <VStack alignItems="stretch" gap="4">
       <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gapX="2" gapY="4">
@@ -83,77 +137,14 @@ export const TransactionInsight = ({
         {isMobile && <TransactionDate />}
       </Flex>
 
-      <Flex
-        alignItems={{ base: 'stretch', md: 'flex-start' }}
-        flexDirection={{ base: 'column-reverse', md: 'row' }}
-        gap="4"
-      >
-        <DataCardGroup
-          singleCard
-          variant="outline"
-          mobileCardProps={{ flex: 1 }}
-          items={transactionInsights.map(insight => ({
-            title: insight.label,
-            children: insight.value,
-          }))}
-        />
-
-        <DataCardGroup
-          variant="outline"
-          cardProps={{ minWidth: { base: '100%', md: 'auto' } }}
-          singleCard
-          items={
-            [
-              {
-                icon: <Image src="/icons/vet-value.svg" alt="Value" />,
-                title: t('Value'),
-                children: <VETBalance balance={VETValue} justifyContent="flex-start" />,
-              },
-              {
-                icon: <Image src="/icons/confirmations.svg" alt="Confirmations" />,
-                title: t('Confirmations'),
-                children: (
-                  <Box>
-                    {isBestBlockPending ? (
-                      <Skeleton width="52px" height="29px" rounded="full" />
-                    ) : (
-                      <Badge
-                        textStyle="bodyM"
-                        minWidth="30px"
-                        justifyContent="center"
-                        bg={`${confirmationsStatus}-surface`}
-                        color={`${confirmationsStatus}-text`}
-                        gap="1"
-                        py="1"
-                        px="2"
-                        rounded="full"
-                        flexShrink={1}
-                      >
-                        {confirmations && confirmations >= 12 && <LuChevronRight />}
-                        {getConfirmations(bestBlock?.number, transaction.meta.blockNumber)}
-                      </Badge>
-                    )}
-                  </Box>
-                ),
-              },
-              {
-                icon: <Image src="/icons/clock.svg" alt="Expiration" />,
-                title: t('Expiration'),
-                children: (
-                  <Text>
-                    {formatNumber(transaction.expiration)} {t('Blocks')}
-                  </Text>
-                ),
-              },
-              {
-                icon: <Image src="/icons/link.svg" alt="Nonce" />,
-                title: 'Nonce',
-                children: <Text color="text-secondary">{transaction.nonce}</Text>,
-              },
-            ] as DataCardGroupItem[]
-          }
-        />
-      </Flex>
+      {isMobile ? (
+        <DataCardGroup singleCard variant="outline" items={[...additionalInsights, ...mainInsights]} />
+      ) : (
+        <Flex alignItems="flex-start" flexDirection="row" gap="4">
+          <DataCardGroup singleCard variant="outline" mobileCardProps={{ flex: 1 }} items={mainInsights} />
+          <DataCardGroup variant="outline" cardProps={{ minWidth: 'auto' }} singleCard items={additionalInsights} />
+        </Flex>
+      )}
     </VStack>
   )
 }
