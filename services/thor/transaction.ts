@@ -1,13 +1,15 @@
 import { queryOptions, skipToken } from '@tanstack/react-query'
+import { Revision } from '@vechain/sdk-core'
 import z from 'zod'
 import type { NetworkName } from '@/lib/constants/network'
-import { type TransactionId, transactionReceiptSchema, transactionSchema } from '@/lib/schemas'
+import { type Transaction, type TransactionId, transactionReceiptSchema, transactionSchema } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
 import { getThorClient } from './client'
 
 const TRANSACTION_QUERY_KEY = 'getTransaction'
 const TRANSACTION_RECEIPT_QUERY_KEY = 'getTransactionReceipt'
 const LEGACY_BASE_GAS_PRICE_QUERY_KEY = 'getLegacyBaseGasPrice'
+const REVERT_REASON_QUERY_KEY = 'getRevertReason'
 
 export const transactionQueryOptions = (networkName: NetworkName, transactionId: TransactionId | undefined) =>
   queryOptions({
@@ -84,4 +86,53 @@ const getLegacyBaseGasPrice = async ({ networkName }: { networkName: NetworkName
     errorMessage: 'Failed to parse legacy base gas price',
     fallbackData: BigInt(0),
   })
+}
+
+/**
+ * Revert reason - simulates the transaction to get the revert reason
+ */
+export const revertReasonQueryOptions = (
+  networkName: NetworkName,
+  transaction: Transaction | null | undefined,
+  isReverted: boolean,
+) =>
+  queryOptions({
+    queryKey: [REVERT_REASON_QUERY_KEY, networkName, transaction?.id],
+    queryFn: transaction && isReverted ? () => getRevertReason({ networkName, transaction }) : skipToken,
+    staleTime: Infinity,
+  })
+
+const getRevertReason = async ({
+  networkName,
+  transaction,
+}: {
+  networkName: NetworkName
+  transaction: Transaction
+}): Promise<string | null> => {
+  const thorClient = getThorClient(networkName)
+
+  const clauses = transaction.clauses.map(clause => ({
+    to: clause.to ?? null,
+    value: clause.value.toString(),
+    data: clause.data,
+  }))
+
+  const simulations = await thorClient.transactions.simulateTransaction(clauses, {
+    revision: Revision.of(transaction.meta.blockID),
+    caller: transaction.origin,
+    gas: Number(transaction.gas),
+  })
+
+  for (const simulation of simulations) {
+    if (simulation.reverted && simulation.vmError) {
+      return simulation.vmError
+    }
+
+    if (simulation.reverted && simulation.data && simulation.data !== '0x') {
+      const decoded = thorClient.transactions.decodeRevertReason(simulation.data)
+      if (decoded) return decoded
+    }
+  }
+
+  return null
 }

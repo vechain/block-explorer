@@ -1,9 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
-import type { AddressString, BlockId, BlockRevision, TransactionId } from '@/lib/schemas'
+import type { AddressString, BlockId, BlockRevision, Transaction, TransactionId } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { accountQueryOptions } from './account'
 import { baseFeePerGasQueryOptions, bestBlockCompressedQueryOptions, blockExpandedQueryOptions } from './block'
-import { legacyBaseFeePerGasQueryOptions, transactionQueryOptions, transactionReceiptQueryOptions } from './transaction'
+import {
+  legacyBaseFeePerGasQueryOptions,
+  revertReasonQueryOptions,
+  transactionQueryOptions,
+  transactionReceiptQueryOptions,
+} from './transaction'
 import { vnsNameQueryOptions } from './vns'
 
 /**
@@ -30,6 +35,11 @@ export const useTransaction = (transactionId: TransactionId | undefined) => {
 export const useTransactionReceipt = (transactionId: TransactionId | undefined) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(transactionReceiptQueryOptions(activeNetwork.name, transactionId))
+}
+
+export const useRevertReason = (transaction: Transaction | null | undefined, isReverted: boolean) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(revertReasonQueryOptions(activeNetwork.name, transaction, isReverted))
 }
 
 export const useBaseFeePerGas = (blockId: BlockId | undefined) => {
