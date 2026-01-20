@@ -141,7 +141,7 @@ export const DataTable = <T extends TableRow = TableRow>({
     </Box>
 
     {/* Mobile: Card View */}
-    <Stack gap={3} hideFrom="md">
+    <Stack gap={4} hideFrom="md">
       {rows.map((row, rowIndex) => (
         <MobileCard key={row.id} row={row} columns={columns} rowIndex={rowIndex} />
       ))}
@@ -165,7 +165,7 @@ const MobileCard = <T extends TableRow = TableRow>({
     <Box
       bg={rowIndex % 2 === 0 ? 'row-odd-bg-primary' : 'row-even-bg-primary'}
       border={border}
-      borderRadius="lg"
+      borderRadius="xl"
       p={4}
       role="article"
     >

@@ -8,8 +8,9 @@ import { GasUsed } from '@/components/ui/GasFees'
 import { Card } from '@/components/ui/Card'
 import type { ExpandedBlock } from '@/lib/schemas'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
+import { useMemo } from 'react'
 import { TxFeaturesBadge } from '@/components/ui/TxTypeBadge'
-import { formatGwei } from 'viem'
+import { formatGwei, formatUnits } from 'viem'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
 export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
@@ -17,6 +18,20 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   const formatNumber = useFormatNumber()
   const formatDate = useFormatDate()
   const isMobile = useIsMobile()
+
+  // Calculate VTHO metrics from transaction receipts
+  const vthoMetrics = useMemo(() => {
+    const totalPaid = block.transactions.reduce((sum, tx) => sum + (tx.paid ?? 0n), 0n)
+    const totalRewarded = block.transactions.reduce((sum, tx) => sum + (tx.reward ?? 0n), 0n)
+    const totalBurned = totalPaid - totalRewarded
+
+    // Convert from wei (18 decimals) to VTHO
+    const vthoPaid = parseFloat(formatUnits(totalPaid, 18))
+    const vthoRewarded = parseFloat(formatUnits(totalRewarded, 18))
+    const vthoBurned = parseFloat(formatUnits(totalBurned, 18))
+
+    return { vthoPaid, vthoRewarded, vthoBurned }
+  }, [block.transactions])
 
   const blockInsights: DataCardGroupItem[] = [
     {
@@ -49,15 +64,15 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
       ? [
           {
             title: t('VTHO Paid'),
-            children: <Text>{'123.456'} VTHO</Text>,
+            children: <Text>{formatNumber(vthoMetrics.vthoPaid, { maximumFractionDigits: 6 })} VTHO</Text>,
           },
           {
             title: t('VTHO Burned'),
-            children: <Text>{'123.456'} VTHO</Text>,
+            children: <Text>{formatNumber(vthoMetrics.vthoBurned, { maximumFractionDigits: 6 })} VTHO</Text>,
           },
           {
             title: t('VTHO Rewarded'),
-            children: <Text>{'123.456'} VTHO</Text>,
+            children: <Text>{formatNumber(vthoMetrics.vthoRewarded, { maximumFractionDigits: 6 })} VTHO</Text>,
           },
         ]
       : ([] satisfies DataCardGroupItem[])),
@@ -84,17 +99,17 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
               {
                 icon: <Image src="/icons/coin.svg" alt="VTHO Paid" width={24} height={24} />,
                 title: t('VTHO Paid'),
-                children: <Text>{'123.456'} VTHO</Text>,
+                children: <Text>{formatNumber(vthoMetrics.vthoPaid, { maximumFractionDigits: 6 })} VTHO</Text>,
               },
               {
                 icon: <Image src="/icons/flash.svg" alt="VTHO Burned" width={24} height={24} />,
                 title: t('VTHO Burned'),
-                children: <Text>{'123.456'} VTHO</Text>,
+                children: <Text>{formatNumber(vthoMetrics.vthoBurned, { maximumFractionDigits: 6 })} VTHO</Text>,
               },
               {
                 icon: <Image src="/icons/reward.svg" alt="VTHO Rewarded" width={24} height={24} />,
                 title: t('VTHO Rewarded'),
-                children: <Text>{'123.456'} VTHO</Text>,
+                children: <Text>{formatNumber(vthoMetrics.vthoRewarded, { maximumFractionDigits: 6 })} VTHO</Text>,
               },
             ] satisfies DataCardGroupItem[]
           }

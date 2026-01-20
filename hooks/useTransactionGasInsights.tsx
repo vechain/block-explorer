@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { GasUsed, TxFeePaid } from '@/components/ui/GasFees'
 import { HStack, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { formatPercentage } from '@/lib/utils/units'
+import { VTHOBalance } from '@/components/ui/Balance'
 
 export type TxGasFeesResult =
   | {
@@ -46,6 +47,14 @@ export const useTransactionGasInsights = ({
     {
       label: t('Fee Paid'),
       value: <TxFeePaid gasFees={txGasFees} gasPayer={receipt?.gasPayer ?? null} />,
+    },
+    {
+      label: t('VTHO Rewarded'),
+      value: <VTHOBalance balance={receipt?.reward ?? BigInt(0)} />,
+    },
+    {
+      label: t('VTHO Burned'),
+      value: <VTHOBalance balance={BigInt(receipt?.paid ?? 0) - BigInt(receipt?.reward ?? 0)} />,
     },
     {
       label: t('Base Fee per Gas'),

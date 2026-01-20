@@ -17,7 +17,7 @@ interface TransactionRow extends TableRow {
   clausesCount: number
   feeDelegatedTo: AddressString
   // co2e: string // TODO: find out how to get co2e from transaction
-  vthoBurn: bigint
+  vthoPaid: bigint
   status: TransactionStatus
 }
 
@@ -41,7 +41,7 @@ export const TransactionsTable = ({ transactions }: { transactions: ExpandedBloc
       label: t('Origin'),
       Cell: ({ row }) => <CopyableAddressLink truncate address={row.origin} />,
     },
-    { key: 'vthoBurn', label: t('VTHO Burn'), Cell: ({ row }) => <Balance balance={row.vthoBurn} /> },
+    { key: 'vthoPaid', label: t('VTHO Paid'), Cell: ({ row }) => <Balance balance={row.vthoPaid} /> },
     {
       key: 'feeDelegatedTo',
       label: t('Fee delegated to'),
@@ -58,7 +58,7 @@ export const TransactionsTable = ({ transactions }: { transactions: ExpandedBloc
     clausesCount: transaction.clauses.length,
     feeDelegatedTo: transaction.gasPayer,
     // co2e: ???, // TODO: find out how to get co2e from transaction
-    vthoBurn: transaction.paid,
+    vthoPaid: transaction.paid,
     status: transaction.reverted ? TransactionStatus.REVERTED : TransactionStatus.SUCCESS,
   }))
 
