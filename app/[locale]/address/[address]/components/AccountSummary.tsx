@@ -3,7 +3,7 @@
 import { Flex, Grid, Heading, Stack, Text, Skeleton } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
-import { DataCard } from '@/components/ui/DataCard'
+import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
 import { Card } from '@/components/ui/Card'
 import type { AddressString } from '@/lib/schemas'
@@ -31,6 +31,53 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
   const firstSeenDate = overview && overview.firstSeen > 0 ? formatDate(overview.firstSeen * 1000) : null
   const lastSeenDate = overview && overview.lastSeen > 0 ? formatDate(overview.lastSeen * 1000) : null
 
+  const accountDataCards: DataCardGroupItem[] = [
+    {
+      icon: <Image src="/icons/calendar.svg" alt="Calendar" width={24} height={24} />,
+      title: t('First Seen'),
+      children: isOverviewPending ? (
+        <Skeleton height="24px" width="120px" />
+      ) : (
+        <Text textStyle="bodyL" color={firstSeenDate ? 'text-primary' : 'text-secondary'}>
+          {firstSeenDate ?? '-'}
+        </Text>
+      ),
+    },
+    {
+      icon: <Image src="/icons/calendar.svg" alt="Calendar" width={24} height={24} />,
+      title: t('Last Seen'),
+      children: isOverviewPending ? (
+        <Skeleton height="24px" width="120px" />
+      ) : (
+        <Text textStyle="bodyL" color={lastSeenDate ? 'text-primary' : 'text-secondary'}>
+          {lastSeenDate ?? '-'}
+        </Text>
+      ),
+    },
+    {
+      icon: <Image src="/icons/transaction.svg" alt="Transactions" width={24} height={24} />,
+      title: t('Total Transactions'),
+      children: isOverviewPending ? (
+        <Skeleton height="24px" width="80px" />
+      ) : (
+        <Text textStyle="bodyL" color="text-primary">
+          {overview ? formatNumber(overview.transactionsSent) : '0'}
+        </Text>
+      ),
+    },
+    {
+      icon: <Image src="/icons/clause.svg" alt="Clauses" width={24} height={24} />,
+      title: t('Total Clauses'),
+      children: isOverviewPending ? (
+        <Skeleton height="24px" width="80px" />
+      ) : (
+        <Text textStyle="bodyL" color="text-primary">
+          {overview ? formatNumber(overview.clausesSent) : '0'}
+        </Text>
+      ),
+    },
+  ]
+
   return (
     <Stack gap="8">
       <Card>
@@ -41,65 +88,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
           <IDChip value={address} vnsName={vnsName} />
         </Flex>
 
-        <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
-          <DataCard
-            variant="secondary"
-            icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
-            title={t('First Seen')}
-          >
-            {isOverviewPending ? (
-              <Skeleton height="24px" width="120px" />
-            ) : (
-              <Text textStyle="bodyL" color={firstSeenDate ? 'text-primary' : 'text-secondary'}>
-                {firstSeenDate ?? '-'}
-              </Text>
-            )}
-          </DataCard>
-
-          <DataCard
-            variant="secondary"
-            icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
-            title={t('Last Seen')}
-          >
-            {isOverviewPending ? (
-              <Skeleton height="24px" width="120px" />
-            ) : (
-              <Text textStyle="bodyL" color={lastSeenDate ? 'text-primary' : 'text-secondary'}>
-                {lastSeenDate ?? '-'}
-              </Text>
-            )}
-          </DataCard>
-
-          <DataCard
-            variant="secondary"
-            icon={<Image src="/icons/transaction.svg" alt="Transactions" />}
-            title={t('Total Transactions')}
-            pb={0}
-          >
-            {isOverviewPending ? (
-              <Skeleton height="24px" width="80px" />
-            ) : (
-              <Text textStyle="bodyL" color="text-primary" mb={0}>
-                {overview ? formatNumber(overview.transactionsSent) : '0'}
-              </Text>
-            )}
-          </DataCard>
-
-          <DataCard
-            variant="secondary"
-            icon={<Image src="/icons/clause.svg" alt="Clauses" />}
-            title={t('Total Clauses')}
-            pb={0}
-          >
-            {isOverviewPending ? (
-              <Skeleton height="24px" width="80px" />
-            ) : (
-              <Text textStyle="bodyL" color="text-primary" mb={0}>
-                {overview ? formatNumber(overview.clausesSent) : '0'}
-              </Text>
-            )}
-          </DataCard>
-        </Flex>
+        <DataCardGroup items={accountDataCards} desktopColumns={4} />
 
         <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={{ base: 5, md: 5 }}>
           <TokenBalanceSection tokenBalanceRows={tokenBalanceRows} isPending={isPendingTokens} />

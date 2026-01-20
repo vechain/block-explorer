@@ -3,7 +3,7 @@
 import { Flex, Grid, Heading, Stack, Text, Skeleton } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
-import { DataCard } from '@/components/ui/DataCard'
+import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
 import { Card } from '@/components/ui/Card'
 import type { AddressString } from '@/lib/schemas'
@@ -30,6 +30,42 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
 
   const isPending = isPendingTokens || isContractPending
 
+  const contractDataCards: DataCardGroupItem[] = [
+    {
+      icon: <Image src="/icons/calendar.svg" alt="Calendar" width={24} height={24} />,
+      title: t('Contract creation'),
+      children: isPending ? (
+        <Skeleton height="24px" width="120px" />
+      ) : (
+        <Text textStyle="bodyL" color="text-primary">
+          {formatDate(contract?.createdOn ?? 0)}
+        </Text>
+      ),
+    },
+    {
+      icon: <Image src="/icons/calendar.svg" alt="Calendar" width={24} height={24} />,
+      title: t('Contract Master'),
+      children: isPending ? (
+        <Skeleton height="24px" width="120px" />
+      ) : (
+        <AddressLink truncate address={contract?.master ?? '0x'} />
+      ),
+    },
+    {
+      icon: <Image src="/icons/transaction.svg" alt="Transactions" width={24} height={24} />,
+      title: t('Creation Transaction'),
+      children: isPending ? (
+        <Skeleton height="24px" width="120px" />
+      ) : (
+        <BaseLink href={`/transaction/${contract?.deploymentTxId ?? '0x'}`} whiteSpace="nowrap">
+          <Text overflow="hidden" textOverflow="ellipsis">
+            {contract?.deploymentTxId ?? '0x'}
+          </Text>
+        </BaseLink>
+      ),
+    },
+  ]
+
   return (
     <Stack gap="8">
       <Card>
@@ -40,49 +76,7 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
           <IDChip value={address} vnsName={vnsName} />
         </Flex>
 
-        <Flex alignItems="center" gap={{ base: '4', md: '5' }} flexDirection={{ base: 'column', md: 'row' }}>
-          <DataCard
-            variant="secondary"
-            icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
-            title={t('Contract creation')}
-          >
-            {isPending ? (
-              <Skeleton height="24px" width="120px" />
-            ) : (
-              <Text textStyle="bodyL" color="text-primary">
-                {formatDate(contract?.createdOn ?? 0)}
-              </Text>
-            )}
-          </DataCard>
-
-          <DataCard
-            variant="secondary"
-            icon={<Image src="/icons/calendar.svg" alt="Calendar" />}
-            title={t('Contract Master')}
-          >
-            {isPending ? (
-              <Skeleton height="24px" width="120px" />
-            ) : (
-              <AddressLink truncate address={contract?.master ?? '0x'} />
-            )}
-          </DataCard>
-
-          <DataCard
-            variant="secondary"
-            icon={<Image src="/icons/transaction.svg" alt="Transactions" />}
-            title={t('Creation Transaction')}
-          >
-            {isPending ? (
-              <Skeleton height="24px" width="120px" />
-            ) : (
-              <BaseLink href={`/transaction/${contract?.deploymentTxId ?? '0x'}`} whiteSpace="nowrap">
-                <Text overflow="hidden" textOverflow="ellipsis">
-                  {contract?.deploymentTxId ?? '0x'}
-                </Text>
-              </BaseLink>
-            )}
-          </DataCard>
-        </Flex>
+        <DataCardGroup items={contractDataCards} desktopColumns={3} />
 
         <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={{ base: 5, md: 5 }}>
           <TokenBalanceSection tokenBalanceRows={tokenBalanceRows} isPending={isPendingTokens} />
