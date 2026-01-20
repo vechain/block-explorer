@@ -1,5 +1,4 @@
-import { useQuery, useQueries } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { AddressString, BlockId, BlockRevision, TransactionId } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { accountQueryOptions } from './account'
@@ -55,27 +54,4 @@ export const useVnsName = (address: AddressString | undefined) => {
 export const useAccount = (address: AddressString | undefined) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(accountQueryOptions(activeNetwork.name, address))
-}
-
-export const useMultipleAccounts = (addresses: AddressString[]) => {
-  const { activeNetwork } = useSettingsStore()
-
-  const queries = useMemo(
-    () => addresses.map(address => accountQueryOptions(activeNetwork.name, address)),
-    [activeNetwork.name, addresses],
-  )
-
-  const results = useQueries({
-    queries,
-    combine: queryResults => ({
-      data: new Map(
-        queryResults
-          .map((result, index) => [addresses[index], result.data] as const)
-          .filter((entry): entry is [AddressString, NonNullable<(typeof entry)[1]>] => entry[1] != null),
-      ),
-      isPending: queryResults.some(result => result.isPending),
-    }),
-  })
-
-  return results
 }
