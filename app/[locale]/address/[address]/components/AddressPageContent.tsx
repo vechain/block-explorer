@@ -8,6 +8,7 @@ import { AccountSummary } from './AccountSummary'
 import { AccountTransactionsSection } from './sections/AccountTransactionsSection'
 import { AccountActivitySection } from './sections/AccountActivitySection'
 import { AccountNftsSection } from './sections/AccountNftsSection'
+import { DeployedContractsSection } from './sections/DeployedContractsSection'
 import { ContractSummary } from './ContractSummary'
 
 export const AddressPageContent = ({ address }: { address: AddressString }) => {
@@ -25,6 +26,7 @@ export const AddressPageContent = ({ address }: { address: AddressString }) => {
       <AccountActivitySection address={account.address} />
       <AccountTransactionsSection address={account.address} hasCode={account.hasCode} />
       {!account.hasCode && <AccountNftsSection address={account.address} />}
+      {!account.hasCode && <DeployedContractsSection address={account.address} />}
     </Stack>
   )
 }
