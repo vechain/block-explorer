@@ -10,6 +10,7 @@ import { accountTotalsQueryOptions, AccountTimeFrame } from './account-totals'
 import { accountOverviewQueryOptions } from './account-overview'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
 import { contractQueryOptions } from './contracts'
+import { deployedContractsQueryOptions } from './deployed-contracts'
 import { accountErc721TokensQueryOptions } from './nfts'
 import type {
   IndexerGetContractTransactionsParams,
@@ -104,6 +105,19 @@ export const useAccountErc721 = ({ params }: { params: IndexerGetErc721Params })
 export const useContract = ({ address }: { address: AddressString }) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(contractQueryOptions(activeNetwork.name, address))
+}
+
+export const useDeployedContracts = ({
+  address,
+  page,
+  size,
+}: {
+  address: AddressString
+  page?: number
+  size?: number
+}) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(deployedContractsQueryOptions(activeNetwork.name, { address, page, size }))
 }
 
 export const useValidatorsCount = (status?: ValidatorStatus) => {
