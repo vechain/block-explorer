@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, type FlexProps, Group, Text, useBreakpointValue, Grid, HStack, GridProps } from '@chakra-ui/react'
+import { Box, Flex, type FlexProps, Text, useBreakpointValue, Grid, HStack, GridProps } from '@chakra-ui/react'
 import React from 'react'
 import type { IconBaseProps } from 'react-icons'
 import { IconInCircle } from './IconInCircle'
@@ -40,7 +40,7 @@ interface DataCardGroupProps {
 export const DataCardGroup = ({
   items,
   iconSize = 12,
-  variant = 'secondary',
+  variant = 'outline',
   desktopColumns = 2,
   desktopGap = 4,
   desktopContainerProps,
@@ -70,15 +70,17 @@ export const DataCardGroup = ({
           return (
             <Card key={index} variant={variant} flex="1" alignSelf="stretch" minWidth="0" {...cardProps}>
               <Flex alignItems="center" justifyContent="space-between">
-                <Group>
+                <HStack alignItems="center" gap="2">
                   {Icon && <IconInCircle icon={Icon} p="1" />}
                   <Text whiteSpace="nowrap" textStyle="bodyM" color="text-primary">
                     {item.title}
                   </Text>
-                </Group>
+                </HStack>
                 {item.tooltip && <InfoTip tooltip={item.tooltip} />}
               </Flex>
-              {item.children}
+              <HStack alignItems="center" justifyContent="flex-start">
+                {item.children}
+              </HStack>
             </Card>
           )
         })}
