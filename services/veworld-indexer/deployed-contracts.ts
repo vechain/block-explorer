@@ -2,20 +2,39 @@ import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
+import { keepPreviousData } from '@tanstack/react-query'
 import { resolveUrl } from '.'
 import { indexerContractSchema, indexerResponseSchema } from './schemas'
 
 const DEPLOYED_CONTRACTS_QUERY_KEY = 'getContractsByMaster'
 
-export const deployedContractsQueryOptions = (networkName: NetworkName, address: AddressString) => ({
-  queryKey: [DEPLOYED_CONTRACTS_QUERY_KEY, networkName, address],
-  queryFn: () => getContractsByMaster({ networkName, address }),
+interface DeployedContractsParams {
+  address: AddressString
+  page?: number
+  size?: number
+}
+
+export const deployedContractsQueryOptions = (networkName: NetworkName, params: DeployedContractsParams) => ({
+  queryKey: [DEPLOYED_CONTRACTS_QUERY_KEY, networkName, params],
+  queryFn: () => getContractsByMaster({ networkName, params }),
+  placeholderData: keepPreviousData,
 })
 
-const getContractsByMaster = async ({ networkName, address }: { networkName: NetworkName; address: AddressString }) => {
+const getContractsByMaster = async ({
+  networkName,
+  params,
+}: {
+  networkName: NetworkName
+  params: DeployedContractsParams
+}) => {
+  const queryParams: Record<string, string> = {}
+  if (params.page !== undefined) queryParams.page = String(params.page)
+  if (params.size !== undefined) queryParams.size = String(params.size)
+
   const { data } = await apiClient.get({
     baseUrl: resolveUrl(networkName),
-    endPoint: `/contracts/by-master/${address}`,
+    endPoint: `/contracts/by-master/${params.address}`,
+    params: queryParams,
   })
 
   return zodParse({

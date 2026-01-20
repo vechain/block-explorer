@@ -107,9 +107,17 @@ export const useContract = ({ address }: { address: AddressString }) => {
   return useQuery(contractQueryOptions(activeNetwork.name, address))
 }
 
-export const useDeployedContracts = ({ address }: { address: AddressString }) => {
+export const useDeployedContracts = ({
+  address,
+  page,
+  size,
+}: {
+  address: AddressString
+  page?: number
+  size?: number
+}) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(deployedContractsQueryOptions(activeNetwork.name, address))
+  return useQuery(deployedContractsQueryOptions(activeNetwork.name, { address, page, size }))
 }
 
 export const useValidatorsCount = (status?: ValidatorStatus) => {

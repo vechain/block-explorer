@@ -30,6 +30,8 @@ export const DeployedContractsSection = ({ address }: { address: AddressString }
 
   const { data: contracts, isLoading } = useDeployedContracts({
     address,
+    page,
+    size: pageSize,
   })
 
   const handlePageSizeChange = (newSize: number) => {
