@@ -92,7 +92,7 @@ export const useTransactionGasInsights = ({
         value: (
           <Stack
             direction={{ base: 'column', md: 'row' }}
-            alignItems={{ base: 'flex-start', md: 'center' }}
+            alignItems={{ base: 'flex-end', md: 'center' }}
             gap={{ base: 2, md: 4 }}
           >
             <Text>

@@ -1,4 +1,4 @@
-import { Box, Flex, Grid, HStack, ScrollArea, Skeleton, Text, useBreakpointValue } from '@chakra-ui/react'
+import { Box, Flex, Grid, HStack, ScrollArea, Skeleton, Text, useBreakpointValue, VStack } from '@chakra-ui/react'
 import { Fragment, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from '@/components/ui-legacy/ErrorBoundary'
@@ -173,8 +173,8 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
   // Mobile: Stack layout with cards
   if (isMobile) {
     return (
-      <Card variant="outline">
-        <Text textStyle="bodyL" mb="3">
+      <VStack alignItems="stretch" gap="2">
+        <Text textStyle="bodyL" mb="3" fontWeight="medium">
           {event.signature.split('(')[0]}
         </Text>
         <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
@@ -206,14 +206,16 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
             </Box>
           ))}
         </Box>
-      </Card>
+      </VStack>
     )
   }
 
   // Desktop: Grid layout with horizontal scroll
   return (
-    <Card variant="outline">
-      <Text textStyle="bodyL">{event.signature.split('(')[0]}</Text>
+    <VStack alignItems="stretch" gap="2">
+      <Text textStyle="bodyL" fontWeight="medium">
+        {event.signature.split('(')[0]}
+      </Text>
       <ScrollArea.Root size="sm" variant="hover">
         <ScrollArea.Viewport>
           <ScrollArea.Content>
@@ -244,7 +246,7 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
                       {input.indexed && <Text fontSize="xs">{t('indexed')}</Text>}
                     </Flex>
 
-                    <Text textAlign="left" pl="4">
+                    <Text textAlign="left" pl="4" minW="0">
                       {input.name ? event.args[input.name] : 'N/A'}
                     </Text>
                   </Grid>
@@ -255,6 +257,6 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
         </ScrollArea.Viewport>
         <ScrollArea.Scrollbar orientation="horizontal" />
       </ScrollArea.Root>
-    </Card>
+    </VStack>
   )
 }

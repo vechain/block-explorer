@@ -94,6 +94,7 @@ const TransactionDetails = ({
       </Flex>
 
       <DataCardGroup
+        variant="outline"
         desktopColumns={3}
         items={
           [

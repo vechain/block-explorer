@@ -1,6 +1,6 @@
 'use client'
 
-import { Flex, Progress, Skeleton, Text } from '@chakra-ui/react'
+import { Flex, HStack, Progress, Skeleton, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 
 import { InfoTip } from './InfoTip'
@@ -18,13 +18,15 @@ export const TxFeePaid = ({ gasFees, gasPayer }: { gasFees: TxGasFeesResult; gas
 
   if (gasPayer) {
     return (
-      <Flex alignItems="center" gap={2} flexWrap="wrap" textStyle="bodyM">
-        <VTHOBalance balance={gasFees.totalFeePaid} />
-        <Flex alignItems="center" gap={2}>
+      <Flex alignItems="center" gap={2} flexWrap="wrap" textStyle="bodyM" justifyContent="flex-end">
+        <HStack alignItems="center" gap="2">
+          <VTHOBalance balance={gasFees.totalFeePaid} />
           <Image src="/icons/success.svg" alt="check mark" width={16} height={16} />
+        </HStack>
+        <HStack alignItems="center" gap={2}>
           <Text textTransform="lowercase">{t('By')}</Text>
           <AddressLink address={gasPayer} truncate />
-        </Flex>
+        </HStack>
       </Flex>
     )
   }

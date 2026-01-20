@@ -14,6 +14,7 @@ import { useVnsName } from '@/services/thor/hooks'
 import { TokenBalanceSection } from './sections/TokenBalanceSection'
 import { TokenValueSection } from './sections/TokenValueSection'
 import { AddressLink, BaseLink } from '@/components/ui/Links'
+import { truncateHex } from '@/lib/utils/truncateHex'
 
 export const ContractSummary = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
@@ -57,10 +58,8 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
       children: isPending ? (
         <Skeleton height="24px" width="120px" />
       ) : (
-        <BaseLink href={`/transaction/${contract?.deploymentTxId ?? '0x'}`} whiteSpace="nowrap">
-          <Text overflow="hidden" textOverflow="ellipsis">
-            {contract?.deploymentTxId ?? '0x'}
-          </Text>
+        <BaseLink href={`/transaction/${contract?.deploymentTxId ?? '0x'}`}>
+          {truncateHex(contract?.deploymentTxId ?? '0x')}
         </BaseLink>
       ),
     },
@@ -76,7 +75,7 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
           <IDChip value={address} vnsName={vnsName} />
         </Flex>
 
-        <DataCardGroup items={contractDataCards} desktopColumns={3} />
+        <DataCardGroup items={contractDataCards} desktopColumns={3} variant="outline" />
 
         <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={{ base: 5, md: 5 }}>
           <TokenBalanceSection tokenBalanceRows={tokenBalanceRows} isPending={isPendingTokens} />

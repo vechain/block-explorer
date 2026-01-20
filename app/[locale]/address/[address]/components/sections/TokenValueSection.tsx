@@ -1,16 +1,33 @@
 import { Flex, Heading, Stack, Text, Skeleton } from '@chakra-ui/react'
+import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
-import { TokenValueRow } from '../shared/TokenValueRow'
-import type { TokenValueRow as TokenValueRowType } from '@/hooks/useAccountTokens'
+import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
+import { getTokenIconPath } from '@/lib/utils/tokens'
+import type { TokenValueRow } from '@/hooks/useAccountTokens'
 
 interface TokenValueSectionProps {
-  tokenValueRows: TokenValueRowType[]
+  tokenValueRows: TokenValueRow[]
   totalValue: string
   isPending: boolean
 }
 
 export const TokenValueSection = ({ tokenValueRows, totalValue, isPending }: TokenValueSectionProps) => {
   const { t } = useTranslation()
+
+  const items: DataCardGroupItem[] = tokenValueRows.map(token => {
+    const iconPath = getTokenIconPath(token.symbol)
+    return {
+      title: token.symbol,
+      children: (
+        <Flex alignItems="center" gap={2}>
+          <Text textStyle="bodyM" color="text-primary">
+            {token.value}
+          </Text>
+          {iconPath && <Image src={iconPath} alt={token.symbol} width={16} height={16} />}
+        </Flex>
+      ),
+    }
+  })
 
   return (
     <Stack gap={0}>
@@ -20,30 +37,17 @@ export const TokenValueSection = ({ tokenValueRows, totalValue, isPending }: Tok
           ({totalValue})
         </Text>
       </Heading>
-      <Stack gap={0}>
-        {isPending ? (
-          <>
-            <Skeleton height="60px" borderRadius="md" />
-            <Skeleton height="60px" borderRadius="md" mt={2} />
-          </>
-        ) : tokenValueRows.length === 0 ? (
-          <Flex pt={4} pr={6} pb={4} pl={6} borderWidth="1px" borderColor="border-primary" borderRadius="md">
-            <Text textStyle="bodyM" color="text-primary">
-              {t('No tokens')}
-            </Text>
-          </Flex>
-        ) : (
-          tokenValueRows.map((token, index) => (
-            <TokenValueRow
-              key={token.key}
-              token={token}
-              value={token.value}
-              isFirst={index === 0}
-              isLast={index === tokenValueRows.length - 1}
-            />
-          ))
-        )}
-      </Stack>
+      {isPending ? (
+        <Skeleton height="120px" borderRadius="md" />
+      ) : tokenValueRows.length === 0 ? (
+        <Flex pt={4} pr={6} pb={4} pl={6} borderWidth="1px" borderColor="border-primary" borderRadius="md">
+          <Text textStyle="bodyM" color="text-primary">
+            {t('No tokens')}
+          </Text>
+        </Flex>
+      ) : (
+        <DataCardGroup items={items} singleCard variant="outline" mobileCardProps={{ flex: '0' }} />
+      )}
     </Stack>
   )
 }
