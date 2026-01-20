@@ -1,11 +1,10 @@
 'use client'
 
-import { Flex, Heading, Text } from '@chakra-ui/react'
+import { Flex, Heading, Text, VStack } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { GasUsed } from '@/components/ui/GasFees'
-import { Card } from '@/components/ui/Card'
 import type { ExpandedBlock } from '@/lib/schemas'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useMemo } from 'react'
@@ -79,7 +78,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   ] satisfies DataCardGroupItem[]
 
   return (
-    <Card variant="secondary">
+    <VStack alignItems="stretch" gap={4}>
       <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gapX="2" gapY="4">
         <Heading as="h2" textStyle="displayXs">
           {t('Block Insights')}
@@ -113,8 +112,9 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
               },
             ] satisfies DataCardGroupItem[]
           }
+          desktopContainerProps={{ h: 'fit-content' }}
         />
       </Flex>
-    </Card>
+    </VStack>
   )
 }

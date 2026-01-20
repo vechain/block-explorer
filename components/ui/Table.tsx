@@ -165,7 +165,7 @@ const MobileCard = <T extends TableRow = TableRow>({
     <Box
       bg={rowIndex % 2 === 0 ? 'row-odd-bg-primary' : 'row-even-bg-primary'}
       border={border}
-      borderRadius="xl"
+      borderRadius="2xl"
       p={4}
       role="article"
     >

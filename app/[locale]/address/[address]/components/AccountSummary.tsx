@@ -88,7 +88,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
           <IDChip value={address} vnsName={vnsName} />
         </Flex>
 
-        <DataCardGroup items={accountDataCards} desktopColumns={4} />
+        <DataCardGroup variant="outline" items={accountDataCards} desktopColumns={4} />
 
         <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={{ base: 5, md: 5 }}>
           <TokenBalanceSection tokenBalanceRows={tokenBalanceRows} isPending={isPendingTokens} />

@@ -36,6 +36,7 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
         </Flex>
 
         <DataCardGroup
+          variant="outline"
           desktopColumns={4}
           items={
             [

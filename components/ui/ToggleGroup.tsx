@@ -30,9 +30,9 @@ export const ToggleGroup = <T extends string | number>({
       gap={size === 'sm' ? 0 : 1}
       bg="bg-primary"
       borderRadius="full"
-      borderWidth="0.5px"
+      borderWidth="1px"
       borderColor="border-primary"
-      p="4px"
+      p="1"
       {...props}
     >
       {options.map(option => (
@@ -68,7 +68,7 @@ const ToggleItem = <T,>({ option, isActive, layoutId, size, onClick }: ToggleIte
       justify="center"
       position="relative"
       px={px}
-      py={1}
+      py={size === 'sm' ? 2 : 3}
       borderRadius="full"
       cursor="pointer"
       onClick={onClick}

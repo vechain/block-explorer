@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Flex, type FlexProps, Group, Text, useBreakpointValue, Grid } from '@chakra-ui/react'
+import { Box, Flex, type FlexProps, Group, Text, useBreakpointValue, Grid, HStack, GridProps } from '@chakra-ui/react'
 import React from 'react'
 import type { IconBaseProps } from 'react-icons'
 import { IconInCircle } from './IconInCircle'
@@ -33,6 +33,8 @@ interface DataCardGroupProps {
   desktopGap?: number
   /** Hide the card group on all screen sizes */
   hidden?: boolean
+  /** Additional props passed to the desktop container */
+  desktopContainerProps?: GridProps
 }
 
 export const DataCardGroup = ({
@@ -41,6 +43,7 @@ export const DataCardGroup = ({
   variant = 'secondary',
   desktopColumns = 2,
   desktopGap = 4,
+  desktopContainerProps,
   cardProps,
   mobileCardProps,
   singleCard = false,
@@ -58,6 +61,7 @@ export const DataCardGroup = ({
         minWidth="0"
         gap={desktopGap}
         hidden={hidden}
+        {...desktopContainerProps}
       >
         {items.map((item, index) => {
           const Icon = item.icon
@@ -93,16 +97,18 @@ export const DataCardGroup = ({
 
         return (
           <Box key={index} py="3" borderBottomWidth={isLast ? '0' : '1px'} borderColor="border-primary">
-            <Flex alignItems="center" justifyContent="space-between">
-              <Group>
+            <HStack alignItems="center" justifyContent="space-between" gap="4" minW="0">
+              <HStack alignItems="center" gap="2" minW="0" flexWrap="wrap">
                 {Icon && <IconInCircle icon={Icon} p="1" />}
                 <Text whiteSpace="nowrap" textStyle="bodyM" color="text-primary">
                   {item.title}
                 </Text>
-              </Group>
-              {item.children}
-              {item.tooltip && <InfoTip tooltip={item.tooltip} />}
-            </Flex>
+              </HStack>
+              <HStack justifyContent="flex-end" textAlign="right" alignItems="center" gap="2" minW="0" flexWrap="wrap">
+                {item.children}
+                {item.tooltip && <InfoTip tooltip={item.tooltip} />}
+              </HStack>
+            </HStack>
           </Box>
         )
       })}

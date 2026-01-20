@@ -1,13 +1,11 @@
 'use client'
 
-import { Fragment } from 'react'
-import { Badge, Box, Flex, Grid, Heading, HStack, Skeleton, Text } from '@chakra-ui/react'
+import { Badge, Box, Flex, Heading, HStack, Skeleton, Text, VStack } from '@chakra-ui/react'
 import Image from 'next/image'
 import { LuChevronRight } from 'react-icons/lu'
 import { useTranslation } from 'react-i18next'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { AddressLink } from '@/components/ui/Links'
-import { Card } from '@/components/ui/Card'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
 import { useTransactionGasInsights } from '@/hooks/useTransactionGasInsights'
 import { TxTypeBadge } from '@/components/ui/TxTypeBadge'
@@ -71,7 +69,7 @@ export const TransactionInsight = ({
   }
 
   return (
-    <Card variant="tertiary">
+    <VStack alignItems="stretch" gap="4">
       <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gapX="2" gapY="4">
         <Heading as="h2" textStyle="displayXs">
           {t('Transaction Insights')}
@@ -85,103 +83,78 @@ export const TransactionInsight = ({
         {isMobile && <TransactionDate />}
       </Flex>
 
-      <Flex alignItems="start" flexDirection={{ base: 'column-reverse', md: 'row' }} gap="4" justifyContent="normal">
-        <Grid
-          flex="1"
-          rounded="md"
-          border="1px solid"
-          textStyle="bodyM"
-          borderColor="border-primary"
-          templateColumns="auto auto"
-        >
-          {transactionInsights.map((insight, index) => (
-            <Fragment key={insight.label}>
-              <Flex
-                alignItems="center"
-                py="4"
-                pl="4"
-                pr="2"
-                flexWrap="wrap"
-                borderBottom={
-                  index !== transactionInsights.length - 1 ? '1px solid var(--chakra-colors-border-primary)' : 'none'
-                }
-              >
-                <Text>{insight.label}</Text>
-              </Flex>
-              <Flex
-                alignItems="center"
-                py="4"
-                pr="4"
-                pl="2"
-                flexWrap="wrap"
-                borderBottom={
-                  index !== transactionInsights.length - 1 ? '1px solid var(--chakra-colors-border-primary)' : 'none'
-                }
-              >
-                {insight.value}
-              </Flex>
-            </Fragment>
-          ))}
-        </Grid>
+      <Flex
+        alignItems={{ base: 'stretch', md: 'flex-start' }}
+        flexDirection={{ base: 'column-reverse', md: 'row' }}
+        gap="4"
+      >
+        <DataCardGroup
+          singleCard
+          variant="outline"
+          mobileCardProps={{ flex: 1 }}
+          items={transactionInsights.map(insight => ({
+            title: insight.label,
+            children: insight.value,
+          }))}
+        />
 
-        <Flex flex="1" gap="4" alignItems="stretch" flexWrap="wrap" w={{ base: '100%', md: 'auto' }}>
-          <DataCardGroup
-            variant="outline"
-            cardProps={{ minWidth: { base: '100%', md: '45%' } }}
-            items={
-              [
-                {
-                  icon: <Image src="/icons/vet-value.svg" alt="Value" />,
-                  title: t('Value'),
-                  children: <VETBalance balance={VETValue} justifyContent="flex-start" />,
-                },
-                {
-                  icon: <Image src="/icons/confirmations.svg" alt="Confirmations" />,
-                  title: t('Confirmations'),
-                  children: (
-                    <Box>
-                      {isBestBlockPending ? (
-                        <Skeleton width="52px" height="29px" rounded="full" />
-                      ) : (
-                        <Badge
-                          textStyle="bodyM"
-                          minWidth="30px"
-                          justifyContent="center"
-                          bg={`${confirmationsStatus}-surface`}
-                          color={`${confirmationsStatus}-text`}
-                          gap="1"
-                          py="1"
-                          px="2"
-                          rounded="full"
-                          flexShrink={1}
-                        >
-                          {confirmations && confirmations >= 12 && <LuChevronRight />}
-                          {getConfirmations(bestBlock?.number, transaction.meta.blockNumber)}
-                        </Badge>
-                      )}
-                    </Box>
-                  ),
-                },
-                {
-                  icon: <Image src="/icons/clock.svg" alt="Expiration" />,
-                  title: t('Expiration'),
-                  children: (
-                    <Text>
-                      {formatNumber(transaction.expiration)} {t('Blocks')}
-                    </Text>
-                  ),
-                },
-                {
-                  icon: <Image src="/icons/link.svg" alt="Nonce" />,
-                  title: 'Nonce',
-                  children: <Text color="text-secondary">{transaction.nonce}</Text>,
-                },
-              ] as DataCardGroupItem[]
-            }
-          />
-        </Flex>
+        <DataCardGroup
+          variant="outline"
+          cardProps={{ minWidth: { base: '100%', md: 'auto' } }}
+          singleCard
+          items={
+            [
+              {
+                icon: <Image src="/icons/vet-value.svg" alt="Value" />,
+                title: t('Value'),
+                children: <VETBalance balance={VETValue} justifyContent="flex-start" />,
+              },
+              {
+                icon: <Image src="/icons/confirmations.svg" alt="Confirmations" />,
+                title: t('Confirmations'),
+                children: (
+                  <Box>
+                    {isBestBlockPending ? (
+                      <Skeleton width="52px" height="29px" rounded="full" />
+                    ) : (
+                      <Badge
+                        textStyle="bodyM"
+                        minWidth="30px"
+                        justifyContent="center"
+                        bg={`${confirmationsStatus}-surface`}
+                        color={`${confirmationsStatus}-text`}
+                        gap="1"
+                        py="1"
+                        px="2"
+                        rounded="full"
+                        flexShrink={1}
+                      >
+                        {confirmations && confirmations >= 12 && <LuChevronRight />}
+                        {getConfirmations(bestBlock?.number, transaction.meta.blockNumber)}
+                      </Badge>
+                    )}
+                  </Box>
+                ),
+              },
+              {
+                icon: <Image src="/icons/clock.svg" alt="Expiration" />,
+                title: t('Expiration'),
+                children: (
+                  <Text>
+                    {formatNumber(transaction.expiration)} {t('Blocks')}
+                  </Text>
+                ),
+              },
+              {
+                icon: <Image src="/icons/link.svg" alt="Nonce" />,
+                title: 'Nonce',
+                children: <Text color="text-secondary">{transaction.nonce}</Text>,
+              },
+            ] as DataCardGroupItem[]
+          }
+        />
       </Flex>
-    </Card>
+    </VStack>
   )
 }
 

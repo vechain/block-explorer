@@ -1,10 +1,13 @@
 'use client'
 
-import { Button, Flex, Heading, Stack, Text, Skeleton } from '@chakra-ui/react'
+import { Button, Flex, Heading, HStack, Skeleton, Stack, Text } from '@chakra-ui/react'
+import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TokenBalanceRow } from '../shared/TokenBalanceRow'
 import type { TokenBalanceRow as TokenBalanceRowType } from '@/hooks/useAccountTokens'
+import { useFormatAmount } from '@/hooks/useFormatting'
+import { getTokenIconPath } from '@/lib/utils/tokens'
+import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 
 interface TokenBalanceSectionProps {
   tokenBalanceRows: TokenBalanceRowType[]
@@ -15,6 +18,7 @@ const TOKEN_LIMIT = 5
 
 export const TokenBalanceSection = ({ tokenBalanceRows, isPending }: TokenBalanceSectionProps) => {
   const { t } = useTranslation()
+  const formatAmount = useFormatAmount()
   const [isExpanded, setIsExpanded] = useState(false)
 
   const { displayRows, hasMoreTokens } = useMemo(() => {
@@ -23,37 +27,38 @@ export const TokenBalanceSection = ({ tokenBalanceRows, isPending }: TokenBalanc
     return { displayRows: rows, hasMoreTokens: hasMore }
   }, [tokenBalanceRows, isExpanded])
 
+  const items: DataCardGroupItem[] = useMemo(() => {
+    return displayRows.map(token => {
+      const [formatted] = formatAmount({ amount: token.balance ?? BigInt(0), decimals: token.decimals })
+      const iconPath = getTokenIconPath(token.symbol)
+      return {
+        title: token.symbol,
+        children: (
+          <HStack gap={2}>
+            <Text textStyle="bodyM" color="text-primary">
+              {formatted}
+            </Text>
+            {iconPath && <Image src={iconPath} alt={token.symbol} width={16} height={16} />}
+          </HStack>
+        ),
+      }
+    })
+  }, [displayRows, formatAmount])
+
   return (
-    <Stack gap={0}>
-      <Heading as="h3" textStyle="bodyL" mb={4} color="text-primary">
+    <Stack gap={4}>
+      <Heading as="h3" textStyle="bodyL" color="text-primary">
         {t('Token Balance')}
       </Heading>
-      <Stack gap={0}>
-        {isPending ? (
-          <>
-            <Skeleton height="60px" borderRadius="md" />
-            <Skeleton height="60px" borderRadius="md" mt={2} />
-          </>
-        ) : tokenBalanceRows.length === 0 ? (
-          <Flex px={6} py={4} borderWidth="1px" borderColor="border-primary" borderRadius="md">
-            <Text textStyle="bodyM" color="text-primary">
-              {t('No tokens')}
-            </Text>
-          </Flex>
-        ) : (
-          displayRows.map((token, index) => (
-            <TokenBalanceRow
-              key={token.key}
-              token={token}
-              balance={token.balance}
-              isFirst={index === 0}
-              isLast={index === displayRows.length - 1}
-            />
-          ))
-        )}
-      </Stack>
+      {isPending ? (
+        <Skeleton height="120px" borderRadius="md" />
+      ) : tokenBalanceRows.length === 0 ? (
+        <DataCardGroup singleCard variant="outline" items={[{ title: t('No tokens'), children: null }]} />
+      ) : (
+        <DataCardGroup singleCard variant="outline" items={items} />
+      )}
       {!isPending && hasMoreTokens && (
-        <Flex justifyContent="center" alignItems="center" mt={4}>
+        <Flex justifyContent="center" alignItems="center">
           <Button
             size="sm"
             variant="outline"
