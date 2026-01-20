@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge, Box, Flex, Heading, HStack, Skeleton, Text, VStack } from '@chakra-ui/react'
+import { Alert, Badge, Box, Flex, Heading, HStack, Skeleton, Text, VStack } from '@chakra-ui/react'
 import Image from 'next/image'
 import { LuChevronRight } from 'react-icons/lu'
 import { useTranslation } from 'react-i18next'
@@ -13,7 +13,7 @@ import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { VETBalance } from './ui/Balance'
 import BigNumber from 'bignumber.js'
-import { useBestBlockCompressed } from '@/services/thor/hooks'
+import { useBestBlockCompressed, useRevertReason } from '@/services/thor/hooks'
 import { InsightType, TransactionStatus } from '@/lib/types'
 import { TxStatusBadge } from './TxStatus'
 
@@ -30,6 +30,8 @@ export const TransactionInsight = ({
   const isMobile = useIsMobile()
 
   const { data: bestBlock, isPending: isBestBlockPending } = useBestBlockCompressed()
+  const isReverted = receipt?.reverted ?? false
+  const { data: revertReason } = useRevertReason(transaction, isReverted)
 
   const transactionGasInsights = useTransactionGasInsights({
     transaction,
@@ -53,7 +55,7 @@ export const TransactionInsight = ({
   ]
 
   const status = receipt
-    ? receipt.reverted
+    ? isReverted
       ? TransactionStatus.REVERTED
       : TransactionStatus.SUCCESS
     : TransactionStatus.PENDING
@@ -82,6 +84,16 @@ export const TransactionInsight = ({
 
         {isMobile && <TransactionDate />}
       </Flex>
+
+      {isReverted && revertReason && (
+        <Alert.Root status="error">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>{t('Revert Reason')}</Alert.Title>
+            <Alert.Description>{revertReason}</Alert.Description>
+          </Alert.Content>
+        </Alert.Root>
+      )}
 
       <Flex
         alignItems={{ base: 'stretch', md: 'flex-start' }}
