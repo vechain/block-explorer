@@ -101,12 +101,10 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
           </DataCard>
         </Flex>
 
-        <Card variant="secondary" borderRadius="md" mt={4}>
-          <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={{ base: 5, md: 5 }}>
-            <TokenBalanceSection tokenBalanceRows={tokenBalanceRows} isPending={isPendingTokens} />
-            <TokenValueSection tokenValueRows={tokenValueRows} totalValue={totalValue} isPending={isPendingAllTokens} />
-          </Grid>
-        </Card>
+        <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={{ base: 5, md: 5 }}>
+          <TokenBalanceSection tokenBalanceRows={tokenBalanceRows} isPending={isPendingTokens} />
+          <TokenValueSection tokenValueRows={tokenValueRows} totalValue={totalValue} isPending={isPendingAllTokens} />
+        </Grid>
       </Card>
     </Stack>
   )
