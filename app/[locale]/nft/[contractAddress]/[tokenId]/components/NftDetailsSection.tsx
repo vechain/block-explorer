@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge, Box, Flex, Link, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Badge, Box, Flex, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { AddressLink, BaseLink } from '@/components/ui/Links'
@@ -11,7 +11,7 @@ import { useFormatNumber } from '@/hooks/useFormatting'
 import { truncateHex } from '@/lib/utils/truncateHex'
 import { useMintEvent } from '@/services/veworld-indexer/nft-transfers'
 import { useStargateNftInfo } from '@/services/thor/tokens/stargate'
-import { isStargateNftContract, STARGATE_APP_URL } from '@/lib/constants/stargate-nft'
+import { isStargateNftContract } from '@/lib/constants/stargate-nft'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { formatEther } from 'viem'
 interface NftDetailsSectionProps {
@@ -95,26 +95,6 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
         {/* Stargate NFT specific fields */}
         {isStargate && (
           <>
-            <DetailRow label={t('Validator')}>
-              {isLoadingStargateInfo ? (
-                <Skeleton height="20px" width="100px" />
-              ) : stargateNftInfo?.validatorAddress ? (
-                <Link
-                  href={`${STARGATE_APP_URL}/validator/${stargateNftInfo.validatorAddress}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="text-primary"
-                  textStyle="bodyM"
-                  _hover={{ textDecoration: 'underline' }}
-                >
-                  {truncateHex(stargateNftInfo.validatorAddress)}
-                </Link>
-              ) : (
-                <Text textStyle="bodyM" color="text-secondary">
-                  {t('Not delegated')}
-                </Text>
-              )}
-            </DetailRow>
             <DetailRow label={t('NFT Value')}>
               {isLoadingStargateInfo ? (
                 <Skeleton height="20px" width="80px" />

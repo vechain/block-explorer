@@ -3,12 +3,7 @@ import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getThorClient } from '@/services/thor/client'
-import {
-  isStargateNftContract,
-  STARGATE_CONTRACT_ADDRESS,
-  STARGATE_NFT_CONTRACT_ADDRESS,
-  STARGATE_NFTS,
-} from '@/lib/constants/stargate-nft'
+import { isStargateNftContract, STARGATE_NFT_CONTRACT_ADDRESS, STARGATE_NFTS } from '@/lib/constants/stargate-nft'
 
 const STARGATE_NFT_INFO_QUERY_KEY = 'getStargateNftInfo'
 
@@ -35,35 +30,10 @@ const STARGATE_NFT_ABI = [
   },
 ] as const
 
-// ABI fragment for Stargate delegation getDelegationDetails function
-const STARGATE_DELEGATION_ABI = [
-  {
-    inputs: [{ name: 'tokenId', type: 'uint256' }],
-    name: 'getDelegationDetails',
-    outputs: [
-      {
-        components: [
-          { name: 'delegationId', type: 'uint256' },
-          { name: 'tokenId', type: 'uint256' },
-          { name: 'validator', type: 'address' },
-          { name: 'startPeriod', type: 'uint256' },
-          { name: 'endPeriod', type: 'uint256' },
-          { name: 'createdAt', type: 'uint256' },
-        ],
-        name: 'delegation',
-        type: 'tuple',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const
-
 interface StargateNftInfo {
   vetAmountStaked: bigint
   levelId: number
   levelName: string
-  validatorAddress: AddressString | null
 }
 
 const getStargateNftInfo = async (networkName: NetworkName, tokenId: bigint): Promise<StargateNftInfo | null> => {
@@ -83,23 +53,10 @@ const getStargateNftInfo = async (networkName: NetworkName, tokenId: bigint): Pr
     const level = STARGATE_NFTS.find(nft => nft.id === String(levelId))
     const levelName = level?.name ?? 'Unknown'
 
-    // Get delegation details from Stargate contract
-    const delegationContract = thorClient.contracts.load(STARGATE_CONTRACT_ADDRESS, STARGATE_DELEGATION_ABI)
-    const [delegationData] = await delegationContract.read.getDelegationDetails(tokenId)
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const delegation = delegationData as any
-    const validatorAddress = delegation.validator ?? delegation[2]
-
-    // Check if validator address is not zero address
-    const zeroAddress = '0x0000000000000000000000000000000000000000'
-    const hasValidator = validatorAddress && validatorAddress.toLowerCase() !== zeroAddress.toLowerCase()
-
     return {
       vetAmountStaked,
       levelId,
       levelName,
-      validatorAddress: hasValidator ? (validatorAddress as AddressString) : null,
     }
   } catch (error) {
     console.error('Error fetching Stargate NFT info:', error)
