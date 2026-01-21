@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next'
 import { LuExternalLink, LuGlobe, LuMapPin } from 'react-icons/lu'
 import { Card } from '@/components/ui/Card'
 import { IDChip } from '@/components/ui/IDChip'
-import { useFormatNumber } from '@/hooks/useFormatting'
 import type { AddressString } from '@/lib/schemas'
 import { LevelName, type ValidatorDetails } from '@/services/veworld-indexer/hooks'
 import { ValidatorStatus } from '@/services/veworld-indexer/validator-details'
@@ -134,15 +133,15 @@ const NftTierApyItem = ({ tier, apy }: NftTierApyItemProps) => (
 
 export const ValidatorSummary = ({ address, validator }: { address: AddressString; validator: ValidatorDetails }) => {
   const { t } = useTranslation()
-  const formatNumber = useFormatNumber()
   const { data: vnsName } = useVnsName(address)
 
-  // Calculate time until next cycle based on cycleEndBlock
+  // Calculate time until next cycle based on current block number (like Stargate)
   const timeUntilNextCycle = useMemo(() => {
-    if (!validator || validator.cyclePeriodLength === 0 || !validator.cycleEndBlock) return '-'
+    if (!validator || validator.cyclePeriodLength === 0 || validator.currentBlockNumber === 0) return '-'
 
-    // Use cycleEndBlock from the indexer which represents blocks remaining in cycle
-    const blocksUntilNextCycle = Math.max(0, validator.cycleEndBlock - validator.startBlock)
+    const completedBlocks = validator.completedPeriods * validator.cyclePeriodLength
+    const currentPeriodEndBlock = validator.startBlock + completedBlocks + validator.cyclePeriodLength
+    const blocksUntilNextCycle = Math.max(0, currentPeriodEndBlock - validator.currentBlockNumber)
 
     if (blocksUntilNextCycle === 0) return '-'
 
@@ -402,31 +401,6 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
             </VStack>
           </Grid>
         </Card>
-
-        {/* Delegations Stats */}
-        <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-          <Card variant="outline" gap={1} p={3}>
-            <Text textStyle="bodyS" color="text-secondary">
-              {t('Total wallets')}
-            </Text>
-            <Text textStyle="bodyM" color="text-primary" fontWeight="medium">
-              {formatNumber(validator.activeDelegations)}
-            </Text>
-          </Card>
-          <Card variant="outline" gap={1} p={3}>
-            <Text textStyle="bodyS" color="text-secondary">
-              {t('Total NFTs')}
-            </Text>
-            <HStack gap={2}>
-              <Text textStyle="bodyM" color="text-primary" fontWeight="medium">
-                {formatNumber(validator.totalDelegations)}
-              </Text>
-              <Text textStyle="bodyS" color="text-secondary">
-                {validator.activeDelegations} {t('Active')} | {validator.queuedDelegations} {t('Pending')}
-              </Text>
-            </HStack>
-          </Card>
-        </Grid>
       </Card>
     </Stack>
   )

@@ -107,6 +107,27 @@ const missedBlocksResponseSchema = z.object({
   validators: z.array(missedBlocksSchema),
 })
 
+// Delegation schema for fetching individual delegations
+const delegationSchema = z.object({
+  id: z.string(),
+  validator: z.string(),
+  tokenId: z.string(),
+  owner: z.string(),
+  status: z.string(),
+  tokenLevel: z.string(),
+  stakedAmount: z.string(),
+  totalRewardsClaimed: z.string(),
+})
+
+type ValidatorDelegation = z.infer<typeof delegationSchema>
+
+const delegationsResponseSchema = z.object({
+  data: z.array(delegationSchema),
+  meta: z.object({
+    total: z.number(),
+  }),
+})
+
 // Combined validator details with computed fields
 export interface ValidatorDetails {
   address: string
@@ -125,6 +146,8 @@ export interface ValidatorDetails {
   queuedDelegations: number
   exitingDelegations: number
   totalDelegations: number
+  uniqueWallets: number
+  totalNfts: number
 
   // APY/Yields
   delegatorApy: number
@@ -142,6 +165,7 @@ export interface ValidatorDetails {
   cycleEndBlock: number
   startBlock: number
   completedPeriods: number
+  currentBlockNumber: number
 
   // Metadata
   metadata?: ValidatorMetadata
@@ -224,6 +248,55 @@ const getValidatorMissedBlocks = async ({
   return validatorData?.missedPercentage ?? 0
 }
 
+/**
+ * Fetch all delegations for a validator (with pagination)
+ * Returns unique wallet count and total NFTs count
+ */
+const getValidatorDelegations = async ({
+  networkName,
+  validatorAddress,
+}: {
+  networkName: NetworkName
+  validatorAddress: string
+}): Promise<{ uniqueWallets: number; totalNfts: number }> => {
+  const allDelegations: ValidatorDelegation[] = []
+  let page = 0
+  const pageSize = 100
+  let hasMore = true
+
+  // Fetch all pages
+  while (hasMore) {
+    const { data } = await apiClient.get({
+      baseUrl: resolveUrl(networkName),
+      endPoint: '/validators/delegations',
+      params: { validator: validatorAddress, page: String(page), size: String(pageSize) },
+    })
+
+    const parsed = zodParse({
+      data,
+      schema: delegationsResponseSchema,
+      errorMessage: 'Invalid delegations response from VeWorld Indexer',
+    })
+
+    allDelegations.push(...parsed.data)
+
+    // Check if there are more pages
+    hasMore = parsed.data.length === pageSize && allDelegations.length < parsed.meta.total
+    page++
+
+    // Safety limit to prevent infinite loops
+    if (page > 50) break
+  }
+
+  // Calculate unique wallets
+  const uniqueOwners = new Set(allDelegations.map(d => d.owner.toLowerCase()))
+
+  return {
+    uniqueWallets: uniqueOwners.size,
+    totalNfts: allDelegations.length,
+  }
+}
+
 // Query options for validator details
 export const validatorDetailsQueryOptions = (networkName: NetworkName, address: string | undefined) => ({
   queryKey: ['validatorDetails', networkName, address],
@@ -245,5 +318,14 @@ export const validatorMissedBlocksQueryOptions = (networkName: NetworkName, addr
   queryKey: ['validatorMissedBlocks', networkName, address],
   queryFn: () => getValidatorMissedBlocks({ networkName, validatorAddress: address! }),
   enabled: !!address,
+  refetchInterval: 60000,
+})
+
+// Query options for delegations (unique wallets and total NFTs)
+export const validatorDelegationsQueryOptions = (networkName: NetworkName, address: string | undefined) => ({
+  queryKey: ['validatorDelegations', networkName, address],
+  queryFn: () => getValidatorDelegations({ networkName, validatorAddress: address! }),
+  enabled: !!address,
+  staleTime: 60000,
   refetchInterval: 60000,
 })

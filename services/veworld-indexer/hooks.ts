@@ -28,6 +28,7 @@ import {
   validatorDetailsQueryOptions,
   validatorDelegationsCountQueryOptions,
   validatorMissedBlocksQueryOptions,
+  validatorDelegationsQueryOptions,
   type ValidatorDetails,
   type ValidatorIndexerData,
   type ValidatorDelegationsCount,
@@ -414,18 +415,20 @@ export const useValidatorDetails = (address: string | undefined) => {
       validatorDelegationsCountQueryOptions(activeNetwork.name, address),
       validatorMissedBlocksQueryOptions(activeNetwork.name, address),
       validatorMetadataQueryOptions(activeNetwork.name, address),
+      validatorDelegationsQueryOptions(activeNetwork.name, address),
     ],
   })
 
-  const [validatorQuery, delegationsQuery, missedBlocksQuery, metadataQuery] = results
+  const [validatorQuery, delegationsCountQuery, missedBlocksQuery, metadataQuery, delegationsQuery] = results
 
   const validator = useMemo<ValidatorDetails | null>(() => {
     const validatorData = validatorQuery.data as ValidatorIndexerData | null | undefined
     if (!validatorData) return null
 
-    const delegationsCount = delegationsQuery.data as ValidatorDelegationsCount | null | undefined
+    const delegationsCount = delegationsCountQuery.data as ValidatorDelegationsCount | null | undefined
     const missedPercentage = (missedBlocksQuery.data as number | undefined) ?? validatorData.percentageOffline ?? 0
     const metadata = metadataQuery.data
+    const delegationsData = delegationsQuery.data as { uniqueWallets: number; totalNfts: number } | undefined
 
     const activeDelegations = delegationsCount?.active ?? 0
     const queuedDelegations = delegationsCount?.queued ?? 0
@@ -448,6 +451,8 @@ export const useValidatorDetails = (address: string | undefined) => {
       queuedDelegations,
       exitingDelegations,
       totalDelegations: activeDelegations + queuedDelegations + exitingDelegations,
+      uniqueWallets: delegationsData?.uniqueWallets ?? 0,
+      totalNfts: delegationsData?.totalNfts ?? 0,
 
       // APY/Yields
       delegatorApy: validatorData.avgDelegatorYield ?? 0,
@@ -465,14 +470,22 @@ export const useValidatorDetails = (address: string | undefined) => {
       cycleEndBlock: validatorData.cycleEndBlock ?? 0,
       startBlock: validatorData.startBlock ?? 0,
       completedPeriods: validatorData.completedPeriods ?? 0,
+      currentBlockNumber,
 
       // Metadata
       metadata: metadata ?? undefined,
     }
-  }, [validatorQuery.data, delegationsQuery.data, missedBlocksQuery.data, metadataQuery.data])
+  }, [
+    validatorQuery.data,
+    delegationsCountQuery.data,
+    missedBlocksQuery.data,
+    metadataQuery.data,
+    delegationsQuery.data,
+    currentBlockNumber,
+  ])
 
-  const isPending = validatorQuery.isPending || delegationsQuery.isPending || metadataQuery.isPending
-  const isError = validatorQuery.isError || delegationsQuery.isError || missedBlocksQuery.isError
+  const isPending = validatorQuery.isPending || delegationsCountQuery.isPending || metadataQuery.isPending
+  const isError = validatorQuery.isError || delegationsCountQuery.isError || missedBlocksQuery.isError
 
   return {
     data: validator,
