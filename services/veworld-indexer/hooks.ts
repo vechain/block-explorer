@@ -24,6 +24,16 @@ import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
 import { contractTransactionsQueryOptions } from './transactions-contract'
 import { ALL_VALIDATORS_COUNT_QUERY_KEY, getAllValidatorsCount, ValidatorStatus } from './validators'
+import {
+  validatorDetailsQueryOptions,
+  validatorDelegationsCountQueryOptions,
+  validatorMissedBlocksQueryOptions,
+  type ValidatorDetails,
+  type ValidatorIndexerData,
+  type ValidatorDelegationsCount,
+  LevelName,
+} from './validator-details'
+import { validatorMetadataQueryOptions } from './validator-metadata'
 
 export const useTotalVetStaked = () => {
   const { activeNetwork } = useSettingsStore()
@@ -381,3 +391,95 @@ export const useRecentNFTTransfers = ({ count }: { count: number }) => {
     isPending,
   }
 }
+
+// Default empty NFT yields object
+const EMPTY_NFT_YIELDS = Object.fromEntries(Object.values(LevelName).map(level => [level, 0]))
+
+/**
+ * Hook to fetch validator details for a specific address.
+ * Combines data from indexer API, delegations count, missed blocks, and metadata.
+ * Returns null if the address is not a validator.
+ */
+export const useValidatorDetails = (address: string | undefined) => {
+  const { activeNetwork } = useSettingsStore()
+
+  // Fetch current block for cycle calculations
+  const { data: bestBlock } = useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
+  const currentBlockNumber = bestBlock?.number ?? 0
+
+  // Fetch all data in parallel using useQueries
+  const results = useQueries({
+    queries: [
+      validatorDetailsQueryOptions(activeNetwork.name, address),
+      validatorDelegationsCountQueryOptions(activeNetwork.name, address),
+      validatorMissedBlocksQueryOptions(activeNetwork.name, address),
+      validatorMetadataQueryOptions(activeNetwork.name, address),
+    ],
+  })
+
+  const [validatorQuery, delegationsQuery, missedBlocksQuery, metadataQuery] = results
+
+  const validator = useMemo<ValidatorDetails | null>(() => {
+    const validatorData = validatorQuery.data as ValidatorIndexerData | null | undefined
+    if (!validatorData) return null
+
+    const delegationsCount = delegationsQuery.data as ValidatorDelegationsCount | null | undefined
+    const missedPercentage = (missedBlocksQuery.data as number | undefined) ?? validatorData.percentageOffline ?? 0
+    const metadata = metadataQuery.data
+
+    const activeDelegations = delegationsCount?.active ?? 0
+    const queuedDelegations = delegationsCount?.queued ?? 0
+    const exitingDelegations = delegationsCount?.exiting ?? 0
+
+    return {
+      address: validatorData.id,
+      status: validatorData.status,
+      online: validatorData.online ?? false,
+
+      // Stake amounts
+      vetStaked: validatorData.vetStaked ?? 0,
+      validatorVetStaked: validatorData.validatorVetStaked ?? 0,
+      delegatorVetStaked: validatorData.delegatorVetStaked ?? 0,
+      queuedStake: validatorData.queuedVetStaked ?? 0,
+      exitingVET: validatorData.exitingVetStaked ?? 0,
+
+      // Delegations counts
+      activeDelegations,
+      queuedDelegations,
+      exitingDelegations,
+      totalDelegations: activeDelegations + queuedDelegations + exitingDelegations,
+
+      // APY/Yields
+      delegatorApy: validatorData.avgDelegatorYield ?? 0,
+      nextCycleDelegatorApy: validatorData.nextCycleAvgDelegatorYield ?? 0,
+      validatorApy: validatorData.validatorYield ?? 0,
+      nextCycleValidatorApy: validatorData.nextCycleValidatorYield ?? 0,
+      nftYieldsNextCycle: validatorData.nftYieldsNextCycle ?? EMPTY_NFT_YIELDS,
+
+      // Performance
+      reliability: 100 - missedPercentage,
+      percentageOffline: missedPercentage,
+
+      // Cycle info
+      cyclePeriodLength: validatorData.cyclePeriodLength ?? 0,
+      cycleEndBlock: validatorData.cycleEndBlock ?? 0,
+      startBlock: validatorData.startBlock ?? 0,
+      completedPeriods: validatorData.completedPeriods ?? 0,
+
+      // Metadata
+      metadata: metadata ?? undefined,
+    }
+  }, [validatorQuery.data, delegationsQuery.data, missedBlocksQuery.data, metadataQuery.data])
+
+  const isPending = validatorQuery.isPending || delegationsQuery.isPending || metadataQuery.isPending
+  const isError = validatorQuery.isError || delegationsQuery.isError || missedBlocksQuery.isError
+
+  return {
+    data: validator,
+    isPending,
+    isError,
+    isValidator: validator !== null && !isPending,
+  }
+}
+
+export { type ValidatorDetails, LevelName } from './validator-details'
