@@ -50,8 +50,6 @@
     "all": {
       "staking": "staking",
       "stake": "stake",
-      "validator": "validator",
-      "validators": "validators",
       "APY": "APY",
       "NFT": "NFT",
       "VET": "VET",
@@ -60,7 +58,8 @@
       "VeChain": "VeChain",
       "vechain": "vechain",
       "mainnet": "mainnet",
-      "testnet": "testnet"
+      "testnet": "testnet",
+      "Stargate": "Stargate"
     },
     "it": {
       "maturity": "maturazione"

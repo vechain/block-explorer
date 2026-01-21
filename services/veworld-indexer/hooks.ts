@@ -20,6 +20,7 @@ import type {
 } from './schemas'
 import { totalVetStakedQueryOptions } from './total-vet-staked'
 import { type TotalVetStakedRange, totalVetStakedHistoricQueryOptions } from './total-vet-staked-historic'
+import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
 import { contractTransactionsQueryOptions } from './transactions-contract'
 import { ALL_VALIDATORS_COUNT_QUERY_KEY, getAllValidatorsCount, ValidatorStatus } from './validators'
@@ -32,6 +33,11 @@ export const useTotalVetStaked = () => {
 export const useTotalVetStakedHistoric = (range: TotalVetStakedRange) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(totalVetStakedHistoricQueryOptions(activeNetwork.name, range))
+}
+
+export const useTotalVthoClaimed = (address: string | undefined) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(totalVthoClaimedQueryOptions(activeNetwork.name, address as `0x${string}` | undefined))
 }
 
 export const useAccountTotals = (timeFrame: AccountTimeFrame) => {
