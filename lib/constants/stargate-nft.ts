@@ -1,3 +1,22 @@
+import type { AddressString } from '@/lib/schemas'
+import { NetworkName } from './network'
+
+// Stargate NFT contract address (mainnet only)
+export const STARGATE_NFT_CONTRACT_ADDRESS: AddressString = '0x1856c533ac2d94340aaa8544d35a5c1d4a21dee7'
+
+// Stargate delegation contract address (mainnet only)
+export const STARGATE_CONTRACT_ADDRESS: AddressString = '0x03C557bE98123fdb6faD325328AC6eB77de7248C'
+
+// Stargate app URL for validator links
+export const STARGATE_APP_URL = 'https://app.stargate.vechain.org'
+
+// Check if a contract address is the Stargate NFT contract
+export const isStargateNftContract = (contractAddress: AddressString, networkName: NetworkName): boolean => {
+  // Stargate is only on mainnet
+  if (networkName !== NetworkName.MAINNET) return false
+  return contractAddress.toLowerCase() === STARGATE_NFT_CONTRACT_ADDRESS.toLowerCase()
+}
+
 export const STARGATE_NFTS = [
   {
     id: '1',

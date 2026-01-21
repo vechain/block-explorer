@@ -13,6 +13,7 @@ import { useAccountTokens } from '@/hooks/useAccountTokens'
 import { useVnsName } from '@/services/thor/hooks'
 import { TokenBalanceSection } from './sections/TokenBalanceSection'
 import { TokenValueSection } from './sections/TokenValueSection'
+import { StargateSection } from './sections/StargateSection'
 
 export const AccountSummary = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
@@ -94,6 +95,8 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
           <TokenBalanceSection tokenBalanceRows={tokenBalanceRows} isPending={isPendingTokens} />
           <TokenValueSection tokenValueRows={tokenValueRows} totalValue={totalValue} isPending={isPendingAllTokens} />
         </Grid>
+
+        <StargateSection address={address} />
       </Card>
     </Stack>
   )

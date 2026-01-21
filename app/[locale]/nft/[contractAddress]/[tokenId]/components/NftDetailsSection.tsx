@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge, Box, Flex, Stack, Text } from '@chakra-ui/react'
+import { Badge, Box, Flex, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { AddressLink, BaseLink } from '@/components/ui/Links'
@@ -10,6 +10,10 @@ import { type Erc721, useErc721CollectionStats } from '@/services/thor/tokens/er
 import { useFormatNumber } from '@/hooks/useFormatting'
 import { truncateHex } from '@/lib/utils/truncateHex'
 import { useMintEvent } from '@/services/veworld-indexer/nft-transfers'
+import { useStargateNftInfo } from '@/services/thor/tokens/stargate'
+import { isStargateNftContract } from '@/lib/constants/stargate-nft'
+import { useSettingsStore } from '@/lib/stores/settings'
+import { formatEther } from 'viem'
 interface NftDetailsSectionProps {
   collection: Erc721
   contractAddress: AddressString
@@ -48,9 +52,23 @@ const SectionCard = ({ title, children }: { title: string; children: React.React
 export const NftDetailsSection = ({ collection, contractAddress, tokenId, metadata }: NftDetailsSectionProps) => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
+  const { activeNetwork } = useSettingsStore()
 
   const { data: collectionStats } = useErc721CollectionStats({ contractAddress })
   const { mintEvent } = useMintEvent({ contractAddress, tokenId })
+
+  // Fetch Stargate NFT info if this is a Stargate NFT
+  const isStargate = isStargateNftContract(contractAddress, activeNetwork.name)
+  const { data: stargateNftInfo, isLoading: isLoadingStargateInfo } = useStargateNftInfo({
+    contractAddress,
+    tokenId,
+  })
+
+  // Format VET amount for display
+  const formatVetAmount = (amount: bigint): string => {
+    const formatted = formatEther(amount)
+    return formatNumber(Number(formatted))
+  }
 
   return (
     <Card variant="secondary" gap={6}>
@@ -74,6 +92,24 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
             {'ERC 721'}
           </Badge>
         </DetailRow>
+        {/* Stargate NFT specific fields */}
+        {isStargate && (
+          <>
+            <DetailRow label={t('NFT Value')}>
+              {isLoadingStargateInfo ? (
+                <Skeleton height="20px" width="80px" />
+              ) : stargateNftInfo?.vetAmountStaked ? (
+                <Text textStyle="bodyM" color="text-primary">
+                  {formatVetAmount(stargateNftInfo.vetAmountStaked)} VET
+                </Text>
+              ) : (
+                <Text textStyle="bodyM" color="text-secondary">
+                  -
+                </Text>
+              )}
+            </DetailRow>
+          </>
+        )}
       </SectionCard>
 
       {/* NFT Mint */}
