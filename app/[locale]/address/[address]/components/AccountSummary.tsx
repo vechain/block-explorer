@@ -10,9 +10,10 @@ import type { AddressString } from '@/lib/schemas'
 import { useAccountOverview } from '@/services/veworld-indexer/hooks'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useAccountTokens } from '@/hooks/useAccountTokens'
-import { useVnsName } from '@/services/thor/hooks'
+import { useAccountStakedVet, useVnsName } from '@/services/thor/hooks'
 import { TokenBalanceSection } from './sections/TokenBalanceSection'
 import { TokenValueSection } from './sections/TokenValueSection'
+import { StakedVetSection } from './sections/StakedVetSection'
 
 export const AccountSummary = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
@@ -27,6 +28,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
     isPending: isPendingTokens,
     isPendingAll: isPendingAllTokens,
   } = useAccountTokens(address)
+  const { data: stakedVet, isPending: isStakedVetPending } = useAccountStakedVet(address)
 
   const firstSeenDate = overview && overview.firstSeen > 0 ? formatDate(overview.firstSeen * 1000) : null
   const lastSeenDate = overview && overview.lastSeen > 0 ? formatDate(overview.lastSeen * 1000) : null
@@ -94,6 +96,8 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
           <TokenBalanceSection tokenBalanceRows={tokenBalanceRows} isPending={isPendingTokens} />
           <TokenValueSection tokenValueRows={tokenValueRows} totalValue={totalValue} isPending={isPendingAllTokens} />
         </Grid>
+
+        <StakedVetSection stakedVet={stakedVet} isPending={isStakedVetPending} />
       </Card>
     </Stack>
   )
