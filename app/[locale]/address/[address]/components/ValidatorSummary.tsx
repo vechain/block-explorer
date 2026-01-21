@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { LuExternalLink, LuGlobe, LuMapPin } from 'react-icons/lu'
 import { Card } from '@/components/ui/Card'
 import { IDChip } from '@/components/ui/IDChip'
+import { Picasso } from '@/components/ui/Picasso'
 import type { AddressString } from '@/lib/schemas'
 import { LevelName, type ValidatorDetails } from '@/services/veworld-indexer/hooks'
 import { ValidatorStatus } from '@/services/veworld-indexer/validator-details'
@@ -200,19 +201,7 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
                 />
               </Box>
             ) : (
-              <Box
-                width="48px"
-                height="48px"
-                borderRadius="full"
-                bg="bg-alt-secondary"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Text textStyle="displayXs" color="text-secondary">
-                  V
-                </Text>
-              </Box>
+              <Picasso address={address} size={48} />
             )}
             <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap">
               {t('Validator')}

@@ -20,6 +20,9 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.85.6
         version: 5.85.6(@tanstack/react-query@5.85.6(react@19.1.2))(react@19.1.2)
+      '@vechain/picasso':
+        specifier: ^2.1.1
+        version: 2.1.1
       '@vechain/sdk-core':
         specifier: ^2.0.7
         version: 2.0.7(typescript@5.9.2)(zod@4.1.13)
@@ -1298,6 +1301,9 @@ packages:
     resolution: {integrity: sha512-lrW200hZdbfRtztbygyaq/6jP6AKE8qQN2KvPcJ+x7wiD038YtnYtZ82IMNJ69GJibV7bwL3y9FgK+5w/pYt6g==}
     cpu: [x64]
     os: [win32]
+
+  '@vechain/picasso@2.1.1':
+    resolution: {integrity: sha512-SOH35A4jxmxQeIn+Q6qA2X+ivRKDE+9n/gvLgCQnacsJrrwh/tSinUbhj9KnfU4ixm+g1aRgTm0IYuz1/uS+uw==}
 
   '@vechain/sdk-core@2.0.7':
     resolution: {integrity: sha512-thIvP/8z8hN2LCV4cWinCTR3PdlJ9Yf5Hofp0EfB6McXL49qbVN/jo9iYj1RuQ3Uq+Um7qWuctbROsXVKOr84A==}
@@ -2667,6 +2673,9 @@ packages:
   merge2@1.4.1:
     resolution: {integrity: sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==}
     engines: {node: '>= 8'}
+
+  mersenne-twister@1.1.0:
+    resolution: {integrity: sha512-mUYWsMKNrm4lfygPkL3OfGzOPTR2DBlTkBNHM//F6hGp8cLThY897crAlk3/Jo17LEOOjQUrNAx6DvgO77QJkA==}
 
   micromatch@4.0.8:
     resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
@@ -4693,6 +4702,10 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
+  '@vechain/picasso@2.1.1':
+    dependencies:
+      mersenne-twister: 1.1.0
+
   '@vechain/sdk-core@2.0.7(typescript@5.9.2)(zod@4.1.13)':
     dependencies:
       '@ethereumjs/rlp': 5.0.2
@@ -6604,6 +6617,8 @@ snapshots:
   math-intrinsics@1.1.0: {}
 
   merge2@1.4.1: {}
+
+  mersenne-twister@1.1.0: {}
 
   micromatch@4.0.8:
     dependencies:
