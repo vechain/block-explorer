@@ -18,10 +18,20 @@ export function initMixpanel() {
   initialized = true
 }
 
-export function trackPageView(path: string) {
+type TrackContext = {
+  path: string
+  network: string
+  language: string
+  currency: string
+}
+
+export function trackPageView({ path, network, language, currency }: TrackContext) {
   if (IS_DEV || !initialized) return
 
   mixpanel.track('Page View', {
     path,
+    network,
+    language,
+    currency,
   })
 }
