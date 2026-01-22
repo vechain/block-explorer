@@ -187,7 +187,13 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
   return (
     <Stack gap="8">
       <Card>
-        <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap">
+        <Flex
+          flexDirection={{ base: 'column', md: 'row' }}
+          gap={4}
+          alignItems={{ base: 'flex-start', md: 'center' }}
+          justifyContent="space-between"
+          flexWrap="wrap"
+        >
           <HStack gap={2}>
             {/* Validator Logo */}
             {validator.metadata?.logo ? (
@@ -270,126 +276,128 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
           <StatCard label={t('Cycle duration')} value={cycleDuration} />
         </Grid>
 
-        {/* APY Section */}
-        {isActiveOrPending && (
-          <Card variant="outline" gap={4}>
-            {/* Avg Delegator APY */}
+        <Flex flexDirection={{ base: 'column', md: 'row' }} gap={4}>
+          {/* APY Section */}
+          {isActiveOrPending && (
+            <Card variant="outline" gap={4} flex={1}>
+              {/* Avg Delegator APY */}
+              <VStack align="start" gap={1}>
+                <Text textStyle="bodyS" color="text-secondary">
+                  {t('Avg. Delegator APY')}
+                </Text>
+                <HStack gap={2}>
+                  <Text textStyle="bodyM" color="text-primary" fontWeight="medium">
+                    {abbreviateAmount(validator.delegatorApy)}%
+                  </Text>
+                  {validator.nextCycleDelegatorApy !== validator.delegatorApy && (
+                    <HStack gap={1}>
+                      <Text
+                        textStyle="bodyS"
+                        color={validator.nextCycleDelegatorApy > validator.delegatorApy ? 'green.400' : 'red.400'}
+                      >
+                        {abbreviateAmount(validator.nextCycleDelegatorApy)}%
+                      </Text>
+                      <Text textStyle="bodyS" color="text-secondary">
+                        {t('next cycle')}
+                      </Text>
+                    </HStack>
+                  )}
+                </HStack>
+              </VStack>
+
+              {/* NFT Tier APYs */}
+              <VStack align="start" gap={2} width="full">
+                <Text textStyle="bodyS" color="text-secondary">
+                  {t('NFT Tier Next Cycle APYs')}
+                </Text>
+                <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(2, 1fr)' }} gap={2} width="full">
+                  {nftTierApys.map(({ tier, apy }) => (
+                    <NftTierApyItem key={tier} tier={tier} apy={apy} />
+                  ))}
+                </Grid>
+              </VStack>
+            </Card>
+          )}
+
+          {/* Total Staked Section */}
+          <Card variant="outline" gap={4} flex={1} height="fit-content">
             <VStack align="start" gap={1}>
               <Text textStyle="bodyS" color="text-secondary">
-                {t('Avg. Delegator APY')}
+                {t('Total staked')}
               </Text>
               <HStack gap={2}>
-                <Text textStyle="bodyM" color="text-primary" fontWeight="medium">
-                  {abbreviateAmount(validator.delegatorApy)}%
+                <Image src="/tokens/vet.svg" alt="VET" width={24} height={24} />
+                <Text textStyle="displayXs" color="text-primary" fontWeight="bold">
+                  {abbreviateAmount(validator.vetStaked)}
                 </Text>
-                {validator.nextCycleDelegatorApy !== validator.delegatorApy && (
-                  <HStack gap={1}>
-                    <Text
-                      textStyle="bodyS"
-                      color={validator.nextCycleDelegatorApy > validator.delegatorApy ? 'green.400' : 'red.400'}
-                    >
-                      {abbreviateAmount(validator.nextCycleDelegatorApy)}%
-                    </Text>
-                    <Text textStyle="bodyS" color="text-secondary">
-                      {t('next cycle')}
-                    </Text>
-                  </HStack>
-                )}
+                <Text textStyle="bodyM" color="text-secondary">
+                  VET
+                </Text>
               </HStack>
             </VStack>
 
-            {/* NFT Tier APYs */}
-            <VStack align="start" gap={2} width="full">
-              <Text textStyle="bodyS" color="text-secondary">
-                {t('NFT Tier Next Cycle APYs')}
-              </Text>
-              <Grid templateColumns="repeat(2, 1fr)" gap={2} width="full">
-                {nftTierApys.map(({ tier, apy }) => (
-                  <NftTierApyItem key={tier} tier={tier} apy={apy} />
-                ))}
-              </Grid>
-            </VStack>
+            {/* Progress Bar */}
+            <Box width="full" height="12px" bg="bg-alt-primary" borderRadius="full" overflow="hidden">
+              <Flex height="full">
+                <Box
+                  width={`${stakePercentages.validatorPercent}%`}
+                  bg="purple.400"
+                  height="full"
+                  transition="width 0.3s ease"
+                />
+                <Box
+                  width={`${stakePercentages.delegatedPercent}%`}
+                  bg="purple.700"
+                  height="full"
+                  transition="width 0.3s ease"
+                />
+              </Flex>
+            </Box>
+
+            {/* Stake Breakdown */}
+            <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+              <VStack align="start" gap={1}>
+                <HStack gap={2}>
+                  <Box width="12px" height="12px" borderRadius="full" bg="purple.400" />
+                  <Text textStyle="bodyS" color="text-secondary">
+                    {t('Validator stake')}
+                  </Text>
+                </HStack>
+                <HStack gap={1}>
+                  <Text textStyle="bodyM" color="text-primary" fontWeight="medium">
+                    {abbreviateAmount(validator.validatorVetStaked)}
+                  </Text>
+                  <Text textStyle="bodyS" color="text-secondary">
+                    VET
+                  </Text>
+                </HStack>
+                <Text textStyle="bodyS" color="text-secondary">
+                  {stakePercentages.validatorPercent.toFixed(1)}%
+                </Text>
+              </VStack>
+
+              <VStack align="start" gap={1}>
+                <HStack gap={2}>
+                  <Box width="12px" height="12px" borderRadius="full" bg="purple.700" />
+                  <Text textStyle="bodyS" color="text-secondary">
+                    {t('Delegated')}
+                  </Text>
+                </HStack>
+                <HStack gap={1}>
+                  <Text textStyle="bodyM" color="text-primary" fontWeight="medium">
+                    {abbreviateAmount(validator.delegatorVetStaked)}
+                  </Text>
+                  <Text textStyle="bodyS" color="text-secondary">
+                    VET
+                  </Text>
+                </HStack>
+                <Text textStyle="bodyS" color="text-secondary">
+                  {stakePercentages.delegatedPercent.toFixed(1)}%
+                </Text>
+              </VStack>
+            </Grid>
           </Card>
-        )}
-
-        {/* Total Staked Section */}
-        <Card variant="outline" gap={4}>
-          <VStack align="start" gap={1}>
-            <Text textStyle="bodyS" color="text-secondary">
-              {t('Total staked')}
-            </Text>
-            <HStack gap={2}>
-              <Image src="/tokens/vet.svg" alt="VET" width={24} height={24} />
-              <Text textStyle="displayXs" color="text-primary" fontWeight="bold">
-                {abbreviateAmount(validator.vetStaked)}
-              </Text>
-              <Text textStyle="bodyM" color="text-secondary">
-                VET
-              </Text>
-            </HStack>
-          </VStack>
-
-          {/* Progress Bar */}
-          <Box width="full" height="12px" bg="bg-alt-primary" borderRadius="full" overflow="hidden">
-            <Flex height="full">
-              <Box
-                width={`${stakePercentages.validatorPercent}%`}
-                bg="purple.400"
-                height="full"
-                transition="width 0.3s ease"
-              />
-              <Box
-                width={`${stakePercentages.delegatedPercent}%`}
-                bg="purple.700"
-                height="full"
-                transition="width 0.3s ease"
-              />
-            </Flex>
-          </Box>
-
-          {/* Stake Breakdown */}
-          <Grid templateColumns="repeat(2, 1fr)" gap={4}>
-            <VStack align="start" gap={1}>
-              <HStack gap={2}>
-                <Box width="12px" height="12px" borderRadius="full" bg="purple.400" />
-                <Text textStyle="bodyS" color="text-secondary">
-                  {t('Validator stake')}
-                </Text>
-              </HStack>
-              <HStack gap={1}>
-                <Text textStyle="bodyM" color="text-primary" fontWeight="medium">
-                  {abbreviateAmount(validator.validatorVetStaked)}
-                </Text>
-                <Text textStyle="bodyS" color="text-secondary">
-                  VET
-                </Text>
-              </HStack>
-              <Text textStyle="bodyS" color="text-secondary">
-                {stakePercentages.validatorPercent.toFixed(1)}%
-              </Text>
-            </VStack>
-
-            <VStack align="start" gap={1}>
-              <HStack gap={2}>
-                <Box width="12px" height="12px" borderRadius="full" bg="purple.700" />
-                <Text textStyle="bodyS" color="text-secondary">
-                  {t('Delegated')}
-                </Text>
-              </HStack>
-              <HStack gap={1}>
-                <Text textStyle="bodyM" color="text-primary" fontWeight="medium">
-                  {abbreviateAmount(validator.delegatorVetStaked)}
-                </Text>
-                <Text textStyle="bodyS" color="text-secondary">
-                  VET
-                </Text>
-              </HStack>
-              <Text textStyle="bodyS" color="text-secondary">
-                {stakePercentages.delegatedPercent.toFixed(1)}%
-              </Text>
-            </VStack>
-          </Grid>
-        </Card>
+        </Flex>
       </Card>
     </Stack>
   )
