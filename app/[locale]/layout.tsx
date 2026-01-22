@@ -6,6 +6,7 @@ import { Header } from '@/components/navigation/Header'
 import { ChakraProvider } from '@/components/theme/provider'
 import type { Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
+import { MixpanelProvider } from '@/lib/analytics/MixpanelProvider'
 import { QueryClientProvider } from '@/lib/query-client/provider'
 
 const rubik = Rubik({
@@ -76,7 +77,9 @@ const Providers = ({ children, locale }: { children: React.ReactNode; locale: st
   return (
     <QueryClientProvider>
       <ChakraProvider>
-        <TranslationsProvider locale={locale as Locale}>{children}</TranslationsProvider>
+        <TranslationsProvider locale={locale as Locale}>
+          <MixpanelProvider>{children}</MixpanelProvider>
+        </TranslationsProvider>
       </ChakraProvider>
     </QueryClientProvider>
   )
