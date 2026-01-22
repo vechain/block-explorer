@@ -131,7 +131,7 @@ export const CopyableTransactionIdLink = ({ txId, truncate = true, ...props }: C
   }
 
   return (
-    <CopyableLink href={`/transaction/${txId}`} value={txId} {...props}>
+    <CopyableLink href={`/transactions/${txId}`} value={txId} {...props}>
       {displayTxId}
     </CopyableLink>
   )

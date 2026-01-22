@@ -58,7 +58,7 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
       children: isPending ? (
         <Skeleton height="24px" width="120px" />
       ) : (
-        <BaseLink href={`/transaction/${contract?.deploymentTxId ?? '0x'}`}>
+        <BaseLink href={`/transactions/${contract?.deploymentTxId ?? '0x'}`}>
           {truncateHex(contract?.deploymentTxId ?? '0x')}
         </BaseLink>
       ),
