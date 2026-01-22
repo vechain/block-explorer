@@ -80,7 +80,7 @@ export const DeployedContractsSection = ({ address }: { address: AddressString }
   return (
     <Card>
       <Heading as="h3" textStyle="displayXs">
-        {t('Deployed Contracts')}
+        {t('Owned Contracts')}
       </Heading>
 
       {isPending ? (
