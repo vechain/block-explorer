@@ -3,6 +3,7 @@
 import { Badge, Box, Flex, Image, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { Card } from '@/components/ui/Card'
 import type { Erc721 } from '@/services/thor/tokens/erc721'
+import { truncateString } from '@/lib/utils/truncateString'
 
 interface NftDetailHeaderProps {
   nftImage: string
@@ -38,16 +39,29 @@ export const NftDetailHeader = ({
             color="text-primary"
             fontSize="sm"
             fontWeight="normal"
+            maxWidth="calc(100% - 32px)"
+            overflow="hidden"
+            textOverflow="ellipsis"
+            whiteSpace="nowrap"
           >
-            #{tokenId.toString()}
+            #{truncateString(tokenId.toString(), 16, 4)}
           </Badge>
         </Box>
-        <Flex justifyContent="center">
+        <Flex justifyContent="center" maxWidth="100%" overflow="hidden">
           {isMetadataPending ? (
             <Skeleton height="24px" width="120px" />
           ) : (
-            <Text textStyle="bodyL" color="text-primary" textAlign="center">
-              {nftName}
+            <Text
+              textStyle="bodyL"
+              color="text-primary"
+              textAlign="center"
+              overflow="hidden"
+              textOverflow="ellipsis"
+              whiteSpace="nowrap"
+              maxWidth="100%"
+              title={nftName}
+            >
+              {truncateString(nftName, 24, 6)}
             </Text>
           )}
         </Flex>

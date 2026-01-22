@@ -9,11 +9,14 @@ import type { NftMetadata } from '@/services/nft-metadata'
 import { type Erc721, useErc721CollectionStats } from '@/services/thor/tokens/erc721'
 import { useFormatNumber } from '@/hooks/useFormatting'
 import { truncateHex } from '@/lib/utils/truncateHex'
+import { truncateString } from '@/lib/utils/truncateString'
 import { useMintEvent } from '@/services/veworld-indexer/nft-transfers'
 import { useStargateNftInfo } from '@/services/thor/tokens/stargate'
 import { isStargateNftContract } from '@/lib/constants/stargate-nft'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { formatEther } from 'viem'
+import { useIsMobile } from '@/hooks/useIsMobile'
+
 interface NftDetailsSectionProps {
   collection: Erc721
   contractAddress: AddressString
@@ -26,15 +29,18 @@ const DetailRow = ({ label, children }: { label: string; children: React.ReactNo
     justifyContent="space-between"
     alignItems="center"
     py={4}
-    px={6}
+    px={{ base: 4, md: 6 }}
     borderBottomWidth="1px"
     borderColor="border-primary"
     _last={{ borderBottomWidth: 0 }}
+    gap={{ base: 2, md: 4 }}
   >
-    <Text textStyle="bodyM" color="text-primary" minWidth="120px">
+    <Text textStyle="bodyM" color="text-primary" minWidth={{ base: '80px', md: '120px' }} flexShrink={0}>
       {label}
     </Text>
-    <Box>{children}</Box>
+    <Box overflow="hidden" textAlign="right" minWidth={0}>
+      {children}
+    </Box>
   </Flex>
 )
 
@@ -53,6 +59,9 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
   const { activeNetwork } = useSettingsStore()
+  const isMobile = useIsMobile()
+  const truncateLength = isMobile ? 20 : 40
+  const truncateEnd = isMobile ? 6 : 8
 
   const { data: collectionStats } = useErc721CollectionStats({ contractAddress })
   const { mintEvent } = useMintEvent({ contractAddress, tokenId })
@@ -75,13 +84,27 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
       {/* NFT Details */}
       <SectionCard title={t('NFT Details')}>
         <DetailRow label={t('Name')}>
-          <Text textStyle="bodyM" color="text-primary">
-            {metadata?.name || `#${tokenId.toString()}`}
+          <Text
+            textStyle="bodyM"
+            color="text-primary"
+            overflow="hidden"
+            textOverflow="ellipsis"
+            whiteSpace="nowrap"
+            title={metadata?.name || `#${tokenId.toString()}`}
+          >
+            {truncateString(metadata?.name || `#${tokenId.toString()}`, truncateLength, truncateEnd)}
           </Text>
         </DetailRow>
         <DetailRow label={t('Token ID')}>
-          <Text textStyle="bodyM" color="text-primary">
-            #{tokenId.toString()}
+          <Text
+            textStyle="bodyM"
+            color="text-primary"
+            overflow="hidden"
+            textOverflow="ellipsis"
+            whiteSpace="nowrap"
+            title={`#${tokenId.toString()}`}
+          >
+            #{truncateString(tokenId.toString(), truncateLength, truncateEnd)}
           </Text>
         </DetailRow>
         <DetailRow label={t('Contract Address')}>
