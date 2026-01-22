@@ -53,7 +53,7 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
                 {formattedVetStaked}
               </Text>
             )}
-            <Image src="/tokens/vet.svg" alt="VET" width={16} height={16} />
+            <Image src="/tokens/VET.svg" alt="VET" width={16} height={16} />
           </HStack>
           {isVetPriceLoading ? (
             <Skeleton height="16px" width="60px" />
@@ -79,7 +79,7 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
                 {formattedTotalEarned}
               </Text>
             )}
-            <Image src="/tokens/vtho.svg" alt="VTHO" width={16} height={16} />
+            <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
           </HStack>
           {isVthoPriceLoading ? (
             <Skeleton height="16px" width="60px" />
