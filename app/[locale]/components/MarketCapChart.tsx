@@ -9,8 +9,6 @@ import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { useFormatCurrency, useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { MarketCapRange, useMarketCapData, type MarketCapToken } from '@/hooks/useMarketCapData'
 
-const chartHeight = 80
-
 type DataPoint = {
   timestamp: number
   marketCap: number
@@ -40,7 +38,7 @@ export const MarketCapChart = () => {
   ]
 
   return (
-    <Card width="415px" height="274px" gap={3}>
+    <Card width="100%" maxW="415px" height="274px" gap={3}>
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL">
           {t('Market Cap')}
@@ -62,8 +60,9 @@ export const MarketCapChart = () => {
           {formatCurrency(currentMarketCap, { maximumFractionDigits: 0 })}
         </Text>
       )}
-
-      <MarketCapChartVisualization data={chartData} />
+      <Flex flex={1} overflow="hidden">
+        <MarketCapChartVisualization data={chartData} />
+      </Flex>
 
       <Flex justify="space-between" align="flex-end" mt="auto">
         <Stack gap={0}>
@@ -123,10 +122,9 @@ const MarketCapChartVisualization = memo(({ data }: { data: DataPoint[] }) => {
   )
 
   return (
-    <Box height={chartHeight} flex={1}>
+    <Box flex={1}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
-          height={chartHeight}
           data={data}
           margin={{
             top: 0,

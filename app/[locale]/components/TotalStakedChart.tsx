@@ -11,8 +11,6 @@ import { Card } from '@/components/ui/Card'
 import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { useFormatAbbreviated, useFormatAmount, useFormatDate } from '@/hooks/useFormatting'
 
-const chartHeight = 140
-
 type DataPoint = {
   timestamp: number
   value: bigint
@@ -68,8 +66,9 @@ export const TotalStakedChart = () => {
       <Text textStyle="displayS" color="accent-primary">
         {formatAbbreviated(displayValue)} VET
       </Text>
-
-      <TotalStakedChartVisualization data={chartData} />
+      <Flex flex={1} overflow="hidden">
+        <TotalStakedChartVisualization data={chartData} />
+      </Flex>
     </Card>
   )
 }
@@ -114,10 +113,9 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
   )
 
   return (
-    <Box height={chartHeight} mb={4}>
+    <Box flex={1} mb={4}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
-          height={chartHeight}
           data={data}
           margin={{
             top: 0,
