@@ -30,11 +30,14 @@ const DetailRow = ({ label, children }: { label: string; children: React.ReactNo
     borderBottomWidth="1px"
     borderColor="border-primary"
     _last={{ borderBottomWidth: 0 }}
+    overflow="hidden"
   >
-    <Text textStyle="bodyM" color="text-primary" minWidth="120px">
+    <Text textStyle="bodyM" color="text-primary" minWidth="120px" flexShrink={0}>
       {label}
     </Text>
-    <Box>{children}</Box>
+    <Box overflow="hidden" textAlign="right">
+      {children}
+    </Box>
   </Flex>
 )
 
@@ -75,12 +78,12 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
       {/* NFT Details */}
       <SectionCard title={t('NFT Details')}>
         <DetailRow label={t('Name')}>
-          <Text textStyle="bodyM" color="text-primary">
+          <Text textStyle="bodyM" color="text-primary" truncate title={metadata?.name || `#${tokenId.toString()}`}>
             {metadata?.name || `#${tokenId.toString()}`}
           </Text>
         </DetailRow>
         <DetailRow label={t('Token ID')}>
-          <Text textStyle="bodyM" color="text-primary">
+          <Text textStyle="bodyM" color="text-primary" truncate title={`#${tokenId.toString()}`}>
             #{tokenId.toString()}
           </Text>
         </DetailRow>
@@ -130,12 +133,12 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
       {/* Collection Details */}
       <SectionCard title={t('Collection Details')}>
         <DetailRow label={t('Collection')}>
-          <Text textStyle="bodyM" color="text-primary">
+          <Text textStyle="bodyM" color="text-primary" truncate title={collection.name}>
             {collection.name}
           </Text>
         </DetailRow>
         <DetailRow label={t('Symbol')}>
-          <Text textStyle="bodyM" color="text-primary">
+          <Text textStyle="bodyM" color="text-primary" truncate title={collection.symbol}>
             {collection.symbol}
           </Text>
         </DetailRow>
@@ -151,7 +154,7 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
         <SectionCard title={t('Attributes')}>
           {metadata.attributes.map((attr, index) => (
             <DetailRow key={index} label={attr.traitType}>
-              <Text textStyle="bodyM" color="text-primary">
+              <Text textStyle="bodyM" color="text-primary" truncate title={String(attr.value)}>
                 {String(attr.value)}
               </Text>
             </DetailRow>
