@@ -51,7 +51,7 @@ export const TotalStakedChart = () => {
     <Card width="415px" height="274px">
       <Flex justify="space-between" align="center">
         <Heading as="h3" textStyle="bodyL">
-          {t('Total Staked')}
+          {t('Total Staked by Delegators')}
         </Heading>
 
         <ToggleGroup
@@ -103,7 +103,7 @@ const TotalStakedChartVisualization = memo(({ data }: { data: DataPoint[] }) => 
           </Flex>
 
           <Flex alignItems="center" gap={2}>
-            <Text textStyle="bodyMSemibold">{t('Total Staked')}:</Text>
+            <Text textStyle="bodyMSemibold">{t('Total Staked by Delegators')}:</Text>
             <Text textStyle="bodyM">{formattedVetAmount} VET</Text>
           </Flex>
         </Stack>

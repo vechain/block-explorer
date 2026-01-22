@@ -326,7 +326,7 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
                 {t('Total staked')}
               </Text>
               <HStack gap={2}>
-                <Image src="/tokens/vet.svg" alt="VET" width={24} height={24} />
+                <Image src="/tokens/VET.svg" alt="VET" width={24} height={24} />
                 <Text textStyle="displayXs" color="text-primary" fontWeight="bold">
                   {abbreviateAmount(validator.vetStaked)}
                 </Text>

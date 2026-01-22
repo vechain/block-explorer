@@ -39,7 +39,6 @@ export default async function RootLayout({
         <Providers locale={locale}>
           <VStack
             as="main"
-            h="100vh"
             bgImage={{
               base: "url('/bg/Mobile.webp')",
               md: "url('/bg/Desktop.webp')",
@@ -47,9 +46,7 @@ export default async function RootLayout({
             color="text-primary"
             bgSize="100%"
             bgRepeat="no-repeat"
-            // TODO: Update background color with theme once implemented
             backgroundColor="#0B0C10"
-            overflowY="auto"
             overflowX="hidden"
             justifyContent="space-between"
           >
