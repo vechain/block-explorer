@@ -112,7 +112,7 @@ const searchHandlers = {
         transactionId: parsedHex,
       })
       if (transaction) {
-        return { redirectTo: `/transaction/${transaction.id}` }
+        return { redirectTo: `/transactions/${transaction.id}` }
       }
       // If transaction is null/undefined, fall through to block lookup
     } catch {

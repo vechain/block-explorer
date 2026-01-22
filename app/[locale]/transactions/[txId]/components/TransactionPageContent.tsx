@@ -42,7 +42,7 @@ export const TransactionPageContent = ({
   }
 
   const handleViewChange = (newView: TransactionDetailsView) => {
-    router.replace(`/transaction/${transaction.id}?view=${newView}`, { scroll: false })
+    router.replace(`/transactions/${transaction.id}?view=${newView}`, { scroll: false })
   }
 
   if (receipt === undefined) {
@@ -111,7 +111,7 @@ const TransactionDetails = ({
               icon: <Image src="/icons/clause.svg" alt="Clauses" />,
               title: t('Total Clauses'),
               children: (
-                <BaseLink href={`/transaction/${transaction.id}?view=clauses`}>{transaction.clauses.length}</BaseLink>
+                <BaseLink href={`/transactions/${transaction.id}?view=clauses`}>{transaction.clauses.length}</BaseLink>
               ),
             },
             {

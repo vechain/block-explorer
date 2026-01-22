@@ -4,13 +4,13 @@ import { getLocalePath } from './utils'
 
 describe('getLocalePath', () => {
   it('should replace existing locale in path', () => {
-    expect(getLocalePath(Locale.FR, '/en/transaction/0x123')).toBe('/fr/transaction/0x123')
+    expect(getLocalePath(Locale.FR, '/en/transactions/0x123')).toBe('/fr/transactions/0x123')
     expect(getLocalePath(Locale.ES, '/en/block/123')).toBe('/es/block/123')
     expect(getLocalePath(Locale.DE, '/fr/address/0x456')).toBe('/de/address/0x456')
   })
 
   it('should insert locale when path has no locale prefix', () => {
-    expect(getLocalePath(Locale.FR, '/transaction/0x123')).toBe('/fr/transaction/0x123')
+    expect(getLocalePath(Locale.FR, '/transactions/0x123')).toBe('/fr/transactions/0x123')
     expect(getLocalePath(Locale.ES, '/block/123')).toBe('/es/block/123')
     expect(getLocalePath(Locale.DE, '/address/0x456')).toBe('/de/address/0x456')
   })
@@ -49,9 +49,9 @@ describe('getLocalePath', () => {
 
     locales.forEach(locale => {
       // With existing locale
-      expect(getLocalePath(locale, '/en/transaction/0x123')).toBe(`/${locale}/transaction/0x123`)
+      expect(getLocalePath(locale, '/en/transactions/0x123')).toBe(`/${locale}/transactions/0x123`)
       // Without locale
-      expect(getLocalePath(locale, '/transaction/0x123')).toBe(`/${locale}/transaction/0x123`)
+      expect(getLocalePath(locale, '/transactions/0x123')).toBe(`/${locale}/transactions/0x123`)
     })
   })
 })

@@ -142,7 +142,7 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
             <BaseLink href={`/block/${mintEvent.blockId}`}>#{formatNumber(mintEvent.blockNumber)}</BaseLink>
           </DetailRow>
           <DetailRow label={t('Transaction ID')}>
-            <BaseLink href={`/transaction/${mintEvent.txId}`}>{truncateHex(mintEvent.txId)}</BaseLink>
+            <BaseLink href={`/transactions/${mintEvent.txId}`}>{truncateHex(mintEvent.txId)}</BaseLink>
           </DetailRow>
           <DetailRow label={t('Minted by')}>
             <AddressLink address={mintEvent.to} truncate />

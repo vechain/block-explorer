@@ -16,10 +16,10 @@ export default async function TransactionPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ transactionId: TransactionId }>
+  params: Promise<{ txId: TransactionId }>
   searchParams: Promise<{ network: NetworkName | undefined; view: string | undefined }>
 }) {
-  const { transactionId } = await params
+  const { txId: transactionId } = await params
   const { view } = await searchParams
 
   if (!transactionId || !transactionIdSchema.safeParse(transactionId).success) {
