@@ -5,6 +5,8 @@ import { AgeText } from '@/components/ui/AgeText'
 import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import { type Column, DataTable, type TableRow } from '@/components/ui/Table'
 import { TxTypeBadge } from '@/components/ui/TxTypeBadge'
+import { TxStatusIcon } from '@/components/TxStatus'
+import { TransactionStatus } from '@/lib/types'
 import type { AddressString, ExpandedBlock, HexString, TransactionType } from '@/lib/schemas'
 
 type TransactionWithBlockInfo = ExpandedBlock['transactions'][number] & {
@@ -18,6 +20,7 @@ interface ActivityTransactionRow extends TableRow {
   origin: AddressString
   type: TransactionType
   clausesCount: number
+  status: TransactionStatus
 }
 
 export const ActivityTransactionsTable = ({ transactions }: { transactions: TransactionWithBlockInfo[] }) => {
@@ -41,6 +44,7 @@ export const ActivityTransactionsTable = ({ transactions }: { transactions: Tran
       label: t('Origin'),
       Cell: ({ row }) => <CopyableAddressLink truncate address={row.origin} />,
     },
+    { key: 'status', label: t('Status'), Cell: ({ row }) => <TxStatusIcon status={row.status} /> },
   ]
 
   const rows: ActivityTransactionRow[] = transactions.map(tx => ({
@@ -49,6 +53,7 @@ export const ActivityTransactionsTable = ({ transactions }: { transactions: Tran
     origin: tx.origin,
     type: tx.type,
     clausesCount: tx.clauses.length,
+    status: tx.reverted ? TransactionStatus.REVERTED : TransactionStatus.SUCCESS,
   }))
 
   return <DataTable columns={columns} rows={rows} />
