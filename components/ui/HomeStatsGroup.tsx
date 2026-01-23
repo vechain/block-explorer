@@ -15,10 +15,13 @@ import {
 } from '@/services/veworld-indexer/hooks'
 import { useFormatNumber } from '@/hooks/useFormatting'
 import { DataCardGroup, type DataCardGroupItem } from './DataCardGroup'
+import { BaseLink } from './Links'
 
 const SCALING_FACTOR = 1200
 const BASE_ISSUANCE = 64
 const ISSUANCE_COEFFICIENT = SCALING_FACTOR * BASE_ISSUANCE
+
+const STARGATE_LINK = 'https://app.stargate.vechain.org/'
 
 export const HomeStatsGroup = () => {
   const { t } = useTranslation()
@@ -96,7 +99,10 @@ export const HomeStatsGroup = () => {
           <Skeleton height="24px" width="50px" />
         ) : (
           <Text textStyle={{ base: 'display2Xs', md: 'displayS' }} color="text-primary">
-            {formatNumber(validators)}
+            <BaseLink href={STARGATE_LINK} target="_blank">
+              {' '}
+              {formatNumber(validators)}{' '}
+            </BaseLink>
           </Text>
         ),
     },
@@ -106,7 +112,10 @@ export const HomeStatsGroup = () => {
         <Skeleton height="24px" width="90px" />
       ) : (
         <Text textStyle={{ base: 'display2Xs', md: 'displayS' }} color="text-primary">
-          {formatNumber(totalTvl, compact)} VET
+          <BaseLink href={STARGATE_LINK} target="_blank">
+            {' '}
+            {formatNumber(totalTvl, compact)} VET{' '}
+          </BaseLink>
         </Text>
       ),
     },
