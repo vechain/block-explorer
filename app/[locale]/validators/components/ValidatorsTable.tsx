@@ -29,7 +29,6 @@ import { truncateHex } from '@/lib/utils/truncateHex'
 enum ValidatorSortKey {
   STAKE = 'stake',
   APY = 'apy',
-  DELEGATIONS = 'delegations',
   RELIABILITY = 'reliability',
 }
 
@@ -145,9 +144,6 @@ export const ValidatorsTable = ({ validators, isPending }: ValidatorsTableProps)
         case ValidatorSortKey.APY:
           compareValue = a.delegatorApy - b.delegatorApy
           break
-        case ValidatorSortKey.DELEGATIONS:
-          compareValue = a.activeDelegations - b.activeDelegations
-          break
         case ValidatorSortKey.RELIABILITY:
           compareValue = a.reliability - b.reliability
           break
@@ -181,7 +177,6 @@ export const ValidatorsTable = ({ validators, isPending }: ValidatorsTableProps)
     { key: 'validator', label: t('Validator'), sortable: false },
     { key: 'stake', label: t('VET Staked'), sortKey: ValidatorSortKey.STAKE },
     { key: 'apy', label: t('Avg. Delegator APY'), sortKey: ValidatorSortKey.APY },
-    { key: 'delegations', label: t('Delegations'), sortKey: ValidatorSortKey.DELEGATIONS },
     { key: 'reliability', label: t('Reliability'), sortKey: ValidatorSortKey.RELIABILITY },
     { key: 'status', label: t('Status'), sortable: false },
   ]
@@ -255,7 +250,7 @@ export const ValidatorsTable = ({ validators, isPending }: ValidatorsTableProps)
       {/* Desktop Table */}
       <Box overflowX="auto" hideBelow="md">
         <Grid
-          templateColumns="2fr 1fr 1fr 1fr 1fr 100px"
+          templateColumns="2fr 1fr 1fr 1fr 100px"
           textStyle="bodyM"
           role="table"
           aria-rowcount={paginatedValidators.length + 1}
@@ -367,24 +362,13 @@ export const ValidatorsTable = ({ validators, isPending }: ValidatorsTableProps)
                   </VStack>
                 </Box>
 
-                {/* Delegations */}
+                {/* Reliability */}
                 <Box
                   p={4}
                   role="cell"
                   textAlign="center"
                   {...getCellBorders(rowIndex, 3, totalCols)}
                   {...getCellBorderRadius(rowIndex, 3, totalRows, totalCols)}
-                >
-                  <Text color="text-primary">{isActive ? validator.activeDelegations : '-'}</Text>
-                </Box>
-
-                {/* Reliability */}
-                <Box
-                  p={4}
-                  role="cell"
-                  textAlign="center"
-                  {...getCellBorders(rowIndex, 4, totalCols)}
-                  {...getCellBorderRadius(rowIndex, 4, totalRows, totalCols)}
                 >
                   <Text color="text-primary">{isActive ? `${validator.reliability.toFixed(0)}%` : '-'}</Text>
                 </Box>
@@ -394,8 +378,8 @@ export const ValidatorsTable = ({ validators, isPending }: ValidatorsTableProps)
                   p={4}
                   role="cell"
                   textAlign="center"
-                  {...getCellBorders(rowIndex, 5, totalCols)}
-                  {...getCellBorderRadius(rowIndex, 5, totalRows, totalCols)}
+                  {...getCellBorders(rowIndex, 4, totalCols)}
+                  {...getCellBorderRadius(rowIndex, 4, totalRows, totalCols)}
                 >
                   <Badge bg={statusBadge.bg} color={statusBadge.color} px={2} py={0.5} borderRadius="md" fontSize="xs">
                     {t(statusBadge.labelKey)}
@@ -474,14 +458,6 @@ export const ValidatorsTable = ({ validators, isPending }: ValidatorsTableProps)
                       </Text>
                       <Text textStyle="bodyM" color="text-primary">
                         {isActive ? `${abbreviateAmount(validator.delegatorApy)}%` : '-'}
-                      </Text>
-                    </VStack>
-                    <VStack align="start" gap={0} bg="bg-alt-primary" p={2} borderRadius="md">
-                      <Text textStyle="bodyS" color="text-secondary">
-                        {t('Delegations')}
-                      </Text>
-                      <Text textStyle="bodyM" color="text-primary">
-                        {isActive ? validator.activeDelegations : '-'}
                       </Text>
                     </VStack>
                     <VStack align="start" gap={0} bg="bg-alt-primary" p={2} borderRadius="md">
