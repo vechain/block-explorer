@@ -278,5 +278,8 @@
   "of": "の",
   "raw": "生データ",
   "success": "成功",
+  "Active Stake": "Active Stake",
+  "Total Value Locked": "Total Value Locked",
+  "VTHO Issuance": "VTHO Issuance",
   "v{{version}}": "v{{version}}"
 }

@@ -3,7 +3,7 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 
 // Force dynamic rendering - ensures SSR data prefetching works in production
 export const dynamic = 'force-dynamic'
-import { GeneralInformationCard } from '@/components/ui/GeneralInformationCard'
+import { HomeStatsGroup } from '@/components/ui/HomeStatsGroup'
 import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
 
@@ -19,10 +19,12 @@ import { NFTTransfersSection } from './components/NFTTransfersSection'
 import { MarketCapChart } from './components/MarketCapChart'
 import { tokenDailyPricesQueryOptions } from '@/hooks/useTokenDailyPrices'
 import { marketCapQueryOptions, circulatingSupplyQueryOptions, MarketCapRange } from '@/hooks/useMarketCapData'
+import { totalVetDelegatedQueryOptions } from '@/services/veworld-indexer/total-vet-delegated'
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
 import { AccountTimeFrame, accountTotalsQueryOptions } from '@/services/veworld-indexer/account-totals'
 import {
   ALL_VALIDATORS_COUNT_QUERY_KEY,
+  allValidatorsQueryOptions,
   getAllValidatorsCount,
   ValidatorStatus,
 } from '@/services/veworld-indexer/validators'
@@ -42,7 +44,9 @@ export default async function HomePage({
     queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', 'usd' as Currency)),
     queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', 'usd' as Currency)),
     queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
+    queryClient.prefetchQuery(totalVetDelegatedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(accountTotalsQueryOptions(activeNetworkName, AccountTimeFrame.ALL)),
+    queryClient.prefetchQuery(allValidatorsQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery({
       queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.ACTIVE],
       queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.ACTIVE),
@@ -62,7 +66,12 @@ export default async function HomePage({
     'tokenDailyPrices:vethor-token',
     'tokenDailyPrices:vebetterdao',
     'totalVetStaked',
+    'totalVetDelegated',
+    'totalVetStakedHistoric:DAY',
+    'totalVetStakedHistoric:MONTH',
+    'totalVetStakedHistoric:YEAR',
     'accountTotals',
+    'allValidators',
     'validatorsCount:ACTIVE',
     'validatorsCount:EXITING',
     'marketCap',
@@ -90,9 +99,9 @@ export default async function HomePage({
       <VStack gap={8} alignItems="stretch">
         <VStack gap={{ base: 8, md: 4 }} alignItems="stretch">
           <PriceCards />
-          <Flex gap={{ base: 8, md: 4 }} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+          <Flex gap={{ base: 8, md: 4 }} flexWrap={{ base: 'wrap', lg: 'nowrap' }}>
             <MarketCapChart />
-            <GeneralInformationCard />
+            <HomeStatsGroup />
           </Flex>
         </VStack>
         <BlockUsage />

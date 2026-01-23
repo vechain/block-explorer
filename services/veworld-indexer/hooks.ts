@@ -19,10 +19,16 @@ import type {
   IndexerGetTransactionsParams,
 } from './schemas'
 import { totalVetStakedQueryOptions } from './total-vet-staked'
+import { totalVetDelegatedQueryOptions } from './total-vet-delegated'
 import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
 import { contractTransactionsQueryOptions } from './transactions-contract'
-import { ALL_VALIDATORS_COUNT_QUERY_KEY, getAllValidatorsCount, ValidatorStatus } from './validators'
+import {
+  ALL_VALIDATORS_COUNT_QUERY_KEY,
+  allValidatorsQueryOptions,
+  getAllValidatorsCount,
+  ValidatorStatus,
+} from './validators'
 import {
   validatorDetailsQueryOptions,
   validatorDelegationsCountQueryOptions,
@@ -38,6 +44,11 @@ import { validatorMetadataQueryOptions } from './validator-metadata'
 export const useTotalVetStaked = () => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(totalVetStakedQueryOptions(activeNetwork.name))
+}
+
+export const useTotalVetDelegated = () => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(totalVetDelegatedQueryOptions(activeNetwork.name))
 }
 
 export const useTotalVthoClaimed = (address: string | undefined) => {
@@ -138,6 +149,11 @@ export const useValidatorsCount = (status?: ValidatorStatus) => {
     queryFn: () => getAllValidatorsCount(activeNetwork.name, status),
     refetchInterval: 60 * 1000, // Refetch every 60 seconds
   })
+}
+
+export const useValidators = (status?: ValidatorStatus) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(allValidatorsQueryOptions(activeNetwork.name, status))
 }
 
 export { ValidatorStatus }

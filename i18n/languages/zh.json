@@ -278,5 +278,8 @@
   "of": "的",
   "raw": "原始",
   "success": "成功",
+  "Active Stake": "Active Stake",
+  "Total Value Locked": "Total Value Locked",
+  "VTHO Issuance": "VTHO Issuance",
   "v{{version}}": "v{{version}}"
 }

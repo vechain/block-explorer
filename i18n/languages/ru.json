@@ -278,5 +278,8 @@
   "of": "из",
   "raw": "сырой",
   "success": "успешно",
+  "Active Stake": "Active Stake",
+  "Total Value Locked": "Total Value Locked",
+  "VTHO Issuance": "VTHO Issuance",
   "v{{version}}": "v{{version}}"
 }
