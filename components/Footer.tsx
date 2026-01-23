@@ -1,6 +1,7 @@
 'use client'
 
-import { Box, Container, Heading, Image, Link, VStack, Text, HStack, Flex } from '@chakra-ui/react'
+import { Box, Container, Heading, Link, VStack, Text, HStack, Flex } from '@chakra-ui/react'
+import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
 import packageJson from '@/package.json'
 import { Logo } from './Logo'
@@ -18,7 +19,13 @@ export const Footer = () => {
   }
   return (
     <VStack gap={0} mt={{ base: -10, md: -40 }}>
-      <Image src={'/footer-image.webp'} alt="footer-image" />
+      <Image
+        src={'/footer-image.webp'}
+        alt="footer-image"
+        width={1920}
+        height={400}
+        style={{ width: '100%', height: 'auto' }}
+      />
       <Box bg="#0B0C10" pt={{ base: 20, md: 20 }} pb={{ base: 36, md: 20 }} width="100%">
         <Container maxW="container.lg">
           <Flex

@@ -1,5 +1,6 @@
 import { Flex, VStack } from '@chakra-ui/react'
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
+import { Suspense } from 'react'
 
 // Force dynamic rendering - ensures SSR data prefetching works in production
 export const dynamic = 'force-dynamic'
@@ -9,16 +10,13 @@ import { getQueryClient } from '@/lib/query-client/query-client'
 
 import { parseNetworkFromParams } from '@/lib/utils/network'
 import { logPrefetchFailures } from '@/lib/utils/prefetch'
-import { bestBlockCompressedQueryOptions, blockExpandedQueryOptions } from '@/services/thor/block'
-import type { CompressedBlock } from '@/lib/schemas'
+import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { ActivitySection } from './components/ActivitySection'
 import { BlockUsage } from './components/BlockUsage/BlockUsage'
 import { PriceCards } from './components/PriceCards'
 import { TokenTransfersSection } from './components/TokenTransfersSection'
 import { NFTTransfersSection } from './components/NFTTransfersSection'
 import { MarketCapChart } from './components/MarketCapChart'
-import { tokenDailyPricesQueryOptions } from '@/hooks/useTokenDailyPrices'
-import { marketCapQueryOptions, circulatingSupplyQueryOptions, MarketCapRange } from '@/hooks/useMarketCapData'
 import { totalVetDelegatedQueryOptions } from '@/services/veworld-indexer/total-vet-delegated'
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
 import { AccountTimeFrame, accountTotalsQueryOptions } from '@/services/veworld-indexer/account-totals'
@@ -28,7 +26,7 @@ import {
   getAllValidatorsCount,
   ValidatorStatus,
 } from '@/services/veworld-indexer/validators'
-import { Currency } from '@/lib/stores/settings'
+import { TableSkeleton } from '@/components/ui/Table'
 
 export default async function HomePage({
   searchParams,
@@ -38,11 +36,10 @@ export default async function HomePage({
   const activeNetworkName = await parseNetworkFromParams(searchParams)
 
   const queryClient = getQueryClient()
+
+  // Prefetch only critical above-the-fold data
   const prefetchResults = await Promise.allSettled([
     queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vechain', 'usd' as Currency)),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', 'usd' as Currency)),
-    queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', 'usd' as Currency)),
     queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(totalVetDelegatedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(accountTotalsQueryOptions(activeNetworkName, AccountTimeFrame.ALL)),
@@ -55,60 +52,44 @@ export default async function HomePage({
       queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.EXITING],
       queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.EXITING),
     }),
-    // Market cap prefetching
-    queryClient.prefetchQuery(marketCapQueryOptions('vechain', Currency.USD, MarketCapRange.DAY)),
-    queryClient.prefetchQuery(circulatingSupplyQueryOptions('vechain')),
   ])
 
   logPrefetchFailures(prefetchResults, [
     'bestBlockCompressed',
-    'tokenDailyPrices:vechain',
-    'tokenDailyPrices:vethor-token',
-    'tokenDailyPrices:vebetterdao',
     'totalVetStaked',
-    'totalVetDelegated',
-    'totalVetStakedHistoric:DAY',
-    'totalVetStakedHistoric:MONTH',
-    'totalVetStakedHistoric:YEAR',
     'accountTotals',
     'allValidators',
     'validatorsCount:ACTIVE',
     'validatorsCount:EXITING',
-    'marketCap',
-    'circulatingSupply',
   ])
-
-  // Prefetch latest 5 expanded blocks for ActivitySection
-  const bestBlock = queryClient.getQueryData<CompressedBlock>(
-    bestBlockCompressedQueryOptions(activeNetworkName).queryKey,
-  )
-  if (bestBlock?.number) {
-    const BLOCKS_TO_DISPLAY = 5
-    const blockRevisions = Array.from({ length: BLOCKS_TO_DISPLAY }, (_, i) => bestBlock.number - i).filter(r => r > 0)
-    const blockResults = await Promise.allSettled(
-      blockRevisions.map(revision => queryClient.prefetchQuery(blockExpandedQueryOptions(activeNetworkName, revision))),
-    )
-    logPrefetchFailures(
-      blockResults,
-      blockRevisions.map(r => `blockExpanded:${r}`),
-    )
-  }
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <VStack gap={8} alignItems="stretch">
         <VStack gap={{ base: 8, md: 4 }} alignItems="stretch">
           <PriceCards />
-          <Flex gap={{ base: 8, md: 4 }} flexWrap={{ base: 'wrap', lg: 'nowrap' }}>
-            <MarketCapChart />
-            <HomeStatsGroup />
+          <Flex gap={{ base: 8, md: 4 }} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+            <Suspense fallback={<TableSkeleton />}>
+              <MarketCapChart />
+            </Suspense>
+            <Suspense fallback={<TableSkeleton />}>
+              <HomeStatsGroup />
+            </Suspense>
           </Flex>
         </VStack>
-        <BlockUsage />
+        <Suspense fallback={<TableSkeleton />}>
+          <BlockUsage />
+        </Suspense>
 
-        <ActivitySection />
-        <TokenTransfersSection />
-        <NFTTransfersSection />
+        <Suspense fallback={<TableSkeleton />}>
+          <ActivitySection />
+        </Suspense>
+        <Suspense fallback={<TableSkeleton />}>
+          <TokenTransfersSection />
+        </Suspense>
+        <Suspense fallback={<TableSkeleton />}>
+          <NFTTransfersSection />
+        </Suspense>
       </VStack>
     </HydrationBoundary>
   )

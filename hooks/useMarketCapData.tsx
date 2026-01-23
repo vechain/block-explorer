@@ -21,7 +21,7 @@ type MarketCapDataPoint = {
 const MARKET_CAP_QUERY_KEY = 'marketCapData'
 const CIRCULATING_SUPPLY_QUERY_KEY = 'circulatingSupply'
 
-export const marketCapQueryOptions = (token: MarketCapToken, currency: Currency, days: MarketCapRange) => ({
+const marketCapQueryOptions = (token: MarketCapToken, currency: Currency, days: MarketCapRange) => ({
   queryKey: [MARKET_CAP_QUERY_KEY, token, currency, days],
   queryFn: () => getMarketCapHistory(token, currency, days),
   staleTime: 1000 * 60 * 2,
@@ -29,7 +29,7 @@ export const marketCapQueryOptions = (token: MarketCapToken, currency: Currency,
   placeholderData: keepPreviousData,
 })
 
-export const circulatingSupplyQueryOptions = (token: MarketCapToken) => ({
+const circulatingSupplyQueryOptions = (token: MarketCapToken) => ({
   queryKey: [CIRCULATING_SUPPLY_QUERY_KEY, token],
   queryFn: () => getCirculatingSupply(token),
   staleTime: 1000 * 60 * 5,
