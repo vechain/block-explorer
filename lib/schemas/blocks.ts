@@ -93,7 +93,6 @@ const blockUsageDataSchema = z.object({
 export const blockUsageResponseSchema = z.array(blockUsageDataSchema)
 
 export type ExpandedBlock = z.infer<typeof blockExpandedSchema>
-export type CompressedBlock = z.infer<typeof blockCompressedSchema>
 export type BlockRevision = z.infer<typeof blockRevisionSchema>
 export type BlockUsageData = z.infer<typeof blockUsageDataSchema>
 export type BlockUsageResponse = z.infer<typeof blockUsageResponseSchema>
