@@ -16,15 +16,10 @@ import { BlockUsage } from './components/BlockUsage/BlockUsage'
 import { PriceCards } from './components/PriceCards'
 import { TokenTransfersSection } from './components/TokenTransfersSection'
 import { NFTTransfersSection } from './components/NFTTransfersSection'
-import { TotalStakedChart } from './components/TotalStakedChart'
 import { MarketCapChart } from './components/MarketCapChart'
 import { tokenDailyPricesQueryOptions } from '@/hooks/useTokenDailyPrices'
 import { marketCapQueryOptions, circulatingSupplyQueryOptions, MarketCapRange } from '@/hooks/useMarketCapData'
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
-import {
-  totalVetStakedHistoricQueryOptions,
-  TotalVetStakedRange,
-} from '@/services/veworld-indexer/total-vet-staked-historic'
 import { AccountTimeFrame, accountTotalsQueryOptions } from '@/services/veworld-indexer/account-totals'
 import {
   ALL_VALIDATORS_COUNT_QUERY_KEY,
@@ -47,9 +42,6 @@ export default async function HomePage({
     queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vethor-token', 'usd' as Currency)),
     queryClient.prefetchQuery(tokenDailyPricesQueryOptions('vebetterdao', 'usd' as Currency)),
     queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
-    queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.DAY)),
-    queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.MONTH)),
-    queryClient.prefetchQuery(totalVetStakedHistoricQueryOptions(activeNetworkName, TotalVetStakedRange.YEAR)),
     queryClient.prefetchQuery(accountTotalsQueryOptions(activeNetworkName, AccountTimeFrame.ALL)),
     queryClient.prefetchQuery({
       queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.ACTIVE],
@@ -70,9 +62,6 @@ export default async function HomePage({
     'tokenDailyPrices:vethor-token',
     'tokenDailyPrices:vebetterdao',
     'totalVetStaked',
-    'totalVetStakedHistoric:DAY',
-    'totalVetStakedHistoric:MONTH',
-    'totalVetStakedHistoric:YEAR',
     'accountTotals',
     'validatorsCount:ACTIVE',
     'validatorsCount:EXITING',
@@ -103,7 +92,6 @@ export default async function HomePage({
           <PriceCards />
           <Flex gap={{ base: 8, md: 4 }} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
             <MarketCapChart />
-            <TotalStakedChart />
             <GeneralInformationCard />
           </Flex>
         </VStack>
