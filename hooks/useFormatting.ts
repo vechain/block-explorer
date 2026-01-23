@@ -4,7 +4,7 @@ import { useCallback } from 'react'
 import type { HexString } from '@/lib/schemas'
 import { useLocale } from './useLocale'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { formatAbbreviated, formatAmount, formatCurrency, formatNumber } from '@/lib/utils/units'
+import { formatAmount, formatCurrency, formatNumber } from '@/lib/utils/units'
 import { formatDateFromTimestamp } from '@/lib/utils/date'
 
 /**
@@ -72,16 +72,16 @@ export const useFormatCurrency = () => {
  * formatAbbreviated(BigInt('500000000000000000'))  // "500M"
  * ```
  */
-export const useFormatAbbreviated = () => {
-  const locale = useLocale()
+// const useFormatAbbreviated = () => {
+//   const locale = useLocale()
 
-  return useCallback(
-    (amount: bigint): string => {
-      return formatAbbreviated(amount, locale)
-    },
-    [locale],
-  )
-}
+//   return useCallback(
+//     (amount: bigint): string => {
+//       return formatAbbreviated(amount, locale)
+//     },
+//     [locale],
+//   )
+// }
 
 /**
  * Hook that formats token amounts with proper decimal handling and locale-specific formatting.

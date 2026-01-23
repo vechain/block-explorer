@@ -214,7 +214,6 @@
   "Total Holders": "保有者合計",
   "Total NFTs": "NFT合計",
   "Total Staked": "合計staking",
-  "Total Staked by Delegators": "委任者による総staking",
   "Total Transactions": "総取引数",
   "Total USD": "合計 USD",
   "Total VET Received": "受取済みVET総額",
@@ -279,5 +278,8 @@
   "of": "の",
   "raw": "生データ",
   "success": "成功",
+  "Active Stake": "Active Stake",
+  "Total Value Locked": "Total Value Locked",
+  "VTHO Issuance": "VTHO Issuance",
   "v{{version}}": "v{{version}}"
 }

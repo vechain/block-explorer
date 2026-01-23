@@ -214,7 +214,6 @@
   "Total Holders": "Всего держателей",
   "Total NFTs": "Всего NFT",
   "Total Staked": "Всего в staking",
-  "Total Staked by Delegators": "Всего staking делегаторами",
   "Total Transactions": "Всего транзакций",
   "Total USD": "Всего USD",
   "Total VET Received": "Всего получено VET",
@@ -279,5 +278,8 @@
   "of": "из",
   "raw": "сырой",
   "success": "успешно",
+  "Active Stake": "Active Stake",
+  "Total Value Locked": "Total Value Locked",
+  "VTHO Issuance": "VTHO Issuance",
   "v{{version}}": "v{{version}}"
 }

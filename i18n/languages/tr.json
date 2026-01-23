@@ -214,7 +214,6 @@
   "Total Holders": "Toplam Sahipler",
   "Total NFTs": "Toplam NFT",
   "Total Staked": "Toplam Stake",
-  "Total Staked by Delegators": "Delegatörler Tarafından Stake Edilen Toplam",
   "Total Transactions": "Toplam İşlem",
   "Total USD": "Toplam USD",
   "Total VET Received": "Alınan Toplam VET",
@@ -279,5 +278,8 @@
   "of": " / ",
   "raw": "ham",
   "success": "başarılı",
+  "Active Stake": "Active Stake",
+  "Total Value Locked": "Total Value Locked",
+  "VTHO Issuance": "VTHO Issuance",
   "v{{version}}": "v{{version}}"
 }

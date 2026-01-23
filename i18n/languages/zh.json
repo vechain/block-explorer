@@ -214,7 +214,6 @@
   "Total Holders": "持有者总数",
   "Total NFTs": "NFT总数",
   "Total Staked": "总stake数量",
-  "Total Staked by Delegators": "代表者总stake数量",
   "Total Transactions": "总交易数",
   "Total USD": "总计美元",
   "Total VET Received": "收到的VET总额",
@@ -279,5 +278,8 @@
   "of": "的",
   "raw": "原始",
   "success": "成功",
+  "Active Stake": "Active Stake",
+  "Total Value Locked": "Total Value Locked",
+  "VTHO Issuance": "VTHO Issuance",
   "v{{version}}": "v{{version}}"
 }

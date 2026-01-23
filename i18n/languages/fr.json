@@ -214,7 +214,6 @@
   "Total Holders": "Nombre total de détenteurs",
   "Total NFTs": "Nombre total de NFTs",
   "Total Staked": "Total stake",
-  "Total Staked by Delegators": "Total staking par les délégateurs",
   "Total Transactions": "Total des transactions",
   "Total USD": "Total USD",
   "Total VET Received": "Total de VET reçus",
@@ -279,5 +278,8 @@
   "of": "de",
   "raw": "brut",
   "success": "succès",
+  "Active Stake": "Active Stake",
+  "Total Value Locked": "Total Value Locked",
+  "VTHO Issuance": "VTHO Issuance",
   "v{{version}}": "v{{version}}"
 }
