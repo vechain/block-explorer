@@ -7,6 +7,7 @@
   "Activity": "Активность",
   "Address": "Адрес",
   "Age": "Возраст",
+  "All Statuses": "Все статусы",
   "All Time": "За всё время",
   "Amount": "Сумма",
   "Attributes": "Атрибуты",
@@ -71,6 +72,7 @@
   "Decoded": "Декодировано",
   "Delegated": "Делегировано",
   "Delegated fee": "Делегированная комиссия",
+  "Delegations": "Делегации",
   "Deployment Tx ID": "Tx ID развертывания",
   "Description": "Описание",
   "Details": "Детали",
@@ -143,6 +145,7 @@
   "No tokens": "Токены отсутствуют",
   "No transactions": "Транзакции отсутствуют",
   "No transfers": "Трансферы отсутствуют",
+  "No validators found": "Валидаторы не найдены",
   "Not delegated": "Не делегировано",
   "Now": "Сейчас",
   "Oops! Something went wrong": "Ой! Что-то пошло не так",
@@ -169,6 +172,7 @@
   "Rows per page": "Строк на странице",
   "Search": "Search",
   "Search for blocks, transactions or accounts": "Поиск блоков, транзакций или аккаунтов",
+  "Search validator...": "Поиск валидатора...",
   "Select Currency": "Выбрать валюту",
   "Select Language": "Выберите язык",
   "Show": "Показать",
@@ -279,5 +283,6 @@
   "of": "из",
   "raw": "сырой",
   "success": "успешно",
-  "v{{version}}": "v{{version}}"
+  "v{{version}}": "v{{version}}",
+  "{{count}} validators": "{{count}} валидаторов"
 }

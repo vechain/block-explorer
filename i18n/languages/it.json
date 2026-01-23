@@ -7,6 +7,7 @@
   "Activity": "Attività",
   "Address": "Indirizzo",
   "Age": "Età",
+  "All Statuses": "Tutti gli stati",
   "All Time": "Tutto il tempo",
   "Amount": "Importo",
   "Attributes": "Attributi",
@@ -71,6 +72,7 @@
   "Decoded": "Decodificato",
   "Delegated": "Delegato",
   "Delegated fee": "Commissione delegata",
+  "Delegations": "Deleghe",
   "Deployment Tx ID": "ID Tx di Distribuzione",
   "Description": "Descrizione",
   "Details": "Dettagli",
@@ -143,6 +145,7 @@
   "No tokens": "Nessun token",
   "No transactions": "Nessuna transazione",
   "No transfers": "Nessun trasferimento",
+  "No validators found": "Nessun validatore trovato",
   "Not delegated": "Non delegato",
   "Now": "Adesso",
   "Oops! Something went wrong": "Ops! Qualcosa è andato storto",
@@ -169,6 +172,7 @@
   "Rows per page": "Righe per pagina",
   "Search": "Search",
   "Search for blocks, transactions or accounts": "Cerca blocchi, transazioni o account",
+  "Search validator...": "Cerca validatore...",
   "Select Currency": "Seleziona valuta",
   "Select Language": "Seleziona lingua",
   "Show": "Mostra",
@@ -279,5 +283,6 @@
   "of": "di",
   "raw": "grezzo",
   "success": "successo",
-  "v{{version}}": "v{{version}}"
+  "v{{version}}": "v{{version}}",
+  "{{count}} validators": "{{count}} validatori"
 }

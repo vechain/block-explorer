@@ -123,6 +123,14 @@ const NavigationMenu = () => {
                 zIndex={10}
                 minW="160px"
               >
+                <Link href={`/${currentLocale}/validators`} onClick={() => setIsMenuOpen(false)}>
+                  <Flex gap={2} alignItems="center" py={2}>
+                    <Text fontSize="body-m" whiteSpace="nowrap">
+                      {t('Validators')}
+                    </Text>
+                  </Flex>
+                </Link>
+                <Separator />
                 <Link href="https://inspector.vecha.in/" target="_blank" rel="noopener noreferrer">
                   <Flex gap={2} alignItems="center" py={2}>
                     <Text fontSize="body-m" whiteSpace="nowrap">

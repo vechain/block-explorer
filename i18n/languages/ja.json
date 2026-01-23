@@ -7,6 +7,7 @@
   "Activity": "アクティビティ",
   "Address": "アドレス",
   "Age": "経過時間",
+  "All Statuses": "すべてのステータス",
   "All Time": "全期間",
   "Amount": "金額",
   "Attributes": "属性",
@@ -71,6 +72,7 @@
   "Decoded": "デコード済み",
   "Delegated": "委任済み",
   "Delegated fee": "委任手数料",
+  "Delegations": "デリゲーション",
   "Deployment Tx ID": "デプロイメントTx ID",
   "Description": "説明",
   "Details": "詳細",
@@ -143,6 +145,7 @@
   "No tokens": "トークンなし",
   "No transactions": "トランザクションなし",
   "No transfers": "転送なし",
+  "No validators found": "バリデーターが見つかりません",
   "Not delegated": "未委任",
   "Now": "今",
   "Oops! Something went wrong": "おっと！問題が発生しました",
@@ -169,6 +172,7 @@
   "Rows per page": "ページごとの行数",
   "Search": "Search",
   "Search for blocks, transactions or accounts": "ブロック、トランザクション、またはアカウントを検索",
+  "Search validator...": "バリデーターを検索...",
   "Select Currency": "通貨を選択",
   "Select Language": "言語を選択",
   "Show": "表示",
@@ -279,5 +283,6 @@
   "of": "の",
   "raw": "生データ",
   "success": "成功",
-  "v{{version}}": "v{{version}}"
+  "v{{version}}": "v{{version}}",
+  "{{count}} validators": "{{count}} 件のバリデーター"
 }

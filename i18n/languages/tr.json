@@ -7,6 +7,7 @@
   "Activity": "Aktivite",
   "Address": "Adres",
   "Age": "Yaş",
+  "All Statuses": "Tüm Durumlar",
   "All Time": "Tüm Zamanlar",
   "Amount": "Miktar",
   "Attributes": "Öznitelikler",
@@ -71,6 +72,7 @@
   "Decoded": "Çözümlendi",
   "Delegated": "Delege Edilen",
   "Delegated fee": "Yetkilendirilmiş Ücret",
+  "Delegations": "Delege Edilenler",
   "Deployment Tx ID": "Yayınlama İşlem Kimliği",
   "Description": "Açıklama",
   "Details": "Detaylar",
@@ -143,6 +145,7 @@
   "No tokens": "Token yok",
   "No transactions": "İşlem yok",
   "No transfers": "Transfer yok",
+  "No validators found": "Doğrulayıcı bulunamadı",
   "Not delegated": "Delege Edilmedi",
   "Now": "Şimdi",
   "Oops! Something went wrong": "Bir şeyler yanlış gitti",
@@ -169,6 +172,7 @@
   "Rows per page": "Sayfa başına satır",
   "Search": "Search",
   "Search for blocks, transactions or accounts": "Blok, işlem veya hesap ara",
+  "Search validator...": "Doğrulayıcı ara...",
   "Select Currency": "Para Birimi Seç",
   "Select Language": "Dil Seç",
   "Show": "Göster",
@@ -279,5 +283,6 @@
   "of": " / ",
   "raw": "ham",
   "success": "başarılı",
-  "v{{version}}": "v{{version}}"
+  "v{{version}}": "v{{version}}",
+  "{{count}} validators": "{{count}} doğrulayıcı"
 }

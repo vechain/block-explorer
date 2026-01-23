@@ -7,6 +7,7 @@
   "Activity": "Activity",
   "Address": "Address",
   "Age": "Age",
+  "All Statuses": "All Statuses",
   "All Time": "All Time",
   "Amount": "Amount",
   "Attributes": "Attributes",
@@ -71,6 +72,7 @@
   "Decoded": "Decoded",
   "Delegated": "Delegated",
   "Delegated fee": "Delegated fee",
+  "Delegations": "Delegations",
   "Deployment Tx ID": "Deployment Tx ID",
   "Description": "Description",
   "Details": "Details",
@@ -143,6 +145,7 @@
   "No tokens": "No tokens",
   "No transactions": "No transactions",
   "No transfers": "No transfers",
+  "No validators found": "No validators found",
   "Not delegated": "Not delegated",
   "Now": "Now",
   "Oops! Something went wrong": "Oops! Something went wrong",
@@ -169,6 +172,7 @@
   "Rows per page": "Rows per page",
   "Search": "Search",
   "Search for blocks, transactions or accounts": "Search for blocks, transactions or accounts",
+  "Search validator...": "Search validator...",
   "Select Currency": "Select Currency",
   "Select Language": "Select Language",
   "Show": "Show",
@@ -279,5 +283,6 @@
   "of": "of",
   "raw": "raw",
   "success": "success",
-  "v{{version}}": "v{{version}}"
+  "v{{version}}": "v{{version}}",
+  "{{count}} validators": "{{count}} validators"
 }

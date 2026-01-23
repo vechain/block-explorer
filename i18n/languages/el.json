@@ -7,6 +7,7 @@
   "Activity": "Δραστηριότητα",
   "Address": "Διεύθυνση",
   "Age": "Ηλικία",
+  "All Statuses": "Όλες οι Καταστάσεις",
   "All Time": "Συνολικά",
   "Amount": "Ποσό",
   "Attributes": "Χαρακτηριστικά",
@@ -71,6 +72,7 @@
   "Decoded": "Αποκωδικοποιημένο",
   "Delegated": "Έχει μεταβιβαστεί",
   "Delegated fee": "Αντιπροσωπευτικό τέλος",
+  "Delegations": "Αναθέσεις",
   "Deployment Tx ID": "Κωδικός Συναλλαγής Ανάπτυξης",
   "Description": "Περιγραφή",
   "Details": "Λεπτομέρειες",
@@ -143,6 +145,7 @@
   "No tokens": "Δεν υπάρχουν tokens",
   "No transactions": "Δεν υπάρχουν συναλλαγές",
   "No transfers": "Δεν υπάρχουν μεταφορές",
+  "No validators found": "Δεν βρέθηκαν validators",
   "Not delegated": "Δεν έχει γίνει ανάθεση",
   "Now": "Τώρα",
   "Oops! Something went wrong": "Κάτι πήγε στραβά",
@@ -169,6 +172,7 @@
   "Rows per page": "Γραμμές ανά σελίδα",
   "Search": "Search",
   "Search for blocks, transactions or accounts": "Αναζήτηση για blocks, συναλλαγές ή λογαριασμούς",
+  "Search validator...": "Αναζήτηση validator...",
   "Select Currency": "Επιλέξτε Νόμισμα",
   "Select Language": "Επιλογή γλώσσας",
   "Show": "Εμφάνιση",
@@ -279,5 +283,6 @@
   "of": "από",
   "raw": "ακατέργαστο",
   "success": "επιτυχία",
-  "v{{version}}": "v{{version}}"
+  "v{{version}}": "v{{version}}",
+  "{{count}} validators": "{{count}} validators"
 }

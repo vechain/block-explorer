@@ -32,9 +32,22 @@ import {
   type ValidatorDetails,
   type ValidatorIndexerData,
   type ValidatorDelegationsCount,
+  type ValidatorMetadata,
   LevelName,
 } from './validator-details'
 import { validatorMetadataQueryOptions } from './validator-metadata'
+import {
+  validatorsListQueryOptions,
+  validatorsDelegationsCountQueryOptions,
+  validatorsMissedBlocksQueryOptions,
+  validatorsMetadataQueryOptions,
+  type ValidatorListItem,
+  type ValidatorDelegationsCount as ValidatorListDelegationsCount,
+  type ValidatorMissedBlocks,
+  type ValidatorForList,
+} from './validators-list'
+
+export { type ValidatorForList } from './validators-list'
 
 export const useTotalVetStaked = () => {
   const { activeNetwork } = useSettingsStore()
@@ -496,3 +509,82 @@ export const useValidatorDetails = (address: string | undefined) => {
 }
 
 export { type ValidatorDetails, LevelName } from './validator-details'
+
+export const useValidatorsList = () => {
+  const { activeNetwork } = useSettingsStore()
+
+  const results = useQueries({
+    queries: [
+      validatorsListQueryOptions(activeNetwork.name),
+      validatorsDelegationsCountQueryOptions(activeNetwork.name),
+      validatorsMissedBlocksQueryOptions(activeNetwork.name),
+      validatorsMetadataQueryOptions(activeNetwork.name),
+    ],
+  })
+
+  const [validatorsQuery, delegationsCountQuery, missedBlocksQuery, metadataQuery] = results
+
+  const validators = useMemo<ValidatorForList[]>(() => {
+    const validatorsData = validatorsQuery.data as ValidatorListItem[] | undefined
+    if (!validatorsData || validatorsData.length === 0) return []
+
+    const delegationsCounts = (delegationsCountQuery.data as ValidatorListDelegationsCount[] | undefined) ?? []
+    const missedBlocks = (missedBlocksQuery.data as ValidatorMissedBlocks[] | undefined) ?? []
+    const metadataList = (metadataQuery.data as ValidatorMetadata[] | undefined) ?? []
+
+    const metadataMap = new Map<string, ValidatorMetadata>()
+    for (const meta of metadataList) {
+      metadataMap.set(meta.address.toLowerCase(), meta)
+    }
+
+    const delegationsMap = new Map<string, ValidatorListDelegationsCount>()
+    for (const delegation of delegationsCounts) {
+      delegationsMap.set(delegation.validator.toLowerCase(), delegation)
+    }
+
+    const missedBlocksMap = new Map<string, number>()
+    for (const missed of missedBlocks) {
+      missedBlocksMap.set(missed.validator.toLowerCase(), missed.missedPercentage)
+    }
+
+    return validatorsData.map(validator => {
+      const addressLower = validator.id.toLowerCase()
+      const delegations = delegationsMap.get(addressLower)
+      const missedPercentage = missedBlocksMap.get(addressLower) ?? validator.percentageOffline
+      const metadata = metadataMap.get(addressLower)
+
+      return {
+        address: validator.id,
+        status: validator.status,
+        online: validator.online ?? false,
+        vetStaked: validator.vetStaked ?? 0,
+        validatorVetStaked: validator.validatorVetStaked ?? 0,
+        delegatorVetStaked: validator.delegatorVetStaked ?? 0,
+        delegatorApy: validator.avgDelegatorYield ?? 0,
+        nextCycleDelegatorApy: validator.nextCycleAvgDelegatorYield ?? 0,
+        validatorApy: validator.validatorYield ?? 0,
+        nextCycleValidatorApy: validator.nextCycleValidatorYield ?? 0,
+        nftYieldsNextCycle: validator.nftYieldsNextCycle ?? {},
+        reliability: 100 - missedPercentage,
+        percentageOffline: missedPercentage,
+        cyclePeriodLength: validator.cyclePeriodLength ?? 0,
+        startBlock: validator.startBlock ?? 0,
+        completedPeriods: validator.completedPeriods ?? 0,
+        activeDelegations: delegations?.active ?? 0,
+        queuedDelegations: delegations?.queued ?? 0,
+        exitingDelegations: delegations?.exiting ?? 0,
+        queuePosition: validator.queuePosition,
+        metadata,
+      }
+    })
+  }, [validatorsQuery.data, delegationsCountQuery.data, missedBlocksQuery.data, metadataQuery.data])
+
+  const isPending = validatorsQuery.isPending || metadataQuery.isPending
+  const isError = validatorsQuery.isError
+
+  return {
+    data: validators,
+    isPending,
+    isError,
+  }
+}

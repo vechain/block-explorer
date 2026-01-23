@@ -7,6 +7,7 @@
   "Activity": "活动",
   "Address": "地址",
   "Age": "区块龄",
+  "All Statuses": "所有状态",
   "All Time": "所有时间",
   "Amount": "数量",
   "Attributes": "属性",
@@ -71,6 +72,7 @@
   "Decoded": "解码后",
   "Delegated": "已委托",
   "Delegated fee": "委托费用",
+  "Delegations": "委托",
   "Deployment Tx ID": "部署交易 ID",
   "Description": "描述",
   "Details": "详情",
@@ -143,6 +145,7 @@
   "No tokens": "无代币",
   "No transactions": "无交易",
   "No transfers": "无转账",
+  "No validators found": "未找到验证人",
   "Not delegated": "未委托",
   "Now": "现在",
   "Oops! Something went wrong": "哎呀！出现了问题",
@@ -169,6 +172,7 @@
   "Rows per page": "每页行数",
   "Search": "Search",
   "Search for blocks, transactions or accounts": "搜索区块、交易或账户",
+  "Search validator...": "搜索验证人...",
   "Select Currency": "选择货币",
   "Select Language": "选择语言",
   "Show": "显示",
@@ -279,5 +283,6 @@
   "of": "的",
   "raw": "原始",
   "success": "成功",
-  "v{{version}}": "v{{version}}"
+  "v{{version}}": "v{{version}}",
+  "{{count}} validators": "{{count}} 个验证人"
 }
