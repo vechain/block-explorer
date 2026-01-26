@@ -11,8 +11,8 @@ enable_custom_domain: true
 image_tag: latest
 
 # App Runner instance configuration
-cpu: 512
-memory: 1024
+cpu: 1024
+memory: 2048
 port: 3000
 
 # Auto-scaling configuration
