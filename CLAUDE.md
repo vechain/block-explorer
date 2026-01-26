@@ -19,6 +19,7 @@ VeChain Block Explorer - A Next.js-based blockchain explorer for the VeChain net
 - **Formatting**: Prettier
 - **Internationalization**: i18next with react-i18next and next-i18n-router
 - **Package Manager**: pnpm (v9.15.4)
+- **Node.js**: v20.19.0 (see `.nvmrc`)
 
 ## Development Commands
 
@@ -65,7 +66,6 @@ The app uses Next.js App Router with internationalized routes:
    - `veworld-indexer/`: Indexed data for faster queries (transactions, transfers, NFTs)
      - Separate endpoints for mainnet/testnet
      - `hooks.ts`: React Query hooks for indexer API
-   - `coin-api/`: Price data for VET/VTHO
    - `b32.ts`: VeChain name service (VNS) lookups
 
 2. **State Management**
@@ -124,7 +124,7 @@ Required environment variables (see `.env`):
 - Configured via `i18n/config.ts` with next-i18n-router
 - Supported locales: EN, ES, FR, IT, JA, PT, RU, TR, DE, ZH, EL (default: EN)
 - Middleware handles locale detection and routing
-- Translations loaded dynamically per route
+- Translations loaded dynamically from `i18n/languages/*.json` (see `i18n/index.ts` and `i18n/provider.tsx`)
 
 ## Code Style
 
