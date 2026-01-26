@@ -401,7 +401,8 @@ const useBlockUsageChartData = (range: TimeRangeKey, date: Date, isLiveMode: boo
     const periodStart = rangeConfig.startOf?.(date)
     const periodEnd = rangeConfig.endOf?.(date)
 
-    startTimestamp = getUnixTime(periodStart)
+    const nowMinusRange = rangeConfig.sub?.(now, 1)
+    startTimestamp = Math.min(getUnixTime(periodStart), getUnixTime(nowMinusRange))
     endTimestamp = Math.min(getUnixTime(periodEnd), getUnixTime(now))
   }
 
