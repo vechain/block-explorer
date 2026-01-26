@@ -16,16 +16,22 @@ import {
 import { useFormatNumber } from '@/hooks/useFormatting'
 import { DataCardGroup, type DataCardGroupItem } from './DataCardGroup'
 import { BaseLink } from './Links'
+import { NetworkName } from '@/lib/constants/network'
+import { useSettingsStore } from '@/lib/stores/settings'
 
 const SCALING_FACTOR = 1200
 const BASE_ISSUANCE = 64
 const ISSUANCE_COEFFICIENT = SCALING_FACTOR * BASE_ISSUANCE
 
-const STARGATE_LINK = 'https://app.stargate.vechain.org/market'
-
 export const HomeStatsGroup = () => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
+
+  const { activeNetwork } = useSettingsStore()
+  const STARGATE_LINK =
+    activeNetwork.name === NetworkName.MAINNET
+      ? 'https://app.stargate.vechain.org/market'
+      : 'https://testnet.app.stargate.vechain.org/'
 
   // General Information logic
   const { data: accountTotalsData, isLoading: isLoadingAccounts } = useAccountTotals(AccountTimeFrame.ALL)
