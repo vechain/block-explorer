@@ -21,7 +21,7 @@ const SCALING_FACTOR = 1200
 const BASE_ISSUANCE = 64
 const ISSUANCE_COEFFICIENT = SCALING_FACTOR * BASE_ISSUANCE
 
-const STARGATE_LINK = 'https://app.stargate.vechain.org/'
+const STARGATE_LINK = 'https://app.stargate.vechain.org/market'
 
 export const HomeStatsGroup = () => {
   const { t } = useTranslation()
