@@ -1,7 +1,7 @@
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 
-// ISR: Cache page for 30 seconds, then revalidate in background
+// ISR: Cache page for 60 seconds, then revalidate in background
 // Account data changes less frequently than homepage stats
 export const revalidate = 60
 import { NetworkName } from '@/lib/constants/network'
