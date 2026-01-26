@@ -48,6 +48,18 @@ yarn-error.log*
 # CI/CD
 .github
 
+# Cursor IDE
+.cursor
+
+# Config files not needed in build
+.husky
+.prettierrc
+.prettierignore
+.eslintrc.json
+.eslintignore
+vitest.config.ts
+knip.config.ts
+
 # Terraform
 terraform
 *.tfstate
