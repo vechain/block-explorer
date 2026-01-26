@@ -1,3 +1,4 @@
+import '@/app/globals.css'
 import { Container, VStack } from '@chakra-ui/react'
 import type { Metadata } from 'next'
 import { Rubik } from 'next/font/google'
