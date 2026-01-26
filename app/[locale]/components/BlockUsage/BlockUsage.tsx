@@ -46,18 +46,15 @@ const getOrdinalSuffix = (day: number) => {
 
 export const BlockUsage = () => {
   const [selectedRange, setSelectedRange] = useState<TimeRangeKey>('hourly')
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date()) // User-selected specific date
+  const [_selectedDate, setSelectedDate] = useState<Date>(new Date()) // User-selected specific date
   const [isLiveMode, setIsLiveMode] = useState(true) // Live mode updates with new blocks
 
-  const { blocksDataPoints, canGoBack, canGoForward } = useBlockUsageChartData(selectedRange, selectedDate, isLiveMode)
+  const selectedDate = isLiveMode ? new Date() : _selectedDate
+  const { blocksDataPoints, canGoBack, canGoForward } = useBlockUsageChartData(selectedRange, selectedDate)
 
   const handleRangeChange = (newRange: TimeRangeKey) => {
     setSelectedRange(newRange)
-
-    // Exit live mode when changing from default hourly view
-    if (newRange !== 'hourly') {
-      setIsLiveMode(false)
-    }
+    setIsLiveMode(false)
   }
 
   const handleResetToNow = () => {
@@ -74,6 +71,7 @@ export const BlockUsage = () => {
   }
 
   const handleNavigateForward = () => {
+    setIsLiveMode(false)
     if (selectedDate) {
       // If we have a selected date, move it forward by one period using date-fns
       const rangeConfig = TIME_RANGES[selectedRange]
