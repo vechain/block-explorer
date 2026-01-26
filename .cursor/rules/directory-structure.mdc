@@ -8,7 +8,7 @@ VeChain Block Explorer frontend - Next.js 15 App Router project.
 
 ## Root Structure
 
-```
+```text
 block-explorer/
 ├── app/                    # Next.js App Router pages
 ├── components/             # Shared React components
@@ -29,7 +29,7 @@ block-explorer/
 
 Locale-prefixed routes under `app/[locale]/`:
 
-```
+```text
 app/
 ├── [locale]/
 │   ├── page.tsx                    # Homepage
@@ -50,7 +50,7 @@ app/
 
 ## Components (`components/`)
 
-```
+```text
 components/
 ├── ui/                 # Preferred UI primitives (use these)
 │   ├── Card.tsx
@@ -73,7 +73,7 @@ components/
 
 API clients for external data sources:
 
-```
+```text
 services/
 ├── thor/               # VeChain Thor node client
 │   ├── client.ts       # Base client setup
@@ -90,9 +90,6 @@ services/
 │   ├── transactions.ts
 │   ├── transfers.ts
 │   └── ...
-├── coin-api/           # Price data
-│   ├── hooks.ts
-│   └── price-list.ts
 ├── b32.ts              # B32 name service
 └── nft-metadata.ts     # NFT metadata fetching
 ```
@@ -101,7 +98,7 @@ services/
 
 Core utilities and infrastructure:
 
-```
+```text
 lib/
 ├── api/                # Fetch helpers
 ├── constants/          # Network configs, contract addresses
@@ -123,12 +120,12 @@ lib/
 
 ## i18n (`i18n/`)
 
-```
+```text
 i18n/
 ├── config.ts           # Supported locales
 ├── languages/          # Translation JSON files (en.json, etc.)
 ├── provider.tsx        # Client-side provider
-├── server.ts           # Server-side translations
+├── index.ts            # i18next initialization (async)
 └── utils.ts
 ```
 

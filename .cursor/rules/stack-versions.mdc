@@ -5,10 +5,12 @@ alwaysApply: true
 
 # Stack & Versions
 
+Source of truth for versions is `package.json` (and `pnpm-lock.yaml`). Keep this file aligned when upgrading dependencies.
+
 ## Core Framework
 
 | Package | Version | Notes |
-|---------|---------|-------|
+| ------- | ------- | ----- |
 | Next.js | 15.5.8 | App Router, Turbopack for builds |
 | React | 19.1.2 | Concurrent features, `use` hook available |
 | TypeScript | 5.9.2 | Strict mode enabled |
@@ -26,14 +28,13 @@ alwaysApply: true
 ### React 19 Best Practices
 
 - Use the `use` hook for reading promises/context in render
-- `ref` is now a regular prop—no need for `forwardRef` in most cases
 - Actions: `useActionState`, `useFormStatus`, `useOptimistic` for forms
 - Avoid legacy patterns (`defaultProps`, string refs)
 
 ## UI & Styling
 
 | Package | Version | Notes |
-|---------|---------|-------|
+| ------- | ------- | ----- |
 | Chakra UI | 3.26.0 | v3 with Ark UI primitives |
 | Emotion | 11.14.0 | CSS-in-JS for Chakra |
 | Motion | 12.23.22 | Animation library (formerly Framer Motion) |
@@ -60,7 +61,7 @@ alwaysApply: true
 ## State & Data
 
 | Package | Version | Notes |
-|---------|---------|-------|
+| ------- | ------- | ----- |
 | TanStack Query | 5.85.6 | Server state management |
 | Zustand | 5.0.8 | Client state management |
 | Zod | 4.1.5 | Schema validation |
@@ -93,7 +94,7 @@ alwaysApply: true
 ## Internationalization
 
 | Package | Version | Notes |
-|---------|---------|-------|
+| ------- | ------- | ----- |
 | i18next | 25.4.2 | Core i18n library |
 | react-i18next | 15.7.3 | React bindings |
 | next-i18n-router | 5.5.3 | Locale routing |
@@ -102,14 +103,14 @@ alwaysApply: true
 
 - Translations in `i18n/languages/*.json`
 - Use `useTranslation` hook in Client Components
-- Server Components: use `i18n/server.ts` utilities
+- i18n init lives in `i18n/index.ts`; client provider is `i18n/provider.tsx`
 - Locale detected via middleware (`middleware.ts`)
 - Always add new keys to `en.json` first
 
 ## Blockchain SDKs
 
 | Package | Version | Notes |
-|---------|---------|-------|
+| ------- | ------- | ----- |
 | @vechain/sdk-core | 2.0.7 | VeChain core utilities |
 | @vechain/sdk-network | 2.0.7 | Thor node client |
 | viem | 2.36.0 | EVM utilities (ABI, encoding) |
@@ -131,7 +132,7 @@ alwaysApply: true
 ## Utilities
 
 | Package | Version | Notes |
-|---------|---------|-------|
+| ------- | ------- | ----- |
 | date-fns | 4.1.0 | Date manipulation |
 | next-themes | 0.4.6 | Theme switching |
 
@@ -144,7 +145,7 @@ alwaysApply: true
 ## Testing
 
 | Package | Version | Notes |
-|---------|---------|-------|
+| ------- | ------- | ----- |
 | Vitest | 3.2.4 | Test runner |
 | Testing Library React | 16.3.0 | React testing utilities |
 | Testing Library DOM | 10.4.1 | DOM queries |
@@ -161,7 +162,7 @@ alwaysApply: true
 ## Linting & Formatting
 
 | Package | Version | Notes |
-|---------|---------|-------|
+| ------- | ------- | ----- |
 | ESLint | 8.57.0 | Linting |
 | Prettier | 3.4.0 | Code formatting |
 | Husky | 9.1.7 | Git hooks |

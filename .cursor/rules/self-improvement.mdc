@@ -1,8 +1,9 @@
 ---
+description: When and how to update Cursor rules
 alwaysApply: true
 ---
 
-## Rule Improvement Triggers
+# Rule maintenance
 
 - New code patterns not covered by existing rules
 - Repeated similar implementations across files
@@ -10,7 +11,7 @@ alwaysApply: true
 - New libraries or tools being used consistently
 - Emerging best practices in the codebase
 
-# Analysis Process:
+## Analysis process
 
 - Compare new code with existing rules
 - Identify patterns that should be standardized
@@ -18,7 +19,7 @@ alwaysApply: true
 - Check for consistent error handling patterns
 - Monitor test patterns and coverage
 
-# Rule Updates:
+## Rule updates
 
 - **Add New Rules When:**
   - A new technology/pattern is used in 3+ files
@@ -32,28 +33,14 @@ alwaysApply: true
   - Related rules have been updated
   - Implementation details have changed
 
-- **Example Pattern Recognition:**
+## Quality checks
 
-  ```typescript
-  // If you see repeated patterns like:
-  const data = await prisma.user.findMany({
-    select: { id: true, email: true },
-    where: { status: 'ACTIVE' },
-  })
-
-  // Consider adding to [prisma.mdc](mdc:shipixen/.cursor/rules/prisma.mdc):
-  // - Standard select fields
-  // - Common where conditions
-  // - Performance optimization patterns
-  ```
-
-- **Rule Quality Checks:**
 - Rules should be actionable and specific
 - Examples should come from actual code
 - References should be up to date
 - Patterns should be consistently enforced
 
-## Continuous Improvement:
+## Continuous improvement
 
 - Monitor code review comments
 - Track common development questions
@@ -61,18 +48,18 @@ alwaysApply: true
 - Add links to relevant documentation
 - Cross-reference related rules
 
-## Rule Deprecation
+## Deprecation
 
 - Mark outdated patterns as deprecated
 - Remove rules that no longer apply
 - Update references to deprecated rules
 - Document migration paths for old patterns
 
-## Documentation Updates:
+## Documentation updates
 
 - Keep examples synchronized with code
 - Update references to external docs
 - Maintain links between related rules
 - Document breaking changes
 
-Follow [cursor-rules.mdc](mdc:.cursor/rules/curs or-rules.mdc) for proper rule formatting and structure.
+See [cursor-rule.mdc](mdc:.cursor/rules/cursor-rule.mdc) for rule formatting and structure.
