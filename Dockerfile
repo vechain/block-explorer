@@ -45,13 +45,13 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 # Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs && \
+RUN addgroup --system --gid 1001 nextjs && \
     adduser --system --uid 1001 nextjs
 
 # Copy built application with correct ownership
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nextjs /app/public ./public
 
 # Switch to non-root user
 USER nextjs
