@@ -1,8 +1,8 @@
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 
-// Force dynamic rendering - ensures SSR data prefetching works in production
-export const dynamic = 'force-dynamic'
+// ISR: Cache page for 10 seconds - confirmations increase with each new block
+export const revalidate = 10
 
 import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'

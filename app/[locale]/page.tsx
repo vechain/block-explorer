@@ -2,8 +2,9 @@ import { Flex, VStack } from '@chakra-ui/react'
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { Suspense } from 'react'
 
-// Force dynamic rendering - ensures SSR data prefetching works in production
-export const dynamic = 'force-dynamic'
+// ISR: Cache page for 10 seconds, then revalidate in background
+// React Query's refetchInterval keeps client-side data fresh after hydration
+export const revalidate = 10
 import { HomeStatsGroup } from '@/components/ui/HomeStatsGroup'
 import { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
