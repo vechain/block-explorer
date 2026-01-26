@@ -39,6 +39,6 @@ const getTotalVetStaked = async ({ networkName }: { networkName: NetworkName }) 
 
 const totalVetStakedSchema = z.object({
   total: z.coerce.bigint(),
-  byLevel: z.record(nftNameSchema, z.coerce.bigint()),
+  byLevel: z.record(nftNameSchema, z.optional(z.coerce.bigint())),
   totalNftCount: z.number(),
 })
