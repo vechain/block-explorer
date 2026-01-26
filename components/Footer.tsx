@@ -3,7 +3,7 @@
 import { Box, Container, Heading, Link, VStack, Text, HStack, Flex } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
-import packageJson from '@/package.json'
+import { APP_VERSION } from '@/env.public'
 import { Logo } from './Logo'
 import { FiExternalLink } from 'react-icons/fi'
 
@@ -38,7 +38,7 @@ export const Footer = () => {
             <VStack alignItems={{ base: 'start', md: 'center' }} gap={2} width={{ base: '100%', md: 'auto' }}>
               <Logo h={{ base: 6, md: 8 }} />
               <Text fontSize="sm" color="gray.500">
-                {t('v{{version}}', { version: packageJson.version })}
+                {t('v{{version}}', { version: APP_VERSION })}
               </Text>
             </VStack>
             <HStack

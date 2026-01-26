@@ -1,3 +1,8 @@
+import packageJson from '@/package.json'
+
+// App version - set at build time from git tag, falls back to package.json for local dev
+export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || packageJson.version
+
 if (!process.env.NEXT_PUBLIC_COIN_API_URL) {
   throw new Error('NEXT_PUBLIC_COIN_API_URL is not set')
 }
