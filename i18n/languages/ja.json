@@ -4,6 +4,7 @@
   "1Y": "1年",
   "Account": "アカウント",
   "Active": "アクティブ",
+  "Active Stake": "Active Stake",
   "Activity": "アクティビティ",
   "Address": "アドレス",
   "Age": "経過時間",
@@ -74,6 +75,7 @@
   "Deployment Tx ID": "デプロイメントTx ID",
   "Description": "説明",
   "Details": "詳細",
+  "Endorser": "エンドーサー",
   "Events": "イベント",
   "Exited": "退出済み",
   "Exiting": "退出中",
@@ -219,6 +221,7 @@
   "Total VET Received": "受取済みVET総額",
   "Total VET Sent": "送信済みVET総額",
   "Total VTHO Paid": "支払済みVTHO総額",
+  "Total Value Locked": "Total Value Locked",
   "Total staked": "総staking",
   "Total transfers": "合計送信数",
   "Total wallets": "ウォレット総数",
@@ -253,6 +256,7 @@
   "VTHO Burned": "VTHO バーン済み",
   "VTHO Delegated": "委任VTHO",
   "VTHO Earned": "獲得したVTHO",
+  "VTHO Issuance": "VTHO Issuance",
   "VTHO Paid": "VTHO 支払い済み",
   "VTHO Price": "VTHO 価格",
   "VTHO Rewarded": "VTHO 報酬",
@@ -277,8 +281,5 @@
   "next cycle": "次のサイクル",
   "of": "の",
   "raw": "生データ",
-  "success": "成功",
-  "Active Stake": "Active Stake",
-  "Total Value Locked": "Total Value Locked",
-  "VTHO Issuance": "VTHO Issuance"
+  "success": "成功"
 }

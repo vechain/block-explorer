@@ -6,7 +6,9 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LuExternalLink, LuGlobe, LuMapPin } from 'react-icons/lu'
 import { Card } from '@/components/ui/Card'
+import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
+import { AddressLink } from '@/components/ui/Links'
 import { Picasso } from '@/components/ui/Picasso'
 import type { AddressString } from '@/lib/schemas'
 import { LevelName, type ValidatorDetails } from '@/services/veworld-indexer/hooks'
@@ -81,40 +83,6 @@ const getStatusBadgeProps = (status: ValidatorStatus): StatusBadgeConfig => {
   }
 }
 
-// Stat card component for displaying a value with optional next cycle info
-interface StatCardProps {
-  label: string
-  value: string
-  nextCycleValue?: string
-  isPositiveChange?: boolean
-  hideNextCycleValue?: boolean
-}
-
-const StatCard = ({ label, value, nextCycleValue, isPositiveChange, hideNextCycleValue }: StatCardProps) => {
-  const { t } = useTranslation()
-
-  return (
-    <Card variant="outline" gap={1} p={3}>
-      <Text textStyle="bodyS" color="text-secondary">
-        {label}
-      </Text>
-      <Text textStyle="bodyM" color="text-primary">
-        {value}
-      </Text>
-      {nextCycleValue && !hideNextCycleValue && (
-        <HStack gap={1}>
-          <Text textStyle="bodyS" color={isPositiveChange ? 'green.400' : 'red.400'}>
-            {nextCycleValue}
-          </Text>
-          <Text textStyle="bodyS" color="text-secondary">
-            {t('next cycle')}
-          </Text>
-        </HStack>
-      )}
-    </Card>
-  )
-}
-
 // NFT Tier APY item component
 interface NftTierApyItemProps {
   tier: string
@@ -184,6 +152,80 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
   const isActive = validator.status === ValidatorStatus.ACTIVE
   const isActiveOrPending = isActive || validator.status === ValidatorStatus.QUEUED
 
+  // Stats cards for DataCardGroup
+  const statsCards: DataCardGroupItem[] = useMemo(() => {
+    const showNextCycleApy = isActiveOrPending && validator.nextCycleValidatorApy !== validator.validatorApy
+
+    return [
+      {
+        title: t('Endorser'),
+        children: <AddressLink address={validator.endorser as AddressString} truncate />,
+      },
+      {
+        title: t('Beneficiary'),
+        children: <AddressLink address={(validator.beneficiary ?? validator.endorser) as AddressString} truncate />,
+      },
+      {
+        title: t('Reliability'),
+        children: (
+          <Text textStyle="bodyM" color="text-primary">
+            {isActive ? `${validator.reliability.toFixed(0)}%` : '-'}
+          </Text>
+        ),
+      },
+      {
+        title: t('Validator APY'),
+        children: (
+          <VStack gap={0} alignItems={{ base: 'flex-end', md: 'flex-start' }}>
+            <Text textStyle="bodyM" color="text-primary">
+              {isActiveOrPending ? `${abbreviateAmount(validator.validatorApy)}%` : '-'}
+            </Text>
+            {showNextCycleApy && (
+              <HStack gap={1}>
+                <Text
+                  textStyle="bodyS"
+                  color={validator.nextCycleValidatorApy > validator.validatorApy ? 'green.400' : 'red.400'}
+                >
+                  {abbreviateAmount(validator.nextCycleValidatorApy)}%
+                </Text>
+                <Text textStyle="bodyS" color="text-secondary">
+                  {t('next cycle')}
+                </Text>
+              </HStack>
+            )}
+          </VStack>
+        ),
+      },
+      {
+        title: t('Cycle left'),
+        children: (
+          <Text textStyle="bodyM" color="text-primary">
+            {isActive ? timeUntilNextCycle : '-'}
+          </Text>
+        ),
+      },
+      {
+        title: t('Cycle duration'),
+        children: (
+          <Text textStyle="bodyM" color="text-primary">
+            {cycleDuration}
+          </Text>
+        ),
+      },
+    ]
+  }, [
+    t,
+    isActive,
+    isActiveOrPending,
+    validator.endorser,
+    validator.beneficiary,
+    validator.reliability,
+    validator.validatorApy,
+    validator.nextCycleValidatorApy,
+    timeUntilNextCycle,
+    cycleDuration,
+  ])
+
   return (
     <Stack gap="8">
       <Card>
@@ -218,7 +260,6 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
           </HStack>
           <IDChip value={address} vnsName={vnsName} />
         </Flex>
-
         {/* Header Section */}
         <HStack justify="space-between" align="flex-start" flexWrap="wrap" gap={4}>
           <HStack gap={3}>
@@ -263,18 +304,7 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
         )}
 
         {/* Stats Grid */}
-        <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }} gap={3}>
-          <StatCard label={t('Reliability')} value={isActive ? `${validator.reliability.toFixed(0)}%` : '-'} />
-          <StatCard
-            label={t('Validator APY')}
-            value={isActiveOrPending ? `${abbreviateAmount(validator.validatorApy)}%` : '-'}
-            nextCycleValue={isActiveOrPending ? `${abbreviateAmount(validator.nextCycleValidatorApy)}%` : undefined}
-            hideNextCycleValue={validator.nextCycleValidatorApy === validator.validatorApy}
-            isPositiveChange={validator.nextCycleValidatorApy > validator.validatorApy}
-          />
-          <StatCard label={t('Cycle left')} value={isActive ? timeUntilNextCycle : '-'} />
-          <StatCard label={t('Cycle duration')} value={cycleDuration} />
-        </Grid>
+        <DataCardGroup items={statsCards} variant="outline" desktopColumns={3} desktopGap={3} />
 
         <Flex flexDirection={{ base: 'column', md: 'row' }} gap={4}>
           {/* APY Section */}

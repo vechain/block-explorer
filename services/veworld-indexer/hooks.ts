@@ -445,6 +445,8 @@ export const useValidatorDetails = (address: string | undefined) => {
     const exitingDelegations = delegationsCount?.exiting ?? 0
 
     return {
+      beneficiary: validatorData.beneficiary,
+      endorser: validatorData.endorser,
       address: validatorData.id,
       status: validatorData.status,
       online: validatorData.online ?? false,
