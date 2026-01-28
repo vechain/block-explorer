@@ -28,6 +28,8 @@ import {
   allValidatorsQueryOptions,
   getAllValidatorsCount,
   ValidatorStatus,
+  type ValidatorQueryOptions,
+  type ValidatorCountOptions,
 } from './validators'
 import {
   validatorDetailsQueryOptions,
@@ -142,18 +144,24 @@ export const useDeployedContracts = ({
   return useQuery(deployedContractsQueryOptions(activeNetwork.name, { address, page, size }))
 }
 
-export const useValidatorsCount = (status?: ValidatorStatus) => {
+export const useValidatorsCount = (options?: ValidatorCountOptions) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery({
-    queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetwork.name, status],
-    queryFn: () => getAllValidatorsCount(activeNetwork.name, status),
+    queryKey: [
+      ALL_VALIDATORS_COUNT_QUERY_KEY,
+      activeNetwork.name,
+      options?.endorser,
+      options?.validatorId,
+      options?.status,
+    ],
+    queryFn: () => getAllValidatorsCount(activeNetwork.name, options),
     refetchInterval: 60 * 1000, // Refetch every 60 seconds
   })
 }
 
-export const useValidators = (status?: ValidatorStatus) => {
+export const useValidators = (options?: ValidatorQueryOptions) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(allValidatorsQueryOptions(activeNetwork.name, status))
+  return useQuery(allValidatorsQueryOptions(activeNetwork.name, options))
 }
 
 export { ValidatorStatus }

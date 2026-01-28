@@ -46,12 +46,12 @@ export default async function HomePage({
     queryClient.prefetchQuery(accountTotalsQueryOptions(activeNetworkName, AccountTimeFrame.ALL)),
     queryClient.prefetchQuery(allValidatorsQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery({
-      queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.ACTIVE],
-      queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.ACTIVE),
+      queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, undefined, undefined, ValidatorStatus.ACTIVE],
+      queryFn: () => getAllValidatorsCount(activeNetworkName, { status: ValidatorStatus.ACTIVE }),
     }),
     queryClient.prefetchQuery({
-      queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.EXITING],
-      queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.EXITING),
+      queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, undefined, undefined, ValidatorStatus.EXITING],
+      queryFn: () => getAllValidatorsCount(activeNetworkName, { status: ValidatorStatus.EXITING }),
     }),
   ])
 

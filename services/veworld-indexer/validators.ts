@@ -8,12 +8,37 @@ import { indexerResponseSchema } from './schemas'
 export const ALL_VALIDATORS_COUNT_QUERY_KEY = 'getAllValidatorsCount'
 const ALL_VALIDATORS_QUERY_KEY = 'getAllValidators'
 
+/** @public */
 export enum ValidatorStatus {
   NONE = 'NONE',
   QUEUED = 'QUEUED',
   ACTIVE = 'ACTIVE',
   EXITED = 'EXITED',
   EXITING = 'EXITING',
+}
+
+/** @public */
+export enum SortDirection {
+  ASC = 'ASC',
+  DESC = 'DESC',
+}
+
+/** @public */
+export enum ValidatorSortBy {
+  VALIDATOR_TVL = 'validatorTvl',
+  TOTAL_TVL = 'totalTvl',
+  BLOCK_PROBABILITY = 'blockProbability',
+  DELEGATOR_TVL = 'delegatorTvl',
+  NFT_STRENGTH = 'nft:Strength',
+  NFT_THUNDER = 'nft:Thunder',
+  NFT_MJOLNIR = 'nft:Mjolnir',
+  NFT_VETHORX = 'nft:VeThorX',
+  NFT_STRENGTHX = 'nft:StrengthX',
+  NFT_THUNDERX = 'nft:ThunderX',
+  NFT_MJOLNIRX = 'nft:MjolnirX',
+  NFT_DAWN = 'nft:Dawn',
+  NFT_LIGHTNING = 'nft:Lightning',
+  NFT_FLASH = 'nft:Flash',
 }
 
 const validatorSchema = z.object({
@@ -31,22 +56,31 @@ const validatorsResponseSchema = indexerResponseSchema(validatorSchema)
 
 const getValidators = async ({
   networkName,
+  endorser,
+  validatorId,
   status,
   page = 0,
   size = 100,
+  direction,
+  sortBy,
 }: {
   networkName: NetworkName
+  endorser?: string
+  validatorId?: string
   status?: ValidatorStatus
   page?: number
   size?: number
+  direction?: SortDirection
+  sortBy?: ValidatorSortBy
 }) => {
   const params: Record<string, string> = {
     page: page.toString(),
     size: size.toString(),
-  }
-
-  if (status) {
-    params.status = status
+    ...(endorser && { endorser }),
+    ...(validatorId && { validatorId }),
+    ...(status && { status }),
+    ...(direction && { direction }),
+    ...(sortBy && { sortBy }),
   }
 
   const { data } = await apiClient.get({
@@ -62,9 +96,25 @@ const getValidators = async ({
   })
 }
 
-export const allValidatorsQueryOptions = (networkName: NetworkName, status?: ValidatorStatus) => ({
-  queryKey: [ALL_VALIDATORS_QUERY_KEY, networkName, status],
-  queryFn: () => getAllValidators({ networkName, status }),
+export type ValidatorQueryOptions = {
+  endorser?: string
+  validatorId?: string
+  status?: ValidatorStatus
+  direction?: SortDirection
+  sortBy?: ValidatorSortBy
+}
+
+export const allValidatorsQueryOptions = (networkName: NetworkName, options?: ValidatorQueryOptions) => ({
+  queryKey: [
+    ALL_VALIDATORS_QUERY_KEY,
+    networkName,
+    options?.endorser,
+    options?.validatorId,
+    options?.status,
+    options?.direction,
+    options?.sortBy,
+  ],
+  queryFn: () => getAllValidators({ networkName, ...options }),
   refetchInterval: 60 * 1000,
 })
 
@@ -76,16 +126,33 @@ type Validator = z.infer<typeof validatorSchema>
  */
 const getAllValidators = async ({
   networkName,
+  endorser,
+  validatorId,
   status,
+  direction,
+  sortBy,
 }: {
   networkName: NetworkName
+  endorser?: string
+  validatorId?: string
   status?: ValidatorStatus
+  direction?: SortDirection
+  sortBy?: ValidatorSortBy
 }): Promise<Validator[]> => {
   const PAGE_SIZE = 150
   const PARALLEL_LIMIT = 3
   const MAX_PAGES = 20
 
-  const firstResponse = await getValidators({ networkName, status, page: 0, size: PAGE_SIZE })
+  const firstResponse = await getValidators({
+    networkName,
+    endorser,
+    validatorId,
+    status,
+    direction,
+    sortBy,
+    page: 0,
+    size: PAGE_SIZE,
+  })
   const all = [...firstResponse.data]
 
   if (!firstResponse.pagination.hasNext) {
@@ -97,7 +164,9 @@ const getAllValidators = async ({
 
   while (shouldContinue && currentPage < MAX_PAGES) {
     const batch = Array.from({ length: Math.min(PARALLEL_LIMIT, MAX_PAGES - currentPage) }, (_, i) => currentPage + i)
-    const batchPromises = batch.map(page => getValidators({ networkName, status, page, size: PAGE_SIZE }))
+    const batchPromises = batch.map(page =>
+      getValidators({ networkName, endorser, validatorId, status, direction, sortBy, page, size: PAGE_SIZE }),
+    )
 
     const batchResults = await Promise.allSettled(batchPromises)
 
@@ -124,6 +193,12 @@ const getAllValidators = async ({
   return all
 }
 
+export type ValidatorCountOptions = {
+  endorser?: string
+  validatorId?: string
+  status?: ValidatorStatus
+}
+
 /**
  * Fetch all validators across multiple pages with parallel batch fetching
  *
@@ -133,16 +208,21 @@ const getAllValidators = async ({
  * 3. Handles failures gracefully with Promise.allSettled
  *
  * @param networkName - The network to fetch validators from
- * @param status - Optional filter by validator status
+ * @param options - Optional filters (endorser, validatorId, status)
  * @returns Total count of validators
  */
-export const getAllValidatorsCount = async (networkName: NetworkName, status?: ValidatorStatus): Promise<number> => {
+export const getAllValidatorsCount = async (
+  networkName: NetworkName,
+  options?: ValidatorCountOptions,
+): Promise<number> => {
   const PAGE_SIZE = 150 // Optimized for ~101 active validators
   const PARALLEL_LIMIT = 3 // Fetch 3 pages at a time if needed
   const MAX_PAGES = 20 // Safety limit (150 * 20 = 3000 validators max)
 
+  const { endorser, validatorId, status } = options ?? {}
+
   // First request - should get all validators in most cases
-  const firstResponse = await getValidators({ networkName, status, page: 0, size: PAGE_SIZE })
+  const firstResponse = await getValidators({ networkName, endorser, validatorId, status, page: 0, size: PAGE_SIZE })
   let totalCount = firstResponse.data.length
 
   // If no more pages, return early (common case for ~101 validators)
@@ -159,7 +239,9 @@ export const getAllValidatorsCount = async (networkName: NetworkName, status?: V
     const batch = Array.from({ length: Math.min(PARALLEL_LIMIT, MAX_PAGES - currentPage) }, (_, i) => currentPage + i)
 
     // Fetch batch in parallel
-    const batchPromises = batch.map(page => getValidators({ networkName, status, page, size: PAGE_SIZE }))
+    const batchPromises = batch.map(page =>
+      getValidators({ networkName, endorser, validatorId, status, page, size: PAGE_SIZE }),
+    )
 
     const batchResults = await Promise.allSettled(batchPromises)
 
