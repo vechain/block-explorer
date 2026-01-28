@@ -18,9 +18,14 @@ type AddressType = 'validator' | 'contract' | 'account'
 
 export const AddressPageContent = ({ address }: { address: AddressString }) => {
   const { data: account, isLoading: isAccountLoading, isFetched: isAccountFetched } = useAccount(address)
-  const { data: validator, isPending: isValidatorPending, isValidator } = useValidatorDetails(address)
+  const {
+    data: validator,
+    isPending: isValidatorPending,
+    isFetched: isValidatorFetched,
+    isValidator,
+  } = useValidatorDetails(address)
 
-  const isLoading = isAccountLoading || isValidatorPending
+  const isLoading = isAccountLoading || !isValidatorFetched
 
   if (isLoading)
     return (
