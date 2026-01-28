@@ -80,7 +80,11 @@ export const useAccountStakedVet = (address: AddressString | undefined) => {
   const totalStakedVet = useMemo(() => {
     const direct = directStakedVet ?? 0n
     const endorsed =
-      endorsedValidators?.reduce((sum, v) => sum + BigInt(Math.floor(v.validatorVetStaked * 1e18)), 0n) ?? 0n
+      endorsedValidators?.reduce((sum, v) => {
+        // Safe conversion: integer part to BigInt, then multiply
+        const vetInWei = BigInt(Math.floor(v.validatorVetStaked)) * 10n ** 18n
+        return sum + vetInWei
+      }, 0n) ?? 0n
     return direct + endorsed
   }, [directStakedVet, endorsedValidators])
 
