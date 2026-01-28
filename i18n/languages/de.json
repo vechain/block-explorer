@@ -4,6 +4,7 @@
   "1Y": "1J",
   "Account": "Konto",
   "Active": "Aktiv",
+  "Active Stake": "Active Stake",
   "Activity": "Aktivität",
   "Address": "Adresse",
   "Age": "Alter",
@@ -74,6 +75,7 @@
   "Deployment Tx ID": "Bereitstellungs-Tx-ID",
   "Description": "Beschreibung",
   "Details": "Details",
+  "Endorser": "Befürworter",
   "Events": "Ereignisse",
   "Exited": "Ausgetreten",
   "Exiting": "Austretend",
@@ -219,6 +221,7 @@
   "Total VET Received": "Gesamte VET empfangen",
   "Total VET Sent": "Gesamte VET gesendet",
   "Total VTHO Paid": "Gesamte VTHO bezahlt",
+  "Total Value Locked": "Total Value Locked",
   "Total staked": "Gesamt gestaket",
   "Total transfers": "Gesamte Übertragungen",
   "Total wallets": "Gesamtanzahl Wallets",
@@ -253,6 +256,7 @@
   "VTHO Burned": "VTHO verbrannt",
   "VTHO Delegated": "VTHO delegiert",
   "VTHO Earned": "VTHO verdient",
+  "VTHO Issuance": "VTHO Issuance",
   "VTHO Paid": "VTHO bezahlt",
   "VTHO Price": "VTHO Preis",
   "VTHO Rewarded": "VTHO Belohnung",
@@ -277,8 +281,5 @@
   "next cycle": "nächster Zyklus",
   "of": "von",
   "raw": "Rohdaten",
-  "success": "Erfolg",
-  "Active Stake": "Active Stake",
-  "Total Value Locked": "Total Value Locked",
-  "VTHO Issuance": "VTHO Issuance"
+  "success": "Erfolg"
 }

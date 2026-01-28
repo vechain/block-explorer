@@ -4,6 +4,7 @@
   "1Y": "1年",
   "Account": "账户",
   "Active": "活跃",
+  "Active Stake": "Active Stake",
   "Activity": "活动",
   "Address": "地址",
   "Age": "区块龄",
@@ -74,6 +75,7 @@
   "Deployment Tx ID": "部署交易 ID",
   "Description": "描述",
   "Details": "详情",
+  "Endorser": "背书人",
   "Events": "事件",
   "Exited": "已退出",
   "Exiting": "正在退出",
@@ -219,6 +221,7 @@
   "Total VET Received": "收到的VET总额",
   "Total VET Sent": "发送的VET总额",
   "Total VTHO Paid": "已支付的VTHO总额",
+  "Total Value Locked": "Total Value Locked",
   "Total staked": "总stake数量",
   "Total transfers": "总转账数",
   "Total wallets": "钱包总数",
@@ -253,6 +256,7 @@
   "VTHO Burned": "VTHO 已销毁",
   "VTHO Delegated": "委托的VTHO",
   "VTHO Earned": "已赚取VTHO",
+  "VTHO Issuance": "VTHO Issuance",
   "VTHO Paid": "VTHO 已支付",
   "VTHO Price": "VTHO 价格",
   "VTHO Rewarded": "VTHO 已奖励",
@@ -277,8 +281,5 @@
   "next cycle": "下一个周期",
   "of": "的",
   "raw": "原始",
-  "success": "成功",
-  "Active Stake": "Active Stake",
-  "Total Value Locked": "Total Value Locked",
-  "VTHO Issuance": "VTHO Issuance"
+  "success": "成功"
 }

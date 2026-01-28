@@ -4,6 +4,7 @@
   "1Y": "1Г",
   "Account": "Аккаунт",
   "Active": "Активен",
+  "Active Stake": "Active Stake",
   "Activity": "Активность",
   "Address": "Адрес",
   "Age": "Возраст",
@@ -74,6 +75,7 @@
   "Deployment Tx ID": "Tx ID развертывания",
   "Description": "Описание",
   "Details": "Детали",
+  "Endorser": "Поручитель",
   "Events": "События",
   "Exited": "Вышел",
   "Exiting": "Выходит",
@@ -219,6 +221,7 @@
   "Total VET Received": "Всего получено VET",
   "Total VET Sent": "Всего отправлено VET",
   "Total VTHO Paid": "Всего оплачено VTHO",
+  "Total Value Locked": "Total Value Locked",
   "Total staked": "Общий staking",
   "Total transfers": "Всего переводов",
   "Total wallets": "Всего кошельков",
@@ -253,6 +256,7 @@
   "VTHO Burned": "Сожжено VTHO",
   "VTHO Delegated": "Делегировано VTHO",
   "VTHO Earned": "Заработано VTHO",
+  "VTHO Issuance": "VTHO Issuance",
   "VTHO Paid": "Оплачено VTHO",
   "VTHO Price": "Цена VTHO",
   "VTHO Rewarded": "Получено VTHO",
@@ -277,8 +281,5 @@
   "next cycle": "следующий цикл",
   "of": "из",
   "raw": "сырой",
-  "success": "успешно",
-  "Active Stake": "Active Stake",
-  "Total Value Locked": "Total Value Locked",
-  "VTHO Issuance": "VTHO Issuance"
+  "success": "успешно"
 }
