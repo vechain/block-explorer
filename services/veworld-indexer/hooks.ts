@@ -495,13 +495,15 @@ export const useValidatorDetails = (address: string | undefined) => {
   ])
 
   const isPending = validatorQuery.isPending || delegationsCountQuery.isPending || metadataQuery.isPending
+  const isFetched = validatorQuery.isFetched || delegationsCountQuery.isFetched || metadataQuery.isFetched
   const isError = validatorQuery.isError || delegationsCountQuery.isError || missedBlocksQuery.isError
 
   return {
     data: validator,
     isPending,
     isError,
-    isValidator: validator !== null && !isPending,
+    isFetched,
+    isValidator: validator !== null && isFetched,
   }
 }
 
