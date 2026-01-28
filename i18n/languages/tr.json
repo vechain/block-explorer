@@ -4,6 +4,7 @@
   "1Y": "1Y",
   "Account": "Hesap",
   "Active": "Aktif",
+  "Active Stake": "Active Stake",
   "Activity": "Aktivite",
   "Address": "Adres",
   "Age": "Yaş",
@@ -74,6 +75,7 @@
   "Deployment Tx ID": "Yayınlama İşlem Kimliği",
   "Description": "Açıklama",
   "Details": "Detaylar",
+  "Endorser": "Onaylayan",
   "Events": "Etkinlikler",
   "Exited": "Çıkıldı",
   "Exiting": "Çıkılıyor",
@@ -219,6 +221,7 @@
   "Total VET Received": "Alınan Toplam VET",
   "Total VET Sent": "Gönderilen Toplam VET",
   "Total VTHO Paid": "Ödenen Toplam VTHO",
+  "Total Value Locked": "Total Value Locked",
   "Total staked": "Toplam stake",
   "Total transfers": "Toplam transferler",
   "Total wallets": "Toplam cüzdan",
@@ -253,6 +256,7 @@
   "VTHO Burned": "Yakılan VTHO",
   "VTHO Delegated": "VTHO Delegasyonu",
   "VTHO Earned": "Kazanılan VTHO",
+  "VTHO Issuance": "VTHO Issuance",
   "VTHO Paid": "Ödenen VTHO",
   "VTHO Price": "VTHO Fiyatı",
   "VTHO Rewarded": "Ödüllendirilen VTHO",
@@ -277,8 +281,5 @@
   "next cycle": "sonraki döngü",
   "of": " / ",
   "raw": "ham",
-  "success": "başarılı",
-  "Active Stake": "Active Stake",
-  "Total Value Locked": "Total Value Locked",
-  "VTHO Issuance": "VTHO Issuance"
+  "success": "başarılı"
 }
