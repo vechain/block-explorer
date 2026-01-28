@@ -5,7 +5,7 @@ import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 import { indexerResponseSchema } from './schemas'
 
-export const ALL_VALIDATORS_COUNT_QUERY_KEY = 'getAllValidatorsCount'
+const ALL_VALIDATORS_COUNT_QUERY_KEY = 'getAllValidatorsCount'
 const ALL_VALIDATORS_QUERY_KEY = 'getAllValidators'
 
 /** @public */
@@ -118,6 +118,12 @@ export const allValidatorsQueryOptions = (networkName: NetworkName, options?: Va
   refetchInterval: 60 * 1000,
 })
 
+export const validatorsCountQueryOptions = (networkName: NetworkName, options?: ValidatorCountOptions) => ({
+  queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, networkName, options?.endorser, options?.validatorId, options?.status],
+  queryFn: () => getAllValidatorsCount(networkName, options),
+  refetchInterval: 60 * 1000,
+})
+
 type Validator = z.infer<typeof validatorSchema>
 
 /**
@@ -211,10 +217,7 @@ export type ValidatorCountOptions = {
  * @param options - Optional filters (endorser, validatorId, status)
  * @returns Total count of validators
  */
-export const getAllValidatorsCount = async (
-  networkName: NetworkName,
-  options?: ValidatorCountOptions,
-): Promise<number> => {
+const getAllValidatorsCount = async (networkName: NetworkName, options?: ValidatorCountOptions): Promise<number> => {
   const PAGE_SIZE = 150 // Optimized for ~101 active validators
   const PARALLEL_LIMIT = 3 // Fetch 3 pages at a time if needed
   const MAX_PAGES = 20 // Safety limit (150 * 20 = 3000 validators max)

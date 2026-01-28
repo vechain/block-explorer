@@ -25,9 +25,8 @@ import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
 import { contractTransactionsQueryOptions } from './transactions-contract'
 import {
-  ALL_VALIDATORS_COUNT_QUERY_KEY,
   allValidatorsQueryOptions,
-  getAllValidatorsCount,
+  validatorsCountQueryOptions,
   ValidatorStatus,
   type ValidatorQueryOptions,
   type ValidatorCountOptions,
@@ -182,17 +181,7 @@ export const useDeployedContracts = ({
 
 export const useValidatorsCount = (options?: ValidatorCountOptions) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery({
-    queryKey: [
-      ALL_VALIDATORS_COUNT_QUERY_KEY,
-      activeNetwork.name,
-      options?.endorser,
-      options?.validatorId,
-      options?.status,
-    ],
-    queryFn: () => getAllValidatorsCount(activeNetwork.name, options),
-    refetchInterval: 60 * 1000, // Refetch every 60 seconds
-  })
+  return useQuery(validatorsCountQueryOptions(activeNetwork.name, options))
 }
 
 export const useValidators = (options?: ValidatorQueryOptions) => {
