@@ -17,11 +17,13 @@ import type {
   IndexerGetErc20ContractsParams,
   IndexerGetErc721Params,
   IndexerGetTransactionsParams,
+  IndexerGetTransfersParams,
 } from './schemas'
 import { totalVetStakedQueryOptions } from './total-vet-staked'
 import { totalVetDelegatedQueryOptions } from './total-vet-delegated'
 import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
+import { accountTransfersQueryOptions } from './account-transfers'
 import { contractTransactionsQueryOptions } from './transactions-contract'
 import {
   ALL_VALIDATORS_COUNT_QUERY_KEY,
@@ -140,6 +142,17 @@ export const useDeployedContracts = ({
 }) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(deployedContractsQueryOptions(activeNetwork.name, { address, page, size }))
+}
+
+export const useAccountTransfers = ({
+  params,
+  enabled = true,
+}: {
+  params: IndexerGetTransfersParams
+  enabled?: boolean
+}) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountTransfersQueryOptions(activeNetwork.name, params, { enabled }))
 }
 
 export const useValidatorsCount = (status?: ValidatorStatus) => {

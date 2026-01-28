@@ -1,7 +1,7 @@
 'use client'
 
 import type { TransferFromBlock } from '@/services/veworld-indexer/hooks'
-import { TransfersTable } from './TransfersTable'
+import { TransfersTable } from '../../../components/TransfersTable'
 
 /**
  * Table component for displaying fungible token transfers (VET and ERC20 tokens).

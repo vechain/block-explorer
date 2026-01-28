@@ -1,7 +1,7 @@
 'use client'
 
 import type { TransferFromBlock } from '@/services/veworld-indexer/hooks'
-import { TransfersTable } from './TransfersTable'
+import { TransfersTable } from '../../../components/TransfersTable'
 
 /**
  * Table component for displaying NFT transfers.

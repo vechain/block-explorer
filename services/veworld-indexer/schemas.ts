@@ -136,7 +136,7 @@ const eventTypeSchema = z.enum({
   VET: 'VET',
 })
 
-const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTransactionMetaSchema.shape).extend({
+export const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTransactionMetaSchema.shape).extend({
   id: z.string(),
   txId: transactionMetaSchema.shape.txID.nonoptional(),
   value: z.coerce.bigint(),
@@ -188,7 +188,7 @@ type TokenHistory = z.infer<typeof tokenHistorySchema>
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
 export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
 export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>
-type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParamsSchema>
+export type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParamsSchema>
 export type IndexerGetErc20ContractsParams = z.infer<typeof indexerGetErc20ContractsParamsSchema>
 export type IndexerGetContractTransactionsParams = z.infer<typeof indexerGetContractTransactionsParamsSchema>
 export type IndexerGetErc721Params = z.infer<typeof indexerGetErc721ParamsSchema>
