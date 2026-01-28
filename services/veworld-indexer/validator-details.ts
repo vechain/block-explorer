@@ -4,6 +4,7 @@ import type { NetworkName } from '@/lib/constants/network'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 import { indexerResponseSchema } from './schemas'
+import { keepPreviousData } from '@tanstack/react-query'
 
 // NFT Level Names for APY tiers
 export const LevelName = {
@@ -305,6 +306,7 @@ export const validatorDetailsQueryOptions = (networkName: NetworkName, address: 
   queryFn: () => getValidatorDetails({ networkName, validatorAddress: address! }),
   enabled: !!address,
   refetchInterval: 60000,
+  placeholderData: keepPreviousData,
 })
 
 // Query options for delegations count
@@ -313,6 +315,7 @@ export const validatorDelegationsCountQueryOptions = (networkName: NetworkName, 
   queryFn: () => getValidatorDelegationsCount({ networkName, validatorAddress: address! }),
   enabled: !!address,
   refetchInterval: 60000,
+  placeholderData: keepPreviousData,
 })
 
 // Query options for missed blocks
@@ -321,6 +324,7 @@ export const validatorMissedBlocksQueryOptions = (networkName: NetworkName, addr
   queryFn: () => getValidatorMissedBlocks({ networkName, validatorAddress: address! }),
   enabled: !!address,
   refetchInterval: 60000,
+  placeholderData: keepPreviousData,
 })
 
 // Query options for delegations (unique wallets and total NFTs)
@@ -328,6 +332,6 @@ export const validatorDelegationsQueryOptions = (networkName: NetworkName, addre
   queryKey: ['validatorDelegations', networkName, address],
   queryFn: () => getValidatorDelegations({ networkName, validatorAddress: address! }),
   enabled: !!address,
-  staleTime: 60000,
   refetchInterval: 60000,
+  placeholderData: keepPreviousData,
 })
