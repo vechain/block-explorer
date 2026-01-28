@@ -131,6 +131,8 @@ const delegationsResponseSchema = z.object({
 
 // Combined validator details with computed fields
 export interface ValidatorDetails {
+  beneficiary?: string
+  endorser?: string
   address: string
   status: ValidatorStatus
   online: boolean

@@ -4,6 +4,7 @@
   "1Y": "1Χ",
   "Account": "Λογαριασμός",
   "Active": "Ενεργό",
+  "Active Stake": "Active Stake",
   "Activity": "Δραστηριότητα",
   "Address": "Διεύθυνση",
   "Age": "Ηλικία",
@@ -74,6 +75,7 @@
   "Deployment Tx ID": "Κωδικός Συναλλαγής Ανάπτυξης",
   "Description": "Περιγραφή",
   "Details": "Λεπτομέρειες",
+  "Endorser": "Εντολέας",
   "Events": "Γεγονότα",
   "Exited": "Αποχώρησε",
   "Exiting": "Αποχωρεί",
@@ -219,6 +221,7 @@
   "Total VET Received": "Συνολικά VET Ελήφθησαν",
   "Total VET Sent": "Συνολικά VET Απεστάλησαν",
   "Total VTHO Paid": "Συνολικά VTHO Πληρώθηκαν",
+  "Total Value Locked": "Total Value Locked",
   "Total staked": "Συνολικό staking",
   "Total transfers": "Συνολικές μεταφορές",
   "Total wallets": "Συνολικά πορτοφόλια",
@@ -253,6 +256,7 @@
   "VTHO Burned": "VTHO Καταναλώθηκε",
   "VTHO Delegated": "VTHO Εκχωρημένα",
   "VTHO Earned": "Κερδισμένα VTHO",
+  "VTHO Issuance": "VTHO Issuance",
   "VTHO Paid": "VTHO Πληρωμένο",
   "VTHO Price": "Τιμή VTHO",
   "VTHO Rewarded": "VTHO Ανταμείφθηκε",
@@ -277,8 +281,5 @@
   "next cycle": "επόμενος κύκλος",
   "of": "από",
   "raw": "ακατέργαστο",
-  "success": "επιτυχία",
-  "Active Stake": "Active Stake",
-  "Total Value Locked": "Total Value Locked",
-  "VTHO Issuance": "VTHO Issuance"
+  "success": "επιτυχία"
 }
