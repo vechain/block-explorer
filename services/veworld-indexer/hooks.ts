@@ -6,6 +6,7 @@ import { ABIEvent, ERC20_ABI } from '@vechain/sdk-core'
 import type { AddressString, ExpandedBlock } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { blockExpandedQueryOptions, bestBlockCompressedQueryOptions } from '@/services/thor/block'
+import { accountStakedVetQueryOptions } from '@/services/thor/staked-vet'
 import { accountTotalsQueryOptions, AccountTimeFrame } from './account-totals'
 import { accountOverviewQueryOptions } from './account-overview'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
@@ -56,6 +57,37 @@ export const useTotalVetDelegated = () => {
 export const useTotalVthoClaimed = (address: string | undefined) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(totalVthoClaimedQueryOptions(activeNetwork.name, address as `0x${string}` | undefined))
+}
+
+/**
+ * Get total VET staked by an account, including:
+ * - Direct staked VET (from Stargate NFT contract)
+ * - VET staked by validators this account endorses
+ */
+export const useAccountStakedVet = (address: AddressString | undefined) => {
+  const { activeNetwork } = useSettingsStore()
+
+  // Direct staked VET from Thor contract
+  const { data: directStakedVet, isPending: isDirectPending } = useQuery(
+    accountStakedVetQueryOptions(activeNetwork.name, address),
+  )
+
+  // Validators this account endorses
+  const { data: endorsedValidators, isPending: isValidatorsPending } = useValidators(
+    address ? { endorser: address } : undefined,
+  )
+
+  const totalStakedVet = useMemo(() => {
+    const direct = directStakedVet ?? 0n
+    const endorsed =
+      endorsedValidators?.reduce((sum, v) => sum + BigInt(Math.floor(v.validatorVetStaked * 1e18)), 0n) ?? 0n
+    return direct + endorsed
+  }, [directStakedVet, endorsedValidators])
+
+  return {
+    data: totalStakedVet,
+    isPending: isDirectPending || isValidatorsPending,
+  }
 }
 
 export const useAccountTotals = (timeFrame: AccountTimeFrame) => {
