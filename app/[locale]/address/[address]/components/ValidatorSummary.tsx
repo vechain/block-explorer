@@ -8,7 +8,7 @@ import { LuExternalLink, LuGlobe, LuMapPin } from 'react-icons/lu'
 import { Card } from '@/components/ui/Card'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
-import { AddressLink } from '@/components/ui/Links'
+import { CopyableAddressLink } from '@/components/ui/Links'
 import { Picasso } from '@/components/ui/Picasso'
 import type { AddressString } from '@/lib/schemas'
 import { LevelName, type ValidatorDetails } from '@/services/veworld-indexer/hooks'
@@ -159,11 +159,13 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
     return [
       {
         title: t('Endorser'),
-        children: <AddressLink address={validator.endorser as AddressString} truncate />,
+        children: <CopyableAddressLink truncate address={validator.endorser as AddressString} />,
       },
       {
         title: t('Beneficiary'),
-        children: <AddressLink address={(validator.beneficiary ?? validator.endorser) as AddressString} truncate />,
+        children: (
+          <CopyableAddressLink truncate address={(validator.beneficiary ?? validator.endorser) as AddressString} />
+        ),
       },
       {
         title: t('Reliability'),
