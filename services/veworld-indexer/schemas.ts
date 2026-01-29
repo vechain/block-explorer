@@ -63,10 +63,13 @@ const indexerGetContractTransactionsParamsSchema = z
   })
   .extend(paginationParamsSchema.shape)
 
+const transferEventTypeSchema = z.enum(['FUNGIBLE_TOKEN', 'NFT', 'VET'])
+
 const indexerGetTransfersParamsSchema = z
   .object({
     address: addressStringSchema,
     tokenAddress: addressStringSchema.nullable().optional(),
+    eventType: transferEventTypeSchema.optional(),
   })
   .extend(paginationParamsSchema.shape)
 

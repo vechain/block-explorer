@@ -18,3 +18,12 @@ export const TOKEN_API_SLUGS = {
   B3TR: 'vebetterdao',
   VOT3: 'vebetterdao',
 } as const
+
+// Token contract addresses (mainnet)
+export const TOKEN_CONTRACT_ADDRESSES = {
+  VTHO: '0x0000000000000000000000000000456E65726779',
+  B3TR: '0x5ef79995FE8a89e0812330E4378eB2660ceDe699',
+  VOT3: '0x76Ca782B59C74d088C7D2Cce2f211BC00836c602',
+} as const
+
+export type TokenFilterKey = 'ALL' | 'VET' | 'VTHO' | 'B3TR' | 'VOT3'
