@@ -35,12 +35,12 @@ export const HomeStatsGroup = () => {
 
   // General Information logic
   const { data: accountTotalsData, isLoading: isLoadingAccounts } = useAccountTotals(AccountTimeFrame.ALL)
-  const { data: activeValidatorsCount, isLoading: isLoadingActiveValidators } = useValidatorsCount(
-    ValidatorStatus.ACTIVE,
-  )
-  const { data: exitingValidatorsCount, isLoading: isLoadingExitingValidators } = useValidatorsCount(
-    ValidatorStatus.EXITING,
-  )
+  const { data: activeValidatorsCount, isLoading: isLoadingActiveValidators } = useValidatorsCount({
+    status: ValidatorStatus.ACTIVE,
+  })
+  const { data: exitingValidatorsCount, isLoading: isLoadingExitingValidators } = useValidatorsCount({
+    status: ValidatorStatus.EXITING,
+  })
 
   const totalAccounts = accountTotalsData?.data?.[0]?.total ?? 0
   const activeValidators = activeValidatorsCount ?? 0

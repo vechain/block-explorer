@@ -22,9 +22,8 @@ import { totalVetDelegatedQueryOptions } from '@/services/veworld-indexer/total-
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
 import { AccountTimeFrame, accountTotalsQueryOptions } from '@/services/veworld-indexer/account-totals'
 import {
-  ALL_VALIDATORS_COUNT_QUERY_KEY,
   allValidatorsQueryOptions,
-  getAllValidatorsCount,
+  validatorsCountQueryOptions,
   ValidatorStatus,
 } from '@/services/veworld-indexer/validators'
 import { TableSkeleton } from '@/components/ui/Table'
@@ -45,14 +44,8 @@ export default async function HomePage({
     queryClient.prefetchQuery(totalVetDelegatedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(accountTotalsQueryOptions(activeNetworkName, AccountTimeFrame.ALL)),
     queryClient.prefetchQuery(allValidatorsQueryOptions(activeNetworkName)),
-    queryClient.prefetchQuery({
-      queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.ACTIVE],
-      queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.ACTIVE),
-    }),
-    queryClient.prefetchQuery({
-      queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetworkName, ValidatorStatus.EXITING],
-      queryFn: () => getAllValidatorsCount(activeNetworkName, ValidatorStatus.EXITING),
-    }),
+    queryClient.prefetchQuery(validatorsCountQueryOptions(activeNetworkName, { status: ValidatorStatus.ACTIVE })),
+    queryClient.prefetchQuery(validatorsCountQueryOptions(activeNetworkName, { status: ValidatorStatus.EXITING })),
   ])
 
   logPrefetchFailures(prefetchResults, [

@@ -3,7 +3,6 @@ import type { AddressString, BlockId, BlockRevision, Transaction, TransactionId 
 import { useSettingsStore } from '@/lib/stores/settings'
 import { accountQueryOptions } from './account'
 import { baseFeePerGasQueryOptions, bestBlockCompressedQueryOptions, blockExpandedQueryOptions } from './block'
-import { accountStakedVetQueryOptions } from './staked-vet'
 import {
   legacyBaseFeePerGasQueryOptions,
   revertReasonQueryOptions,
@@ -65,9 +64,4 @@ export const useVnsName = (address: AddressString | undefined) => {
 export const useAccount = (address: AddressString | undefined) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(accountQueryOptions(activeNetwork.name, address))
-}
-
-export const useAccountStakedVet = (address: AddressString | undefined) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(accountStakedVetQueryOptions(activeNetwork.name, address))
 }
