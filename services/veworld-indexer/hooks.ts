@@ -6,6 +6,7 @@ import { ABIEvent, ERC20_ABI } from '@vechain/sdk-core'
 import type { AddressString, ExpandedBlock } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { blockExpandedQueryOptions, bestBlockCompressedQueryOptions } from '@/services/thor/block'
+import { accountStakedVetQueryOptions } from '@/services/thor/staked-vet'
 import { accountTotalsQueryOptions, AccountTimeFrame } from './account-totals'
 import { accountOverviewQueryOptions } from './account-overview'
 import { accountErc20ContractsQueryOptions } from './erc20-contracts'
@@ -24,10 +25,11 @@ import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
 import { contractTransactionsQueryOptions } from './transactions-contract'
 import {
-  ALL_VALIDATORS_COUNT_QUERY_KEY,
   allValidatorsQueryOptions,
-  getAllValidatorsCount,
+  validatorsCountQueryOptions,
   ValidatorStatus,
+  type ValidatorQueryOptions,
+  type ValidatorCountOptions,
 } from './validators'
 import {
   validatorDetailsQueryOptions,
@@ -54,6 +56,41 @@ export const useTotalVetDelegated = () => {
 export const useTotalVthoClaimed = (address: string | undefined) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(totalVthoClaimedQueryOptions(activeNetwork.name, address as `0x${string}` | undefined))
+}
+
+/**
+ * Get total VET staked by an account, including:
+ * - Direct staked VET (from Stargate NFT contract)
+ * - VET staked by validators this account endorses
+ */
+export const useAccountStakedVet = (address: AddressString | undefined) => {
+  const { activeNetwork } = useSettingsStore()
+
+  // Direct staked VET from Thor contract
+  const { data: directStakedVet, isPending: isDirectPending } = useQuery(
+    accountStakedVetQueryOptions(activeNetwork.name, address),
+  )
+
+  // Validators this account endorses
+  const { data: endorsedValidators, isPending: isValidatorsPending } = useValidators(
+    address ? { endorser: address } : undefined,
+  )
+
+  const totalStakedVet = useMemo(() => {
+    const direct = directStakedVet ?? 0n
+    const endorsed =
+      endorsedValidators?.reduce((sum, v) => {
+        // Safe conversion: integer part to BigInt, then multiply
+        const vetInWei = BigInt(Math.floor(v.validatorVetStaked)) * 10n ** 18n
+        return sum + vetInWei
+      }, 0n) ?? 0n
+    return direct + endorsed
+  }, [directStakedVet, endorsedValidators])
+
+  return {
+    data: totalStakedVet,
+    isPending: isDirectPending || isValidatorsPending,
+  }
 }
 
 export const useAccountTotals = (timeFrame: AccountTimeFrame) => {
@@ -142,18 +179,14 @@ export const useDeployedContracts = ({
   return useQuery(deployedContractsQueryOptions(activeNetwork.name, { address, page, size }))
 }
 
-export const useValidatorsCount = (status?: ValidatorStatus) => {
+export const useValidatorsCount = (options?: ValidatorCountOptions) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery({
-    queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, activeNetwork.name, status],
-    queryFn: () => getAllValidatorsCount(activeNetwork.name, status),
-    refetchInterval: 60 * 1000, // Refetch every 60 seconds
-  })
+  return useQuery(validatorsCountQueryOptions(activeNetwork.name, options))
 }
 
-export const useValidators = (status?: ValidatorStatus) => {
+export const useValidators = (options?: ValidatorQueryOptions) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(allValidatorsQueryOptions(activeNetwork.name, status))
+  return useQuery(allValidatorsQueryOptions(activeNetwork.name, options))
 }
 
 export { ValidatorStatus }
