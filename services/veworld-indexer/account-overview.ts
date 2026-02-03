@@ -19,6 +19,10 @@ const accountOverviewSchema = z.object({
   gasUsed: z.string(),
   vetSent: z.string(),
   vetReceived: z.string(),
+  vthoBlockRewards: z.number(),
+  vthoPassiveGeneration: z.number(),
+  vthoClaimedStargate: z.number(),
+  vthoEarnedTotal: z.number(),
 })
 
 export const accountOverviewQueryOptions = (networkName: NetworkName, address: string) => ({

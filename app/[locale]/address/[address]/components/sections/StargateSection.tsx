@@ -1,13 +1,13 @@
 'use client'
 
-import { Heading, HStack, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { HStack, Skeleton, Stack, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFormatAmount, useFormatNumber } from '@/hooks/useFormatting'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
-import { useAccountStakedVet, useTotalVthoClaimed } from '@/services/veworld-indexer/hooks'
+import { useAccountOverview, useAccountStakedVet } from '@/services/veworld-indexer/hooks'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { CURRENCIES } from '@/lib/constants/currencies'
 import type { AddressString } from '@/lib/schemas'
@@ -19,13 +19,16 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
   const { currency } = useSettingsStore()
   const currencySymbol = CURRENCIES[currency].symbol
 
+  const { data: accountOverview, isPending: isAccountOverviewPending } = useAccountOverview(address)
   const { data: stakedVet, isPending: isStakedVetPending } = useAccountStakedVet(address)
-  const { data: totalEarned, isPending: isTotalEarnedPending } = useTotalVthoClaimed(address)
   const { price: vetPrice, isLoading: isVetPriceLoading } = useTokenDailyPrices('vechain')
   const { price: vthoPrice, isLoading: isVthoPriceLoading } = useTokenDailyPrices('vethor-token')
 
   const [formattedVetStaked, fullVetStaked] = formatAmount({ amount: stakedVet ?? 0n, decimals: 18 })
-  const [formattedTotalEarned, fullTotalEarned] = formatAmount({ amount: totalEarned ?? 0n, decimals: 18 })
+  const [formattedTotalEarned, fullTotalEarned] = formatAmount({
+    amount: BigInt(accountOverview?.vthoEarnedTotal ?? 0),
+    decimals: 18,
+  })
 
   const vetFiatValue = useMemo(() => {
     if (!vetPrice || !fullVetStaked) return null
@@ -71,7 +74,7 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
       children: (
         <Stack gap={0}>
           <HStack gap={2}>
-            {isTotalEarnedPending ? (
+            {isAccountOverviewPending ? (
               <Skeleton height="20px" width="100px" />
             ) : (
               <Text textStyle="bodyM" color="text-primary">
@@ -96,9 +99,6 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
 
   return (
     <Stack gap={4}>
-      <Heading as="h3" textStyle="bodyL" color="text-primary">
-        {t('Stargate')}
-      </Heading>
       <DataCardGroup variant="outline" items={items} desktopColumns={2} />
     </Stack>
   )
