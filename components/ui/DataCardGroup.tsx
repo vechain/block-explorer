@@ -1,6 +1,16 @@
 'use client'
 
-import { Box, Flex, type FlexProps, Text, useBreakpointValue, Grid, HStack, GridProps } from '@chakra-ui/react'
+import {
+  Box,
+  Flex,
+  type FlexProps,
+  Text,
+  useBreakpointValue,
+  Grid,
+  HStack,
+  GridProps,
+  StackProps,
+} from '@chakra-ui/react'
 import React from 'react'
 import type { IconBaseProps } from 'react-icons'
 import { IconInCircle } from './IconInCircle'
@@ -10,8 +20,10 @@ import { Card, type CardVariant } from './Card'
 export interface DataCardGroupItem {
   icon?: React.ReactElement<IconBaseProps>
   title: string
+  hiddenTitle?: boolean
   tooltip?: string
   children: React.ReactNode
+  childrenContainerProps?: StackProps
 }
 
 interface DataCardGroupProps {
@@ -69,15 +81,17 @@ export const DataCardGroup = ({
             : undefined
           return (
             <Card key={index} variant={variant} flex="1" alignSelf="stretch" minWidth="0" {...cardProps}>
-              <Flex alignItems="center" justifyContent="space-between">
-                <HStack alignItems="center" gap="2">
-                  {Icon && <IconInCircle icon={Icon} p="1" />}
-                  <Text whiteSpace="nowrap" textStyle="bodyM" color="text-primary">
-                    {item.title}
-                  </Text>
-                </HStack>
-                {item.tooltip && <InfoTip tooltip={item.tooltip} />}
-              </Flex>
+              {!item.hiddenTitle && (
+                <Flex alignItems="center" justifyContent="space-between">
+                  <HStack alignItems="center" gap="2">
+                    {Icon && <IconInCircle icon={Icon} p="1" />}
+                    <Text whiteSpace="nowrap" textStyle="bodyM" color="text-primary">
+                      {item.title}
+                    </Text>
+                  </HStack>
+                  {item.tooltip && <InfoTip tooltip={item.tooltip} />}
+                </Flex>
+              )}
               <HStack alignItems="center" justifyContent="flex-start">
                 {item.children}
               </HStack>
@@ -100,13 +114,25 @@ export const DataCardGroup = ({
         return (
           <Box key={index} py="3" borderBottomWidth={isLast ? '0' : '1px'} borderColor="border-primary">
             <HStack alignItems="center" justifyContent="space-between" gap="4" minW="0">
-              <HStack alignItems="center" gap="2" minW="0" flexWrap="wrap">
-                {Icon && <IconInCircle icon={Icon} p="1" />}
-                <Text whiteSpace="nowrap" textStyle="bodyM" color="text-primary">
-                  {item.title}
-                </Text>
-              </HStack>
-              <HStack justifyContent="flex-end" textAlign="right" alignItems="center" gap="2" minW="0" flexWrap="wrap">
+              {!item.hiddenTitle && (
+                <HStack alignItems="center" gap="2" minW="0" flexWrap="wrap">
+                  {Icon && <IconInCircle icon={Icon} p="1" />}
+
+                  <Text whiteSpace="nowrap" textStyle="bodyM" color="text-primary">
+                    {item.title}
+                  </Text>
+                </HStack>
+              )}
+
+              <HStack
+                justifyContent="flex-end"
+                textAlign="right"
+                alignItems="center"
+                gap="2"
+                minW="0"
+                flexWrap="wrap"
+                {...item.childrenContainerProps}
+              >
                 {item.children}
                 {item.tooltip && <InfoTip tooltip={item.tooltip} />}
               </HStack>
