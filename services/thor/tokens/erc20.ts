@@ -36,7 +36,7 @@ export const useErc20Contracts = ({ contractAddressList }: { contractAddressList
   })
 }
 
-const erc20ContractQueryOptions = (networkName: NetworkName, address: AddressString) => ({
+export const erc20ContractQueryOptions = (networkName: NetworkName, address: AddressString) => ({
   queryKey: [ERC20_CONTRACT_QUERY_KEY, networkName, address],
   queryFn: () => getErc20Contract(networkName, address),
   select: (data: Erc20 | null) => ({ address, erc20: data }),
