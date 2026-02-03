@@ -11,6 +11,7 @@ import { useAccountOverview, useAccountStakedVet } from '@/services/veworld-inde
 import { useSettingsStore } from '@/lib/stores/settings'
 import { CURRENCIES } from '@/lib/constants/currencies'
 import type { AddressString } from '@/lib/schemas'
+import { Card } from '@/components/ui/Card'
 
 export const StargateSection = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
@@ -116,7 +117,7 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
             </HStack>
           ) : (
             <Accordion.Root collapsible>
-              <Accordion.Item value="vtho-earned" border="none" p="0">
+              <Accordion.Item value="vtho-earned" border="none" p="0" gap={4}>
                 <Accordion.ItemTrigger p="0" justifyContent="space-between" cursor="pointer">
                   {isMobile && (
                     <Text textStyle="bodyM" color="text-primary">
@@ -151,60 +152,74 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
 
                 <Accordion.ItemContent rounded={'none'}>
                   <Accordion.ItemBody pt={2} pb={0} px={0} display="flex" flexDirection="column" gap={4}>
-                    <HStack justify="space-between" width="full">
-                      <Text textStyle="bodyS" color="text-secondary">
-                        {t('Block rewards')}
-                      </Text>
-                      <VStack gap={2}>
-                        <HStack gap={2}>
-                          <Text textStyle="bodyS" color="text-primary">
-                            {formattedVthoBlockRewards}
-                          </Text>
-                          <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
-                        </HStack>
-                        {fiatVthoBlockRewards && (
-                          <Text textStyle="bodyS" color="text-secondary">
-                            {fiatVthoBlockRewards}
-                          </Text>
-                        )}
-                      </VStack>
-                    </HStack>
-                    <HStack justify="space-between" width="full">
-                      <Text textStyle="bodyS" color="text-secondary">
-                        {t('Passive generation')}
-                      </Text>
-                      <VStack gap={2}>
-                        <HStack gap={2}>
-                          <Text textStyle="bodyS" color="text-primary">
-                            {formattedVthoPassiveGeneration}
-                          </Text>
-                          <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
-                        </HStack>
-                        {fiatVthoPassiveGeneration && (
-                          <Text textStyle="bodyS" color="text-secondary">
-                            {fiatVthoPassiveGeneration}
-                          </Text>
-                        )}
-                      </VStack>
-                    </HStack>
-                    <HStack justify="space-between" width="full">
-                      <Text textStyle="bodyS" color="text-secondary">
-                        {t('Claimed Stargate')}
-                      </Text>
-                      <VStack gap={2}>
-                        <HStack gap={2}>
-                          <Text textStyle="bodyS" color="text-primary">
-                            {formattedVthoClaimedStargate}
-                          </Text>
-                          <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
-                        </HStack>
-                        {fiatVthoClaimedStargate && (
-                          <Text textStyle="bodyS" color="text-secondary">
-                            {fiatVthoClaimedStargate}
-                          </Text>
-                        )}
-                      </VStack>
-                    </HStack>
+                    <Card variant="outline">
+                      <HStack
+                        justify="space-between"
+                        width="full"
+                        borderBottomWidth="1px"
+                        borderColor="border-primary"
+                        pb={2}
+                      >
+                        <Text textStyle="bodyS" color="text-secondary">
+                          {t('Block rewards')}
+                        </Text>
+                        <VStack gap={2}>
+                          <HStack gap={2}>
+                            <Text textStyle="bodyS" color="text-primary">
+                              {formattedVthoBlockRewards}
+                            </Text>
+                            <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
+                          </HStack>
+                          {fiatVthoBlockRewards && (
+                            <Text textStyle="bodyS" color="text-secondary">
+                              {fiatVthoBlockRewards}
+                            </Text>
+                          )}
+                        </VStack>
+                      </HStack>
+                      <HStack
+                        justify="space-between"
+                        width="full"
+                        borderBottomWidth="1px"
+                        borderColor="border-primary"
+                        pb={2}
+                      >
+                        <Text textStyle="bodyS" color="text-secondary">
+                          {t('Passive generation')}
+                        </Text>
+                        <VStack gap={2}>
+                          <HStack gap={2}>
+                            <Text textStyle="bodyS" color="text-primary">
+                              {formattedVthoPassiveGeneration}
+                            </Text>
+                            <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
+                          </HStack>
+                          {fiatVthoPassiveGeneration && (
+                            <Text textStyle="bodyS" color="text-secondary">
+                              {fiatVthoPassiveGeneration}
+                            </Text>
+                          )}
+                        </VStack>
+                      </HStack>
+                      <HStack justify="space-between" width="full">
+                        <Text textStyle="bodyS" color="text-secondary">
+                          {t('Claimed Stargate')}
+                        </Text>
+                        <VStack gap={2}>
+                          <HStack gap={2}>
+                            <Text textStyle="bodyS" color="text-primary">
+                              {formattedVthoClaimedStargate}
+                            </Text>
+                            <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
+                          </HStack>
+                          {fiatVthoClaimedStargate && (
+                            <Text textStyle="bodyS" color="text-secondary">
+                              {fiatVthoClaimedStargate}
+                            </Text>
+                          )}
+                        </VStack>
+                      </HStack>
+                    </Card>
                   </Accordion.ItemBody>
                 </Accordion.ItemContent>
               </Accordion.Item>
