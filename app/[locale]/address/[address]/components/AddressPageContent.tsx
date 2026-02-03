@@ -10,6 +10,7 @@ import { AccountTransactionsSection } from './sections/AccountTransactionsSectio
 import { AccountActivitySection } from './sections/AccountActivitySection'
 import { AccountNftsSection } from './sections/AccountNftsSection'
 import { DeployedContractsSection } from './sections/DeployedContractsSection'
+import { AccountTokenTransfersSection } from './sections/AccountTokenTransfersSection'
 import { ContractSummary } from './ContractSummary'
 import { ValidatorSummary } from './ValidatorSummary'
 
@@ -18,12 +19,7 @@ type AddressType = 'validator' | 'contract' | 'account'
 
 export const AddressPageContent = ({ address }: { address: AddressString }) => {
   const { data: account, isLoading: isAccountLoading, isFetched: isAccountFetched } = useAccount(address)
-  const {
-    data: validator,
-    isPending: isValidatorPending,
-    isFetched: isValidatorFetched,
-    isValidator,
-  } = useValidatorDetails(address)
+  const { data: validator, isFetched: isValidatorFetched, isValidator } = useValidatorDetails(address)
 
   const isLoading = isAccountLoading || !isValidatorFetched
 
@@ -52,31 +48,6 @@ export const AddressPageContent = ({ address }: { address: AddressString }) => {
     )
   }
 
-  // While still determining if it's a validator, show account/contract layout
-  // This prevents flicker when validator data loads after account data
-  if (isValidatorPending && !isValidator) {
-    // Show account or contract layout based on what we know
-    if (account?.hasCode) {
-      return (
-        <Stack flex={1} gap="8">
-          <ContractSummary address={resolvedAddress} />
-          <AccountActivitySection address={resolvedAddress} />
-          <AccountTransactionsSection address={resolvedAddress} hasCode={true} />
-        </Stack>
-      )
-    }
-
-    return (
-      <Stack flex={1} gap="8">
-        <AccountSummary address={resolvedAddress} />
-        <AccountActivitySection address={resolvedAddress} />
-        <AccountTransactionsSection address={resolvedAddress} hasCode={false} />
-        <AccountNftsSection address={resolvedAddress} />
-        <DeployedContractsSection address={resolvedAddress} />
-      </Stack>
-    )
-  }
-
   // Render contract page
   if (addressType === 'contract') {
     return (
@@ -84,6 +55,7 @@ export const AddressPageContent = ({ address }: { address: AddressString }) => {
         <ContractSummary address={resolvedAddress} />
         <AccountActivitySection address={resolvedAddress} />
         <AccountTransactionsSection address={resolvedAddress} hasCode={true} />
+        <AccountTokenTransfersSection address={resolvedAddress} />
       </Stack>
     )
   }
@@ -94,6 +66,7 @@ export const AddressPageContent = ({ address }: { address: AddressString }) => {
       <AccountSummary address={resolvedAddress} />
       <AccountActivitySection address={resolvedAddress} />
       <AccountTransactionsSection address={resolvedAddress} hasCode={account?.hasCode ?? false} />
+      <AccountTokenTransfersSection address={resolvedAddress} />
       <AccountNftsSection address={resolvedAddress} />
       <DeployedContractsSection address={resolvedAddress} />
     </Stack>
