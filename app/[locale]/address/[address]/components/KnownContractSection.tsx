@@ -24,7 +24,7 @@ export const KnownContractSection = ({ token }: KnownContractSectionProps) => {
         {/* Token Icon */}
         {iconUrl && (
           <Box flexShrink={0}>
-            <Image src={iconUrl} alt={token.name} width={64} height={64} style={{ borderRadius: '50%' }} unoptimized />
+            <Image src={iconUrl} alt={token.name} width={64} height={64} style={{ borderRadius: '50%' }} />
           </Box>
         )}
 
