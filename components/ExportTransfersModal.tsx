@@ -59,8 +59,8 @@ export const ExportTransfersModal = ({ isOpen, onClose, address }: ExportTransfe
       const fetchedTransfers = await fetchAllTransfersForExport({
         networkName: activeNetwork.name,
         address,
-        startDate: new Date(startDate),
-        endDate: new Date(`${endDate}T23:59:59`), // Include the entire end date
+        startDate: new Date(`${startDate}T00:00:00Z`),
+        endDate: new Date(`${endDate}T23:59:59Z`), // Include the entire end date (UTC)
         onProgress: setProgress,
         signal: abortControllerRef.current.signal,
       })
@@ -83,7 +83,7 @@ export const ExportTransfersModal = ({ isOpen, onClose, address }: ExportTransfe
         transfers: fetchedTransfers,
         accountAddress: address,
         networkName: activeNetwork.name,
-        filename: generateExportFilename(address, new Date(startDate), new Date(endDate)),
+        filename: generateExportFilename(address, new Date(`${startDate}T00:00:00Z`), new Date(`${endDate}T23:59:59Z`)),
       })
 
       setExportState('complete')
@@ -123,7 +123,7 @@ export const ExportTransfersModal = ({ isOpen, onClose, address }: ExportTransfe
         transfers,
         accountAddress: address,
         networkName: activeNetwork.name,
-        filename: generateExportFilename(address, new Date(startDate), new Date(endDate)),
+        filename: generateExportFilename(address, new Date(`${startDate}T00:00:00Z`), new Date(`${endDate}T23:59:59Z`)),
       })
       setExportState('complete')
     } catch (error) {
