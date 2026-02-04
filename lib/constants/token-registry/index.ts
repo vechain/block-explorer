@@ -1,4 +1,4 @@
-import type { NetworkName } from '@/lib/constants/network'
+import { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import mainTokens from './main.json'
 import testTokens from './test.json'
@@ -38,7 +38,7 @@ for (const token of testTokens as TokenRegistryEntry[]) {
  * Returns null if the token is not in the registry.
  */
 export function getTokenInfo(networkName: NetworkName, address: AddressString): TokenInfo | null {
-  const map = networkName === 'mainnet' ? mainTokenMap : testTokenMap
+  const map = networkName === NetworkName.MAINNET ? mainTokenMap : testTokenMap
   const token = map.get(address.toLowerCase())
 
   if (!token) {
