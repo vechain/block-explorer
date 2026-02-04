@@ -50,8 +50,11 @@ export function generateAndDownloadTransfersCsv({
   // Generate CSV rows
   const rows = includedTransfers.map(transfer => transferToCsvRow(transfer, accountAddress, tokenCache))
 
-  // Create CSV content
-  const csvContent = [CSV_HEADERS.join(','), ...rows.map(row => row.join(','))].join('\n')
+  // Create CSV content with proper field escaping
+  const csvContent = [
+    CSV_HEADERS.map(escapeCsvField).join(','),
+    ...rows.map(row => row.map(escapeCsvField).join(',')),
+  ].join('\n')
 
   // Trigger download
   downloadCsv(csvContent, filename)
@@ -172,6 +175,24 @@ function generateRemark(isSelfTransfer: boolean, isOutgoing: boolean, amount: st
   }
 
   return isOutgoing ? `sent ${amount} ${symbol}` : `received ${amount} ${symbol}`
+}
+
+/**
+ * Escapes a CSV field value according to RFC 4180.
+ * Fields containing commas, newlines, or double quotes are wrapped in double quotes.
+ * Internal double quotes are escaped by doubling them.
+ */
+function escapeCsvField(value: string): string {
+  // Check if the field needs to be quoted
+  const needsQuoting = value.includes(',') || value.includes('\n') || value.includes('\r') || value.includes('"')
+
+  if (!needsQuoting) {
+    return value
+  }
+
+  // Escape internal double quotes by doubling them
+  const escaped = value.replace(/"/g, '""')
+  return `"${escaped}"`
 }
 
 /**
