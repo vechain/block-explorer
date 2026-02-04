@@ -38,6 +38,7 @@ const ExpandableTokenBalance = ({ formattedBalance, breakdown, decimals }: Expan
         _hover={{ opacity: 0.8 }}
         role="button"
         tabIndex={0}
+        justifyContent="flex-end"
         onKeyDown={e => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
@@ -54,7 +55,7 @@ const ExpandableTokenBalance = ({ formattedBalance, breakdown, decimals }: Expan
         </Box>
       </HStack>
       {isBreakdownExpanded && (
-        <Stack gap={1} mt={2} pl={2} borderLeftWidth="2px" borderColor="border-primary">
+        <Stack gap={1} mt={2} pl={2} alignItems="flex-end">
           {breakdown.map(item => {
             const [formatted] = formatAmount({ amount: item.balance ?? BigInt(0), decimals })
             const itemIconPath = getTokenIconPath(item.symbol)
