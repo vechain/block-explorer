@@ -178,7 +178,7 @@ export const ExportTransfersModal = ({ isOpen, onClose, address }: ExportTransfe
                       <Input
                         type="date"
                         value={startDate}
-                        max={endDate || today}
+                        max={today}
                         onChange={e => setStartDate(e.target.value)}
                         bg="bg-secondary"
                         borderColor="border-primary"
