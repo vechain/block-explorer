@@ -55,7 +55,7 @@ export const useErc721Tokens = ({ contract, tokenIds }: { contract: Erc721['cont
   })
 }
 
-export const erc721ContractQueryOptions = (networkName: NetworkName, address: AddressString) => ({
+const erc721ContractQueryOptions = (networkName: NetworkName, address: AddressString) => ({
   queryKey: [ERC721_CONTRACT_QUERY_KEY, networkName, address],
   queryFn: () => getErc721Contract(networkName, address),
   select: (data: Erc721 | null) => ({ address, erc721: data }),

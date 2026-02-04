@@ -1,10 +1,8 @@
-import type { QueryClient } from '@tanstack/react-query'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
-import { erc20ContractQueryOptions } from '@/services/thor/tokens/erc20'
-import { erc721ContractQueryOptions } from '@/services/thor/tokens/erc721'
 import type { IndexerTransfer } from '@/services/veworld-indexer/schemas'
 import { NATIVE_TOKEN_DECIMALS } from '@/lib/constants/tokens'
+import { getTokenInfo } from '@/lib/constants/token-registry'
 
 const CSV_HEADERS = ['Txid', 'Block# ', 'Date(GMT)', 'Sender', 'Recipient', 'Amount', 'Token', 'Remark']
 
@@ -17,25 +15,40 @@ type TokenCache = Map<string, TokenInfo>
 
 /**
  * Generates a CSV file from transfer data and triggers download.
+ * Only includes transfers for tokens that are in the official vechain token registry.
+ * NFTs and unlisted tokens are excluded.
  */
-export async function generateAndDownloadTransfersCsv({
+export function generateAndDownloadTransfersCsv({
   transfers,
   accountAddress,
   networkName,
-  queryClient,
   filename,
 }: {
   transfers: IndexerTransfer[]
   accountAddress: AddressString
   networkName: NetworkName
-  queryClient: QueryClient
   filename: string
-}): Promise<void> {
+}): void {
   // Build token cache for all unique token addresses
-  const tokenCache = await buildTokenCache(transfers, networkName, queryClient)
+  const tokenCache = buildTokenCache(transfers, networkName)
+
+  // Filter transfers to only include those with tokens in the cache
+  // This excludes NFTs and unlisted fungible tokens
+  const includedTransfers = transfers.filter(transfer => {
+    if (transfer.eventType === 'VET') {
+      return true // VET is always included
+    }
+    if (transfer.eventType === 'NFT') {
+      return false // NFTs are excluded
+    }
+    if (transfer.tokenAddress) {
+      return tokenCache.has(transfer.tokenAddress)
+    }
+    return false
+  })
 
   // Generate CSV rows
-  const rows = transfers.map(transfer => transferToCsvRow(transfer, accountAddress, tokenCache))
+  const rows = includedTransfers.map(transfer => transferToCsvRow(transfer, accountAddress, tokenCache))
 
   // Create CSV content
   const csvContent = [CSV_HEADERS.join(','), ...rows.map(row => row.join(','))].join('\n')
@@ -46,69 +59,32 @@ export async function generateAndDownloadTransfersCsv({
 
 /**
  * Builds a cache of token info (symbol, decimals) for all unique token addresses.
- * Uses TanStack Query cache to avoid redundant fetches.
+ * Uses the local token registry instead of contract calls.
+ * Only tokens in the official vechain token registry are included.
  */
-async function buildTokenCache(
-  transfers: IndexerTransfer[],
-  networkName: NetworkName,
-  queryClient: QueryClient,
-): Promise<TokenCache> {
+function buildTokenCache(transfers: IndexerTransfer[], networkName: NetworkName): TokenCache {
   const cache: TokenCache = new Map()
 
   // Add VET to cache
   cache.set('VET', { symbol: 'VET', decimals: NATIVE_TOKEN_DECIMALS })
 
-  // Collect unique token addresses by event type
+  // Collect unique fungible token addresses
   const fungibleAddresses = new Set<AddressString>()
-  const nftAddresses = new Set<AddressString>()
 
   for (const transfer of transfers) {
-    if (transfer.tokenAddress) {
-      if (transfer.eventType === 'FUNGIBLE_TOKEN') {
-        fungibleAddresses.add(transfer.tokenAddress)
-      } else if (transfer.eventType === 'NFT') {
-        nftAddresses.add(transfer.tokenAddress)
-      }
+    if (transfer.tokenAddress && transfer.eventType === 'FUNGIBLE_TOKEN') {
+      fungibleAddresses.add(transfer.tokenAddress)
     }
   }
 
-  // Fetch ERC20 token info
-  // Note: fetchQuery doesn't apply the `select` function, so we get the raw Erc20 | null result
-  const erc20Promises = Array.from(fungibleAddresses).map(async address => {
-    try {
-      const { queryKey, queryFn } = erc20ContractQueryOptions(networkName, address)
-      const result = await queryClient.fetchQuery({ queryKey, queryFn })
-      if (result) {
-        cache.set(address, {
-          symbol: result.symbol,
-          decimals: result.decimals,
-        })
-      }
-    } catch {
-      // If fetch fails, we'll use fallback values
-      cache.set(address, { symbol: truncateAddress(address), decimals: NATIVE_TOKEN_DECIMALS })
+  // Look up token info from the registry
+  for (const address of fungibleAddresses) {
+    const tokenInfo = getTokenInfo(networkName, address)
+    if (tokenInfo) {
+      cache.set(address, tokenInfo)
     }
-  })
-
-  // Fetch ERC721 token info
-  // Note: fetchQuery doesn't apply the `select` function, so we get the raw Erc721 | null result
-  const erc721Promises = Array.from(nftAddresses).map(async address => {
-    try {
-      const { queryKey, queryFn } = erc721ContractQueryOptions(networkName, address)
-      const result = await queryClient.fetchQuery({ queryKey, queryFn })
-      if (result) {
-        cache.set(address, {
-          symbol: result.name || result.symbol,
-          decimals: 0, // NFTs don't have decimals
-        })
-      }
-    } catch {
-      // If fetch fails, we'll use fallback values
-      cache.set(address, { symbol: 'NFT', decimals: 0 })
-    }
-  })
-
-  await Promise.all([...erc20Promises, ...erc721Promises])
+    // Tokens not in registry are not added to cache and will be filtered out
+  }
 
   return cache
 }
@@ -136,7 +112,7 @@ function transferToCsvRow(transfer: IndexerTransfer, accountAddress: AddressStri
   const amount = isOutgoing && !isSelfTransfer ? `-${rawAmount}` : rawAmount
 
   // Generate remark
-  const remark = generateRemark(transfer, isSelfTransfer, isOutgoing, rawAmount, tokenInfo.symbol)
+  const remark = generateRemark(isSelfTransfer, isOutgoing, rawAmount, tokenInfo.symbol)
 
   return [
     transfer.txId,
@@ -188,35 +164,14 @@ function formatBigIntToDecimal(value: bigint, decimals: number): string {
 
 /**
  * Generates a remark for the transfer.
+ * NFTs are excluded from export, so this only handles VET and fungible tokens.
  */
-function generateRemark(
-  transfer: IndexerTransfer,
-  isSelfTransfer: boolean,
-  isOutgoing: boolean,
-  amount: string,
-  symbol: string,
-): string {
-  if (transfer.eventType === 'NFT') {
-    const tokenId = transfer.tokenId || 'unknown'
-    if (isSelfTransfer) {
-      return `self-transferred ${symbol} #${tokenId}`
-    }
-    return isOutgoing ? `sent ${symbol} #${tokenId}` : `received ${symbol} #${tokenId}`
-  }
-
+function generateRemark(isSelfTransfer: boolean, isOutgoing: boolean, amount: string, symbol: string): string {
   if (isSelfTransfer) {
     return `self-transferred ${amount} ${symbol}`
   }
 
   return isOutgoing ? `sent ${amount} ${symbol}` : `received ${amount} ${symbol}`
-}
-
-/**
- * Truncates an address to a shorter format for display.
- */
-function truncateAddress(address: string): string {
-  if (address.length <= 10) return address
-  return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
 /**

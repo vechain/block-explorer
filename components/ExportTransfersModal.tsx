@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Box, Button, Dialog, Flex, Input, Portal, Progress, Text, VStack } from '@chakra-ui/react'
-import { useQueryClient } from '@tanstack/react-query'
 import { LuDownload, LuX } from 'react-icons/lu'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -22,7 +21,6 @@ type ExportState = 'idle' | 'fetching' | 'generating' | 'complete' | 'error'
 export const ExportTransfersModal = ({ isOpen, onClose, address }: ExportTransfersModalProps) => {
   const { t } = useTranslation()
   const { activeNetwork } = useSettingsStore()
-  const queryClient = useQueryClient()
   const abortControllerRef = useRef<AbortController | null>(null)
 
   // Date inputs - default to last 30 days
@@ -81,11 +79,10 @@ export const ExportTransfersModal = ({ isOpen, onClose, address }: ExportTransfe
 
       // Generate and download CSV
       setExportState('generating')
-      await generateAndDownloadTransfersCsv({
+      generateAndDownloadTransfersCsv({
         transfers: fetchedTransfers,
         accountAddress: address,
         networkName: activeNetwork.name,
-        queryClient,
         filename: generateExportFilename(address, new Date(startDate), new Date(endDate)),
       })
 
@@ -99,7 +96,7 @@ export const ExportTransfersModal = ({ isOpen, onClose, address }: ExportTransfe
       setErrorMessage(error instanceof Error ? error.message : t('An error occurred'))
       setExportState('error')
     }
-  }, [isValidDateRange, activeNetwork.name, address, startDate, endDate, queryClient, t])
+  }, [isValidDateRange, activeNetwork.name, address, startDate, endDate, t])
 
   const handleCancel = useCallback(() => {
     abortControllerRef.current?.abort()
@@ -117,16 +114,15 @@ export const ExportTransfersModal = ({ isOpen, onClose, address }: ExportTransfe
     setErrorMessage(null)
   }, [])
 
-  const handleDownloadAgain = useCallback(async () => {
+  const handleDownloadAgain = useCallback(() => {
     if (transfers.length === 0) return
 
     setExportState('generating')
     try {
-      await generateAndDownloadTransfersCsv({
+      generateAndDownloadTransfersCsv({
         transfers,
         accountAddress: address,
         networkName: activeNetwork.name,
-        queryClient,
         filename: generateExportFilename(address, new Date(startDate), new Date(endDate)),
       })
       setExportState('complete')
@@ -134,7 +130,7 @@ export const ExportTransfersModal = ({ isOpen, onClose, address }: ExportTransfe
       setErrorMessage(error instanceof Error ? error.message : t('An error occurred'))
       setExportState('error')
     }
-  }, [transfers, address, activeNetwork.name, queryClient, startDate, endDate, t])
+  }, [transfers, address, activeNetwork.name, startDate, endDate, t])
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={details => !details.open && handleClose()}>
