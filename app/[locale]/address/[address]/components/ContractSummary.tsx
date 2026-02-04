@@ -3,6 +3,7 @@
 import { Flex, Grid, Heading, Stack, Text, Skeleton } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
+import { useMemo } from 'react'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
 import { Card } from '@/components/ui/Card'
@@ -15,11 +16,15 @@ import { TokenBalanceSection } from './sections/TokenBalanceSection'
 import { TokenValueSection } from './sections/TokenValueSection'
 import { AddressLink, BaseLink } from '@/components/ui/Links'
 import { truncateHex } from '@/lib/utils/truncateHex'
+import { useSettingsStore } from '@/lib/stores/settings'
+import { getTokenRegistryEntry } from '@/lib/constants/token-registry'
+import { KnownContractSection } from './KnownContractSection'
 
 export const ContractSummary = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
   const { data: vnsName } = useVnsName(address)
+  const activeNetwork = useSettingsStore(state => state.activeNetwork)
   const {
     tokenBalanceRows,
     tokenValueRows,
@@ -28,6 +33,12 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
     isPendingAll: isPendingAllTokens,
   } = useAccountTokens(address)
   const { data: contract, isPending: isContractPending } = useContract({ address })
+
+  // Check if this contract is a known token from the registry
+  const tokenRegistryEntry = useMemo(
+    () => getTokenRegistryEntry(activeNetwork.name, address),
+    [activeNetwork.name, address],
+  )
 
   const isPending = isPendingTokens || isContractPending
 
@@ -74,6 +85,9 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
           </Heading>
           <IDChip value={address} vnsName={vnsName} />
         </Flex>
+
+        {/* Show known token info if contract is in the token registry */}
+        {tokenRegistryEntry && <KnownContractSection token={tokenRegistryEntry} />}
 
         <DataCardGroup items={contractDataCards} desktopColumns={3} variant="outline" />
 
