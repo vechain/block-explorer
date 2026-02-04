@@ -165,7 +165,7 @@ export const useSearch = () => {
   })
 }
 
-const search = async ({
+export const search = async ({
   searchTerm,
   activeNetwork,
 }: {

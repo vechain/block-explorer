@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { identifySearchTermType, normalizeSearchTerm, SearchTermType } from './useSearch'
+import { identifySearchTermType, normalizeSearchTerm, search, SearchTermType } from './useSearch'
 import { getVnsAddress } from '@/services/thor/vns'
-import { NetworkName } from '@/lib/constants/network'
+import { Network, NetworkName } from '@/lib/constants/network'
 
 // Mock the external dependencies
 vi.mock('@/services/thor/account')
@@ -451,36 +451,97 @@ describe('useSearch', () => {
 
 // Integration tests for VNS fallback behavior
 describe('VNS fallback integration', () => {
+  const mockNetwork: Network = {
+    name: NetworkName.MAINNET,
+    url: 'https://mainnet.vechain.org',
+    contracts: {},
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  describe('getVnsAddress service', () => {
-    it('should resolve VNS name to address when VNS exists', async () => {
+  describe('VNS_DOMAIN handler', () => {
+    it('should resolve VNS domain to address and redirect', async () => {
       const resolvedAddress = '0x1234567890123456789012345678901234567890'
       mockGetVnsAddress.mockResolvedValueOnce(resolvedAddress)
 
-      const result = await mockGetVnsAddress({
-        networkName: NetworkName.MAINNET,
-        name: 'alice',
+      const result = await search({
+        searchTerm: 'alice.vet',
+        activeNetwork: mockNetwork,
       })
 
-      expect(result).toBe(resolvedAddress)
+      expect(result).toEqual({ redirectTo: `/address/${resolvedAddress}` })
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'alice.vet',
+      })
+    })
+
+    it('should throw error when VNS domain does not resolve', async () => {
+      mockGetVnsAddress.mockResolvedValueOnce(null)
+
+      await expect(
+        search({
+          searchTerm: 'nonexistent.vet',
+          activeNetwork: mockNetwork,
+        }),
+      ).rejects.toThrow('VNS domain not found')
+
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'nonexistent.vet',
+      })
+    })
+  })
+
+  describe('UNKNOWN handler (VNS fallback)', () => {
+    it('should attempt VNS resolution for unknown terms and redirect on success', async () => {
+      const resolvedAddress = '0xabcdef1234567890abcdef1234567890abcdef12'
+      mockGetVnsAddress.mockResolvedValueOnce(resolvedAddress)
+
+      const result = await search({
+        searchTerm: 'alice',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: `/address/${resolvedAddress}` })
       expect(mockGetVnsAddress).toHaveBeenCalledWith({
         networkName: NetworkName.MAINNET,
         name: 'alice',
       })
     })
 
-    it('should return null when VNS name does not exist', async () => {
+    it('should throw error when VNS resolution fails for unknown terms', async () => {
       mockGetVnsAddress.mockResolvedValueOnce(null)
 
-      const result = await mockGetVnsAddress({
-        networkName: NetworkName.MAINNET,
-        name: 'nonexistent',
-      })
+      await expect(
+        search({
+          searchTerm: 'nonexistent-name',
+          activeNetwork: mockNetwork,
+        }),
+      ).rejects.toThrow('No results found')
 
-      expect(result).toBeNull()
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'nonexistent-name',
+      })
+    })
+
+    it('should handle VNS service errors gracefully', async () => {
+      mockGetVnsAddress.mockRejectedValueOnce(new Error('Network error'))
+
+      await expect(
+        search({
+          searchTerm: 'some-name',
+          activeNetwork: mockNetwork,
+        }),
+      ).rejects.toThrow('Network error')
+
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'some-name',
+      })
     })
   })
 })
