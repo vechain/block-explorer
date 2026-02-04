@@ -495,6 +495,91 @@ describe('VNS fallback integration', () => {
     })
   })
 
+  describe('UNKNOWN handler - Token name/symbol search', () => {
+    it('should redirect to token address when searching by symbol (lowercase)', async () => {
+      const result = await search({
+        searchTerm: 'b3tr',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: '/address/0x5ef79995fe8a89e0812330e4378eb2660cede699' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+
+    it('should redirect to token address when searching by symbol (uppercase)', async () => {
+      const result = await search({
+        searchTerm: 'B3TR',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: '/address/0x5ef79995fe8a89e0812330e4378eb2660cede699' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+
+    it('should redirect to token address when searching by name', async () => {
+      const result = await search({
+        searchTerm: 'VeThor',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: '/address/0x0000000000000000000000000000456e65726779' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+
+    it('should redirect to token address when searching by symbol (VTHO)', async () => {
+      const result = await search({
+        searchTerm: 'VTHO',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: '/address/0x0000000000000000000000000000456e65726779' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+
+    it('should be case-insensitive for token names', async () => {
+      const result = await search({
+        searchTerm: 'vethor',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: '/address/0x0000000000000000000000000000456e65726779' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+
+    it('should fall back to VNS when token name is not found', async () => {
+      const resolvedAddress = '0xabcdef1234567890abcdef1234567890abcdef12'
+      mockGetVnsAddress.mockResolvedValueOnce(resolvedAddress)
+
+      const result = await search({
+        searchTerm: 'not-a-token',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: `/address/${resolvedAddress}` })
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'not-a-token',
+      })
+    })
+
+    it('should resolve to testnet token address when on testnet', async () => {
+      const testnetNetwork: Network = {
+        name: NetworkName.TESTNET,
+        url: 'https://testnet.vechain.org',
+        contracts: {},
+      }
+
+      const result = await search({
+        searchTerm: 'B3TR',
+        activeNetwork: testnetNetwork,
+      })
+
+      // B3TR testnet address
+      expect(result).toEqual({ redirectTo: '/address/0xbf64cf86894ee0877c4e7d03936e35ee8d8b864f' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+  })
+
   describe('UNKNOWN handler (VNS fallback)', () => {
     it('should attempt VNS resolution for unknown terms and redirect on success', async () => {
       const resolvedAddress = '0xabcdef1234567890abcdef1234567890abcdef12'
