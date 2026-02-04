@@ -73,6 +73,18 @@ export const identifySearchTermType = (searchTerm: string): SearchTermType => {
   return SearchTermType.UNKNOWN
 }
 
+const attemptVnsResolution = async (searchTerm: string, activeNetwork: Network, errorMessage: string) => {
+  const address = await getVnsAddress({
+    networkName: activeNetwork.name,
+    name: searchTerm,
+  })
+  if (address) {
+    return { redirectTo: `/address/${address}` }
+  }
+
+  throw new Error(errorMessage)
+}
+
 const searchHandlers = {
   [SearchTermType.ADDRESS]: async (searchTerm: string, activeNetwork: Network) => {
     // Add 0x prefix if missing
@@ -137,18 +149,11 @@ const searchHandlers = {
   },
 
   [SearchTermType.VNS_DOMAIN]: async (searchTerm: string, activeNetwork: Network) => {
-    const address = await getVnsAddress({
-      networkName: activeNetwork.name,
-      name: searchTerm,
-    })
-    if (address) {
-      return { redirectTo: `/address/${address}` }
-    }
-    throw new Error('VNS domain not found')
+    return attemptVnsResolution(searchTerm, activeNetwork, 'VNS domain not found')
   },
 
-  [SearchTermType.UNKNOWN]: async () => {
-    throw new Error('No results found')
+  [SearchTermType.UNKNOWN]: async (searchTerm: string, activeNetwork: Network) => {
+    return attemptVnsResolution(searchTerm, activeNetwork, 'No results found')
   },
 }
 
@@ -160,7 +165,7 @@ export const useSearch = () => {
   })
 }
 
-const search = async ({
+export const search = async ({
   searchTerm,
   activeNetwork,
 }: {
