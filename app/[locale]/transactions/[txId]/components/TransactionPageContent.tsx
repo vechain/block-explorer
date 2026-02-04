@@ -7,7 +7,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NotFound } from '@/components/error/NotFound'
 import { TransactionViews } from '@/components/TransactionViews'
-import { VETBalance } from '@/components/ui/Balance'
+import { VTHOBalance } from '@/components/ui/Balance'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
 import { BaseLink } from '@/components/ui/Links'
@@ -117,7 +117,7 @@ const TransactionDetails = ({
             {
               icon: <Image src="/icons/reward.svg" alt="Rewards" />,
               title: t('Rewards'),
-              children: receipt ? <VETBalance balance={receipt.reward} justifyContent="flex-start" /> : <Text>-</Text>,
+              children: receipt ? <VTHOBalance balance={receipt.reward} justifyContent="flex-start" /> : <Text>-</Text>,
             },
           ] as DataCardGroupItem[]
         }
