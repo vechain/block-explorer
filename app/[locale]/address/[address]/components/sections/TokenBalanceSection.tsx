@@ -1,10 +1,9 @@
 'use client'
 
-import { Box, Button, Flex, Heading, HStack, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Accordion, Button, Flex, Heading, HStack, Skeleton, Stack, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LuChevronDown, LuChevronUp } from 'react-icons/lu'
 import type { TokenBalanceRow as TokenBalanceRowType, TokenBreakdownItem } from '@/hooks/useAccountTokens'
 import { useFormatAmount } from '@/hooks/useFormatting'
 import { getTokenIconPath } from '@/lib/utils/tokens'
@@ -23,57 +22,42 @@ interface ExpandableTokenBalanceProps {
 }
 
 const ExpandableTokenBalance = ({ formattedBalance, breakdown, decimals }: ExpandableTokenBalanceProps) => {
-  const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(false)
   const formatAmount = useFormatAmount()
-
-  // Get symbols from breakdown for stacked icons (B3TR first, then VOT3)
   const breakdownSymbols = breakdown.map(item => item.symbol)
 
   return (
-    <Stack gap={0} width="100%">
-      <HStack
-        gap={2}
-        cursor="pointer"
-        onClick={() => setIsBreakdownExpanded(!isBreakdownExpanded)}
-        _hover={{ opacity: 0.8 }}
-        role="button"
-        tabIndex={0}
-        justifyContent="flex-end"
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            setIsBreakdownExpanded(!isBreakdownExpanded)
-          }
-        }}
-      >
-        <Text textStyle="bodyM" color="text-primary">
-          {formattedBalance}
-        </Text>
-        <StackedTokenIcons symbols={breakdownSymbols} size={16} />
-        <Box color="text-secondary" ml={1}>
-          {isBreakdownExpanded ? <LuChevronUp size={14} /> : <LuChevronDown size={14} />}
-        </Box>
-      </HStack>
-      {isBreakdownExpanded && (
-        <Stack gap={1} mt={2} pl={2} alignItems="flex-end">
-          {breakdown.map(item => {
-            const [formatted] = formatAmount({ amount: item.balance ?? BigInt(0), decimals })
-            const itemIconPath = getTokenIconPath(item.symbol)
-            return (
-              <HStack key={item.symbol} gap={2}>
-                <Text textStyle="bodyS" color="text-secondary" minW="40px">
-                  {item.symbol}
-                </Text>
-                <Text textStyle="bodyS" color="text-secondary">
-                  {formatted}
-                </Text>
-                {itemIconPath && <Image src={itemIconPath} alt={item.symbol} width={12} height={12} />}
-              </HStack>
-            )
-          })}
-        </Stack>
-      )}
-    </Stack>
+    <Accordion.Root collapsible width="100%">
+      <Accordion.Item value="breakdown" border="none">
+        <Accordion.ItemTrigger p={0} cursor="pointer" justifyContent="flex-end" _hover={{ opacity: 0.8 }}>
+          <HStack gap={2}>
+            <Text textStyle="bodyM" color="text-primary">
+              {formattedBalance}
+            </Text>
+            <StackedTokenIcons symbols={breakdownSymbols} size={16} />
+            <Accordion.ItemIndicator _icon={{ width: '14px', height: '14px', color: 'text-secondary' }} />
+          </HStack>
+        </Accordion.ItemTrigger>
+        <Accordion.ItemContent rounded="none">
+          <Accordion.ItemBody pt={2} pb={0} display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
+            {breakdown.map(item => {
+              const [formatted] = formatAmount({ amount: item.balance ?? BigInt(0), decimals })
+              const itemIconPath = getTokenIconPath(item.symbol)
+              return (
+                <HStack key={item.symbol} gap={3}>
+                  <HStack gap={1}>
+                    <Text textStyle="bodyS">{formatted}</Text>
+                    <Text textStyle="bodyS" color="text-secondary">
+                      {item.symbol}
+                    </Text>
+                  </HStack>
+                  {itemIconPath && <Image src={itemIconPath} alt={item.symbol} width={12} height={12} />}
+                </HStack>
+              )
+            })}
+          </Accordion.ItemBody>
+        </Accordion.ItemContent>
+      </Accordion.Item>
+    </Accordion.Root>
   )
 }
 
@@ -95,9 +79,7 @@ export const TokenBalanceSection = ({ tokenBalanceRows, isPending }: TokenBalanc
       const [formatted] = formatAmount({ amount: token.balance ?? BigInt(0), decimals: token.decimals })
       const iconPath = getTokenIconPath(token.symbol)
 
-      // If token has breakdown data, render expandable component with combined title
       if (token.breakdown && token.breakdown.length > 0) {
-        // Create title from breakdown symbols (e.g., "B3TR / VOT3")
         const combinedTitle = token.breakdown.map(item => item.symbol).join(' / ')
         return {
           title: combinedTitle,
@@ -111,7 +93,6 @@ export const TokenBalanceSection = ({ tokenBalanceRows, isPending }: TokenBalanc
         }
       }
 
-      // Regular token rendering
       return {
         title: token.symbol,
         children: (
