@@ -7,16 +7,29 @@ import { useErc20Contracts, erc20BalanceOfQueryOptions } from '@/services/thor/t
 import { tokenDailyPricesQueryOptions } from '@/hooks/useTokenDailyPrices'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { CURRENCIES } from '@/lib/constants/currencies'
-import { NATIVE_TOKEN_DECIMALS, MAX_TOKENS_PER_ACCOUNT } from '@/lib/constants/tokens'
+import {
+  NATIVE_TOKEN_DECIMALS,
+  MAX_TOKENS_PER_ACCOUNT,
+  TokenSymbol,
+  COMBINED_TOKENS,
+  isCombinedToken,
+} from '@/lib/constants/tokens'
 import { isNotNullish } from '@/lib/type-predicates'
 import { getTokenSlug } from '@/lib/utils/tokens'
+import { getTokenInfo } from '@/lib/constants/token-registry'
 import { useFormatAmount, useFormatNumber } from '@/hooks/useFormatting'
+
+export type TokenBreakdownItem = {
+  symbol: string
+  balance: bigint | null | undefined
+}
 
 export type TokenBalanceRow = {
   symbol: string
   decimals: number
   balance: bigint | null | undefined
   key: string
+  breakdown?: TokenBreakdownItem[]
 }
 
 export type TokenValueRow = {
@@ -28,7 +41,7 @@ export type TokenValueRow = {
 export const useAccountTokens = (address: AddressString) => {
   const formatNumber = useFormatNumber()
   const formatAmount = useFormatAmount()
-  const { currency } = useSettingsStore()
+  const { currency, activeNetwork } = useSettingsStore()
   const currencySymbol = CURRENCIES[currency].symbol
 
   const { data: account, isPending: isAccountPending } = useAccount(address)
@@ -62,49 +75,69 @@ export const useAccountTokens = (address: AddressString) => {
     return balanceMap
   }, [erc20s, erc20BalanceQueries])
 
-  // Build token balance rows: VET, VTHO, and B3TR first (in that order), then other ERC20 tokens
+  // Filter ERC20 tokens to only include those in the token registry
+  const registeredErc20s = useMemo(() => {
+    return erc20s.filter(erc20 => getTokenInfo(activeNetwork.name, erc20.address) !== null)
+  }, [erc20s, activeNetwork.name])
+
+  // Build token balance rows: VET, VTHO, and B3TR/VOT3 first (in that order), then other ERC20 tokens
   const tokenBalanceRows = useMemo((): TokenBalanceRow[] => {
     const rows: TokenBalanceRow[] = []
 
     // Always add VET first
     if (account?.vet !== undefined) {
       rows.push({
-        symbol: 'VET',
+        symbol: TokenSymbol.VET,
         decimals: NATIVE_TOKEN_DECIMALS,
         balance: account.vet,
-        key: 'VET',
+        key: TokenSymbol.VET,
       })
     }
 
     // Always add VTHO second
     if (account?.vtho !== undefined) {
       rows.push({
-        symbol: 'VTHO',
+        symbol: TokenSymbol.VTHO,
         decimals: NATIVE_TOKEN_DECIMALS,
         balance: account.vtho,
-        key: 'VTHO',
+        key: TokenSymbol.VTHO,
       })
     }
 
-    // Always add B3TR third if available
-    const b3trToken = erc20s.find(erc20 => erc20.symbol.toUpperCase() === 'B3TR')
-    if (b3trToken) {
-      const balance = erc20BalanceMap.get(b3trToken.address)
-      if (balance !== undefined) {
+    // Always add combined B3TR/VOT3 third if either is available
+    const b3trToken = registeredErc20s.find(erc20 => erc20.symbol.toUpperCase() === TokenSymbol.B3TR)
+    const vot3Token = registeredErc20s.find(erc20 => erc20.symbol.toUpperCase() === TokenSymbol.VOT3)
+
+    if (b3trToken || vot3Token) {
+      const b3trBalance = b3trToken ? erc20BalanceMap.get(b3trToken.address) : undefined
+      const vot3Balance = vot3Token ? erc20BalanceMap.get(vot3Token.address) : undefined
+
+      // Only add if at least one balance is defined
+      if (b3trBalance !== undefined || vot3Balance !== undefined) {
+        const combinedBalance = (b3trBalance ?? BigInt(0)) + (vot3Balance ?? BigInt(0))
+
         rows.push({
-          symbol: b3trToken.symbol,
-          decimals: b3trToken.decimals,
-          balance,
-          key: b3trToken.address,
+          symbol: COMBINED_TOKENS.primarySymbol,
+          decimals: COMBINED_TOKENS.decimals,
+          balance: combinedBalance,
+          key: COMBINED_TOKENS.key,
+          breakdown: COMBINED_TOKENS.symbols.map(symbol => ({
+            symbol,
+            balance: symbol === TokenSymbol.B3TR ? (b3trBalance ?? BigInt(0)) : (vot3Balance ?? BigInt(0)),
+          })),
         })
       }
     }
 
-    // Add all other ERC20 tokens (excluding VET/VTHO/B3TR if they appear as ERC20)
-    erc20s.forEach(erc20 => {
-      // Skip if already added as native tokens or B3TR
+    // Add all other ERC20 tokens (excluding priority tokens handled above)
+    registeredErc20s.forEach(erc20 => {
+      // Skip if already added as native tokens or combined tokens
       const normalizedSymbol = erc20.symbol.toUpperCase()
-      if (normalizedSymbol === 'VET' || normalizedSymbol === 'VTHO' || normalizedSymbol === 'B3TR') {
+      if (
+        normalizedSymbol === TokenSymbol.VET ||
+        normalizedSymbol === TokenSymbol.VTHO ||
+        isCombinedToken(normalizedSymbol)
+      ) {
         return
       }
 
@@ -122,48 +155,54 @@ export const useAccountTokens = (address: AddressString) => {
     })
 
     return rows
-  }, [account, erc20s, erc20BalanceMap])
+  }, [account, registeredErc20s, erc20BalanceMap])
 
-  // Build token value rows: only VET, VTHO, and B3TR
+  // Build token value rows: only VET, VTHO, and B3TR/VOT3 (combined)
   const tokenValueRowsData = useMemo((): TokenBalanceRow[] => {
     const rows: TokenBalanceRow[] = []
 
     // Add VET if available
     if (account?.vet !== undefined) {
       rows.push({
-        symbol: 'VET',
+        symbol: TokenSymbol.VET,
         decimals: NATIVE_TOKEN_DECIMALS,
         balance: account.vet,
-        key: 'VET',
+        key: TokenSymbol.VET,
       })
     }
 
     // Add VTHO if available
     if (account?.vtho !== undefined) {
       rows.push({
-        symbol: 'VTHO',
+        symbol: TokenSymbol.VTHO,
         decimals: NATIVE_TOKEN_DECIMALS,
         balance: account.vtho,
-        key: 'VTHO',
+        key: TokenSymbol.VTHO,
       })
     }
 
-    // Add B3TR if available (find directly without iterating all tokens)
-    const b3trToken = erc20s.find(erc20 => erc20.symbol.toUpperCase() === 'B3TR')
-    if (b3trToken) {
-      const balance = erc20BalanceMap.get(b3trToken.address)
-      if (balance !== undefined) {
+    // Add combined B3TR/VOT3 if either is available (for value calculation)
+    const b3trToken = registeredErc20s.find(erc20 => erc20.symbol.toUpperCase() === TokenSymbol.B3TR)
+    const vot3Token = registeredErc20s.find(erc20 => erc20.symbol.toUpperCase() === TokenSymbol.VOT3)
+
+    if (b3trToken || vot3Token) {
+      const b3trBalance = b3trToken ? erc20BalanceMap.get(b3trToken.address) : undefined
+      const vot3Balance = vot3Token ? erc20BalanceMap.get(vot3Token.address) : undefined
+
+      if (b3trBalance !== undefined || vot3Balance !== undefined) {
+        const combinedBalance = (b3trBalance ?? BigInt(0)) + (vot3Balance ?? BigInt(0))
+
         rows.push({
-          symbol: b3trToken.symbol,
-          decimals: b3trToken.decimals,
-          balance,
-          key: b3trToken.address,
+          symbol: COMBINED_TOKENS.primarySymbol, // Use primary symbol for price lookup
+          decimals: COMBINED_TOKENS.decimals,
+          balance: combinedBalance,
+          key: COMBINED_TOKENS.key,
         })
       }
     }
 
     return rows
-  }, [account, erc20s, erc20BalanceMap])
+  }, [account, registeredErc20s, erc20BalanceMap])
 
   // Fetch prices only for VET, VTHO, and B3TR
   const tokenPriceQueries = useQueries({

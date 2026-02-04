@@ -2,7 +2,9 @@ import { Flex, Heading, Stack, Text, Skeleton } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
+import { StackedTokenIcons } from '@/components/ui/StackedTokenIcons'
 import { getTokenIconPath } from '@/lib/utils/tokens'
+import { COMBINED_TOKENS } from '@/lib/constants/tokens'
 import type { TokenValueRow } from '@/hooks/useAccountTokens'
 
 interface TokenValueSectionProps {
@@ -15,6 +17,24 @@ export const TokenValueSection = ({ tokenValueRows, totalValue, isPending }: Tok
   const { t } = useTranslation()
 
   const items: DataCardGroupItem[] = tokenValueRows.map(token => {
+    // Check if this is the combined B3TR/VOT3 row
+    const isCombined = token.key === COMBINED_TOKENS.key
+
+    if (isCombined) {
+      return {
+        title: COMBINED_TOKENS.symbols.join(' / '),
+        children: (
+          <Flex alignItems="center" gap={2}>
+            <Text textStyle="bodyM" color="text-primary">
+              {token.value}
+            </Text>
+            <StackedTokenIcons symbols={[...COMBINED_TOKENS.symbols]} size={16} />
+          </Flex>
+        ),
+      }
+    }
+
+    // Regular token rendering
     const iconPath = getTokenIconPath(token.symbol)
     return {
       title: token.symbol,

@@ -11,13 +11,13 @@ import { TableSkeleton } from '@/components/ui/Table'
 import { NoTokenTransfers } from '@/components/NoResults'
 import { ExportTransfersModal } from '@/components/ExportTransfersModal'
 import type { AddressString } from '@/lib/schemas'
-import { TOKEN_CONTRACT_ADDRESSES, type TokenFilterKey } from '@/lib/constants/tokens'
+import { TOKEN_CONTRACT_ADDRESSES, TokenSymbol, type TokenFilterKey } from '@/lib/constants/tokens'
 import { useAccountTransfers } from '@/services/veworld-indexer/hooks'
 import { TransfersTable } from '@/components/TransfersTable'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
 
-type EventType = 'FUNGIBLE_TOKEN' | 'NFT' | 'VET'
+type EventType = 'FUNGIBLE_TOKEN' | 'NFT' | TokenSymbol.VET
 
 export const AccountTokenTransfersSection = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
@@ -28,10 +28,10 @@ export const AccountTokenTransfersSection = ({ address }: { address: AddressStri
 
   const tokenFilterOptions: ToggleOption<TokenFilterKey>[] = [
     { value: 'ALL', label: t('All') },
-    { value: 'VET', label: t('VET') },
-    { value: 'VTHO', label: t('VTHO') },
-    { value: 'B3TR', label: t('B3TR') },
-    { value: 'VOT3', label: 'VOT3' },
+    { value: TokenSymbol.VET, label: t('VET') },
+    { value: TokenSymbol.VTHO, label: t('VTHO') },
+    { value: TokenSymbol.B3TR, label: t('B3TR') },
+    { value: TokenSymbol.VOT3, label: t('VOT3') },
   ]
 
   const { tokenAddress, eventType } = useMemo((): {
@@ -39,11 +39,11 @@ export const AccountTokenTransfersSection = ({ address }: { address: AddressStri
     eventType: EventType | undefined
   } => {
     switch (selectedToken) {
-      case 'VET':
-        return { tokenAddress: undefined, eventType: 'VET' }
-      case 'VTHO':
-      case 'B3TR':
-      case 'VOT3':
+      case TokenSymbol.VET:
+        return { tokenAddress: undefined, eventType: TokenSymbol.VET }
+      case TokenSymbol.VTHO:
+      case TokenSymbol.B3TR:
+      case TokenSymbol.VOT3:
         return {
           tokenAddress: TOKEN_CONTRACT_ADDRESSES[selectedToken] as AddressString,
           eventType: undefined,
