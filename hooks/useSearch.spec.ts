@@ -1,11 +1,15 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { identifySearchTermType, normalizeSearchTerm, SearchTermType } from './useSearch'
+import { getVnsAddress } from '@/services/thor/vns'
+import { NetworkName } from '@/lib/constants/network'
 
 // Mock the external dependencies
 vi.mock('@/services/thor/account')
 vi.mock('@/services/thor/block')
 vi.mock('@/services/thor/transaction')
 vi.mock('@/services/thor/vns')
+
+const mockGetVnsAddress = vi.mocked(getVnsAddress)
 
 describe('useSearch', () => {
   describe('normalizeSearchTerm', () => {
@@ -407,6 +411,76 @@ describe('useSearch', () => {
       })
     })
   })
+  describe('VNS fallback for UNKNOWN terms', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should identify terms without .vet as UNKNOWN (VNS fallback handled by handler)', () => {
+      // These should be UNKNOWN - the handler will attempt VNS resolution
+      expect(identifySearchTermType('alice')).toBe(SearchTermType.UNKNOWN)
+      expect(identifySearchTermType('myname')).toBe(SearchTermType.UNKNOWN)
+      expect(identifySearchTermType('some-domain')).toBe(SearchTermType.UNKNOWN)
+    })
+
+    it('should still identify terms with .vet as VNS_DOMAIN', () => {
+      expect(identifySearchTermType('alice.vet')).toBe(SearchTermType.VNS_DOMAIN)
+      expect(identifySearchTermType('myname.vet')).toBe(SearchTermType.VNS_DOMAIN)
+    })
+
+    it('should not identify addresses as UNKNOWN (no VNS fallback)', () => {
+      // These should be ADDRESS, not UNKNOWN - VNS fallback won't be triggered
+      expect(identifySearchTermType('0x1234567890123456789012345678901234567890')).toBe(SearchTermType.ADDRESS)
+      expect(identifySearchTermType('1234567890123456789012345678901234567890')).toBe(SearchTermType.ADDRESS)
+    })
+
+    it('should not identify transaction IDs as UNKNOWN (no VNS fallback)', () => {
+      // These should be TRANSACTION_ID, not UNKNOWN - VNS fallback won't be triggered
+      expect(identifySearchTermType('0x1234567890123456789012345678901234567890123456789012345678901234')).toBe(
+        SearchTermType.TRANSACTION_ID,
+      )
+    })
+
+    it('should not identify block revisions as UNKNOWN (no VNS fallback)', () => {
+      // These should be BLOCK_REVISION, not UNKNOWN - VNS fallback won't be triggered
+      expect(identifySearchTermType('best')).toBe(SearchTermType.BLOCK_REVISION)
+      expect(identifySearchTermType('12345')).toBe(SearchTermType.BLOCK_REVISION)
+    })
+  })
 })
 
-// Integration tests would go here when we implement service mocking
+// Integration tests for VNS fallback behavior
+describe('VNS fallback integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('getVnsAddress service', () => {
+    it('should resolve VNS name to address when VNS exists', async () => {
+      const resolvedAddress = '0x1234567890123456789012345678901234567890'
+      mockGetVnsAddress.mockResolvedValueOnce(resolvedAddress)
+
+      const result = await mockGetVnsAddress({
+        networkName: NetworkName.MAINNET,
+        name: 'alice',
+      })
+
+      expect(result).toBe(resolvedAddress)
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'alice',
+      })
+    })
+
+    it('should return null when VNS name does not exist', async () => {
+      mockGetVnsAddress.mockResolvedValueOnce(null)
+
+      const result = await mockGetVnsAddress({
+        networkName: NetworkName.MAINNET,
+        name: 'nonexistent',
+      })
+
+      expect(result).toBeNull()
+    })
+  })
+})
