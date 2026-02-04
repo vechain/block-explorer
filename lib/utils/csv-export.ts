@@ -111,8 +111,9 @@ function transferToCsvRow(transfer: IndexerTransfer, accountAddress: AddressStri
   }
 
   // Calculate amount with sign
+  // Self-transfers have a net amount of 0 since the same account sends and receives
   const rawAmount = formatBigIntToDecimal(transfer.value, tokenInfo.decimals)
-  const amount = isOutgoing && !isSelfTransfer ? `-${rawAmount}` : rawAmount
+  const amount = isSelfTransfer ? '0' : isOutgoing ? `-${rawAmount}` : rawAmount
 
   // Generate remark
   const remark = generateRemark(isSelfTransfer, isOutgoing, rawAmount, tokenInfo.symbol)
