@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import type { Network } from '@/lib/constants/network'
+import { getTokenByNameOrSymbol } from '@/lib/constants/token-registry'
 import { addressStringSchema, blockRevisionSchema, transactionIdSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getAccount } from '@/services/thor/account'
@@ -153,6 +154,13 @@ const searchHandlers = {
   },
 
   [SearchTermType.UNKNOWN]: async (searchTerm: string, activeNetwork: Network) => {
+    // Check if it matches a known token name or symbol
+    const token = getTokenByNameOrSymbol(activeNetwork.name, searchTerm)
+    if (token) {
+      return { redirectTo: `/address/${token.address}` }
+    }
+
+    // Fall back to VNS resolution
     return attemptVnsResolution(searchTerm, activeNetwork, 'No results found')
   },
 }
