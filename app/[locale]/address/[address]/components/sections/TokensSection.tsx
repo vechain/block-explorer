@@ -4,24 +4,28 @@ import { Accordion, Button, Flex, Heading, HStack, Skeleton, Stack, Text } from 
 import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { TokenBalanceRow as TokenBalanceRowType, TokenBreakdownItem } from '@/hooks/useAccountTokens'
+import type { TokenBalanceRow, TokenBreakdownItem, TokenValueRow } from '@/hooks/useAccountTokens'
 import { useFormatAmount } from '@/hooks/useFormatting'
 import { getTokenIconPath } from '@/lib/utils/tokens'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { StackedTokenIcons } from '@/components/ui/StackedTokenIcons'
+import { COMBINED_TOKENS } from '@/lib/constants/tokens'
 
-interface TokenBalanceSectionProps {
-  tokenBalanceRows: TokenBalanceRowType[]
+interface TokensSectionProps {
+  tokenBalanceRows: TokenBalanceRow[]
+  tokenValueRows: TokenValueRow[]
+  totalValue: string
   isPending: boolean
 }
 
 interface ExpandableTokenBalanceProps {
   formattedBalance: string
+  fiatValue?: string
   breakdown: TokenBreakdownItem[]
   decimals: number
 }
 
-const ExpandableTokenBalance = ({ formattedBalance, breakdown, decimals }: ExpandableTokenBalanceProps) => {
+const ExpandableTokenBalance = ({ formattedBalance, fiatValue, breakdown, decimals }: ExpandableTokenBalanceProps) => {
   const formatAmount = useFormatAmount()
   const breakdownSymbols = breakdown.map(item => item.symbol)
 
@@ -30,10 +34,17 @@ const ExpandableTokenBalance = ({ formattedBalance, breakdown, decimals }: Expan
       <Accordion.Item value="breakdown" border="none">
         <Accordion.ItemTrigger p={0} cursor="pointer" justifyContent="flex-end" _hover={{ opacity: 0.8 }}>
           <HStack gap={2}>
-            <Text textStyle="bodyM" color="text-primary">
-              {formattedBalance}
-            </Text>
-            <StackedTokenIcons symbols={breakdownSymbols} size={16} />
+            <Stack gap={0} alignItems="flex-end">
+              <Text textStyle="bodyM" color="text-primary">
+                {formattedBalance}
+              </Text>
+              {fiatValue && (
+                <Text textStyle="bodyS" color="text-secondary">
+                  {fiatValue}
+                </Text>
+              )}
+            </Stack>
+            <StackedTokenIcons symbols={breakdownSymbols} size={20} />
             <Accordion.ItemIndicator _icon={{ width: '14px', height: '14px', color: 'text-secondary' }} />
           </HStack>
         </Accordion.ItemTrigger>
@@ -63,10 +74,18 @@ const ExpandableTokenBalance = ({ formattedBalance, breakdown, decimals }: Expan
 
 const TOKEN_LIMIT = 5
 
-export const TokenBalanceSection = ({ tokenBalanceRows, isPending }: TokenBalanceSectionProps) => {
+export const TokensSection = ({ tokenBalanceRows, tokenValueRows, totalValue, isPending }: TokensSectionProps) => {
   const { t } = useTranslation()
   const formatAmount = useFormatAmount()
   const [isExpanded, setIsExpanded] = useState(false)
+
+  const valueMap = useMemo(() => {
+    const map = new Map<string, string>()
+    tokenValueRows.forEach(row => {
+      map.set(row.key, row.value)
+    })
+    return map
+  }, [tokenValueRows])
 
   const { displayRows, hasMoreTokens } = useMemo(() => {
     const hasMore = tokenBalanceRows.length > TOKEN_LIMIT
@@ -78,6 +97,8 @@ export const TokenBalanceSection = ({ tokenBalanceRows, isPending }: TokenBalanc
     return displayRows.map(token => {
       const [formatted] = formatAmount({ amount: token.balance ?? BigInt(0), decimals: token.decimals })
       const iconPath = getTokenIconPath(token.symbol)
+      const fiatValue = valueMap.get(token.key)
+      const isCombined = token.key === COMBINED_TOKENS.key
 
       if (token.breakdown && token.breakdown.length > 0) {
         const combinedTitle = token.breakdown.map(item => item.symbol).join(' / ')
@@ -86,6 +107,7 @@ export const TokenBalanceSection = ({ tokenBalanceRows, isPending }: TokenBalanc
           children: (
             <ExpandableTokenBalance
               formattedBalance={formatted}
+              fiatValue={fiatValue}
               breakdown={token.breakdown}
               decimals={token.decimals}
             />
@@ -97,21 +119,36 @@ export const TokenBalanceSection = ({ tokenBalanceRows, isPending }: TokenBalanc
         title: token.symbol,
         children: (
           <HStack gap={2}>
-            <Text textStyle="bodyM" color="text-primary">
-              {formatted}
-            </Text>
-            {iconPath && <Image src={iconPath} alt={token.symbol} width={16} height={16} />}
+            <Stack gap={0} alignItems="flex-end">
+              <Text textStyle="bodyM" color="text-primary">
+                {formatted}
+              </Text>
+              {fiatValue && (
+                <Text textStyle="bodyS" color="text-secondary">
+                  {fiatValue}
+                </Text>
+              )}
+            </Stack>
+            {iconPath && <Image src={iconPath} alt={token.symbol} width={20} height={20} />}
+            {isCombined && <StackedTokenIcons symbols={[...COMBINED_TOKENS.symbols]} size={20} />}
           </HStack>
         ),
       }
     })
-  }, [displayRows, formatAmount])
+  }, [displayRows, formatAmount, valueMap])
 
   return (
     <Stack gap={4}>
-      <Heading as="h3" textStyle="bodyL" color="text-primary">
-        {t('Token Balance')}
-      </Heading>
+      <Flex alignItems="baseline" gap={2}>
+        <Heading as="h3" textStyle="bodyL" color="text-primary">
+          {t('Tokens')}
+        </Heading>
+        {!isPending && totalValue !== 'n/a' && (
+          <Text textStyle="bodyM" color="text-secondary">
+            {totalValue}
+          </Text>
+        )}
+      </Flex>
       {isPending ? (
         <Skeleton height="120px" borderRadius="md" />
       ) : tokenBalanceRows.length === 0 ? (
