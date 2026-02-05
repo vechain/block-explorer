@@ -137,6 +137,7 @@ const eventTypeSchema = z.enum({
   FUNGIBLE_TOKEN: 'FUNGIBLE_TOKEN',
   NFT: 'NFT',
   VET: 'VET',
+  SEMI_FUNGIBLE_TOKEN: 'SEMI_FUNGIBLE_TOKEN',
 })
 
 export const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTransactionMetaSchema.shape).extend({

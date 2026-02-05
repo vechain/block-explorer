@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import type { Network } from '@/lib/constants/network'
+import { getTokenByNameOrSymbol } from '@/lib/constants/token-registry'
 import { addressStringSchema, blockRevisionSchema, transactionIdSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getAccount } from '@/services/thor/account'
@@ -73,6 +74,18 @@ export const identifySearchTermType = (searchTerm: string): SearchTermType => {
   return SearchTermType.UNKNOWN
 }
 
+const attemptVnsResolution = async (searchTerm: string, activeNetwork: Network, errorMessage: string) => {
+  const address = await getVnsAddress({
+    networkName: activeNetwork.name,
+    name: searchTerm,
+  })
+  if (address) {
+    return { redirectTo: `/address/${address}` }
+  }
+
+  throw new Error(errorMessage)
+}
+
 const searchHandlers = {
   [SearchTermType.ADDRESS]: async (searchTerm: string, activeNetwork: Network) => {
     // Add 0x prefix if missing
@@ -137,18 +150,18 @@ const searchHandlers = {
   },
 
   [SearchTermType.VNS_DOMAIN]: async (searchTerm: string, activeNetwork: Network) => {
-    const address = await getVnsAddress({
-      networkName: activeNetwork.name,
-      name: searchTerm,
-    })
-    if (address) {
-      return { redirectTo: `/address/${address}` }
-    }
-    throw new Error('VNS domain not found')
+    return attemptVnsResolution(searchTerm, activeNetwork, 'VNS domain not found')
   },
 
-  [SearchTermType.UNKNOWN]: async () => {
-    throw new Error('No results found')
+  [SearchTermType.UNKNOWN]: async (searchTerm: string, activeNetwork: Network) => {
+    // Check if it matches a known token name or symbol
+    const token = getTokenByNameOrSymbol(activeNetwork.name, searchTerm)
+    if (token) {
+      return { redirectTo: `/address/${token.address}` }
+    }
+
+    // Fall back to VNS resolution
+    return attemptVnsResolution(searchTerm, activeNetwork, 'No results found')
   },
 }
 
@@ -160,7 +173,7 @@ export const useSearch = () => {
   })
 }
 
-const search = async ({
+export const search = async ({
   searchTerm,
   activeNetwork,
 }: {

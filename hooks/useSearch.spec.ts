@@ -1,11 +1,15 @@
-import { describe, expect, it, vi } from 'vitest'
-import { identifySearchTermType, normalizeSearchTerm, SearchTermType } from './useSearch'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { identifySearchTermType, normalizeSearchTerm, search, SearchTermType } from './useSearch'
+import { getVnsAddress } from '@/services/thor/vns'
+import { Network, NetworkName } from '@/lib/constants/network'
 
 // Mock the external dependencies
 vi.mock('@/services/thor/account')
 vi.mock('@/services/thor/block')
 vi.mock('@/services/thor/transaction')
 vi.mock('@/services/thor/vns')
+
+const mockGetVnsAddress = vi.mocked(getVnsAddress)
 
 describe('useSearch', () => {
   describe('normalizeSearchTerm', () => {
@@ -407,6 +411,222 @@ describe('useSearch', () => {
       })
     })
   })
+  describe('VNS fallback for UNKNOWN terms', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should identify terms without .vet as UNKNOWN (VNS fallback handled by handler)', () => {
+      // These should be UNKNOWN - the handler will attempt VNS resolution
+      expect(identifySearchTermType('alice')).toBe(SearchTermType.UNKNOWN)
+      expect(identifySearchTermType('myname')).toBe(SearchTermType.UNKNOWN)
+      expect(identifySearchTermType('some-domain')).toBe(SearchTermType.UNKNOWN)
+    })
+
+    it('should still identify terms with .vet as VNS_DOMAIN', () => {
+      expect(identifySearchTermType('alice.vet')).toBe(SearchTermType.VNS_DOMAIN)
+      expect(identifySearchTermType('myname.vet')).toBe(SearchTermType.VNS_DOMAIN)
+    })
+
+    it('should not identify addresses as UNKNOWN (no VNS fallback)', () => {
+      // These should be ADDRESS, not UNKNOWN - VNS fallback won't be triggered
+      expect(identifySearchTermType('0x1234567890123456789012345678901234567890')).toBe(SearchTermType.ADDRESS)
+      expect(identifySearchTermType('1234567890123456789012345678901234567890')).toBe(SearchTermType.ADDRESS)
+    })
+
+    it('should not identify transaction IDs as UNKNOWN (no VNS fallback)', () => {
+      // These should be TRANSACTION_ID, not UNKNOWN - VNS fallback won't be triggered
+      expect(identifySearchTermType('0x1234567890123456789012345678901234567890123456789012345678901234')).toBe(
+        SearchTermType.TRANSACTION_ID,
+      )
+    })
+
+    it('should not identify block revisions as UNKNOWN (no VNS fallback)', () => {
+      // These should be BLOCK_REVISION, not UNKNOWN - VNS fallback won't be triggered
+      expect(identifySearchTermType('best')).toBe(SearchTermType.BLOCK_REVISION)
+      expect(identifySearchTermType('12345')).toBe(SearchTermType.BLOCK_REVISION)
+    })
+  })
 })
 
-// Integration tests would go here when we implement service mocking
+// Integration tests for VNS fallback behavior
+describe('VNS fallback integration', () => {
+  const mockNetwork: Network = {
+    name: NetworkName.MAINNET,
+    url: 'https://mainnet.vechain.org',
+    contracts: {},
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('VNS_DOMAIN handler', () => {
+    it('should resolve VNS domain to address and redirect', async () => {
+      const resolvedAddress = '0x1234567890123456789012345678901234567890'
+      mockGetVnsAddress.mockResolvedValueOnce(resolvedAddress)
+
+      const result = await search({
+        searchTerm: 'alice.vet',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: `/address/${resolvedAddress}` })
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'alice.vet',
+      })
+    })
+
+    it('should throw error when VNS domain does not resolve', async () => {
+      mockGetVnsAddress.mockResolvedValueOnce(null)
+
+      await expect(
+        search({
+          searchTerm: 'nonexistent.vet',
+          activeNetwork: mockNetwork,
+        }),
+      ).rejects.toThrow('VNS domain not found')
+
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'nonexistent.vet',
+      })
+    })
+  })
+
+  describe('UNKNOWN handler - Token name/symbol search', () => {
+    it('should redirect to token address when searching by symbol (lowercase)', async () => {
+      const result = await search({
+        searchTerm: 'b3tr',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: '/address/0x5ef79995fe8a89e0812330e4378eb2660cede699' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+
+    it('should redirect to token address when searching by symbol (uppercase)', async () => {
+      const result = await search({
+        searchTerm: 'B3TR',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: '/address/0x5ef79995fe8a89e0812330e4378eb2660cede699' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+
+    it('should redirect to token address when searching by name', async () => {
+      const result = await search({
+        searchTerm: 'VeThor',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: '/address/0x0000000000000000000000000000456e65726779' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+
+    it('should redirect to token address when searching by symbol (VTHO)', async () => {
+      const result = await search({
+        searchTerm: 'VTHO',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: '/address/0x0000000000000000000000000000456e65726779' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+
+    it('should be case-insensitive for token names', async () => {
+      const result = await search({
+        searchTerm: 'vethor',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: '/address/0x0000000000000000000000000000456e65726779' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+
+    it('should fall back to VNS when token name is not found', async () => {
+      const resolvedAddress = '0xabcdef1234567890abcdef1234567890abcdef12'
+      mockGetVnsAddress.mockResolvedValueOnce(resolvedAddress)
+
+      const result = await search({
+        searchTerm: 'not-a-token',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: `/address/${resolvedAddress}` })
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'not-a-token',
+      })
+    })
+
+    it('should resolve to testnet token address when on testnet', async () => {
+      const testnetNetwork: Network = {
+        name: NetworkName.TESTNET,
+        url: 'https://testnet.vechain.org',
+        contracts: {},
+      }
+
+      const result = await search({
+        searchTerm: 'B3TR',
+        activeNetwork: testnetNetwork,
+      })
+
+      // B3TR testnet address
+      expect(result).toEqual({ redirectTo: '/address/0xbf64cf86894ee0877c4e7d03936e35ee8d8b864f' })
+      expect(mockGetVnsAddress).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('UNKNOWN handler (VNS fallback)', () => {
+    it('should attempt VNS resolution for unknown terms and redirect on success', async () => {
+      const resolvedAddress = '0xabcdef1234567890abcdef1234567890abcdef12'
+      mockGetVnsAddress.mockResolvedValueOnce(resolvedAddress)
+
+      const result = await search({
+        searchTerm: 'alice',
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: `/address/${resolvedAddress}` })
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'alice',
+      })
+    })
+
+    it('should throw error when VNS resolution fails for unknown terms', async () => {
+      mockGetVnsAddress.mockResolvedValueOnce(null)
+
+      await expect(
+        search({
+          searchTerm: 'nonexistent-name',
+          activeNetwork: mockNetwork,
+        }),
+      ).rejects.toThrow('No results found')
+
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'nonexistent-name',
+      })
+    })
+
+    it('should handle VNS service errors gracefully', async () => {
+      mockGetVnsAddress.mockRejectedValueOnce(new Error('Network error'))
+
+      await expect(
+        search({
+          searchTerm: 'some-name',
+          activeNetwork: mockNetwork,
+        }),
+      ).rejects.toThrow('Network error')
+
+      expect(mockGetVnsAddress).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        name: 'some-name',
+      })
+    })
+  })
+})

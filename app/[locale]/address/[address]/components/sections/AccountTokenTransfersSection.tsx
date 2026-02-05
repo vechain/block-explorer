@@ -2,33 +2,36 @@
 
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Flex, Heading } from '@chakra-ui/react'
+import { Button, Flex, Heading } from '@chakra-ui/react'
+import { LuDownload } from 'react-icons/lu'
 import { Card } from '@/components/ui/Card'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { TableSkeleton } from '@/components/ui/Table'
 import { NoTokenTransfers } from '@/components/NoResults'
+import { ExportTransfersModal } from '@/components/ExportTransfersModal'
 import type { AddressString } from '@/lib/schemas'
-import { TOKEN_CONTRACT_ADDRESSES, type TokenFilterKey } from '@/lib/constants/tokens'
+import { TOKEN_CONTRACT_ADDRESSES, TokenSymbol, type TokenFilterKey } from '@/lib/constants/tokens'
 import { useAccountTransfers } from '@/services/veworld-indexer/hooks'
 import { TransfersTable } from '@/components/TransfersTable'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
 
-type EventType = 'FUNGIBLE_TOKEN' | 'NFT' | 'VET'
+type EventType = 'FUNGIBLE_TOKEN' | 'NFT' | TokenSymbol.VET
 
 export const AccountTokenTransfersSection = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
   const [selectedToken, setSelectedToken] = useState<TokenFilterKey>('ALL')
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[0])
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false)
 
   const tokenFilterOptions: ToggleOption<TokenFilterKey>[] = [
     { value: 'ALL', label: t('All') },
-    { value: 'VET', label: t('VET') },
-    { value: 'VTHO', label: t('VTHO') },
-    { value: 'B3TR', label: t('B3TR') },
-    { value: 'VOT3', label: 'VOT3' },
+    { value: TokenSymbol.VET, label: t('VET') },
+    { value: TokenSymbol.VTHO, label: t('VTHO') },
+    { value: TokenSymbol.B3TR, label: t('B3TR') },
+    { value: TokenSymbol.VOT3, label: t('VOT3') },
   ]
 
   const { tokenAddress, eventType } = useMemo((): {
@@ -36,11 +39,11 @@ export const AccountTokenTransfersSection = ({ address }: { address: AddressStri
     eventType: EventType | undefined
   } => {
     switch (selectedToken) {
-      case 'VET':
-        return { tokenAddress: undefined, eventType: 'VET' }
-      case 'VTHO':
-      case 'B3TR':
-      case 'VOT3':
+      case TokenSymbol.VET:
+        return { tokenAddress: undefined, eventType: TokenSymbol.VET }
+      case TokenSymbol.VTHO:
+      case TokenSymbol.B3TR:
+      case TokenSymbol.VOT3:
         return {
           tokenAddress: TOKEN_CONTRACT_ADDRESSES[selectedToken] as AddressString,
           eventType: undefined,
@@ -85,13 +88,18 @@ export const AccountTokenTransfersSection = ({ address }: { address: AddressStri
         <Heading as="h3" textStyle="displayXs">
           {t('Token Transfers')}
         </Heading>
-        <ToggleGroup
-          options={tokenFilterOptions}
-          value={selectedToken}
-          onChange={handleTokenChange}
-          layoutId="token-transfers-filter"
-          size="sm"
-        />
+        <Flex gap={2} align="center" flexWrap="wrap">
+          <ToggleGroup
+            options={tokenFilterOptions}
+            value={selectedToken}
+            onChange={handleTokenChange}
+            layoutId="token-transfers-filter"
+            size="sm"
+          />
+          <Button variant="ghost" size="sm" onClick={() => setIsExportModalOpen(true)} title={t('Export CSV')}>
+            <LuDownload size={16} />
+          </Button>
+        </Flex>
       </Flex>
 
       {isLoading ? (
@@ -112,6 +120,8 @@ export const AccountTokenTransfersSection = ({ address }: { address: AddressStri
           onPageSizeChange={handlePageSizeChange}
         />
       )}
+
+      <ExportTransfersModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} address={address} />
     </Card>
   )
 }
