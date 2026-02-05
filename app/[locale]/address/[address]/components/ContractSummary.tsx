@@ -1,6 +1,6 @@
 'use client'
 
-import { Flex, Grid, Heading, Stack, Text, Skeleton } from '@chakra-ui/react'
+import { Flex, Heading, Stack, Text, Skeleton } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
@@ -12,8 +12,7 @@ import { useContract } from '@/services/veworld-indexer/hooks'
 import { useFormatDate } from '@/hooks/useFormatting'
 import { useAccountTokens } from '@/hooks/useAccountTokens'
 import { useVnsName } from '@/services/thor/hooks'
-import { TokenBalanceSection } from './sections/TokenBalanceSection'
-import { TokenValueSection } from './sections/TokenValueSection'
+import { TokensSection } from './sections/TokensSection'
 import { AddressLink, BaseLink } from '@/components/ui/Links'
 import { truncateHex } from '@/lib/utils/truncateHex'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -25,13 +24,7 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
   const formatDate = useFormatDate()
   const { data: vnsName } = useVnsName(address)
   const activeNetwork = useSettingsStore(state => state.activeNetwork)
-  const {
-    tokenBalanceRows,
-    tokenValueRows,
-    totalValue,
-    isPending: isPendingTokens,
-    isPendingAll: isPendingAllTokens,
-  } = useAccountTokens(address)
+  const { tokenBalanceRows, tokenValueRows, totalValue, isPendingAll: isPendingAllTokens } = useAccountTokens(address)
   const { data: contract, isPending: isContractPending } = useContract({ address })
 
   // Check if this contract is a known token from the registry
@@ -40,7 +33,7 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
     [activeNetwork.name, address],
   )
 
-  const isPending = isPendingTokens || isContractPending
+  const isPending = isPendingAllTokens || isContractPending
 
   const contractDataCards: DataCardGroupItem[] = [
     {
@@ -91,10 +84,12 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
 
         <DataCardGroup items={contractDataCards} desktopColumns={3} variant="outline" />
 
-        <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={{ base: 5, md: 5 }}>
-          <TokenBalanceSection tokenBalanceRows={tokenBalanceRows} isPending={isPendingTokens} />
-          <TokenValueSection tokenValueRows={tokenValueRows} totalValue={totalValue} isPending={isPendingAllTokens} />
-        </Grid>
+        <TokensSection
+          tokenBalanceRows={tokenBalanceRows}
+          tokenValueRows={tokenValueRows}
+          totalValue={totalValue}
+          isPending={isPendingAllTokens}
+        />
       </Card>
     </Stack>
   )
