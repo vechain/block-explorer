@@ -17,12 +17,13 @@ const accountOverviewSchema = z.object({
   vthoBurned: z.string(),
   vthoDelegated: z.string(),
   gasUsed: z.string(),
+  vetBalance: z.string(),
   vetSent: z.string(),
   vetReceived: z.string(),
-  vthoBlockRewards: z.number(),
-  vthoPassiveGeneration: z.number(),
-  vthoClaimedStargate: z.number(),
-  vthoEarnedTotal: z.number(),
+  vthoBlockRewards: z.string(),
+  vthoPassiveGeneration: z.string(),
+  vthoClaimedStargate: z.string(),
+  vthoEarnedTotal: z.string(),
 })
 
 export const accountOverviewQueryOptions = (networkName: NetworkName, address: string) => ({
@@ -51,8 +52,13 @@ const getAccountOverview = async ({ networkName, address }: { networkName: Netwo
       vthoBurned: '0',
       vthoDelegated: '0',
       gasUsed: '0',
+      vetBalance: '0',
       vetSent: '0',
       vetReceived: '0',
+      vthoBlockRewards: '0',
+      vthoPassiveGeneration: '0',
+      vthoClaimedStargate: '0',
+      vthoEarnedTotal: '0',
     },
   })
 }

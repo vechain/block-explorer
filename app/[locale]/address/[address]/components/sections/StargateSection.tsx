@@ -12,6 +12,7 @@ import { useSettingsStore } from '@/lib/stores/settings'
 import { CURRENCIES } from '@/lib/constants/currencies'
 import type { AddressString } from '@/lib/schemas'
 import { Card } from '@/components/ui/Card'
+import { formatUnits } from 'viem'
 
 export const StargateSection = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
@@ -24,42 +25,34 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
   const { data: stakedVet, isPending: isStakedVetPending } = useAccountStakedVet(address)
   const { price: vetPrice, isLoading: isVetPriceLoading } = useTokenDailyPrices('vechain')
   const { price: vthoPrice, isLoading: isVthoPriceLoading } = useTokenDailyPrices('vethor-token')
-
   const [formattedVetStaked, fullVetStaked] = formatAmount({ amount: stakedVet ?? 0n, decimals: 18 })
-  const [formattedVthoBlockRewards] = formatAmount({
-    amount: BigInt(accountOverview?.vthoBlockRewards ?? 0),
-    decimals: 18,
-  })
+
+  const vthoBlockRewards = accountOverview?.vthoBlockRewards ?? 0
+  const [formattedVthoBlockRewards] = formatAmount({ amount: BigInt(vthoBlockRewards), decimals: 18 })
   const fiatVthoBlockRewards = useMemo(() => {
-    if (!vthoPrice || !formattedVthoBlockRewards) return null
-    const value = Number(formattedVthoBlockRewards) * vthoPrice
+    if (!vthoPrice || !vthoBlockRewards) return null
+    const value = Number(formatUnits(BigInt(vthoBlockRewards), 18)) * vthoPrice
     return `${currencySymbol}${formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }, [vthoPrice, formattedVthoBlockRewards, currencySymbol, formatNumber])
+  }, [vthoPrice, vthoBlockRewards, currencySymbol, formatNumber])
 
-  const [formattedVthoPassiveGeneration] = formatAmount({
-    amount: BigInt(accountOverview?.vthoPassiveGeneration ?? 0),
-    decimals: 18,
-  })
+  const vthoPassiveGeneration = accountOverview?.vthoPassiveGeneration ?? 0
+  const [formattedVthoPassiveGeneration] = formatAmount({ amount: BigInt(vthoPassiveGeneration), decimals: 18 })
   const fiatVthoPassiveGeneration = useMemo(() => {
-    if (!vthoPrice || !formattedVthoPassiveGeneration) return null
-    const value = Number(formattedVthoPassiveGeneration) * vthoPrice
+    if (!vthoPrice || !vthoPassiveGeneration) return null
+    const value = Number(formatUnits(BigInt(vthoPassiveGeneration), 18)) * vthoPrice
     return `${currencySymbol}${formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }, [vthoPrice, formattedVthoPassiveGeneration, currencySymbol, formatNumber])
+  }, [vthoPrice, vthoPassiveGeneration, currencySymbol, formatNumber])
 
-  const [formattedVthoClaimedStargate] = formatAmount({
-    amount: BigInt(accountOverview?.vthoClaimedStargate ?? 0),
-    decimals: 18,
-  })
+  const vthoClaimedStargate = accountOverview?.vthoClaimedStargate ?? 0
+  const [formattedVthoClaimedStargate] = formatAmount({ amount: BigInt(vthoClaimedStargate), decimals: 18 })
   const fiatVthoClaimedStargate = useMemo(() => {
-    if (!vthoPrice || !formattedVthoClaimedStargate) return null
-    const value = Number(formattedVthoClaimedStargate) * vthoPrice
+    if (!vthoPrice || !vthoClaimedStargate) return null
+    const value = Number(formatUnits(BigInt(vthoClaimedStargate), 18)) * vthoPrice
     return `${currencySymbol}${formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  }, [vthoPrice, formattedVthoClaimedStargate, currencySymbol, formatNumber])
+  }, [vthoPrice, vthoClaimedStargate, currencySymbol, formatNumber])
 
-  const [formattedTotalEarned, fullTotalEarned] = formatAmount({
-    amount: BigInt(accountOverview?.vthoEarnedTotal ?? 0),
-    decimals: 18,
-  })
+  const vthoEarnedTotal = accountOverview?.vthoEarnedTotal ?? 0
+  const [formattedTotalEarned, fullTotalEarned] = formatAmount({ amount: BigInt(vthoEarnedTotal), decimals: 18 })
 
   const vetFiatValue = useMemo(() => {
     if (!vetPrice || !fullVetStaked) return null
@@ -79,7 +72,7 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
     {
       title: t('VET Staked'),
       children: (
-        <Stack gap={0}>
+        <Stack gap={0} alignItems="flex-end">
           <HStack gap={2}>
             {isStakedVetPending ? (
               <Skeleton height="20px" width="100px" />
@@ -129,7 +122,7 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
                     justifyContent={{ base: 'flex-end', md: 'space-between' }}
                     w={{ base: 'auto', md: 'full' }}
                   >
-                    <VStack gap={2}>
+                    <VStack gap={1} alignItems="flex-end">
                       <HStack gap={2}>
                         <Text textStyle="bodyM" color="text-primary">
                           {formattedTotalEarned}
@@ -140,7 +133,7 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
                         <Skeleton height="16px" width="60px" />
                       ) : (
                         vthoFiatValue && (
-                          <Text textStyle="bodyS" color="text-secondary">
+                          <Text textStyle="bodyS" color="text-secondary" textAlign="right">
                             {vthoFiatValue}
                           </Text>
                         )
@@ -163,7 +156,7 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
                         <Text textStyle="bodyS" color="text-secondary">
                           {t('Block rewards')}
                         </Text>
-                        <VStack gap={2}>
+                        <VStack gap={2} alignItems="flex-end">
                           <HStack gap={2}>
                             <Text textStyle="bodyS" color="text-primary">
                               {formattedVthoBlockRewards}
@@ -187,7 +180,7 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
                         <Text textStyle="bodyS" color="text-secondary">
                           {t('Passive generation')}
                         </Text>
-                        <VStack gap={2}>
+                        <VStack gap={2} alignItems="flex-end">
                           <HStack gap={2}>
                             <Text textStyle="bodyS" color="text-primary">
                               {formattedVthoPassiveGeneration}
@@ -205,7 +198,7 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
                         <Text textStyle="bodyS" color="text-secondary">
                           {t('Claimed Stargate')}
                         </Text>
-                        <VStack gap={2}>
+                        <VStack gap={2} alignItems="flex-end">
                           <HStack gap={2}>
                             <Text textStyle="bodyS" color="text-primary">
                               {formattedVthoClaimedStargate}
