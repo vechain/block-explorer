@@ -22,7 +22,6 @@ import type {
 } from './schemas'
 import { totalVetStakedQueryOptions } from './total-vet-staked'
 import { totalVetDelegatedQueryOptions } from './total-vet-delegated'
-import { totalVthoClaimedQueryOptions } from './total-vtho-claimed'
 import { accountTransactionsQueryOptions } from './transactions'
 import { accountTransfersQueryOptions } from './account-transfers'
 import { contractTransactionsQueryOptions } from './transactions-contract'
@@ -53,11 +52,6 @@ export const useTotalVetStaked = () => {
 export const useTotalVetDelegated = () => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(totalVetDelegatedQueryOptions(activeNetwork.name))
-}
-
-export const useTotalVthoClaimed = (address: string | undefined) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(totalVthoClaimedQueryOptions(activeNetwork.name, address as `0x${string}` | undefined))
 }
 
 /**
