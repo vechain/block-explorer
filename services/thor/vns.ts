@@ -3,7 +3,7 @@ import { vnsUtils } from '@vechain/sdk-network'
 import { NetworkName } from '@/lib/constants/network'
 import { type AddressString, addressStringSchema } from '@/lib/schemas'
 import { isZeroAddress } from '@/lib/utils/address'
-import { normalizeName } from '@/lib/utils/vns'
+import { nameToVeworldVet, normalizeName } from '@/lib/utils/vns'
 import { getThorClient } from './client'
 
 const VNS_NAME_QUERY_KEY = 'getVnsName'
@@ -32,6 +32,17 @@ const getVnsName = async ({
   return vnsName
 }
 
+const tryResolve = async (
+  thorClient: ReturnType<typeof getThorClient>,
+  vnsName: string,
+): Promise<AddressString | null> => {
+  const resolvedAddress = await vnsUtils.resolveName(thorClient, vnsName)
+  if (!resolvedAddress) return null
+  const address = addressStringSchema.parse(resolvedAddress)
+  if (isZeroAddress(address)) return null
+  return address
+}
+
 export const getVnsAddress = async ({
   networkName,
   name,
@@ -40,15 +51,14 @@ export const getVnsAddress = async ({
   name: string
 }): Promise<AddressString | null> => {
   const thorClient = getThorClient(networkName)
+  const nameTrimmed = name.trim().toLowerCase()
 
-  const resolvedAddress = await vnsUtils.resolveName(thorClient, normalizeName(name))
-
-  if (!resolvedAddress) {
-    return null
+  if (nameTrimmed.endsWith('.vet')) {
+    return tryResolve(thorClient, normalizeName(name))
   }
-  const address = addressStringSchema.parse(resolvedAddress)
 
-  if (isZeroAddress(address)) return null
+  const withVet = await tryResolve(thorClient, normalizeName(name))
+  if (withVet) return withVet
 
-  return address
+  return tryResolve(thorClient, nameToVeworldVet(name))
 }
