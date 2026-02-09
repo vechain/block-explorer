@@ -16,8 +16,8 @@ import {
 import { useFormatNumber } from '@/hooks/useFormatting'
 import { DataCardGroup, type DataCardGroupItem } from './DataCardGroup'
 import { BaseLink } from './Links'
-import { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { getStargateLink } from '@/lib/constants/stargate-nft'
 
 const SCALING_FACTOR = 1200
 const BASE_ISSUANCE = 64
@@ -28,10 +28,7 @@ export const HomeStatsGroup = () => {
   const formatNumber = useFormatNumber()
 
   const { activeNetwork } = useSettingsStore()
-  const STARGATE_LINK =
-    activeNetwork.name === NetworkName.MAINNET
-      ? 'https://app.stargate.vechain.org/market'
-      : 'https://testnet.app.stargate.vechain.org/'
+  const STARGATE_LINK = getStargateLink(activeNetwork.name, '/market')
 
   // General Information logic
   const { data: accountTotalsData, isLoading: isLoadingAccounts } = useAccountTotals(AccountTimeFrame.ALL)

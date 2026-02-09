@@ -1,10 +1,12 @@
 'use client'
 
-import { Accordion, HStack, Skeleton, Stack, Text, VStack, useBreakpointValue } from '@chakra-ui/react'
+import { Accordion, HStack, Link, Skeleton, Stack, Text, VStack, useBreakpointValue } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { LuExternalLink } from 'react-icons/lu'
 import { useFormatAmount, useFormatNumber } from '@/hooks/useFormatting'
+
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { useAccountOverview, useAccountStakedVet } from '@/services/veworld-indexer/hooks'
@@ -13,13 +15,15 @@ import { CURRENCIES } from '@/lib/constants/currencies'
 import type { AddressString } from '@/lib/schemas'
 import { Card } from '@/components/ui/Card'
 import { formatUnits } from 'viem'
+import { getStargateLink } from '@/lib/constants/stargate-nft'
 
-export const StargateSection = ({ address }: { address: AddressString }) => {
+export const StakingSection = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
   const formatAmount = useFormatAmount()
   const formatNumber = useFormatNumber()
-  const { currency } = useSettingsStore()
+  const { currency, activeNetwork } = useSettingsStore()
   const currencySymbol = CURRENCIES[currency].symbol
+  const stargateLink = getStargateLink(activeNetwork.name)
 
   const { data: accountOverview, isPending: isAccountOverviewPending } = useAccountOverview(address)
   const { data: stakedVet, isPending: isStakedVetPending } = useAccountStakedVet(address)
@@ -72,27 +76,37 @@ export const StargateSection = ({ address }: { address: AddressString }) => {
     {
       title: t('VET Staked'),
       children: (
-        <Stack gap={0} alignItems="flex-end">
-          <HStack gap={2}>
-            {isStakedVetPending ? (
-              <Skeleton height="20px" width="100px" />
+        <Link
+          href={stargateLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          _hover={{ textDecoration: 'none', opacity: 0.8 }}
+          _focus={{ outline: 'none', boxShadow: 'none' }}
+          _focusVisible={{ outline: 'none', boxShadow: 'none' }}
+        >
+          <Stack gap={0} alignItems="flex-end">
+            <HStack gap={2}>
+              {isStakedVetPending ? (
+                <Skeleton height="20px" width="100px" />
+              ) : (
+                <Text textStyle="bodyM" color="text-primary">
+                  {formattedVetStaked}
+                </Text>
+              )}
+              <Image src="/tokens/VET.svg" alt="VET" width={16} height={16} />
+              <LuExternalLink size={12} color="var(--chakra-colors-text-secondary)" />
+            </HStack>
+            {isVetPriceLoading ? (
+              <Skeleton height="16px" width="60px" />
             ) : (
-              <Text textStyle="bodyM" color="text-primary">
-                {formattedVetStaked}
-              </Text>
+              vetFiatValue && (
+                <Text textStyle="bodyS" color="text-secondary">
+                  {vetFiatValue}
+                </Text>
+              )
             )}
-            <Image src="/tokens/VET.svg" alt="VET" width={16} height={16} />
-          </HStack>
-          {isVetPriceLoading ? (
-            <Skeleton height="16px" width="60px" />
-          ) : (
-            vetFiatValue && (
-              <Text textStyle="bodyS" color="text-secondary">
-                {vetFiatValue}
-              </Text>
-            )
-          )}
-        </Stack>
+          </Stack>
+        </Link>
       ),
     },
     {
