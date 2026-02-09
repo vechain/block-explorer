@@ -14,6 +14,8 @@ import type { AddressString } from '@/lib/schemas'
 import { LevelName, type ValidatorDetails } from '@/services/veworld-indexer/hooks'
 import { ValidatorStatus } from '@/services/veworld-indexer/validator-details'
 import { useVnsName } from '@/services/thor/hooks'
+import { getStargateLink } from '@/lib/constants/stargate-nft'
+import { useSettingsStore } from '@/lib/stores/settings'
 
 // Block time on VeChain is 10 seconds
 const BLOCK_TIME_IN_SECONDS = 10
@@ -103,6 +105,8 @@ const NftTierApyItem = ({ tier, apy }: NftTierApyItemProps) => (
 export const ValidatorSummary = ({ address, validator }: { address: AddressString; validator: ValidatorDetails }) => {
   const { t } = useTranslation()
   const { data: vnsName } = useVnsName(address)
+  const { activeNetwork } = useSettingsStore()
+  const stargateValidatorLink = getStargateLink(activeNetwork.name, `/validator/${address}`)
 
   // Calculate time until next cycle based on current block number (like Stargate)
   const timeUntilNextCycle = useMemo(() => {
@@ -253,9 +257,22 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
             ) : (
               <Picasso address={address} size={48} />
             )}
-            <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap">
-              {t('Validator')}
-            </Heading>
+            <Link
+              href={stargateValidatorLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              display="flex"
+              alignItems="center"
+              gap={2}
+              _hover={{ textDecoration: 'none', opacity: 0.8 }}
+              _focus={{ outline: 'none', boxShadow: 'none' }}
+              _focusVisible={{ outline: 'none', boxShadow: 'none' }}
+            >
+              <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap">
+                {t('Validator')}
+              </Heading>
+              <LuExternalLink size={16} color="var(--chakra-colors-text-secondary)" />
+            </Link>
             <Badge bg={statusBadge.bg} color={statusBadge.color} px={2} py={0.5} borderRadius="md" fontSize="xs">
               {t(statusBadge.labelKey)}
             </Badge>

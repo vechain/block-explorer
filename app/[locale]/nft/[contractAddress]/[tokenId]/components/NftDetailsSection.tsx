@@ -1,7 +1,8 @@
 'use client'
 
-import { Badge, Box, Flex, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Badge, Box, Flex, Link, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
+import { LuExternalLink } from 'react-icons/lu'
 import { Card } from '@/components/ui/Card'
 import { AddressLink, BaseLink } from '@/components/ui/Links'
 import type { AddressString } from '@/lib/schemas'
@@ -12,7 +13,7 @@ import { truncateHex } from '@/lib/utils/truncateHex'
 import { truncateString } from '@/lib/utils/truncateString'
 import { useMintEvent } from '@/services/veworld-indexer/nft-transfers'
 import { useStargateNftInfo } from '@/services/thor/tokens/stargate'
-import { isStargateNftContract } from '@/lib/constants/stargate-nft'
+import { isStargateNftContract, getStargateLink } from '@/lib/constants/stargate-nft'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { formatEther } from 'viem'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -117,21 +118,35 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
         </DetailRow>
         {/* Stargate NFT specific fields */}
         {isStargate && (
-          <>
-            <DetailRow label={t('NFT Value')}>
-              {isLoadingStargateInfo ? (
-                <Skeleton height="20px" width="80px" />
-              ) : stargateNftInfo?.vetAmountStaked ? (
+          <DetailRow label={t('NFT Value')}>
+            {isLoadingStargateInfo ? (
+              <Skeleton height="20px" width="80px" />
+            ) : stargateNftInfo?.vetAmountStaked ? (
+              <Link
+                href={getStargateLink(activeNetwork.name, `/nft/${tokenId.toString()}`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                display="flex"
+                alignItems="center"
+                gap={1}
+                _hover={{ textDecoration: 'none', opacity: 0.8 }}
+                _focus={{ outline: 'none', boxShadow: 'none' }}
+                _focusVisible={{ outline: 'none', boxShadow: 'none' }}
+              >
                 <Text textStyle="bodyM" color="text-primary">
-                  {formatVetAmount(stargateNftInfo.vetAmountStaked)} VET
+                  {formatVetAmount(stargateNftInfo.vetAmountStaked)}
                 </Text>
-              ) : (
-                <Text textStyle="bodyM" color="text-secondary">
-                  -
+                <Text textStyle="bodyM" color="text-primary">
+                  VET
                 </Text>
-              )}
-            </DetailRow>
-          </>
+                <LuExternalLink size={12} color="var(--chakra-colors-text-secondary)" />
+              </Link>
+            ) : (
+              <Text textStyle="bodyM" color="text-secondary">
+                -
+              </Text>
+            )}
+          </DetailRow>
         )}
       </SectionCard>
 

@@ -12,7 +12,7 @@ import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useAccountTokens } from '@/hooks/useAccountTokens'
 import { useVnsName } from '@/services/thor/hooks'
 import { TokensSection } from './sections/TokensSection'
-import { StargateSection } from './sections/StargateSection'
+import { StakingSection } from './sections/StakingSection'
 
 export const AccountSummary = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
@@ -91,7 +91,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
           isPending={isPendingAllTokens}
         />
 
-        <StargateSection address={address} />
+        <StakingSection address={address} />
       </Card>
     </Stack>
   )
