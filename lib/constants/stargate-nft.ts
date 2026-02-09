@@ -7,8 +7,17 @@ export const STARGATE_NFT_CONTRACT_ADDRESS: AddressString = '0x1856c533ac2d94340
 // Stargate delegation contract address (mainnet only)
 export const STARGATE_CONTRACT_ADDRESS: AddressString = '0x03C557bE98123fdb6faD325328AC6eB77de7248C'
 
-// Stargate app URL for validator links
+// Stargate app URLs
 export const STARGATE_APP_URL = 'https://app.stargate.vechain.org'
+export const STARGATE_TESTNET_APP_URL = 'https://testnet.app.stargate.vechain.org'
+
+// Get the Stargate base URL for the given network
+export const getStargateBaseUrl = (networkName: NetworkName): string =>
+  networkName === NetworkName.MAINNET ? STARGATE_APP_URL : STARGATE_TESTNET_APP_URL
+
+// Build a Stargate link with an optional path
+export const getStargateLink = (networkName: NetworkName, path = ''): string =>
+  `${getStargateBaseUrl(networkName)}${path}`
 
 // Check if a contract address is the Stargate NFT contract
 export const isStargateNftContract = (contractAddress: AddressString, networkName: NetworkName): boolean => {
