@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeName } from './vns'
+import { nameToVeworldVet, normalizeName } from './vns'
 
 describe('Vns utils', () => {
   describe('normalizeName', () => {
@@ -104,6 +104,35 @@ describe('Vns utils', () => {
         expect(normalizeName('a')).toBe('a.vet')
         expect(normalizeName('A')).toBe('a.vet')
       })
+    })
+  })
+
+  describe('nameToVeworldVet', () => {
+    it('should add .veworld.vet when no extension', () => {
+      expect(nameToVeworldVet('alice')).toBe('alice.veworld.vet')
+      expect(nameToVeworldVet('example')).toBe('example.veworld.vet')
+    })
+
+    it('should replace .vet with .veworld.vet', () => {
+      expect(nameToVeworldVet('alice.vet')).toBe('alice.veworld.vet')
+      expect(nameToVeworldVet('example.vet')).toBe('example.veworld.vet')
+    })
+
+    it('should handle subdomains', () => {
+      expect(nameToVeworldVet('sub.domain')).toBe('sub.domain.veworld.vet')
+      expect(nameToVeworldVet('sub.domain.vet')).toBe('sub.domain.veworld.vet')
+    })
+
+    it('should trim and lowercase', () => {
+      expect(nameToVeworldVet('  alice  ')).toBe('alice.veworld.vet')
+      expect(nameToVeworldVet('ALICE')).toBe('alice.veworld.vet')
+      expect(nameToVeworldVet(' Alice.vet ')).toBe('alice.veworld.vet')
+    })
+
+    it('should handle edge cases', () => {
+      expect(nameToVeworldVet('')).toBe('.veworld.vet')
+      expect(nameToVeworldVet('vet')).toBe('vet.veworld.vet')
+      expect(nameToVeworldVet('vet.vet')).toBe('vet.veworld.vet')
     })
   })
 })
