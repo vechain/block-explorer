@@ -457,6 +457,53 @@ terraform destroy
 - Forces App Runner to pull new image
 - Prevents stale deployments
 
+## Public Docker Image (GHCR)
+
+The Block Explorer image is also published to **GitHub Container Registry** (`ghcr.io`) as a public image. This allows anyone to pull and run the explorer locally — useful when running a local VeChain node and wanting a block explorer alongside it.
+
+### Publishing a new version
+
+```bash
+# Login to GHCR (one-time, requires a GitHub PAT or `gh auth token`)
+echo $(gh auth token) | docker login ghcr.io -u $(gh api user --jq .login) --password-stdin
+
+# To push the "latest" image to GHCR
+pnpm docker:push
+```
+
+To push a specific version tag instead of `latest`:
+
+```bash
+docker build -t ghcr.io/vechain/block-explorer:v.1.2.3 .
+docker push ghcr.io/vechain/block-explorer:v.1.2.3
+```
+
+### Pulling the image
+
+Since the image is public, no authentication is needed to pull:
+
+```bash
+docker pull ghcr.io/vechain/block-explorer:latest
+```
+
+Or in a `docker-compose.yml`:
+
+```yaml
+services:
+  block-explorer:
+    image: ghcr.io/vechain/block-explorer:latest
+    ports:
+      - '3000:3000'
+    environment:
+      - NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION}
+      - NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL=${NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL}
+      - B32_URL=${B32_URL}
+      - NEXT_PUBLIC_COIN_API_URL=${NEXT_PUBLIC_COIN_API_URL}
+      - NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL}
+      - NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL}
+      - NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL}
+```
+
 ## Support
 
 For issues or questions:
