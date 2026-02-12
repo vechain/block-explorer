@@ -333,7 +333,7 @@
     "address": "0xa258e1a871f10cccf6330bfa06366d929ea26b46",
     "desc": "Utility token for 3DAbles platform",
     "icon": "07f26d41581c62729b26ac2cb0a679a18b08f43e.png",
-    "totalSupply": "255000000000000000000",
+    "totalSupply": "256000000000000000000",
     "website": "https://3dables.smuzzies.com/",
     "links": {
       "twitter": "https://twitter.com/Smuzzies_NFT"
@@ -473,6 +473,26 @@
     "totalSupply": "0"
   },
   {
+    "name": "VOT3",
+    "symbol": "VOT3",
+    "decimals": 18,
+    "address": "0xa704c45971995467696ee9544da77dd42bc9706e",
+    "desc": "The testnet VOT3 token used for testing purposes by developers",
+    "icon": "dcc6e7f09932a389a536fe74107cd73af445dd65.png",
+    "totalSupply": "283359475324578538593641",
+    "website": "https://docs.vebetterdao.org/developer-guides/test-environmnet"
+  },
+  {
+    "name": "B3TR",
+    "symbol": "B3TR",
+    "decimals": 18,
+    "address": "0xbf64cf86894ee0877c4e7d03936e35ee8d8b864f",
+    "desc": "The testnet B3TR token used for testing purposes by developers",
+    "icon": "38b6a2fdff4c109128935762dc27853c773fef21.png",
+    "totalSupply": "21006343321437349796801598",
+    "website": "https://docs.vebetterdao.org/developer-guides/test-environmnet"
+  },
+  {
     "name": "Dream",
     "symbol": "DREAM",
     "decimals": 18,
@@ -527,7 +547,7 @@
     "address": "0x3ba9ef09ca4e664644a6e32d704c5cd8882998d0",
     "desc": "Bridged WAN from Wanchain at https://bridge-testnet.wanchain.org/AssetBridge.",
     "icon": "d1f646308d536866bc88dc1a885c45aa3fbfca20.png",
-    "totalSupply": "58922396500000000000",
+    "totalSupply": "36922396500000000000",
     "crossChainProvider": {
       "name": "wanchain",
       "url": "https://bridge-testnet.wanchain.org/AssetBridge"
@@ -553,7 +573,7 @@
     "address": "0x94a0f4e2a03d213317779fbabf1df4820143789b",
     "desc": "Bridged USDT from Wanchain at https://bridge-testnet.wanchain.org/AssetBridge.",
     "icon": "f12b8449e61f62f2bcc4847a911dfb6b206a4970.png",
-    "totalSupply": "1230506356",
+    "totalSupply": "1230406356",
     "crossChainProvider": {
       "name": "wanchain",
       "url": "https://bridge-testnet.wanchain.org/AssetBridge"
@@ -571,25 +591,5 @@
       "name": "wanchain",
       "url": "https://bridge-testnet.wanchain.org/AssetBridge"
     }
-  },
-  {
-    "name": "VOT3",
-    "symbol": "VOT3",
-    "decimals": 18,
-    "address": "0x6e8b4a88d37897fc11f6ba12c805695f1c41f40e",
-    "desc": "The testnet VOT3 token used for testing purposes by developers",
-    "icon": "dcc6e7f09932a389a536fe74107cd73af445dd65.png",
-    "totalSupply": "37665685541379875722887465",
-    "website": "https://docs.vebetterdao.org/developer-guides/test-environmnet"
-  },
-  {
-    "name": "B3TR",
-    "symbol": "B3TR",
-    "decimals": 18,
-    "address": "0x95761346d18244bb91664181bf91193376197088",
-    "desc": "The testnet B3TR token used for testing purposes by developers",
-    "icon": "38b6a2fdff4c109128935762dc27853c773fef21.png",
-    "totalSupply": "856122317779572666755065860",
-    "website": "https://docs.vebetterdao.org/developer-guides/test-environmnet"
   }
 ]
