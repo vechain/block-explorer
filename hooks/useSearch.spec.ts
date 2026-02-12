@@ -575,7 +575,7 @@ describe('VNS fallback integration', () => {
       })
 
       // B3TR testnet address
-      expect(result).toEqual({ redirectTo: '/address/0xbf64cf86894ee0877c4e7d03936e35ee8d8b864f' })
+      expect(result).toEqual({ redirectTo: '/address/0x95761346d18244bb91664181bf91193376197088' })
       expect(mockGetVnsAddress).not.toHaveBeenCalled()
     })
   })
