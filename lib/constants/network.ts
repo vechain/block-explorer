@@ -1,3 +1,4 @@
+import { IS_SOLO, SOLO_NODE_URL } from '@/env.public'
 import { MAINNET_URL, TESTNET_URL } from '@vechain/sdk-network'
 
 export type Network = {
@@ -11,7 +12,7 @@ export type Network = {
 export enum NetworkName {
   MAINNET = 'mainnet',
   TESTNET = 'testnet',
-  // SOLO = 'solo',
+  SOLO = 'solo',
 }
 
 const mainnet: Network = {
@@ -26,14 +27,14 @@ const testnet: Network = {
   contracts: { X2EarnRewardsPool: '0x5F8f86B8D0Fa93cdaE20936d150175dF0205fB38' },
 }
 
-// const solo: Network = {
-//   name: NetworkName.SOLO,
-//   url: THOR_SOLO_URL,
-//   contracts: {},
-// }
-
-export const NETWORKS: Record<NetworkName, Network> = {
-  [NetworkName.MAINNET]: mainnet,
-  [NetworkName.TESTNET]: testnet,
-  // [NetworkName.SOLO]: solo,
+const solo: Network = {
+  name: NetworkName.SOLO,
+  url: SOLO_NODE_URL,
+  contracts: {},
 }
+
+export const DEFAULT_NETWORK: Network = IS_SOLO ? solo : mainnet
+
+export const NETWORKS: Record<string, Network> = IS_SOLO
+  ? { [NetworkName.SOLO]: solo }
+  : { [NetworkName.MAINNET]: mainnet, [NetworkName.TESTNET]: testnet }

@@ -43,7 +43,6 @@ export const blockExpandedQueryOptions = (networkName: NetworkName, revision: Bl
 const getBlockExpanded = async ({ revision, networkName }: { revision: BlockRevision; networkName: NetworkName }) => {
   const thorClient = getThorClient(networkName)
   const block = await thorClient.blocks.getBlockExpanded(revision)
-
   return zodParse({
     data: block,
     schema: blockExpandedSchema,
