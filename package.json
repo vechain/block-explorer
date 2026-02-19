@@ -22,7 +22,8 @@
     "ts-check": "tsc -p tsconfig.json --noEmit",
     "ts-check:staged": "node scripts/ts-check-staged.mjs",
     "token-registry:update": "node scripts/update-token-registry.mjs",
-    "token-registry:check": "node scripts/check-token-registry.mjs"
+    "token-registry:check": "node scripts/check-token-registry.mjs",
+    "ghcr:push": "docker build -t ghcr.io/vechain/block-explorer:latest . && docker push ghcr.io/vechain/block-explorer:latest"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.26.0",

@@ -111,7 +111,8 @@ The workflow will:
 3. Push to ECR with tag `v.X.Y.Z`
 4. Update production config
 5. Deploy via Terraform
-6. Create a GitHub Release (if new version)
+6. Push the image to GHCR (`ghcr.io/vechain/block-explorer`) with the version tag and `latest`
+7. Create a GitHub Release (if new version)
 
 ### Manual Deployment (Not Recommended)
 
@@ -456,6 +457,61 @@ terraform destroy
 - Unique per commit on each PR
 - Forces App Runner to pull new image
 - Prevents stale deployments
+
+## Public Docker Image (GHCR)
+
+The Block Explorer image is also published to **GitHub Container Registry** (`ghcr.io`) as a public image. This allows anyone to pull and run the explorer locally — useful when running a local VeChain node and wanting a block explorer alongside it.
+
+### Automated Publishing
+
+Every successful production deployment automatically pushes the image to GHCR with both the version tag and `latest`. This is handled by the `push-ghcr` job in `deploy-production.yml`, which runs after the deploy job completes.
+
+### Manual Publishing
+
+For ad-hoc pushes outside the CI pipeline:
+
+```bash
+# Login to GHCR (one-time, requires a GitHub PAT or `gh auth token`)
+echo $(gh auth token) | docker login ghcr.io -u $(gh api user --jq .login) --password-stdin
+
+# Build and push the "latest" image to GHCR
+pnpm ghcr:push
+```
+
+To push a specific version tag instead of `latest`:
+
+```bash
+docker build -t ghcr.io/vechain/block-explorer:v.1.2.3 .
+docker push ghcr.io/vechain/block-explorer:v.1.2.3
+```
+
+### Pulling the image
+
+Since the image is public, no authentication is needed to pull:
+
+```bash
+docker pull ghcr.io/vechain/block-explorer:latest
+```
+
+Or in a `docker-compose.yml`:
+
+```yaml
+services:
+  block-explorer:
+    image: ghcr.io/vechain/block-explorer:latest
+    ports:
+      - '3000:3000'
+    environment:
+      - NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION}
+      - NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL=${NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL}
+      - B32_URL=${B32_URL}
+      - NEXT_PUBLIC_COIN_API_URL=${NEXT_PUBLIC_COIN_API_URL}
+      - NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL}
+      - NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL}
+      - NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL}
+      - NEXT_PUBLIC_IS_SOLO=${NEXT_PUBLIC_IS_SOLO}
+      - NEXT_PUBLIC_SOLO_NODE_URL=${NEXT_PUBLIC_SOLO_NODE_URL}
+```
 
 ## Support
 

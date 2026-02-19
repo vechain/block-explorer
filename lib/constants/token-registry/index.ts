@@ -70,7 +70,7 @@ for (const token of testTokens as TokenRegistryEntry[]) {
  * Returns null if the token is not in the registry.
  */
 export function getTokenRegistryEntry(networkName: NetworkName, address: AddressString): TokenRegistryEntry | null {
-  const map = networkName === NetworkName.MAINNET ? mainTokenMap : testTokenMap
+  const map = networkName === NetworkName.MAINNET ? mainTokenMap : testTokenMap // solo falls back to testnet
   return map.get(address.toLowerCase()) ?? null
 }
 
@@ -106,8 +106,8 @@ export function getTokenInfo(networkName: NetworkName, address: AddressString): 
  * Returns null if no matching token is found.
  */
 export function getTokenByNameOrSymbol(networkName: NetworkName, nameOrSymbol: string): { address: string } | null {
-  const symbolMap = networkName === NetworkName.MAINNET ? mainTokenBySymbolMap : testTokenBySymbolMap
-  const nameMap = networkName === NetworkName.MAINNET ? mainTokenByNameMap : testTokenByNameMap
+  const symbolMap = networkName === NetworkName.MAINNET ? mainTokenBySymbolMap : testTokenBySymbolMap // solo falls back to testnet
+  const nameMap = networkName === NetworkName.MAINNET ? mainTokenByNameMap : testTokenByNameMap // solo falls back to testnet
   const key = nameOrSymbol.toLowerCase()
 
   // Prioritize symbol lookup (symbols are more precise identifiers)

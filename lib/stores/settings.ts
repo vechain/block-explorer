@@ -3,7 +3,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { ColorMode } from '@/components/theme/config'
-import { NETWORKS, type Network, NetworkName } from '@/lib/constants/network'
+import { DEFAULT_NETWORK, type Network } from '@/lib/constants/network'
 
 export enum Currency {
   USD = 'usd',
@@ -31,7 +31,7 @@ export const useSettingsStore = create<SettingsStore>()(
       setColorMode: colorMode => set({ colorMode }),
       currency: Currency.USD,
       setCurrency: currency => set({ currency }),
-      activeNetwork: NETWORKS[NetworkName.MAINNET],
+      activeNetwork: DEFAULT_NETWORK,
       setActiveNetwork: network => set({ activeNetwork: network }),
     }),
     { name: 'settings' },

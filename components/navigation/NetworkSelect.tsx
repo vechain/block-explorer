@@ -1,5 +1,6 @@
 import { Box, Flex } from '@chakra-ui/react'
 import { useQueryClient } from '@tanstack/react-query'
+import { IS_SOLO } from '@/env.public'
 import { NETWORKS, NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getThorClient } from '@/services/thor/client'
@@ -7,6 +8,51 @@ import { MotionBox } from '../ui/MotionBox'
 import { MotionText } from '../ui/MotionText'
 
 export const NetworkSelect = () => {
+  if (IS_SOLO) {
+    return <SoloNetworkLabel />
+  }
+
+  return <NetworkToggle />
+}
+
+const SoloNetworkLabel = () => {
+  return (
+    <Flex
+      gap={1}
+      alignItems="center"
+      border="1px solid"
+      borderColor="border-primary"
+      bg="bg-primary"
+      p={1.5}
+      rounded="full"
+      textStyle="bodyMSemibold"
+    >
+      <Box py={{ base: 1, md: 2 }} px={{ base: 2, md: 4 }} position="relative">
+        <MotionBox
+          position="absolute"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          bg="accent-tertiary"
+          color="text-alt-primary"
+          rounded="full"
+        />
+        <MotionText
+          as="span"
+          position="relative"
+          color="text-alt-primary"
+          textTransform="capitalize"
+          fontSize={{ base: 'body-s', md: 'body-m' }}
+        >
+          {NetworkName.SOLO}
+        </MotionText>
+      </Box>
+    </Flex>
+  )
+}
+
+const NetworkToggle = () => {
   const { setActiveNetwork, activeNetwork } = useSettingsStore()
   const queryClient = useQueryClient()
 
