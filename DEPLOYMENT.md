@@ -111,7 +111,8 @@ The workflow will:
 3. Push to ECR with tag `v.X.Y.Z`
 4. Update production config
 5. Deploy via Terraform
-6. Create a GitHub Release (if new version)
+6. Push the image to GHCR (`ghcr.io/vechain/block-explorer`) with the version tag and `latest`
+7. Create a GitHub Release (if new version)
 
 ### Manual Deployment (Not Recommended)
 
@@ -461,14 +462,20 @@ terraform destroy
 
 The Block Explorer image is also published to **GitHub Container Registry** (`ghcr.io`) as a public image. This allows anyone to pull and run the explorer locally — useful when running a local VeChain node and wanting a block explorer alongside it.
 
-### Publishing a new version
+### Automated Publishing
+
+Every successful production deployment automatically pushes the image to GHCR with both the version tag and `latest`. This is handled by the `push-ghcr` job in `deploy-production.yml`, which runs after the deploy job completes.
+
+### Manual Publishing
+
+For ad-hoc pushes outside the CI pipeline:
 
 ```bash
 # Login to GHCR (one-time, requires a GitHub PAT or `gh auth token`)
 echo $(gh auth token) | docker login ghcr.io -u $(gh api user --jq .login) --password-stdin
 
-# To push the "latest" image to GHCR
-pnpm docker:push
+# Build and push the "latest" image to GHCR
+pnpm ghcr:push
 ```
 
 To push a specific version tag instead of `latest`:
@@ -502,6 +509,8 @@ services:
       - NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL}
       - NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL}
       - NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL}
+      - NEXT_PUBLIC_IS_SOLO=${NEXT_PUBLIC_IS_SOLO}
+      - NEXT_PUBLIC_SOLO_NODE_URL=${NEXT_PUBLIC_SOLO_NODE_URL}
 ```
 
 ## Support
