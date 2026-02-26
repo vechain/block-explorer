@@ -113,7 +113,7 @@
     "address": "0xacc280010b2ee0efc770bce34774376656d8ce14",
     "desc": "HAI can be used to power most activities within the HackenAI application and to acquire various cybersecurity services",
     "icon": "bbe48eedf5b23a5e268672276ba889eea5d00256.png",
-    "totalSupply": "95832861013036194"
+    "totalSupply": "95822021762856923"
   },
   {
     "name": "Madini",
@@ -184,7 +184,7 @@
     "address": "0x170f4ba8e7acf6510f55db26047c83d13498af8a",
     "desc": "WoV is the ecosystem utility and governance token of WorldOfV.",
     "icon": "86d852d5b2bacaa182139c0ca08bc916a63eee24.png",
-    "totalSupply": "178507270086551466527239983",
+    "totalSupply": "190194902602107022082795969",
     "website": "https://www.worldofv.art/",
     "whitePaper": "https://medium.com/@WorldofV/world-of-v-tokenomics-the-beginning-of-our-journey-together-d428907c22af",
     "links": {
@@ -241,7 +241,7 @@
     "address": "0x45429a2255e7248e57fce99e7239aed3f84b7a53",
     "desc": "Wrapper VET VIP-180 token (VIP-180) that 1:1 pegs VET. Audit report provided by PeckShield.",
     "icon": "b58186aeabfc3dabd3938f2b3a795623c8520d46.png",
-    "totalSupply": "17729656402914629511764266",
+    "totalSupply": "10592634616382836868480992",
     "links": {
       "github": "https://github.com/VeChainDEXCode/vvet"
     }
@@ -371,7 +371,7 @@
     "address": "0xa4f95b1f1c9f4cf984b0a003c4303e8ea86302f6",
     "desc": "Utility token of the VFox Alliance ecosystem",
     "icon": "3265906190851c0d19bf6057325902adafecd076.png",
-    "totalSupply": "9126026258488225828977826",
+    "totalSupply": "9125808336081380474584715",
     "website": "https://vfox-alliance.com/",
     "whitePaper": "https://medium.com/@vfox.alphice/tokenomics-vfa-f3ab4c4f0cf7",
     "links": {
@@ -410,7 +410,7 @@
     "address": "0xc3fd50a056dc4025875fa164ced1524c93053f29",
     "desc": "MVA is a utility and governance token for the MadⓥApes Ecosystem",
     "icon": "97d999107b6e9f5dcb1422bf5118758dbc9e354f.png",
-    "totalSupply": "9946124438488048404177659",
+    "totalSupply": "9944711143086426387701017",
     "website": "https://mvanft.io/",
     "links": {
       "twitter": "https://twitter.com/madvapesnft"
@@ -711,7 +711,7 @@
     "address": "0x5ef79995fe8a89e0812330e4378eb2660cede699",
     "desc": "B3TR is the incentive and value token of the VeBetterDAO ecosystem. It serves as the foundation for VeBetterDAO’s sustainability-focused incentive model, rewarding active participation, innovation, and contributions that drive positive environmental, social and economic impact.\n\nB3TR supports DAO treasury management, acts as the value carrier for VeBetter applications, and backs VOT3 tokens 1:1, which are required for VeBetterDAO governance and decision-making.\n\nThe total supply of 1 billion B3TR is fixed, with a weekly issuance schedule distributed over 12 years, ensuring a sustainable and transparent reward structure that aligns long-term ecosystem growth with real-world impact.",
     "icon": "5a9eb5e11751a649ca00298f3237c4624712af75.png",
-    "totalSupply": "331041576631296000000000000",
+    "totalSupply": "372887808068444160000000000",
     "website": "https://vebetter.com/",
     "whitePaper": "https://files.vebetter.com/vebetterdaocontainer/VeBetter_Whitepaper_v2-OCR.pdf",
     "links": {
@@ -728,7 +728,7 @@
     "address": "0x76ca782b59c74d088c7d2cce2f211bc00836c602",
     "desc": "Tokens representing voting power in the VeBetterDAO",
     "icon": "dcc6e7f09932a389a536fe74107cd73af445dd65.png",
-    "totalSupply": "191067289279510510896679025"
+    "totalSupply": "239347136838144437008414547"
   },
   {
     "name": "Hawk Tuah",
@@ -762,7 +762,7 @@
     "address": "0x420dfe6b7bc605ce61e9839c8c0e745870a6cde0",
     "desc": "Earns enhanced weekly rewards and can be redeemed for 1 B3TR on veDelegate.vet.",
     "icon": "1c641b86096d56bf13d49f38388accd6db8b8b2e.png",
-    "totalSupply": "2383053247315135247335018",
+    "totalSupply": "2408725074764193304809573",
     "website": "https://veDelegate.vet/",
     "links": {
       "twitter": "https://x.com/vedelegate",
@@ -809,7 +809,7 @@
     "address": "0xaac40a6e1adcf2acf172019e118b4278dd935760",
     "desc": "Represents 1 ton of CO2 offset for 1 year. Non-tradable and non-transferable. Each token is linked to an offset certificate and can only be minted by the Pause Your Carbon smart contract.",
     "icon": "2f5dbd5e3b40580b2f8b3790a78b4e5c403ff0eb.png",
-    "totalSupply": "199481441330292706570735",
+    "totalSupply": "205408079376830537887050",
     "website": "https://pauseyourcarbon.com/",
     "links": {
       "twitter": "https://x.com/the_Carboneers/"
@@ -831,7 +831,7 @@
     "address": "0xf9b02b47694fd635a413f16dc7b38af06cc16fe5",
     "desc": "Wrapper VET VIP-180 token (VIP-180) that 1:1 pegs VET",
     "icon": "1b51232270c6f7b34b4ce9dd1001df0197e56e24.png",
-    "totalSupply": "20368591383869648038261172",
+    "totalSupply": "16758772003388359300310225",
     "website": "https://www.betterswap.io/",
     "links": {
       "twitter": "https://x.com/BetterSwap_io"
@@ -853,7 +853,7 @@
     "address": "0x29c630cce4ddb23900f5fe66ab55e488c15b9f5e",
     "desc": "Glo Dollar is the stablecoin that funds public goods and charities. Unlike other stablecoins, we donate all our profits. This unlocks up to $7b in funding to make crypto and the world a better place.",
     "icon": "6d55bdde89f83265f94ec07b491573334625cdc6.png",
-    "totalSupply": "37099670000000000000000",
+    "totalSupply": "11068259211000000000000",
     "website": "https://www.glodollar.org",
     "links": {
       "twitter": "https://x.com/glodollar",
@@ -880,7 +880,7 @@
     "address": "0x1d828b239749c023aa561d442744d0e83f3fab66",
     "desc": "Bridged SOL from Wanchain at https://bridge.wanchain.org/AssetBridge.",
     "icon": "4f0d1666d00240aaf50da65217c27ee26cfaafca.png",
-    "totalSupply": "889730993",
+    "totalSupply": "909457876",
     "website": "https://bridge.wanchain.org/AssetBridge",
     "links": {
       "twitter": "https://x.com/wanchain_org",
@@ -898,7 +898,7 @@
     "address": "0x2076382cfee16ffc8155b59ef1836ad36b8a1df4",
     "desc": "Bridged ETH from Wanchain at https://bridge.wanchain.org/AssetBridge.",
     "icon": "f21d01e658696753370cf19b3f9c06719fc02363.png",
-    "totalSupply": "41111734620516098",
+    "totalSupply": "86912934620516098",
     "website": "https://bridge.wanchain.org/AssetBridge",
     "links": {
       "twitter": "https://x.com/wanchain_org",
@@ -916,7 +916,7 @@
     "address": "0x752e4e77d8d3a111f931edcd35cee944adc36cc5",
     "desc": "Bridged BTC from Wanchain at https://bridge.wanchain.org/AssetBridge.",
     "icon": "a003ed98565684de189b85ab5ae54abb26952633.png",
-    "totalSupply": "423806",
+    "totalSupply": "545568",
     "website": "https://bridge.wanchain.org/AssetBridge",
     "links": {
       "twitter": "https://x.com/wanchain_org",
@@ -934,7 +934,7 @@
     "address": "0x88b08f4eb5c87e320780a253cd1baa387d04bfcc",
     "desc": "Bridged USDT from Wanchain at https://bridge.wanchain.org/AssetBridge.",
     "icon": "f12b8449e61f62f2bcc4847a911dfb6b206a4970.png",
-    "totalSupply": "10375547813",
+    "totalSupply": "6798472291",
     "website": "https://bridge.wanchain.org/AssetBridge",
     "links": {
       "twitter": "https://x.com/wanchain_org",
@@ -952,7 +952,7 @@
     "address": "0xc0c789a13a69859d3ae7bdb3fe4fa1625d20fd65",
     "desc": "Bridged USDC from Wanchain at https://bridge.wanchain.org/AssetBridge.",
     "icon": "0dc5e9031298774f5a0583b3c7bca9f00ab7cdf9.png",
-    "totalSupply": "79555582688",
+    "totalSupply": "17324226796",
     "website": "https://bridge.wanchain.org/AssetBridge",
     "links": {
       "twitter": "https://x.com/wanchain_org",
@@ -970,7 +970,7 @@
     "address": "0xdb01e0b2b8d8d8eea3eaf290bdb2ae05c317f2f1",
     "desc": "Bridged WAN from Wanchain at https://bridge.wanchain.org/AssetBridge.",
     "icon": "d1f646308d536866bc88dc1a885c45aa3fbfca20.png",
-    "totalSupply": "2384552259226556694528",
+    "totalSupply": "2341185163876669969476",
     "website": "https://bridge.wanchain.org/AssetBridge",
     "links": {
       "twitter": "https://x.com/wanchain_org",
@@ -988,7 +988,7 @@
     "address": "0xe6826a142b6c4b6070015a633e6cccca36586185",
     "desc": "Bridged XRP from Wanchain at https://bridge.wanchain.org/AssetBridge.",
     "icon": "3ec6820986555b8f6debf95112c15b9c58bcdf42.png",
-    "totalSupply": "27369001",
+    "totalSupply": "159603411",
     "website": "https://bridge.wanchain.org/AssetBridge",
     "links": {
       "twitter": "https://x.com/wanchain_org",
@@ -1006,10 +1006,22 @@
     "address": "0x98beccbe48d6bef5bae95f83cb0b965a97073819",
     "desc": "MOB is a utility and governance token powering the Mino Mob ecosystem.",
     "icon": "3cafd92c6c0cb32c47e481dcc1954e084fbab29d.png",
-    "totalSupply": "4545000000000000000000",
+    "totalSupply": "5545000000000000000000",
     "website": "https://minomob.com/",
     "links": {
       "twitter": "https://x.com/minomobNFT"
+    }
+  },
+  {
+    "name": "VENI",
+    "symbol": "VENI",
+    "decimals": 18,
+    "address": "0x0bf03b87b2bdd0b3907657115832ec6da5193305",
+    "desc": "VeChains most powerfull Meme Coin, Leveling up the warrios within the ecosystem.",
+    "icon": "1e3a0e440e24ae32ae9b4dd31b651c7ab1b218b5.png",
+    "totalSupply": "1000000000000000000000000000",
+    "links": {
+      "twitter": "https://x.com/vaiyansworld"
     }
   }
 ]
