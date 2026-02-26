@@ -333,7 +333,7 @@
     "address": "0xa258e1a871f10cccf6330bfa06366d929ea26b46",
     "desc": "Utility token for 3DAbles platform",
     "icon": "07f26d41581c62729b26ac2cb0a679a18b08f43e.png",
-    "totalSupply": "255000000000000000000",
+    "totalSupply": "252000000000000000000",
     "website": "https://3dables.smuzzies.com/",
     "links": {
       "twitter": "https://twitter.com/Smuzzies_NFT"
@@ -579,7 +579,7 @@
     "address": "0x6e8b4a88d37897fc11f6ba12c805695f1c41f40e",
     "desc": "The testnet VOT3 token used for testing purposes by developers",
     "icon": "dcc6e7f09932a389a536fe74107cd73af445dd65.png",
-    "totalSupply": "37665685541379875722887465",
+    "totalSupply": "54672202806830529058005917",
     "website": "https://docs.vebetterdao.org/developer-guides/test-environmnet"
   },
   {
@@ -589,7 +589,7 @@
     "address": "0x95761346d18244bb91664181bf91193376197088",
     "desc": "The testnet B3TR token used for testing purposes by developers",
     "icon": "38b6a2fdff4c109128935762dc27853c773fef21.png",
-    "totalSupply": "856122317779572666755065860",
+    "totalSupply": "883397102912133824464333410",
     "website": "https://docs.vebetterdao.org/developer-guides/test-environmnet"
   }
 ]
