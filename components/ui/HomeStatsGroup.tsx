@@ -53,7 +53,7 @@ export const HomeStatsGroup = () => {
     const list = validatorsList ?? []
     return list
       .filter(v => v.status === ValidatorStatus.ACTIVE || v.status === ValidatorStatus.EXITING)
-      .reduce((acc, v) => acc + v.validatorVetStaked, 0)
+      .reduce((acc, v) => acc + (v.validatorVetStaked ?? 0), 0)
   }, [validatorsList])
 
   const totalDelegatorStakedVet = useMemo(() => {

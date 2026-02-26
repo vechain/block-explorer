@@ -80,7 +80,7 @@ export const useAccountStakedVet = (address: AddressString | undefined) => {
         ?.filter(v => v.status !== ValidatorStatus.EXITED)
         .reduce((sum, v) => {
           // Safe conversion: integer part to BigInt, then multiply
-          const vetInWei = BigInt(Math.floor(v.validatorVetStaked)) * 10n ** 18n
+          const vetInWei = BigInt(Math.floor(v.validatorVetStaked ?? 0)) * 10n ** 18n
           return sum + vetInWei
         }, 0n) ?? 0n
     return direct + endorsed

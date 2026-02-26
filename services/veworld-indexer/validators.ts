@@ -44,9 +44,9 @@ export enum ValidatorSortBy {
 const validatorSchema = z.object({
   id: z.string(),
   status: z.nativeEnum(ValidatorStatus),
-  vetStaked: z.number(),
-  validatorVetStaked: z.number(),
-  delegatorVetStaked: z.number(),
+  vetStaked: z.number().optional(),
+  validatorVetStaked: z.number().optional(),
+  delegatorVetStaked: z.number().optional(),
   online: z.boolean().optional(),
 })
 
