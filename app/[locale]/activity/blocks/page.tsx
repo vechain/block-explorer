@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { NoBlocks } from '@/components/NoResults'
-import { useRecentBlocksExpanded } from '@/services/veworld-indexer/hooks'
+import { useRecentBlocksExpanded } from '@/services/veworld-indexer/recent-activity'
 import { BlocksTable } from '../../components/BlocksTable'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const

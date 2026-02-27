@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import type { AddressString } from '@/lib/schemas'
-import { useAddressTransactions } from '@/services/veworld-indexer/hooks'
+import { useAddressTransactions } from '@/services/veworld-indexer/transactions'
 import { AccountTransactionsTable } from './AccountTransactionsTable'
 import { Heading } from '@chakra-ui/react'
 

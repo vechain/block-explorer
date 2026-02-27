@@ -9,7 +9,7 @@ import { type Column, DataTable, TableRow, TableSkeleton } from '@/components/ui
 import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import { NoContracts } from '@/components/NoResults'
 import type { AddressString } from '@/lib/schemas'
-import { useDeployedContracts } from '@/services/veworld-indexer/hooks'
+import { useDeployedContracts } from '@/services/veworld-indexer/deployed-contracts'
 import { useFormatDate } from '@/hooks/useFormatting'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const

@@ -6,7 +6,7 @@ import { truncateAddress } from '@/lib/utils/address'
 import { truncateString } from '@/lib/utils/truncateString'
 import { truncateHex } from '@/lib/utils/truncateHex'
 import { CopyToClipBoard } from './CopyToClipBoard'
-import { useVnsName } from '@/services/thor/hooks'
+import { useVnsName } from '@/services/thor/vns'
 import { useMemo } from 'react'
 
 interface BaseLinkProps extends Omit<ChakraLinkProps, 'href'> {

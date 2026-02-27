@@ -12,7 +12,7 @@ import { NoTokenTransfers } from '@/components/NoResults'
 import { ExportTransfersModal } from '@/components/ExportTransfersModal'
 import type { AddressString } from '@/lib/schemas'
 import { TOKEN_CONTRACT_ADDRESSES, TokenSymbol, type TokenFilterKey } from '@/lib/constants/tokens'
-import { useAccountTransfers } from '@/services/veworld-indexer/hooks'
+import { useAccountTransfers } from '@/services/veworld-indexer/account-transfers'
 import { TransfersTable } from '@/components/TransfersTable'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const

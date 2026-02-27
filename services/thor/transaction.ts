@@ -1,8 +1,9 @@
-import { queryOptions, skipToken } from '@tanstack/react-query'
+import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
 import { Revision } from '@vechain/sdk-core'
 import z from 'zod'
 import type { NetworkName } from '@/lib/constants/network'
 import { type Transaction, type TransactionId, transactionReceiptSchema, transactionSchema } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { getThorClient } from './client'
 
@@ -68,7 +69,7 @@ const getTransactionReceipt = async ({
   })
 }
 
-export const legacyBaseFeePerGasQueryOptions = (networkName: NetworkName) =>
+const legacyBaseFeePerGasQueryOptions = (networkName: NetworkName) =>
   queryOptions({
     queryKey: [LEGACY_BASE_GAS_PRICE_QUERY_KEY, networkName],
     queryFn: () => getLegacyBaseGasPrice({ networkName }),
@@ -91,7 +92,7 @@ const getLegacyBaseGasPrice = async ({ networkName }: { networkName: NetworkName
 /**
  * Revert reason - simulates the transaction to get the revert reason
  */
-export const revertReasonQueryOptions = (
+const revertReasonQueryOptions = (
   networkName: NetworkName,
   transaction: Transaction | null | undefined,
   isReverted: boolean,
@@ -135,4 +136,24 @@ const getRevertReason = async ({
   }
 
   return null
+}
+
+export const useTransaction = (transactionId: TransactionId | undefined) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(transactionQueryOptions(activeNetwork.name, transactionId))
+}
+
+export const useTransactionReceipt = (transactionId: TransactionId | undefined) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(transactionReceiptQueryOptions(activeNetwork.name, transactionId))
+}
+
+export const useRevertReason = (transaction: Transaction | null | undefined, isReverted: boolean) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(revertReasonQueryOptions(activeNetwork.name, transaction, isReverted))
+}
+
+export const useLegacyBaseFeePerGas = () => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(legacyBaseFeePerGasQueryOptions(activeNetwork.name))
 }

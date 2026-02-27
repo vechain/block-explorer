@@ -1,5 +1,6 @@
 import { type Transaction, transactionTypeSchema } from '@/lib/schemas/transactions'
-import { useBaseFeePerGas, useLegacyBaseFeePerGas } from '@/services/thor/hooks'
+import { useBaseFeePerGas } from '@/services/thor/block'
+import { useLegacyBaseFeePerGas } from '@/services/thor/transaction'
 import type { TransactionReceipt } from '@/lib/schemas'
 import { formatGwei } from 'viem'
 import { useFormatNumber } from '@/hooks/useFormatting'

@@ -1,8 +1,9 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { keepPreviousData } from '@tanstack/react-query'
 import { resolveUrl } from '.'
 import { indexerContractSchema, indexerResponseSchema } from './schemas'
 
@@ -14,11 +15,24 @@ interface DeployedContractsParams {
   size?: number
 }
 
-export const deployedContractsQueryOptions = (networkName: NetworkName, params: DeployedContractsParams) => ({
+const deployedContractsQueryOptions = (networkName: NetworkName, params: DeployedContractsParams) => ({
   queryKey: [DEPLOYED_CONTRACTS_QUERY_KEY, networkName, params],
   queryFn: () => getContractsByMaster({ networkName, params }),
   placeholderData: keepPreviousData,
 })
+
+export const useDeployedContracts = ({
+  address,
+  page,
+  size,
+}: {
+  address: AddressString
+  page?: number
+  size?: number
+}) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(deployedContractsQueryOptions(activeNetwork.name, { address, page, size }))
+}
 
 const getContractsByMaster = async ({
   networkName,

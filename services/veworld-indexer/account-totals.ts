@@ -1,13 +1,15 @@
-import { keepPreviousData } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 import { indexerResponseSchema } from './schemas'
 
 const ACCOUNT_TOTALS_QUERY_KEY = 'getAccountTotals'
 
+/** @public */
 export enum AccountTimeFrame {
   DAY = 'DAY',
   WEEK = 'WEEK',
@@ -33,6 +35,11 @@ export const accountTotalsQueryOptions = (networkName: NetworkName, timeFrame: A
   refetchInterval: 5 * 1000, // Refetch every 5 seconds
   placeholderData: keepPreviousData, // Prevent UI flickering during refetches
 })
+
+export const useAccountTotals = (timeFrame: AccountTimeFrame) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountTotalsQueryOptions(activeNetwork.name, timeFrame))
+}
 
 const getAccountTotals = async ({
   networkName,

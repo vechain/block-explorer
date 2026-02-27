@@ -1,6 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 
@@ -27,6 +29,11 @@ const getTotalVetDelegated = async ({ networkName }: { networkName: NetworkName 
     schema: totalVetDelegatedSchema,
     errorMessage: 'Invalid total vet delegated response from VeWorld Indexer',
   })
+}
+
+export const useTotalVetDelegated = () => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(totalVetDelegatedQueryOptions(activeNetwork.name))
 }
 
 const totalVetDelegatedSchema = z.object({

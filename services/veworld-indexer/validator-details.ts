@@ -1,10 +1,14 @@
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
+import { useMemo } from 'react'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
+import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { resolveUrl } from '.'
 import { indexerResponseSchema } from './schemas'
-import { keepPreviousData } from '@tanstack/react-query'
+import { validatorMetadataQueryOptions } from './validator-metadata'
 
 // NFT Level Names for APY tiers
 export const LevelName = {
@@ -77,7 +81,7 @@ const validatorIndexerDataSchema = z.object({
   queuePosition: z.number().optional(),
 })
 
-export type ValidatorIndexerData = z.infer<typeof validatorIndexerDataSchema>
+type ValidatorIndexerData = z.infer<typeof validatorIndexerDataSchema>
 
 const validatorDetailsResponseSchema = indexerResponseSchema(validatorIndexerDataSchema)
 
@@ -89,7 +93,7 @@ const delegationsCountSchema = z.object({
   active: z.number(),
 })
 
-export type ValidatorDelegationsCount = z.infer<typeof delegationsCountSchema>
+type ValidatorDelegationsCount = z.infer<typeof delegationsCountSchema>
 
 const delegationsCountResponseSchema = z.object({
   data: z.array(delegationsCountSchema),
@@ -335,3 +339,95 @@ export const validatorDelegationsQueryOptions = (networkName: NetworkName, addre
   refetchInterval: 60000,
   placeholderData: keepPreviousData,
 })
+
+const EMPTY_NFT_YIELDS = Object.fromEntries(Object.values(LevelName).map(level => [level, 0]))
+
+export const useValidatorDetails = (address: string | undefined) => {
+  const { activeNetwork } = useSettingsStore()
+
+  const { data: bestBlock } = useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
+  const currentBlockNumber = bestBlock?.number ?? 0
+
+  const results = useQueries({
+    queries: [
+      validatorDetailsQueryOptions(activeNetwork.name, address),
+      validatorDelegationsCountQueryOptions(activeNetwork.name, address),
+      validatorMissedBlocksQueryOptions(activeNetwork.name, address),
+      validatorMetadataQueryOptions(activeNetwork.name, address),
+      validatorDelegationsQueryOptions(activeNetwork.name, address),
+    ],
+  })
+
+  const [validatorQuery, delegationsCountQuery, missedBlocksQuery, metadataQuery, delegationsQuery] = results
+
+  const validator = useMemo<ValidatorDetails | null>(() => {
+    const validatorData = validatorQuery.data as ValidatorIndexerData | null | undefined
+    if (!validatorData) return null
+
+    const delegationsCount = delegationsCountQuery.data as ValidatorDelegationsCount | null | undefined
+    const missedPercentage = (missedBlocksQuery.data as number | undefined) ?? validatorData.percentageOffline ?? 0
+    const metadata = metadataQuery.data
+    const delegationsData = delegationsQuery.data as { uniqueWallets: number; totalNfts: number } | undefined
+
+    const activeDelegations = delegationsCount?.active ?? 0
+    const queuedDelegations = delegationsCount?.queued ?? 0
+    const exitingDelegations = delegationsCount?.exiting ?? 0
+
+    return {
+      beneficiary: validatorData.beneficiary,
+      endorser: validatorData.endorser,
+      address: validatorData.id,
+      status: validatorData.status,
+      online: validatorData.online ?? false,
+
+      vetStaked: validatorData.vetStaked ?? 0,
+      validatorVetStaked: validatorData.validatorVetStaked ?? 0,
+      delegatorVetStaked: validatorData.delegatorVetStaked ?? 0,
+      queuedStake: validatorData.queuedVetStaked ?? 0,
+      exitingVET: validatorData.exitingVetStaked ?? 0,
+
+      activeDelegations,
+      queuedDelegations,
+      exitingDelegations,
+      totalDelegations: activeDelegations + queuedDelegations + exitingDelegations,
+      uniqueWallets: delegationsData?.uniqueWallets ?? 0,
+      totalNfts: delegationsData?.totalNfts ?? 0,
+
+      delegatorApy: validatorData.avgDelegatorYield ?? 0,
+      nextCycleDelegatorApy: validatorData.nextCycleAvgDelegatorYield ?? 0,
+      validatorApy: validatorData.validatorYield ?? 0,
+      nextCycleValidatorApy: validatorData.nextCycleValidatorYield ?? 0,
+      nftYieldsNextCycle: validatorData.nftYieldsNextCycle ?? EMPTY_NFT_YIELDS,
+
+      reliability: 100 - missedPercentage,
+      percentageOffline: missedPercentage,
+
+      cyclePeriodLength: validatorData.cyclePeriodLength ?? 0,
+      cycleEndBlock: validatorData.cycleEndBlock ?? 0,
+      startBlock: validatorData.startBlock ?? 0,
+      completedPeriods: validatorData.completedPeriods ?? 0,
+      currentBlockNumber,
+
+      metadata: metadata ?? undefined,
+    }
+  }, [
+    validatorQuery.data,
+    delegationsCountQuery.data,
+    missedBlocksQuery.data,
+    metadataQuery.data,
+    delegationsQuery.data,
+    currentBlockNumber,
+  ])
+
+  const isPending = validatorQuery.isPending || delegationsCountQuery.isPending || metadataQuery.isPending
+  const isFetched = validatorQuery.isFetched || delegationsCountQuery.isFetched || metadataQuery.isFetched
+  const isError = validatorQuery.isError || delegationsCountQuery.isError || missedBlocksQuery.isError
+
+  return {
+    data: validator,
+    isPending,
+    isError,
+    isFetched,
+    isValidator: validator !== null && isFetched,
+  }
+}

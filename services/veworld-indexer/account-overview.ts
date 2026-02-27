@@ -1,8 +1,9 @@
-import { keepPreviousData } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { addressStringSchema } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 
@@ -33,6 +34,11 @@ export const accountOverviewQueryOptions = (networkName: NetworkName, address: s
   refetchInterval: 60 * 1000, // Refetch every minute
   placeholderData: keepPreviousData, // Prevent UI flickering during refetches
 })
+
+export const useAccountOverview = (address: string) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountOverviewQueryOptions(activeNetwork.name, address))
+}
 
 const getAccountOverview = async ({ networkName, address }: { networkName: NetworkName; address: string }) => {
   const { data } = await apiClient.get({

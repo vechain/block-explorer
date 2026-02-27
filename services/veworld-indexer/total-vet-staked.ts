@@ -1,6 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 
@@ -35,6 +37,11 @@ const getTotalVetStaked = async ({ networkName }: { networkName: NetworkName }) 
     schema: totalVetStakedSchema,
     errorMessage: 'Invalid total vet staked response from VeWorld Indexer',
   })
+}
+
+export const useTotalVetStaked = () => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(totalVetStakedQueryOptions(activeNetwork.name))
 }
 
 const totalVetStakedSchema = z.object({

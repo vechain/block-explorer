@@ -4,15 +4,10 @@ import { Skeleton, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
 import { formatEther } from 'viem'
-import {
-  AccountTimeFrame,
-  useAccountTotals,
-  useValidatorsCount,
-  ValidatorStatus,
-  useTotalVetDelegated,
-  useTotalVetStaked,
-  useValidators,
-} from '@/services/veworld-indexer/hooks'
+import { AccountTimeFrame, useAccountTotals } from '@/services/veworld-indexer/account-totals'
+import { useTotalVetDelegated } from '@/services/veworld-indexer/total-vet-delegated'
+import { useTotalVetStaked } from '@/services/veworld-indexer/total-vet-staked'
+import { ValidatorStatus, useValidators, useValidatorsCount } from '@/services/veworld-indexer/validators'
 import { useFormatNumber } from '@/hooks/useFormatting'
 import { DataCardGroup, type DataCardGroupItem } from './DataCardGroup'
 import { BaseLink } from './Links'

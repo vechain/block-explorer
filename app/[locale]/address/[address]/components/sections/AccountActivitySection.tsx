@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { Balance, VETBalance, VTHOBalance } from '@/components/ui/Balance'
 import type { AddressString } from '@/lib/schemas'
-import { useAccountOverview } from '@/services/veworld-indexer/hooks'
+import { useAccountOverview } from '@/services/veworld-indexer/account-overview'
 
 export const AccountActivitySection = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()

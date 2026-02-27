@@ -1,9 +1,10 @@
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { keepPreviousData } from '@tanstack/react-query'
 import { resolveUrl } from '.'
 import {
   type IndexerGetErc721Params,
@@ -14,7 +15,7 @@ import {
 
 const ERC721_TOKENS_QUERY_KEY = 'getErc721Tokens'
 
-export const accountErc721TokensQueryOptions = (networkName: NetworkName, params: IndexerGetErc721Params) => ({
+const accountErc721TokensQueryOptions = (networkName: NetworkName, params: IndexerGetErc721Params) => ({
   queryKey: [ERC721_TOKENS_QUERY_KEY, networkName, params],
   queryFn: () => getErc721Tokens({ networkName, params }),
 
@@ -43,6 +44,11 @@ export const accountErc721TokensQueryOptions = (networkName: NetworkName, params
     }
   },
 })
+
+export const useAccountErc721 = ({ params }: { params: IndexerGetErc721Params }) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountErc721TokensQueryOptions(activeNetwork.name, params))
+}
 
 const getErc721Tokens = async ({
   networkName,

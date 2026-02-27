@@ -14,7 +14,7 @@ import { BaseLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
-import { useTransaction, useTransactionReceipt } from '@/services/thor/hooks'
+import { useTransaction, useTransactionReceipt } from '@/services/thor/transaction'
 import { useFormatNumber } from '@/hooks/useFormatting'
 import { TransactionDetailsView } from '@/lib/types'
 
