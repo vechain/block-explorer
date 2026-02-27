@@ -34,7 +34,6 @@ export const getAccount = async ({ networkName, address }: { networkName: Networ
     data: accountData,
     schema: accountSchema,
     errorMessage: 'Failed to parse account',
-    fallbackData: null,
   })
 }
 

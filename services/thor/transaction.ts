@@ -35,7 +35,6 @@ export const getTransaction = async ({
     data: tx,
     schema: transactionSchema,
     errorMessage: 'Failed to parse Thor transaction',
-    fallbackData: null,
   })
 }
 
@@ -65,7 +64,6 @@ const getTransactionReceipt = async ({
     data: receipt,
     schema: transactionReceiptSchema,
     errorMessage: 'Failed to parse Thor transaction receipt',
-    fallbackData: null,
   })
 }
 
@@ -85,7 +83,6 @@ const getLegacyBaseGasPrice = async ({ networkName }: { networkName: NetworkName
     data: legacyBaseGasPrice.result.plain,
     schema: z.coerce.bigint(),
     errorMessage: 'Failed to parse legacy base gas price',
-    fallbackData: BigInt(0),
   })
 }
 

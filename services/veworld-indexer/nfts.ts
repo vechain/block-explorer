@@ -67,9 +67,5 @@ const getErc721Tokens = async ({
     data,
     schema: indexerResponseSchema(indexerErc721Schema),
     errorMessage: 'Invalid NFTs response from VeWorld Indexer',
-    fallbackData: {
-      data: [],
-      pagination: { hasNext: false },
-    },
   })
 }

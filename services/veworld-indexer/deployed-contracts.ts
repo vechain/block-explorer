@@ -55,9 +55,5 @@ const getContractsByMaster = async ({
     data,
     schema: indexerResponseSchema(indexerContractSchema),
     errorMessage: 'Invalid deployed contracts response from VeWorld Indexer',
-    fallbackData: {
-      data: [],
-      pagination: { hasNext: false },
-    },
   })
 }

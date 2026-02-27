@@ -49,9 +49,5 @@ const getAccountTransfers = async ({
     data,
     schema: indexerResponseSchema(indexerTransferSchema),
     errorMessage: 'Invalid transfers response from VeWorld Indexer',
-    fallbackData: {
-      data: [],
-      pagination: { hasNext: false },
-    },
   })
 }

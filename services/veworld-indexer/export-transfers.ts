@@ -167,10 +167,6 @@ async function fetchTransfersPageWithRetry({
         data,
         schema: indexerResponseSchema(indexerTransferSchema),
         errorMessage: 'Invalid transfers response from VeWorld Indexer',
-        fallbackData: {
-          data: [],
-          pagination: { hasNext: false },
-        },
       })
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Unknown error')

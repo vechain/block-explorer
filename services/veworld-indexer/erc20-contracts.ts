@@ -37,9 +37,5 @@ const getErc20Contracts = async ({
     data,
     schema: indexerResponseSchema(addressStringSchema),
     errorMessage: 'Invalid fungible token contracts response from VeWorld Indexer',
-    fallbackData: {
-      data: [],
-      pagination: { hasNext: false },
-    },
   })
 }

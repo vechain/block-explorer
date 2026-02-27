@@ -69,7 +69,6 @@ const getBlockUsage = async ({
     data,
     schema: blockUsageResponseSchema,
     errorMessage: 'Failed to parse block usage response',
-    fallbackData: [],
   })
 }
 

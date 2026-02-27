@@ -75,9 +75,5 @@ const getTransactions = async ({
     data,
     schema: indexerResponseSchema(indexerTransactionSchema),
     errorMessage: 'Invalid transactions response from VeWorld Indexer',
-    fallbackData: {
-      data: [],
-      pagination: { hasNext: false },
-    },
   })
 }

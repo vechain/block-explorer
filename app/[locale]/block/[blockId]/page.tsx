@@ -25,7 +25,6 @@ export default async function BlockPage({
     data: blockIdParam,
     schema: blockRevisionSchema,
     errorMessage: 'Invalid block ID',
-    fallbackData: null,
   }) as BlockRevision | null
 
   if (!blockId) {

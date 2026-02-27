@@ -49,22 +49,5 @@ const getAccountOverview = async ({ networkName, address }: { networkName: Netwo
     data,
     schema: accountOverviewSchema,
     errorMessage: 'Invalid account overview response from VeWorld Indexer',
-    fallbackData: {
-      address,
-      firstSeen: 0,
-      lastSeen: 0,
-      transactionsSent: 0,
-      clausesSent: 0,
-      vthoBurned: '0',
-      vthoDelegated: '0',
-      gasUsed: '0',
-      vetBalance: '0',
-      vetSent: '0',
-      vetReceived: '0',
-      vthoBlockRewards: '0',
-      vthoPassiveGeneration: '0',
-      vthoClaimedStargate: '0',
-      vthoEarnedTotal: '0',
-    },
   })
 }

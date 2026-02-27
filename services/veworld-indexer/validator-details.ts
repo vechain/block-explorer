@@ -54,8 +54,6 @@ const validatorIndexerDataSchema = z.object({
   id: z.string(),
   avgDelegatorYield: z.number().default(0),
   beneficiary: z.string().optional(),
-  blockNumber: z.number(),
-  blockTimestamp: z.number(),
   completedPeriods: z.number().default(0),
   cycleEndBlock: z.number().default(0),
   cyclePeriodLength: z.number().default(0),
@@ -126,12 +124,7 @@ const delegationSchema = z.object({
 
 type ValidatorDelegation = z.infer<typeof delegationSchema>
 
-const delegationsResponseSchema = z.object({
-  data: z.array(delegationSchema),
-  meta: z.object({
-    total: z.number(),
-  }),
-})
+const delegationsResponseSchema = indexerResponseSchema(delegationSchema)
 
 // Combined validator details with computed fields
 export interface ValidatorDetails {
@@ -213,14 +206,14 @@ const getValidatorDelegationsCount = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<ValidatorDelegationsCount | null> => {
-  const { data } = await apiClient.get({
+  const result = await apiClient.get({
     baseUrl: resolveUrl(networkName),
     endPoint: '/validators/delegations/count',
     params: { validator: validatorAddress },
   })
 
   const parsed = zodParse({
-    data,
+    data: result,
     schema: delegationsCountResponseSchema,
     errorMessage: 'Invalid delegations count response from VeWorld Indexer',
   })
@@ -288,7 +281,7 @@ const getValidatorDelegations = async ({
     allDelegations.push(...parsed.data)
 
     // Check if there are more pages
-    hasMore = parsed.data.length === pageSize && allDelegations.length < parsed.meta.total
+    hasMore = parsed.data.length === pageSize && allDelegations.length < (parsed.pagination.totalElements ?? Infinity)
     page++
 
     // Safety limit to prevent infinite loops

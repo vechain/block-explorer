@@ -26,7 +26,6 @@ const getBestBlockCompressed = async ({ networkName }: { networkName: NetworkNam
     data: block,
     schema: blockCompressedSchema,
     errorMessage: 'Failed to parse best block compressed',
-    fallbackData: null,
   })
 }
 
@@ -48,7 +47,6 @@ const getBlockExpanded = async ({ revision, networkName }: { revision: BlockRevi
     data: block,
     schema: blockExpandedSchema,
     errorMessage: `Failed to parse block expanded ${revision}`,
-    fallbackData: null,
   })
 }
 
@@ -66,7 +64,6 @@ export const getBlockCompressed = async ({
     data: block,
     schema: blockCompressedSchema,
     errorMessage: `Failed to parse block compressed ${revision}`,
-    fallbackData: null,
   })
 }
 
