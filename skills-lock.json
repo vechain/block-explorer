@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "grill-me": {
+      "source": "vechain/vechain-ai-skills",
+      "sourceType": "github",
+      "computedHash": "a096bc3a1b5f73b889f688b82cf806cc9ffc278551b47efee4465265280c555f"
+    },
+    "stargate": {
+      "source": "vechain/vechain-ai-skills",
+      "sourceType": "github",
+      "computedHash": "0ac6fd2b729b55625420cf7d3972b0c89074ae1dbd3aa44800fa3856fb81415e"
+    },
+    "translate": {
+      "source": "vechain/vechain-ai-skills",
+      "sourceType": "github",
+      "computedHash": "78b470c50fbd83040f88937699a40b5f4520cfb0d81d8a06e17f231d24273d46"
+    },
+    "vechain-dev": {
+      "source": "vechain/vechain-ai-skills",
+      "sourceType": "github",
+      "computedHash": "085d94e48d7e06881fd64c6d609815400da9462fe4666e931a0b838ac80658ef"
+    }
+  }
+}
