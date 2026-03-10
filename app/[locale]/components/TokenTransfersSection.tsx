@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { ViewAllLink } from '@/components/ui/Links'
 import { NoTokenTransfers } from '@/components/NoResults'
-import { useRecentTokenTransfers } from '@/services/veworld-indexer/hooks'
+import { useRecentTokenTransfers } from '@/services/veworld-indexer/recent-activity'
 import { TokenTransfersTable } from './TokenTransfersTable'
 
 const TRANSFERS_TO_DISPLAY = 5

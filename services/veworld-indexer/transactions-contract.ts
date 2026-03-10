@@ -1,14 +1,15 @@
+import { queryOptions, useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { queryOptions } from '@tanstack/react-query'
 import { resolveUrl } from './index'
 import { type IndexerGetContractTransactionsParams, indexerTransactionSchema, indexerResponseSchema } from './schemas'
 
 const CONTRACT_TRANSACTIONS_QUERY_KEY = 'getContractTransactions'
 
-export const contractTransactionsQueryOptions = (
+const contractTransactionsQueryOptions = (
   networkName: NetworkName,
   params: IndexerGetContractTransactionsParams,
   options?: { enabled?: boolean },
@@ -18,6 +19,17 @@ export const contractTransactionsQueryOptions = (
     queryFn: () => getContractTransactions({ networkName, params }),
     enabled: options?.enabled ?? true,
   })
+
+export const useContractTransactions = ({
+  params,
+  enabled = true,
+}: {
+  params: IndexerGetContractTransactionsParams
+  enabled?: boolean
+}) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(contractTransactionsQueryOptions(activeNetwork.name, params, { enabled }))
+}
 
 const getContractTransactions = async ({
   networkName,

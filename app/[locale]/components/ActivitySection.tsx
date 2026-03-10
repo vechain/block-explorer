@@ -8,7 +8,7 @@ import { TableSkeleton } from '@/components/ui/Table'
 import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { ViewAllLink } from '@/components/ui/Links'
 import { NoBlocks, NoTransactions } from '@/components/NoResults'
-import { useRecentBlocksExpanded } from '@/services/veworld-indexer/hooks'
+import { useRecentBlocksExpanded } from '@/services/veworld-indexer/recent-activity'
 import { BlocksTable } from './BlocksTable'
 import { ActivityTransactionsTable } from './ActivityTransactionsTable'
 

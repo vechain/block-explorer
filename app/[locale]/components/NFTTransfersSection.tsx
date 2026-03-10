@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { ViewAllLink } from '@/components/ui/Links'
 import { NoNFTTransfers } from '@/components/NoResults'
-import { useRecentNFTTransfers } from '@/services/veworld-indexer/hooks'
+import { useRecentNFTTransfers } from '@/services/veworld-indexer/recent-activity'
 import { NFTTransfersTable } from './NFTTransfersTable'
 
 const TRANSFERS_TO_DISPLAY = 5

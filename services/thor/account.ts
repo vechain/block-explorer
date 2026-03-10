@@ -1,8 +1,9 @@
-import { queryOptions, skipToken } from '@tanstack/react-query'
+import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
 import { Address } from '@vechain/sdk-core'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { accountSchema } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { getThorClient } from './client'
 
@@ -33,6 +34,10 @@ export const getAccount = async ({ networkName, address }: { networkName: Networ
     data: accountData,
     schema: accountSchema,
     errorMessage: 'Failed to parse account',
-    fallbackData: null,
   })
+}
+
+export const useAccount = (address: AddressString | undefined) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountQueryOptions(activeNetwork.name, address))
 }

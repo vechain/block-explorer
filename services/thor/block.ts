@@ -1,6 +1,7 @@
-import { queryOptions, skipToken } from '@tanstack/react-query'
+import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
 import type { NetworkName } from '@/lib/constants/network'
 import { type BlockId, type BlockRevision, blockCompressedSchema, blockExpandedSchema } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { getThorClient } from './client'
 
@@ -25,7 +26,6 @@ const getBestBlockCompressed = async ({ networkName }: { networkName: NetworkNam
     data: block,
     schema: blockCompressedSchema,
     errorMessage: 'Failed to parse best block compressed',
-    fallbackData: null,
   })
 }
 
@@ -47,7 +47,6 @@ const getBlockExpanded = async ({ revision, networkName }: { revision: BlockRevi
     data: block,
     schema: blockExpandedSchema,
     errorMessage: `Failed to parse block expanded ${revision}`,
-    fallbackData: null,
   })
 }
 
@@ -65,7 +64,6 @@ export const getBlockCompressed = async ({
     data: block,
     schema: blockCompressedSchema,
     errorMessage: `Failed to parse block compressed ${revision}`,
-    fallbackData: null,
   })
 }
 
@@ -73,9 +71,24 @@ export const getBlockCompressed = async ({
  * Base fee per gas
  */
 
-export const baseFeePerGasQueryOptions = (networkName: NetworkName, blockId: BlockId | undefined) =>
+const baseFeePerGasQueryOptions = (networkName: NetworkName, blockId: BlockId | undefined) =>
   queryOptions({
     queryKey: [BLOCK_COMPRESSED_QUERY_KEY, networkName, blockId],
     queryFn: blockId ? () => getBlockCompressed({ networkName, revision: blockId }) : skipToken,
     select: data => data.baseFeePerGas,
   })
+
+export const useBestBlockCompressed = () => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
+}
+
+export const useBlockExpanded = (revision: BlockRevision | undefined) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(blockExpandedQueryOptions(activeNetwork.name, revision))
+}
+
+export const useBaseFeePerGas = (blockId: BlockId | undefined) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(baseFeePerGasQueryOptions(activeNetwork.name, blockId))
+}

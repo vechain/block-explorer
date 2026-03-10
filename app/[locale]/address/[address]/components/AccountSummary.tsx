@@ -7,10 +7,10 @@ import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardG
 import { IDChip } from '@/components/ui/IDChip'
 import { Card } from '@/components/ui/Card'
 import type { AddressString } from '@/lib/schemas'
-import { useAccountOverview } from '@/services/veworld-indexer/hooks'
+import { useAccountOverview } from '@/services/veworld-indexer/account-overview'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useAccountTokens } from '@/hooks/useAccountTokens'
-import { useVnsName } from '@/services/thor/hooks'
+import { useVnsName } from '@/services/thor/vns'
 import { TokensSection } from './sections/TokensSection'
 import { StakingSection } from './sections/StakingSection'
 

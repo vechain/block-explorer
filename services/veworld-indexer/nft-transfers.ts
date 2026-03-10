@@ -39,10 +39,6 @@ const getTokenHistory = async (networkName: NetworkName, params: TokenHistoryPar
     data,
     schema: indexerResponseSchema(tokenHistorySchema),
     errorMessage: 'Invalid token history response from VeWorld Indexer',
-    fallbackData: {
-      data: [],
-      pagination: { hasNext: false },
-    },
   })
 }
 

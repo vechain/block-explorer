@@ -1,6 +1,6 @@
 'use client'
 
-import type { TransferFromBlock } from '@/services/veworld-indexer/hooks'
+import type { TransferFromBlock } from '@/services/veworld-indexer/recent-activity'
 import { TransfersTable } from '../../../components/TransfersTable'
 
 /**

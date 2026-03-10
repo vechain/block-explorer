@@ -8,7 +8,7 @@ import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/
 import { type CellComponentProps, type Column, DataTable } from '@/components/ui/Table'
 import { AmountWithHover } from '@/components/ui-legacy/AmountWithHover'
 import type { IndexerTransfer } from '@/services/veworld-indexer/schemas'
-import type { TransferFromBlock } from '@/services/veworld-indexer/hooks'
+import type { TransferFromBlock } from '@/services/veworld-indexer/recent-activity'
 import { useErc20Contracts } from '@/services/thor/tokens/erc20'
 import { useErc721Contracts } from '@/services/thor/tokens/erc721'
 import { isNotNullish } from '@/lib/type-predicates'

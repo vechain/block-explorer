@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { NoNFTTransfers } from '@/components/NoResults'
-import { useRecentNFTTransfers } from '@/services/veworld-indexer/hooks'
+import { useRecentNFTTransfers } from '@/services/veworld-indexer/recent-activity'
 import { NFTTransfersTable } from '../../components/NFTTransfersTable'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const

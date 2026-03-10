@@ -2,8 +2,8 @@
 
 import { notFound } from 'next/navigation'
 import type { AddressString } from '@/lib/schemas'
-import { useAccount } from '@/services/thor/hooks'
-import { useValidatorDetails } from '@/services/veworld-indexer/hooks'
+import { useAccount } from '@/services/thor/account'
+import { useValidatorDetails } from '@/services/veworld-indexer/validator-details'
 import { Center, Spinner, Stack } from '@chakra-ui/react'
 import { AccountSummary } from './AccountSummary'
 import { AccountTransactionsSection } from './sections/AccountTransactionsSection'

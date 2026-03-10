@@ -31,7 +31,6 @@ export const useNftMetadata = (uri: string) => {
     data: uri,
     schema: nftMetadataUriSchema,
     errorMessage: 'Invalid NFT metadata URI',
-    fallbackData: null,
   })
 
   return useQuery({ ...nftMetadataQueryOptions(parsedUri), enabled: !!parsedUri })

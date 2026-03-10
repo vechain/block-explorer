@@ -23,7 +23,7 @@ export const zodParse = <T extends z.ZodSchema>({
       return fallbackData as z.infer<T>
     }
 
-    throw new Error(errorMessage || 'Unknown error')
+    return data as z.infer<T>
   }
 
   return result.data as z.infer<T>

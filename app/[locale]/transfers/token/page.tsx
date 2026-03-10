@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { NoTokenTransfers } from '@/components/NoResults'
-import { useRecentTokenTransfers } from '@/services/veworld-indexer/hooks'
+import { useRecentTokenTransfers } from '@/services/veworld-indexer/recent-activity'
 import { TokenTransfersTable } from '../../components/TokenTransfersTable'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const

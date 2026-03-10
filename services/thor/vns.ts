@@ -1,7 +1,8 @@
-import { queryOptions, skipToken } from '@tanstack/react-query'
+import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
 import { vnsUtils } from '@vechain/sdk-network'
 import { NetworkName } from '@/lib/constants/network'
 import { type AddressString, addressStringSchema } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { isZeroAddress } from '@/lib/utils/address'
 import { nameToVeworldVet, normalizeName } from '@/lib/utils/vns'
 import { getThorClient } from './client'
@@ -41,6 +42,11 @@ const tryResolve = async (
   const address = addressStringSchema.parse(resolvedAddress)
   if (isZeroAddress(address)) return null
   return address
+}
+
+export const useVnsName = (address: AddressString | undefined) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(vnsNameQueryOptions(activeNetwork.name, address))
 }
 
 export const getVnsAddress = async ({

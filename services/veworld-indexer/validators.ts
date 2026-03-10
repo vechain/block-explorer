@@ -1,6 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { resolveUrl } from '.'
 import { indexerResponseSchema } from './schemas'
@@ -94,7 +96,7 @@ const getValidators = async ({
   })
 }
 
-export type ValidatorQueryOptions = {
+type ValidatorQueryOptions = {
   endorser?: string
   validatorId?: string
   status?: ValidatorStatus
@@ -197,7 +199,17 @@ const getAllValidators = async ({
   return all
 }
 
-export type ValidatorCountOptions = {
+export const useValidatorsCount = (options?: ValidatorCountOptions) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(validatorsCountQueryOptions(activeNetwork.name, options))
+}
+
+export const useValidators = (options?: ValidatorQueryOptions) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(allValidatorsQueryOptions(activeNetwork.name, options))
+}
+
+type ValidatorCountOptions = {
   endorser?: string
   validatorId?: string
   status?: ValidatorStatus
