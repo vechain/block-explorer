@@ -81,8 +81,6 @@ const validatorIndexerDataSchema = z.object({
 
 type ValidatorIndexerData = z.infer<typeof validatorIndexerDataSchema>
 
-const validatorDetailsResponseSchema = indexerResponseSchema(validatorIndexerDataSchema)
-
 // Delegations count schema
 const delegationsCountSchema = z.object({
   validator: z.string(),
@@ -183,17 +181,16 @@ const getValidatorDetails = async ({
 }): Promise<ValidatorIndexerData | null> => {
   const { data } = await apiClient.get({
     baseUrl: resolveUrl(networkName),
-    endPoint: '/validators',
-    params: { validatorId: validatorAddress },
+    endPoint: `/validators/${validatorAddress}`,
   })
 
   const parsed = zodParse({
     data,
-    schema: validatorDetailsResponseSchema,
+    schema: validatorIndexerDataSchema,
     errorMessage: 'Invalid validator details response from VeWorld Indexer',
   })
 
-  return parsed.data.length > 0 ? parsed.data[0] : null
+  return parsed
 }
 
 /**
