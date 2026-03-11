@@ -7,7 +7,7 @@ import { ColorMode, system } from './config'
 export const ChakraProvider = ({ children }: React.PropsWithChildren) => {
   return (
     <ChakraProviderBase value={system}>
-      <ThemeProvider attribute="class" defaultTheme={ColorMode.DARK} enableSystem={false} disableTransitionOnChange>
+      <ThemeProvider attribute="class" forcedTheme={ColorMode.DARK} enableSystem={false} disableTransitionOnChange>
         {children}
       </ThemeProvider>
     </ChakraProviderBase>

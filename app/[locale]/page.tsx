@@ -13,7 +13,7 @@ import { parseNetworkFromParams } from '@/lib/utils/network'
 import { logPrefetchFailures } from '@/lib/utils/prefetch'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { ActivitySection } from './components/ActivitySection'
-import { BlockUsage } from './components/BlockUsage/BlockUsage'
+import { BlockChart } from './components/BlockChart/BlockChart'
 import { PriceCards } from './components/PriceCards'
 import { TokenTransfersSection } from './components/TokenTransfersSection'
 import { NFTTransfersSection } from './components/NFTTransfersSection'
@@ -72,7 +72,7 @@ export default async function HomePage({
           </Flex>
         </VStack>
         <Suspense fallback={<TableSkeleton />}>
-          <BlockUsage />
+          <BlockChart dataKey="usagePercentage" color="#E782FF" chartType="line" yAxisUnit="%" />
         </Suspense>
 
         <Suspense fallback={<TableSkeleton />}>

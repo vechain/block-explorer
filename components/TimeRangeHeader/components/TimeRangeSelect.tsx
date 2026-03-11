@@ -2,7 +2,7 @@
 
 import { createListCollection, Portal, Select } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import { type TimeRangeKey, timeRangeCollection } from '../../../constants'
+import { type TimeRangeKey, timeRangeCollection } from '@/lib/constants/time-ranges'
 import type { TranslationKey } from '@/i18n/types'
 
 interface TimeRangeSelectProps {

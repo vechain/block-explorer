@@ -2,12 +2,12 @@
 
 import { Flex, Heading, HStack, Stack } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
-import type { TimeRangeKey } from '../../constants'
+import type { TimeRangeKey } from '@/lib/constants/time-ranges'
 import { NavigationControls } from './components/NavigationControls'
 import { NowButton } from './components/NowButton'
 import { TimeRangeSelect } from './components/TimeRangeSelect'
 
-interface BlockUsageHeaderProps {
+interface TimeRangeHeaderProps {
   selectedRange: TimeRangeKey
   selectedDate: Date | null
   canGoBack: boolean
@@ -18,9 +18,10 @@ interface BlockUsageHeaderProps {
   onResetToNow: () => void
   onDateChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   onHourChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
+  title?: string
 }
 
-export const BlockUsageHeader = ({
+export const TimeRangeHeader = ({
   selectedRange,
   selectedDate,
   canGoBack,
@@ -31,7 +32,8 @@ export const BlockUsageHeader = ({
   onResetToNow,
   onDateChange,
   onHourChange,
-}: BlockUsageHeaderProps) => {
+  title,
+}: TimeRangeHeaderProps) => {
   const { t } = useTranslation()
 
   return (
@@ -43,7 +45,7 @@ export const BlockUsageHeader = ({
     >
       <HStack justify="space-between" align="center" w={{ base: '100%', md: 'auto' }}>
         <Heading as="h2" textStyle="displayXs">
-          {t('Block Usage')}
+          {title ?? t('Block Usage')}
         </Heading>
         <Flex gap={2} hideFrom="md">
           <TimeRangeSelect selectedRange={selectedRange} onRangeChange={onRangeChange} />

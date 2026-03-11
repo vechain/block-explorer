@@ -1,62 +1,45 @@
 import type { BlockUsageData } from '@/lib/schemas'
 
-export type BlockUsageDataPoint = {
-  id: string
-  gasLimit: number
+export type CumulativeDataPoint = {
   gasUsed: number
-  number: number
+  gasLimit: number
+  numTransactions: number
+  usagePercentage: number
   timestamp: number
+  startTimestamp: number
 }
 
 /**
- * Transforms cumulative block usage data to per-block values for chart display
+ * Transforms cumulative block usage data to period totals for bar chart display
  *
- * The indexer returns cumulative values, so we need to calculate the difference
- * between consecutive blocks to get the actual values for each block.
- *
- * For sparse data (non-consecutive blocks), we calculate the average per block
- * over the range between data points.
- *
- * The first record is used only as a baseline and is discarded since it cannot
- * be calculated (no previous record to subtract from).
+ * Unlike transformBlockUsageData which calculates per-block averages,
+ * this function returns the total cumulated values between consecutive
+ * data points — suitable for bar charts showing period totals.
  */
-export const transformBlockUsageData = (cumulativeData: BlockUsageData[]): BlockUsageDataPoint[] => {
+export const transformBlockUsageCumulativeData = (cumulativeData: BlockUsageData[]): CumulativeDataPoint[] => {
   if (cumulativeData.length <= 1) return []
 
-  const result: BlockUsageDataPoint[] = []
+  const result: CumulativeDataPoint[] = []
 
   for (let i = 1; i < cumulativeData.length; i++) {
     const currentBlock = cumulativeData[i]
     const previousBlock = cumulativeData[i - 1]
 
-    // Convert string values to numbers
-    const currentGasUsed = Number(currentBlock.cumulativeGasUsed)
-    const currentGasLimit = Number(currentBlock.cumulativeGasLimit)
-    const previousGasUsed = Number(previousBlock.cumulativeGasUsed)
-    const previousGasLimit = Number(previousBlock.cumulativeGasLimit)
+    const totalGasUsed = Number(currentBlock.cumulativeGasUsed) - Number(previousBlock.cumulativeGasUsed)
+    const totalGasLimit = Number(currentBlock.cumulativeGasLimit) - Number(previousBlock.cumulativeGasLimit)
+    const totalNumTransactions =
+      Number(currentBlock.cumulativeNumTransactions) - Number(previousBlock.cumulativeNumTransactions)
 
-    // Calculate total difference between blocks
-    const totalGasUsed = currentGasUsed - previousGasUsed
-    const totalGasLimit = currentGasLimit - previousGasLimit
-
-    // Calculate number of blocks in this range
     const blockRange = currentBlock.blockNumber - previousBlock.blockNumber
-
-    // Prevent division by zero in case of duplicate or malformed data
-    if (blockRange === 0) {
-      // Optionally, you could log a warning here
-      continue
-    }
-    // Calculate average per block (for sparse data) or actual values (for consecutive blocks)
-    const gasUsed = blockRange > 1 ? totalGasUsed / blockRange : totalGasUsed
-    const gasLimit = blockRange > 1 ? totalGasLimit / blockRange : totalGasLimit
+    if (blockRange === 0) continue
 
     result.push({
-      id: currentBlock.blockId,
-      gasLimit,
-      gasUsed,
-      number: currentBlock.blockNumber,
+      gasUsed: totalGasUsed,
+      gasLimit: totalGasLimit,
+      numTransactions: totalNumTransactions,
+      usagePercentage: totalGasLimit > 0 ? (totalGasUsed / totalGasLimit) * 100 : 0,
       timestamp: currentBlock.blockTimestamp,
+      startTimestamp: previousBlock.blockTimestamp,
     })
   }
 
