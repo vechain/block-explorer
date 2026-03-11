@@ -4,6 +4,7 @@ import { VStack } from '@chakra-ui/react'
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFormatNumber } from '@/hooks/useFormatting'
+import { AFPTChart } from '../components/AFPTChart/AFPTChart'
 import { BlockChart } from '../components/BlockChart/BlockChart'
 
 export default function StatsPage() {
@@ -15,6 +16,7 @@ export default function StatsPage() {
 
   return (
     <VStack gap={8} alignItems="stretch">
+      <AFPTChart />
       <BlockChart
         dataKey="gasUsed"
         title={t('Gas Used')}
