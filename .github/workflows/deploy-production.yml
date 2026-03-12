@@ -1,7 +1,9 @@
 name: Deploy to Production
 
 on:
-  workflow_dispatch:
+  release:
+    types:
+      - published
 
 env:
   AWS_REGION: eu-west-1
