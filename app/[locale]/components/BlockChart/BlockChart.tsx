@@ -420,7 +420,7 @@ const BlockChartTooltip = ({
   payload,
   dataKey,
 }: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey; dataKey: string }) => {
-  const isVisible = active && payload.length > 0
+  const isVisible = active && payload && payload.length > 0
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
   const formatDate = useFormatDate()
