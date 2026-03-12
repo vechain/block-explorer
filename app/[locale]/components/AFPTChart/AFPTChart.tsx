@@ -1,9 +1,8 @@
 'use client'
 
-import { Box, Flex, Stack, Text, useBreakpointValue } from '@chakra-ui/react'
+import { Box, Flex, HStack, Stack, Text, useBreakpointValue } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { getUnixTime } from 'date-fns'
-import { useRouter } from 'next/navigation'
 import { useCallback, useMemo, useState } from 'react'
 import {
   Area,
@@ -17,17 +16,21 @@ import {
 } from 'recharts'
 import { Card } from '@/components/ui/Card'
 import type { BlockUsageData } from '@/lib/schemas'
-import { type BlockUsageDataPoint, transformBlockUsageData } from '@/lib/utils/block-usage'
+import { transformBlockUsageCumulativeData } from '@/lib/utils/block-usage'
 import { timeFormat } from '@/lib/utils/date'
 import { useBlockUsage } from '@/services/veworld-indexer/block-usage'
-import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
-import { BlockUsageHeader } from './components/BlockUsageHeader/BlockUsageHeader'
-import { TIME_RANGES, type TimeRangeKey } from './constants'
+import { useFormatCurrency, useFormatDate } from '@/hooks/useFormatting'
+import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
+import { TimeRangeHeader } from '@/components/TimeRangeHeader/TimeRangeHeader'
+import { TIME_RANGES, type TimeRangeKey } from '@/lib/constants/time-ranges'
 
-const mainColor = '#E782FF'
+const VTHO_PER_GAS = 0.001
+const CHART_COLOR = '#4ADE80'
 
-// Use the type from the utility file
-type DataPoint = BlockUsageDataPoint
+type AFPTDataPoint = {
+  timestamp: number
+  afpt: number
+}
 
 // Helper function to get ordinal suffix for day
 const getOrdinalSuffix = (day: number) => {
@@ -44,13 +47,14 @@ const getOrdinalSuffix = (day: number) => {
   }
 }
 
-export const BlockUsage = () => {
+export const AFPTChart = () => {
+  const { t } = useTranslation()
   const [selectedRange, setSelectedRange] = useState<TimeRangeKey>('hourly')
-  const [_selectedDate, setSelectedDate] = useState<Date>(new Date()) // User-selected specific date
-  const [isLiveMode, setIsLiveMode] = useState(true) // Live mode updates with new blocks
+  const [_selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [isLiveMode, setIsLiveMode] = useState(true)
 
   const selectedDate = isLiveMode ? new Date() : _selectedDate
-  const { blocksDataPoints, canGoBack, canGoForward } = useBlockUsageChartData(selectedRange, selectedDate)
+  const { dataPoints, canGoBack, canGoForward } = useAFPTData(selectedRange, selectedDate, isLiveMode)
 
   const handleRangeChange = (newRange: TimeRangeKey) => {
     setSelectedRange(newRange)
@@ -59,27 +63,24 @@ export const BlockUsage = () => {
 
   const handleResetToNow = () => {
     setSelectedDate(new Date())
-    setSelectedRange('hourly') // Reset to default hourly view
-    setIsLiveMode(true) // Re-enable live mode
+    setSelectedRange('hourly')
+    setIsLiveMode(true)
   }
 
   const handleNavigateBack = () => {
     const rangeConfig = TIME_RANGES[selectedRange]
     const newDate = rangeConfig.sub(selectedDate, 1)
     setSelectedDate(newDate)
-    setIsLiveMode(false) // Exit live mode
+    setIsLiveMode(false)
   }
 
   const handleNavigateForward = () => {
     setIsLiveMode(false)
     if (selectedDate) {
-      // If we have a selected date, move it forward by one period using date-fns
       const rangeConfig = TIME_RANGES[selectedRange]
       if (rangeConfig.add) {
         const newDate = rangeConfig.add(selectedDate, 1)
         const now = new Date()
-
-        // Don't go beyond current time
         if (newDate <= now) {
           setSelectedDate(newDate)
         }
@@ -93,25 +94,19 @@ export const BlockUsage = () => {
 
     let newSelectedDate: Date
 
-    // Handle year input for yearly range
     if (selectedRange === 'yearly' && selectedDateStr.match(/^\d{4}$/)) {
       const year = parseInt(selectedDateStr, 10)
       const now = new Date()
       if (!Number.isNaN(year) && year >= 2018 && year <= now.getFullYear()) {
         newSelectedDate = new Date(`${year}-01-01T00:00:00`)
       } else {
-        return // Invalid year
+        return
       }
-    }
-    // Parse date in local timezone to avoid UTC conversion issues
-    else if (selectedRange === 'monthly' && selectedDateStr.match(/^\d{4}-\d{2}$/)) {
-      // Month format: YYYY-MM (month is 1-indexed in the string, 0-indexed in Date constructor)
+    } else if (selectedRange === 'monthly' && selectedDateStr.match(/^\d{4}-\d{2}$/)) {
       const [year, month] = selectedDateStr.split('-').map(Number)
       newSelectedDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
     } else if (selectedDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      // Date format: YYYY-MM-DD (month is 1-indexed in the string, 0-indexed in Date constructor)
       const [year, month, day] = selectedDateStr.split('-').map(Number)
-      // For hourly view, preserve the current hour when changing date
       if (selectedRange === 'hourly') {
         const currentHour = selectedDate.getHours()
         newSelectedDate = new Date(year, month - 1, day, currentHour, 0, 0, 0)
@@ -119,19 +114,16 @@ export const BlockUsage = () => {
         newSelectedDate = new Date(year, month - 1, day, 0, 0, 0, 0)
       }
     } else {
-      return // Invalid format
+      return
     }
 
     const now = new Date()
-
-    // Validate the selected date
     if (Number.isNaN(newSelectedDate.getTime()) || newSelectedDate > now) {
-      return // Invalid date or future date
+      return
     }
 
-    // Set the selected date - the hook will handle calculating the right block range
     setSelectedDate(newSelectedDate)
-    setIsLiveMode(false) // Exit live mode when selecting a specific date
+    setIsLiveMode(false)
   }
 
   const handleHourChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,24 +133,26 @@ export const BlockUsage = () => {
     const hour = parseInt(hourStr, 10)
     if (Number.isNaN(hour) || hour < 0 || hour > 23) return
 
-    // Create new date with the selected hour
     const newSelectedDate = new Date(selectedDate)
     newSelectedDate.setHours(hour, 0, 0, 0)
 
     const now = new Date()
-
-    // Validate the selected date
     if (newSelectedDate > now) {
-      return // Future date
+      return
     }
 
     setSelectedDate(newSelectedDate)
-    setIsLiveMode(false) // Exit live mode when selecting a specific hour
+    setIsLiveMode(false)
   }
+
+  const avgAFPT =
+    dataPoints.length > 0
+      ? dataPoints.reduce((acc: number, curr: AFPTDataPoint) => acc + curr.afpt, 0) / dataPoints.length
+      : 0
 
   return (
     <Card>
-      <BlockUsageHeader
+      <TimeRangeHeader
         selectedRange={selectedRange}
         selectedDate={selectedDate}
         canGoBack={canGoBack}
@@ -169,77 +163,73 @@ export const BlockUsage = () => {
         onResetToNow={handleResetToNow}
         onDateChange={handleDateChange}
         onHourChange={handleHourChange}
+        title={t('Average Fees Per Transaction (AFPT)')}
       />
+      <AFPTPeriodTotal avgAFPT={avgAFPT} />
       <Card variant="secondary">
-        <BlockUsageChart data={blocksDataPoints} selectedRange={selectedRange} />
+        <AFPTInnerChart data={dataPoints} selectedRange={selectedRange} />
       </Card>
     </Card>
   )
 }
 
-const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedRange: TimeRangeKey }) => {
-  const router = useRouter()
-  const formatNumber = useFormatNumber()
+const AFPTPeriodTotal = ({ avgAFPT }: { avgAFPT: number }) => {
+  const { t } = useTranslation()
+  const formatCurrency = useFormatCurrency()
 
-  type AreaClickEvent = {
-    activePayload?: Array<{
-      payload?: {
-        id?: string | number
-      }
-    }>
-  }
+  return (
+    <HStack gap={{ base: 4, md: 8 }} flexWrap="wrap">
+      <Flex alignItems="baseline" gap={2}>
+        <Text fontSize="sm" color="text-secondary">
+          {t('Avg AFPT')}:
+        </Text>
+        <Text fontSize="lg" fontWeight="bold" color={CHART_COLOR}>
+          {formatCurrency(avgAFPT)}
+        </Text>
+      </Flex>
+    </HStack>
+  )
+}
 
-  const handleAreaClick = (data: unknown) => {
-    const id = (data as AreaClickEvent | null)?.activePayload?.[0]?.payload?.id
-    if (id === undefined || id === null) return
-    router.push(`/block/${id}`)
-  }
-
-  // Memoized tick formatter for YAxis
-  const formatYAxisTick = useCallback((value: number) => formatNumber(Number(value) / 10 ** 6), [formatNumber])
-
+const AFPTInnerChart = ({ data, selectedRange }: { data: AFPTDataPoint[]; selectedRange: TimeRangeKey }) => {
+  const formatCurrency = useFormatCurrency()
   const chartHeight = useBreakpointValue({ base: '250px', md: '300px' })
 
-  // Format X-axis labels based on the selected time range
+  const formatYAxisTick = useCallback((value: number) => formatCurrency(value), [formatCurrency])
+
   const formatXAxis = useCallback(
     (timestamp: number) => {
       const date = new Date(timestamp)
 
       switch (selectedRange) {
         case 'hourly':
-          // For hourly view, show time with minutes
           return date.toLocaleTimeString(undefined, {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false,
           })
         case 'daily':
-          // For daily view, show time only
           return date.toLocaleTimeString(undefined, {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false,
           })
         case 'weekly': {
-          // For weekly view, show month and day with ordinal
           const weekDay = date.getDate()
           const weekMonth = date.toLocaleDateString(undefined, { month: 'short' })
           return `${weekMonth} ${weekDay}${getOrdinalSuffix(weekDay)}`
         }
         case 'monthly': {
-          // For monthly view, show month and day with ordinal
           const day = date.getDate()
           const month = date.toLocaleDateString(undefined, { month: 'short' })
           return `${month} ${day}${getOrdinalSuffix(day)}`
         }
         case 'yearly':
-          // For yearly view, show month and year
           return date.toLocaleDateString(undefined, {
             month: 'short',
             year: 'numeric',
           })
         case 'all':
-          // For all-time view, show year only
           return date.getFullYear().toString()
         default:
           return timeFormat(timestamp)
@@ -248,30 +238,23 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
     [selectedRange],
   )
 
+  const gradientId = 'afptGradient'
+  const chartMargin = { top: 8, right: 8, bottom: -8, left: 0 }
+
   return (
     <Box h={chartHeight}>
       <ResponsiveContainer>
-        <AreaChart
-          style={{ height: chartHeight }}
-          margin={{
-            top: 8,
-            right: 8,
-            bottom: -8,
-            left: -16,
-          }}
-          data={data}
-          onClick={handleAreaClick}
-        >
+        <AreaChart style={{ height: chartHeight }} margin={chartMargin} data={data}>
           <defs>
-            <linearGradient id="gasUsedGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={mainColor} stopOpacity={0.8} />
-              <stop offset="95%" stopColor={mainColor} stopOpacity={0.1} />
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={CHART_COLOR} stopOpacity={0.8} />
+              <stop offset="95%" stopColor={CHART_COLOR} stopOpacity={0.1} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
           <XAxis
             dataKey="timestamp"
-            interval={'equidistantPreserveStart'}
+            interval="equidistantPreserveStart"
             textAnchor="middle"
             tickLine={false}
             tickFormatter={formatXAxis}
@@ -280,27 +263,25 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
             stroke="white"
           />
           <YAxis
-            unit="M"
-            dataKey="gasLimit"
+            dataKey="afpt"
             tickFormatter={formatYAxisTick}
             tick={{ style: { fontSize: '.8rem' } }}
             axisLine={false}
             stroke="white"
           />
-
           <Tooltip
             contentStyle={{ fontSize: '.8rem' }}
             content={(props: TooltipContentProps<number, string>) => (
-              <CustomTooltip {...props} selectedRange={selectedRange} />
+              <AFPTTooltip {...props} selectedRange={selectedRange} />
             )}
           />
           <Area
             type="monotone"
-            dataKey="gasUsed"
-            stroke={mainColor}
+            dataKey="afpt"
+            stroke={CHART_COLOR}
             strokeWidth={2}
-            fill="url(#gasUsedGradient)"
-            activeDot={{ r: 6, cursor: 'pointer' }}
+            fill={`url(#${gradientId})`}
+            activeDot={{ r: 6 }}
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -308,31 +289,16 @@ const BlockUsageChart = ({ data, selectedRange }: { data: DataPoint[]; selectedR
   )
 }
 
-const CustomTooltip = ({
-  active,
-  payload,
-  selectedRange,
-}: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey }) => {
-  const isVisible = active && payload.length > 0
+const AFPTTooltip = ({ active, payload }: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey }) => {
+  const isVisible = active && payload && payload.length > 0
   const { t } = useTranslation()
-  const formatNumber = useFormatNumber()
   const formatDate = useFormatDate()
+  const formatCurrency = useFormatCurrency()
 
   if (!isVisible) return null
 
-  const dataPoint = payload[0].payload as DataPoint
+  const dataPoint = payload[0].payload as AFPTDataPoint
 
-  // Determine if we should show average labels based on range
-  const isAggregated = selectedRange !== 'hourly'
-
-  const labels = {
-    identifier: t('Date & Time'),
-    gasUsed: isAggregated ? t('Avg Gas Used/Block') : t('Gas Used'),
-    gasLimit: isAggregated ? t('Avg Gas Limit/Block') : t('Gas Limit'),
-    usage: isAggregated ? t('Avg Usage') : t('Usage'),
-  }
-
-  // Format the date and time for the data point
   const formatDateTime = (timestamp: number) => {
     return formatDate(timestamp, {
       month: 'short',
@@ -345,54 +311,29 @@ const CustomTooltip = ({
 
   return (
     <Stack bg="tooltip-bg" border="1px solid" borderColor="border-primary" rounded="xl" p={4}>
-      {selectedRange === 'hourly' && (
-        <Flex alignItems="center" gap={2}>
-          <Text fontSize="sm" fontWeight="bold">
-            {t('Block Number')}:
-          </Text>
-          <Text fontSize="sm">{formatNumber(dataPoint.number)}</Text>
-        </Flex>
-      )}
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
-          {labels.identifier}:
+          {t('Date & Time')}:
         </Text>
         <Text fontSize="sm">{formatDateTime(dataPoint.timestamp)}</Text>
       </Flex>
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
-          {labels.gasUsed}:
+          {t('AFPT')}:
         </Text>
-        <Text fontSize="sm">{formatNumber(Math.round(dataPoint.gasUsed))}</Text>
-      </Flex>
-      <Flex alignItems="center" gap={2}>
-        <Text fontSize="sm" fontWeight="bold">
-          {labels.gasLimit}:
-        </Text>
-        <Text fontSize="sm">{formatNumber(Math.round(dataPoint.gasLimit))}</Text>
-      </Flex>
-      <Flex alignItems="center" gap={2}>
-        <Text fontSize="sm" fontWeight="bold">
-          {labels.usage}:
-        </Text>
-        <Text fontSize="sm">{((dataPoint.gasUsed / dataPoint.gasLimit) * 100).toFixed(2)}%</Text>
+        <Text fontSize="sm">{formatCurrency(dataPoint.afpt)}</Text>
       </Flex>
     </Stack>
   )
 }
 
-const useBlockUsageChartData = (range: TimeRangeKey, date: Date, isLiveMode: boolean = true) => {
-  // Get the selected range configuration
-  const selectedRangeConfig = TIME_RANGES[range]
-
-  // VeChain genesis timestamp
+const useAFPTData = (range: TimeRangeKey, date: Date, isLiveMode: boolean = true) => {
   const GENESIS_TIMESTAMP = 1530316800
 
   const now = new Date()
   let startTimestamp: number = GENESIS_TIMESTAMP
   let endTimestamp: number = getUnixTime(now)
 
-  // When a specific date is selected, use date-fns to calculate exact period boundaries
   if (range === 'all') {
     startTimestamp = GENESIS_TIMESTAMP
     endTimestamp = getUnixTime(now)
@@ -400,14 +341,11 @@ const useBlockUsageChartData = (range: TimeRangeKey, date: Date, isLiveMode: boo
     const rangeConfig = TIME_RANGES[range]
     const periodStart = rangeConfig.startOf?.(date)
     const periodEnd = rangeConfig.endOf?.(date)
-
     const nowMinusRange = rangeConfig.sub?.(now, 1)
     startTimestamp = Math.min(getUnixTime(periodStart), getUnixTime(nowMinusRange))
     endTimestamp = Math.min(getUnixTime(periodEnd), getUnixTime(now))
   }
 
-  // Calculate buffer needed before startTimestamp to get the baseline record
-  // This ensures we have a previous record to calculate the first data point in our range
   const getBufferSeconds = (startTimestamp: number, endTimestamp: number): number => {
     const rangeSeconds = endTimestamp - startTimestamp
     if (rangeSeconds <= 4000) {
@@ -424,24 +362,27 @@ const useBlockUsageChartData = (range: TimeRangeKey, date: Date, isLiveMode: boo
   const bufferSeconds = getBufferSeconds(startTimestamp, endTimestamp)
   const adjustedStartTimestamp = Math.max(GENESIS_TIMESTAMP, startTimestamp - bufferSeconds)
 
-  // Calculate navigation constraints
-  // Can always go back unless we're literally at genesis
   const canGoBack = true
-  // Can go forward if we have an offset or selected date (meaning we're not at current time)
   const canGoForward = date.getTime() !== now.getTime()
 
-  // Fetch block usage data from indexer with buffered start timestamp
-  // In live mode, enable refetching; in historical mode, disable it
-  const { data: cumulativeData = [], ...rest } = useBlockUsage(adjustedStartTimestamp, endTimestamp, isLiveMode)
+  const { data: cumulativeData = [] } = useBlockUsage(adjustedStartTimestamp, endTimestamp, isLiveMode)
+  const { price: vthoPrice = 0 } = useTokenDailyPrices('vethor-token')
 
-  // Transform cumulative data to per-block values
-  const allDataPoints = useMemo(() => transformBlockUsageData(cumulativeData as BlockUsageData[]), [cumulativeData])
-
-  // Filter to only include data points within the requested range (exclude buffer)
-  const blocksDataPoints = useMemo(
-    () => allDataPoints.filter(point => point.timestamp >= startTimestamp),
-    [allDataPoints, startTimestamp],
+  const allDataPoints = useMemo(
+    () => transformBlockUsageCumulativeData(cumulativeData as BlockUsageData[]),
+    [cumulativeData],
   )
 
-  return { blocksDataPoints, selectedRangeConfig, canGoBack, canGoForward, ...rest }
+  const dataPoints: AFPTDataPoint[] = useMemo(
+    () =>
+      allDataPoints
+        .filter(point => point.timestamp >= startTimestamp)
+        .map(point => ({
+          timestamp: point.timestamp,
+          afpt: point.numTransactions > 0 ? (point.gasUsed * VTHO_PER_GAS * vthoPrice) / point.numTransactions : 0,
+        })),
+    [allDataPoints, startTimestamp, vthoPrice],
+  )
+
+  return { dataPoints, canGoBack, canGoForward }
 }

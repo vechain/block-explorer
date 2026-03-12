@@ -147,12 +147,13 @@ ESLint configuration (`.eslintrc.json`):
 
 ## Important Patterns
 
-1. **Network-aware Data Fetching**: Most API calls require the active network from settings store
-2. **Schema Validation**: Use Zod schemas defined in `services/*/schemas.ts` for API responses
-3. **Error Boundaries**: Wrap async components with React Error Boundary
-4. **Type Predicates**: Use utilities in `lib/type-predicates.ts` for runtime type checking
-5. **Chakra UI v3**: This project uses Chakra UI v3 - when working with Chakra components, use the MCP tools to get accurate v3 API information
-6. **Figma Integration**: The project uses Figma MCP for design-to-code workflows. Component designs are sourced from the VeChain Block Explorer Figma file and converted to Chakra UI v3 components with custom theme tokens
+1. **No Cross-Route Component Imports**: Never import from another route's `components/` subfolder (e.g., do not import from `app/[locale]/block/components/` inside `app/[locale]/address/`). Each route's `components/` directory is private to that route's directory tree. If a component is needed by multiple routes, move it to a shared location such as `components/` (top-level) or `app/[locale]/components/` (shared across locale routes). Importing from a parent route's `components/` is allowed (e.g., `app/[locale]/block/[blockId]/` can import from `app/[locale]/block/components/`).
+2. **Network-aware Data Fetching**: Most API calls require the active network from settings store
+3. **Schema Validation**: Use Zod schemas defined in `services/*/schemas.ts` for API responses
+4. **Error Boundaries**: Wrap async components with React Error Boundary
+5. **Type Predicates**: Use utilities in `lib/type-predicates.ts` for runtime type checking
+6. **Chakra UI v3**: This project uses Chakra UI v3 - when working with Chakra components, use the MCP tools to get accurate v3 API information
+7. **Figma Integration**: The project uses Figma MCP for design-to-code workflows. Component designs are sourced from the VeChain Block Explorer Figma file and converted to Chakra UI v3 components with custom theme tokens
 
 ## Deployment
 

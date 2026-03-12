@@ -2,7 +2,7 @@
 
 import { IconButton, Input } from '@chakra-ui/react'
 import { LuChevronLeft, LuChevronRight } from 'react-icons/lu'
-import type { TimeRangeKey } from '../../../constants'
+import type { TimeRangeKey } from '@/lib/constants/time-ranges'
 import { HourlyDateInput } from './HourlyDateInput'
 
 interface NavigationControlsProps {
