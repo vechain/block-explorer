@@ -193,19 +193,6 @@ export const TableSkeleton = (props: SkeletonProps) => {
   return <Skeleton height="320px" width="100%" bg="bg-primary" {...props} />
 }
 
-/**
- * Cell components
- */
-
-export const AppendIconCell = ({ value, icon }: { icon: React.ReactNode } & CellComponentProps) => {
-  return (
-    <Flex display="flex" alignItems="center" gap={2}>
-      <TableText>{value}</TableText>
-      {icon}
-    </Flex>
-  )
-}
-
 const TableText = (props: TextProps) => {
   return <Text as="span" color="text-primary" {...props} />
 }

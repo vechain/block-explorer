@@ -15,22 +15,23 @@ const formatChangePercent = (change?: number) => {
 }
 
 export const PriceCards = () => {
-  const { t } = useTranslation()
-
   const {
     dailyChangePercent: vetDailyChangePercent,
     isLoading: vetDailyLoading,
     price: vetPrice,
+    marketCap: vetMarketCap,
   } = useTokenDailyPrices('vechain')
   const {
     dailyChangePercent: vthoDailyChangePercent,
     isLoading: vthoDailyLoading,
     price: vthoPrice,
+    marketCap: vthoMarketCap,
   } = useTokenDailyPrices('vethor-token')
   const {
     dailyChangePercent: b3trDailyChangePercent,
     isLoading: b3trDailyLoading,
     price: b3trPrice,
+    marketCap: b3trMarketCap,
   } = useTokenDailyPrices('vebetterdao')
 
   return (
@@ -51,22 +52,25 @@ export const PriceCards = () => {
     >
       <TokenPriceCard
         token="VET"
-        label={t('VET Price')}
+        label="VET"
         price={vetPrice}
+        marketCap={vetMarketCap}
         changePercent={vetDailyChangePercent}
         isLoading={vetDailyLoading}
       />
       <TokenPriceCard
         token="VTHO"
-        label={t('VTHO Price')}
+        label="VTHO"
         price={vthoPrice}
+        marketCap={vthoMarketCap}
         changePercent={vthoDailyChangePercent}
         isLoading={vthoDailyLoading}
       />
       <TokenPriceCard
         token="B3TR"
-        label={t('B3TR Price')}
+        label="B3TR"
         price={b3trPrice}
+        marketCap={b3trMarketCap}
         changePercent={b3trDailyChangePercent}
         isLoading={b3trDailyLoading}
       />
@@ -78,11 +82,13 @@ interface TokenPriceCardProps {
   token: SupportedTokenSymbol
   label: string
   price?: number
+  marketCap?: number
   changePercent?: number
   isLoading?: boolean
 }
 
-const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: TokenPriceCardProps) => {
+const TokenPriceCard = ({ token, label, price, marketCap, changePercent, isLoading }: TokenPriceCardProps) => {
+  const { t } = useTranslation()
   const formattedPrice = useFormatCurrency()
 
   return (
@@ -94,7 +100,7 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
       width={{ base: '70%', sm: 'auto' }}
       py={5}
       px={4}
-      gap={6}
+      gap={4}
     >
       <Flex alignItems="center" justifyContent="space-between" gap={2}>
         <Circle bg="bg-primary" borderWidth="1px" borderColor="border-primary" rounded="full">
@@ -104,6 +110,9 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
       </Flex>
 
       <HStack gap={2} alignItems="flex-start">
+        <Text textStyle="bodyS" color="text-secondary">
+          {t('Price')}:
+        </Text>
         {isLoading ? (
           <Skeleton height="28px" width="80px" />
         ) : (
@@ -124,6 +133,30 @@ const TokenPriceCard = ({ token, label, price, changePercent, isLoading }: Token
           </HStack>
         )}
       </HStack>
+
+      <Flex gap={1} alignItems="baseline">
+        <Text textStyle="bodyS" color="text-secondary">
+          {t('Market Cap')}:
+        </Text>
+        {isLoading ? (
+          <Skeleton height="16px" width="60px" />
+        ) : (
+          <Text textStyle="bodyS" color="text-primary">
+            {formatMarketCap(marketCap, formattedPrice)}
+          </Text>
+        )}
+      </Flex>
     </Card>
   )
+}
+
+const formatMarketCap = (
+  marketCap: number | undefined,
+  formatCurrency: (n: number, opts?: Intl.NumberFormatOptions) => string,
+) => {
+  if (marketCap === undefined) return '-'
+  if (marketCap >= 1_000_000_000) return `${formatCurrency(marketCap / 1_000_000_000, { maximumFractionDigits: 2 })}B`
+  if (marketCap >= 1_000_000) return `${formatCurrency(marketCap / 1_000_000, { maximumFractionDigits: 2 })}M`
+  if (marketCap >= 1_000) return `${formatCurrency(marketCap / 1_000, { maximumFractionDigits: 2 })}K`
+  return formatCurrency(marketCap, { maximumFractionDigits: 0 })
 }

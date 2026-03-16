@@ -59,7 +59,7 @@ export const BlockChart = ({
   yAxisUnit,
   yAxisFormatter,
 }: BlockChartProps) => {
-  const [selectedRange, setSelectedRange] = useState<TimeRangeKey>('hourly')
+  const [selectedRange, setSelectedRange] = useState<TimeRangeKey>('daily')
   const [_selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [isLiveMode, setIsLiveMode] = useState(true)
 
@@ -84,7 +84,7 @@ export const BlockChart = ({
 
   const handleResetToNow = () => {
     setSelectedDate(new Date())
-    setSelectedRange('hourly')
+    setSelectedRange('daily')
     setIsLiveMode(true)
   }
 

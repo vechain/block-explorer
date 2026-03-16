@@ -13,7 +13,6 @@ import { parseNetworkFromParams } from '@/lib/utils/network'
 import { logPrefetchFailures } from '@/lib/utils/prefetch'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { ActivitySection } from './components/ActivitySection'
-import { BlockChart } from './components/BlockChart/BlockChart'
 import { PriceCards } from './components/PriceCards'
 import { TokenTransfersSection } from './components/TokenTransfersSection'
 import { NFTTransfersSection } from './components/NFTTransfersSection'
@@ -59,16 +58,10 @@ export default async function HomePage({
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <VStack gap={8} alignItems="stretch">
-        <VStack gap={{ base: 8, md: 4 }} alignItems="stretch">
-          <PriceCards />
-          <Suspense fallback={<TableSkeleton />}>
-            <HomeStatsGroup />
-          </Suspense>
-        </VStack>
         <Suspense fallback={<TableSkeleton />}>
-          <BlockChart dataKey="usagePercentage" color="#E782FF" chartType="line" yAxisUnit="%" />
+          <HomeStatsGroup />
         </Suspense>
-
+        <PriceCards />
         <Suspense fallback={<TableSkeleton />}>
           <ActivitySection />
         </Suspense>

@@ -1,6 +1,7 @@
 'use client'
 
-import { Skeleton, Text } from '@chakra-ui/react'
+import { Grid, Skeleton, Text } from '@chakra-ui/react'
+import { Card } from './Card'
 import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
 import { formatEther } from 'viem'
@@ -9,7 +10,6 @@ import { useTotalVetDelegated } from '@/services/veworld-indexer/total-vet-deleg
 import { useTotalVetStaked } from '@/services/veworld-indexer/total-vet-staked'
 import { ValidatorStatus, useValidators, useValidatorsCount } from '@/services/veworld-indexer/validators'
 import { useFormatNumber } from '@/hooks/useFormatting'
-import { DataCardGroup, type DataCardGroupItem } from './DataCardGroup'
 import { BaseLink } from './Links'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getStargateLink } from '@/lib/constants/stargate-nft'
@@ -79,55 +79,53 @@ export const HomeStatsGroup = () => {
     [],
   )
 
-  const items: DataCardGroupItem[] = [
+  const stats = [
     {
       title: t('Total Accounts'),
-      children: isLoadingAccounts ? (
-        <Skeleton height="24px" width="50px" />
-      ) : (
-        <Text textStyle={{ base: 'display2Xs', md: 'displayS' }} color="text-primary">
-          {formatNumber(totalAccounts)}
-        </Text>
-      ),
+      loading: isLoadingAccounts,
+      value: formatNumber(totalAccounts),
     },
     {
       title: t('Validators'),
-      children:
-        isLoadingActiveValidators || isLoadingExitingValidators ? (
-          <Skeleton height="24px" width="50px" />
-        ) : (
-          <Text textStyle={{ base: 'display2Xs', md: 'displayS' }} color="text-primary">
-            <BaseLink href={STARGATE_LINK} target="_blank">
-              {' '}
-              {formatNumber(validators)}{' '}
-            </BaseLink>
-          </Text>
-        ),
+      loading: isLoadingActiveValidators || isLoadingExitingValidators,
+      value: (
+        <BaseLink href={STARGATE_LINK} target="_blank">
+          {formatNumber(validators)}
+        </BaseLink>
+      ),
     },
     {
       title: t('Total Value Locked'),
-      children: tvlLoading ? (
-        <Skeleton height="24px" width="90px" />
-      ) : (
-        <Text textStyle={{ base: 'display2Xs', md: 'displayS' }} color="text-primary">
-          <BaseLink href={STARGATE_LINK} target="_blank">
-            {' '}
-            {formatNumber(totalTvl, compact)} VET{' '}
-          </BaseLink>
-        </Text>
+      loading: tvlLoading,
+      value: (
+        <BaseLink href={STARGATE_LINK} target="_blank">
+          {formatNumber(totalTvl, compact)} VET
+        </BaseLink>
       ),
     },
     {
       title: t('VTHO Issuance'),
-      children: vthoIssuanceLoading ? (
-        <Skeleton height="24px" width="90px" />
-      ) : (
-        <Text textStyle={{ base: 'display2Xs', md: 'displayS' }} color="text-primary">
-          {formatNumber(vthoIssuance, compact)} VTHO
-        </Text>
-      ),
+      loading: vthoIssuanceLoading,
+      value: <>{formatNumber(vthoIssuance, compact)} VTHO</>,
     },
   ]
 
-  return <DataCardGroup items={items} desktopColumns={2} variant="primary" />
+  return (
+    <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }} gap={4}>
+      {stats.map((stat, index) => (
+        <Card key={index} alignItems="flex-start" justifyContent="center" py={5} px={4} gap={1}>
+          <Text textStyle="bodyM" color="text-secondary">
+            {stat.title}
+          </Text>
+          {stat.loading ? (
+            <Skeleton height="24px" width="70px" />
+          ) : (
+            <Text textStyle={{ base: 'display2Xs', md: 'displayXs' }} color="text-primary">
+              {stat.value}
+            </Text>
+          )}
+        </Card>
+      ))}
+    </Grid>
+  )
 }
