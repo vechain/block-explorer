@@ -1,4 +1,4 @@
-import { Flex, VStack } from '@chakra-ui/react'
+import { VStack } from '@chakra-ui/react'
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { Suspense } from 'react'
 
@@ -17,7 +17,6 @@ import { BlockChart } from './components/BlockChart/BlockChart'
 import { PriceCards } from './components/PriceCards'
 import { TokenTransfersSection } from './components/TokenTransfersSection'
 import { NFTTransfersSection } from './components/NFTTransfersSection'
-import { MarketCapChart } from './components/MarketCapChart'
 import { totalVetDelegatedQueryOptions } from '@/services/veworld-indexer/total-vet-delegated'
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
 import { AccountTimeFrame, accountTotalsQueryOptions } from '@/services/veworld-indexer/account-totals'
@@ -62,14 +61,9 @@ export default async function HomePage({
       <VStack gap={8} alignItems="stretch">
         <VStack gap={{ base: 8, md: 4 }} alignItems="stretch">
           <PriceCards />
-          <Flex gap={{ base: 8, md: 4 }} flexWrap={{ base: 'wrap', md: 'nowrap' }}>
-            <Suspense fallback={<TableSkeleton />}>
-              <MarketCapChart />
-            </Suspense>
-            <Suspense fallback={<TableSkeleton />}>
-              <HomeStatsGroup />
-            </Suspense>
-          </Flex>
+          <Suspense fallback={<TableSkeleton />}>
+            <HomeStatsGroup />
+          </Suspense>
         </VStack>
         <Suspense fallback={<TableSkeleton />}>
           <BlockChart dataKey="usagePercentage" color="#E782FF" chartType="line" yAxisUnit="%" />
