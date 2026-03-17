@@ -19,6 +19,7 @@ export type TxGasFeesResult =
       type: 'legacy'
       gasPriceCoef: number
       baseFeePerGas: bigint
+      gasPrice: bigint
       totalFeePaid: bigint
     }
   | {
@@ -26,6 +27,7 @@ export type TxGasFeesResult =
       maxFeePerGas: bigint
       priorityFeePerGas: bigint
       baseFeePerGas: bigint
+      gasPrice: bigint
       totalFeePaid: bigint
     }
 
@@ -64,6 +66,15 @@ export const useTransactionGasInsights = ({
           <Skeleton h="20px" w="80px" />
         ) : (
           `${formatNumber(Number(formatGwei(txGasFees.baseFeePerGas)))} Gwei`
+        ),
+    },
+    {
+      label: t('Gas Price'),
+      value:
+        txGasFees.type === 'loading' ? (
+          <Skeleton h="20px" w="80px" />
+        ) : (
+          `${formatNumber(Number(formatGwei(txGasFees.gasPrice)))} Gwei`
         ),
     },
   ]
@@ -130,12 +141,14 @@ const useTxGasFees = ({
 
   if (isDynamicFee) {
     const { maxFeePerGas, maxPriorityFeePerGas } = transaction
+    const priorityFeePerGas = calculatePriorityFeePerGas({ maxPriorityFeePerGas, maxFeePerGas, baseFeePerGas })
 
     return {
       type: 'dynamic',
       maxFeePerGas,
-      priorityFeePerGas: calculatePriorityFeePerGas({ maxPriorityFeePerGas, maxFeePerGas, baseFeePerGas }),
+      priorityFeePerGas,
       baseFeePerGas,
+      gasPrice: baseFeePerGas + priorityFeePerGas,
       totalFeePaid,
     }
   }
@@ -146,6 +159,7 @@ const useTxGasFees = ({
     type: 'legacy',
     gasPriceCoef,
     baseFeePerGas: legacyBaseFeePerGas,
+    gasPrice: (legacyBaseFeePerGas * BigInt(255 + gasPriceCoef)) / BigInt(255),
     totalFeePaid,
   }
 }
