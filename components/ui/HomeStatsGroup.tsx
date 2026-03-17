@@ -10,7 +10,6 @@ import { useTotalVetDelegated } from '@/services/veworld-indexer/total-vet-deleg
 import { useTotalVetStaked } from '@/services/veworld-indexer/total-vet-staked'
 import { ValidatorStatus, useValidators, useValidatorsCount } from '@/services/veworld-indexer/validators'
 import { useFormatNumber } from '@/hooks/useFormatting'
-import { BaseLink } from './Links'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getStargateLink } from '@/lib/constants/stargate-nft'
 
@@ -84,46 +83,55 @@ export const HomeStatsGroup = () => {
       title: t('Total Accounts'),
       loading: isLoadingAccounts,
       value: formatNumber(totalAccounts),
+      href: STARGATE_LINK,
     },
     {
       title: t('Validators'),
       loading: isLoadingActiveValidators || isLoadingExitingValidators,
-      value: (
-        <BaseLink href={STARGATE_LINK} target="_blank">
-          {formatNumber(validators)}
-        </BaseLink>
-      ),
+      value: formatNumber(validators),
+      href: STARGATE_LINK,
     },
     {
       title: t('Total Value Locked'),
       loading: tvlLoading,
-      value: (
-        <BaseLink href={STARGATE_LINK} target="_blank">
-          {formatNumber(totalTvl, compact)} VET
-        </BaseLink>
-      ),
+      value: <>{formatNumber(totalTvl, compact)} VET</>,
+      href: STARGATE_LINK,
     },
     {
       title: t('VTHO Issuance'),
       loading: vthoIssuanceLoading,
       value: <>{formatNumber(vthoIssuance, compact)} VTHO</>,
+      href: STARGATE_LINK,
     },
   ]
 
   return (
     <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }} gap={4}>
       {stats.map((stat, index) => (
-        <Card key={index} alignItems="flex-start" justifyContent="center" py={5} px={4} gap={1}>
-          <Text textStyle="bodyM" color="text-secondary">
-            {stat.title}
-          </Text>
-          {stat.loading ? (
-            <Skeleton height="24px" width="70px" />
-          ) : (
-            <Text textStyle={{ base: 'display2Xs', md: 'displayXs' }} color="text-primary">
-              {stat.value}
+        <Card
+          key={index}
+          asChild
+          alignItems="flex-start"
+          justifyContent="center"
+          py={5}
+          px={4}
+          gap={1}
+          cursor="pointer"
+          _hover={{ borderColor: 'border-hover', transform: 'scale(1.02)' }}
+          transition="border-color 0.2s, transform 0.2s"
+        >
+          <a href={stat.href} target="_blank" rel="noopener noreferrer">
+            <Text textStyle="bodyM" color="text-secondary">
+              {stat.title}
             </Text>
-          )}
+            {stat.loading ? (
+              <Skeleton height="24px" width="70px" />
+            ) : (
+              <Text textStyle={{ base: 'display2Xs', md: 'displayXs' }} color="text-primary">
+                {stat.value}
+              </Text>
+            )}
+          </a>
         </Card>
       ))}
     </Grid>
