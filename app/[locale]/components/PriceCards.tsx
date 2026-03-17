@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { LuTrendingDown, LuTrendingUp } from 'react-icons/lu'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { Card } from '@/components/ui/Card'
-import { useFormatCurrency } from '@/hooks/useFormatting'
+import { useFormatCompactCurrency, useFormatCurrency } from '@/hooks/useFormatting'
 
 type SupportedTokenSymbol = 'VET' | 'VTHO' | 'B3TR'
 
@@ -90,6 +90,7 @@ interface TokenPriceCardProps {
 const TokenPriceCard = ({ token, label, price, marketCap, changePercent, isLoading }: TokenPriceCardProps) => {
   const { t } = useTranslation()
   const formattedPrice = useFormatCurrency()
+  const formatCompact = useFormatCompactCurrency()
 
   return (
     <Card
@@ -142,21 +143,10 @@ const TokenPriceCard = ({ token, label, price, marketCap, changePercent, isLoadi
           <Skeleton height="16px" width="60px" />
         ) : (
           <Text textStyle="bodyS" color="text-primary">
-            {formatMarketCap(marketCap, formattedPrice)}
+            {marketCap !== undefined ? formatCompact(marketCap) : '-'}
           </Text>
         )}
       </Flex>
     </Card>
   )
-}
-
-const formatMarketCap = (
-  marketCap: number | undefined,
-  formatCurrency: (n: number, opts?: Intl.NumberFormatOptions) => string,
-) => {
-  if (marketCap === undefined) return '-'
-  if (marketCap >= 1_000_000_000) return `${formatCurrency(marketCap / 1_000_000_000, { maximumFractionDigits: 2 })}B`
-  if (marketCap >= 1_000_000) return `${formatCurrency(marketCap / 1_000_000, { maximumFractionDigits: 2 })}M`
-  if (marketCap >= 1_000) return `${formatCurrency(marketCap / 1_000, { maximumFractionDigits: 2 })}K`
-  return formatCurrency(marketCap, { maximumFractionDigits: 0 })
 }

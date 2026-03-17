@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { formatAbbreviated, formatAmount, formatHexToGwei, formatPercentage } from './units'
+import { formatAbbreviated, formatAmount, formatCompactCurrency, formatHexToGwei, formatPercentage } from './units'
+import { Locale } from '@/i18n/config'
 
 describe('Units utils', () => {
   describe('formatHexToGwei', () => {
@@ -93,6 +94,37 @@ describe('Units utils', () => {
       expect(formatAbbreviated(BigInt('1000000000000000000000'))).toBe('1K')
       // Just below 1 thousand ether (999)
       expect(formatAbbreviated(BigInt('999000000000000000000'))).toBe('999')
+    })
+  })
+
+  describe('formatCompactCurrency', () => {
+    it('should format billions with compact notation', () => {
+      expect(formatCompactCurrency(1_500_000_000, Locale.EN, 'USD')).toBe('$1.5B')
+      expect(formatCompactCurrency(2_000_000_000, Locale.EN, 'USD')).toBe('$2B')
+    })
+
+    it('should format millions with compact notation', () => {
+      expect(formatCompactCurrency(1_500_000, Locale.EN, 'USD')).toBe('$1.5M')
+      expect(formatCompactCurrency(250_000_000, Locale.EN, 'USD')).toBe('$250M')
+    })
+
+    it('should format thousands with compact notation', () => {
+      expect(formatCompactCurrency(1_500, Locale.EN, 'USD')).toBe('$1.5K')
+      expect(formatCompactCurrency(50_000, Locale.EN, 'USD')).toBe('$50K')
+    })
+
+    it('should format small values without compact suffix', () => {
+      expect(formatCompactCurrency(500, Locale.EN, 'USD')).toBe('$500')
+      expect(formatCompactCurrency(99, Locale.EN, 'USD')).toBe('$99')
+    })
+
+    it('should respect different currencies', () => {
+      expect(formatCompactCurrency(1_500_000, Locale.EN, 'EUR')).toContain('1.5M')
+    })
+
+    it('should allow overriding options', () => {
+      const result = formatCompactCurrency(1_234_567, Locale.EN, 'USD', { maximumFractionDigits: 0 })
+      expect(result).toBe('$1M')
     })
   })
 
