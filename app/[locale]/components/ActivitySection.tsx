@@ -35,7 +35,7 @@ export const ActivitySection = () => {
   const hasNoTransactions = !isPending && recentTransactions.length === 0
 
   return (
-    <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={8}>
+    <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={{ base: 8, md: 4 }}>
       <Card>
         <Flex justify="space-between" align="center">
           <Heading as="h3" textStyle="displayXs">

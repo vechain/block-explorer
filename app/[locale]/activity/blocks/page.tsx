@@ -48,7 +48,13 @@ export default function AllBlocksPage() {
           {t('Blocks')}
         </Heading>
         <Box minHeight="400px">
-          {isPending ? <TableSkeleton /> : hasNoBlocks ? <NoBlocks /> : <BlocksTable blocks={paginatedBlocks} />}
+          {isPending ? (
+            <TableSkeleton />
+          ) : hasNoBlocks ? (
+            <NoBlocks />
+          ) : (
+            <BlocksTable blocks={paginatedBlocks} showDetails />
+          )}
         </Box>
         <PaginationControls
           page={page}
