@@ -156,14 +156,15 @@ export const useRecentBlocksExpanded = ({ count }: { count: number }) => {
   const blocksPending = blocksResult.isPending
 
   useEffect(() => {
-    if (!blocksPending && latestBlocks.length < count && blocksToFetch < 100 && bestBlockNumber > blocksToFetch) {
-      setBlocksToFetch(prev => Math.min(prev + 10, 100))
+    if (!blocksPending && latestBlocks.length < count && bestBlockNumber > blocksToFetch) {
+      setBlocksToFetch(prev => prev + 10)
     }
   }, [blocksPending, latestBlocks.length, count, blocksToFetch, bestBlockNumber])
 
   return {
     data: latestBlocks,
     isPending: blocksPending && latestBlocks.length === 0,
+    bestBlockNumber,
   }
 }
 
@@ -200,7 +201,14 @@ export const useRecentTokenTransfers = ({ count }: { count: number }) => {
 }
 
 export const useRecentNFTTransfers = ({ count }: { count: number }) => {
-  const { data: blocks, isPending } = useRecentBlocksExpanded({ count: Math.max(count * 10, 50) })
+  const minBlocks = Math.max(count * 10, 50)
+  const [blocksToFetch, setBlocksToFetch] = useState(minBlocks)
+
+  useEffect(() => {
+    setBlocksToFetch(prev => Math.max(prev, minBlocks))
+  }, [minBlocks])
+
+  const { data: blocks, isPending, bestBlockNumber } = useRecentBlocksExpanded({ count: blocksToFetch })
 
   const transfers = useMemo(() => {
     if (!blocks || blocks.length === 0) return []
@@ -222,8 +230,21 @@ export const useRecentNFTTransfers = ({ count }: { count: number }) => {
       .slice(0, count)
   }, [blocks, count])
 
+  const reachedChainStart = blocksToFetch >= bestBlockNumber
+
+  useEffect(() => {
+    if (!isPending && transfers.length < count && blocksToFetch < bestBlockNumber) {
+      const increment = Math.max(count * 5, 100)
+      setBlocksToFetch(prev => prev + increment)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPending, transfers.length, count])
+
+  const hasMore = !reachedChainStart || transfers.length >= count
+
   return {
     data: transfers,
-    isPending,
+    isPending: isPending && transfers.length === 0,
+    hasMore,
   }
 }

@@ -1,19 +1,44 @@
 'use client'
 
-import Image from 'next/image'
+import { Stack, Text } from '@chakra-ui/react'
+import { formatEther } from 'viem'
 import { useTranslation } from 'react-i18next'
 import { AgeText } from '@/components/ui/AgeText'
 import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
-import { AppendIconCell, type CellComponentProps, type Column, DataTable } from '@/components/ui/Table'
+import { type Column, DataTable } from '@/components/ui/Table'
 import type { ExpandedBlock } from '@/lib/schemas'
-import { useFormatNumber } from '@/hooks/useFormatting'
+import { useFormatCurrency, useFormatNumber } from '@/hooks/useFormatting'
+import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
+import { Balance } from '@/components/ui/Balance'
 
-export const BlocksTable = ({ blocks }: { blocks: ExpandedBlock[] }) => {
+type BlocksTableProps = {
+  blocks: ExpandedBlock[]
+  showDetails?: boolean
+}
+
+export const BlocksTable = ({ blocks, showDetails = false }: BlocksTableProps) => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
+  const formatCurrencyValue = useFormatCurrency()
+  const { price: vthoPrice } = useTokenDailyPrices('vethor-token')
+
+  const rows = blocks.map(block => {
+    const totalClauses = block.transactions.reduce((sum, tx) => sum + tx.clauses.length, 0)
+    const totalVthoPaid = block.transactions.reduce((sum, tx) => sum + tx.paid, BigInt(0))
+    return {
+      id: block.id,
+      blockNumber: `#${block.number.toString()}`,
+      blockNumberRaw: block.number.toString(),
+      age: block.timestamp,
+      block: formatNumber(block.number),
+      signer: block.signer,
+      txsClauses: `${block.transactions.length}/${totalClauses}`,
+      gasUsed: formatNumber(Number(block.gasUsed)),
+      vthoPaid: totalVthoPaid,
+    }
+  })
 
   const columns: Column<(typeof rows)[number]>[] = [
-    { key: 'age', label: t('Age'), Cell: ({ value }) => <AgeText timestamp={value as number} /> },
     {
       key: 'blockNumber',
       label: t('Block'),
@@ -23,43 +48,36 @@ export const BlocksTable = ({ blocks }: { blocks: ExpandedBlock[] }) => {
         </CopyableLink>
       ),
     },
+    { key: 'age', label: t('Age'), Cell: ({ value }) => <AgeText timestamp={value as number} /> },
+    ...(showDetails
+      ? ([
+          { key: 'txsClauses', label: t('Txs/Clauses') },
+          { key: 'gasUsed', label: t('Gas Used') },
+          {
+            key: 'vthoPaid',
+            label: t('VTHO Paid'),
+            Cell: ({ row }) => {
+              const fiatValue = vthoPrice ? Number(formatEther(row.vthoPaid)) * vthoPrice : undefined
+              return (
+                <Stack gap={0}>
+                  <Balance balance={row.vthoPaid} />
+                  {fiatValue !== undefined && (
+                    <Text textStyle="bodyS" color="text-secondary">
+                      {formatCurrencyValue(fiatValue)}
+                    </Text>
+                  )}
+                </Stack>
+              )
+            },
+          },
+        ] as Column<(typeof rows)[number]>[])
+      : []),
     {
       key: 'signer',
       label: t('Signer'),
       Cell: ({ row }) => <CopyableAddressLink truncate address={row.signer} />,
     },
-    { key: 'txs/clauses', label: t('Txs/Clauses') },
-    {
-      key: 'gasUsed',
-      label: t('Gas Used'),
-      Cell: GasUsedCell,
-    },
   ]
 
-  const rows = blocks.map(block => {
-    const totalClauses = block.transactions.reduce((sum, tx) => sum + tx.clauses.length, 0)
-    return {
-      id: block.id,
-      blockNumber: `#${block.number.toString()}`,
-      blockNumberRaw: block.number.toString(),
-      age: block.timestamp,
-      block: formatNumber(block.number),
-      signer: block.signer,
-      'txs/clauses': `${block.transactions.length}/${totalClauses}`,
-      gasUsed: formatNumber(Number(block.gasUsed)),
-      isFinalized: block.isFinalized,
-    }
-  })
-
   return <DataTable columns={columns} rows={rows} />
-}
-
-const GasUsedCell = (props: CellComponentProps) => {
-  const icon = props.row.isFinalized ? (
-    <Image src="/icons/success.svg" alt="Finalized" width={16} height={16} />
-  ) : (
-    <Image src="/icons/pending.svg" alt="Pending" width={16} height={16} />
-  )
-
-  return <AppendIconCell icon={icon} {...props} />
 }

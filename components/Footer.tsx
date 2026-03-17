@@ -17,7 +17,7 @@ export const Footer = () => {
     },
   }
   return (
-    <VStack gap={0} mt={{ base: -10, md: -40 }}>
+    <VStack gap={0} mt={{ base: -10, md: -40 }} width="100%">
       <Image
         src={'/footer-image.webp'}
         alt="footer-image"

@@ -170,6 +170,23 @@ export const formatCurrency = (
  * formatPercentage(100)     // "100%"
  * ```
  */
+export const formatCompactCurrency = (
+  num: number,
+  locale: Locale | undefined,
+  currency: string,
+  options?: Intl.NumberFormatOptions,
+): string => {
+  return getNumberFormatter(locale || Locale.EN, {
+    style: 'currency',
+    currency,
+    notation: 'compact',
+    compactDisplay: 'short',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+    ...options,
+  }).format(num)
+}
+
 export const formatPercentage = (value: number): string => {
   if (Number.isInteger(value)) {
     return `${value}%`

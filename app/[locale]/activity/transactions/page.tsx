@@ -64,7 +64,7 @@ export default function AllTransactionsPage() {
           ) : hasNoTransactions ? (
             <NoTransactions />
           ) : (
-            <ActivityTransactionsTable transactions={paginatedTransactions} />
+            <ActivityTransactionsTable transactions={paginatedTransactions} showDetails />
           )}
         </Box>
         <PaginationControls

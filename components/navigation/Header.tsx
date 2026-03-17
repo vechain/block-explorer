@@ -126,7 +126,7 @@ const NavigationMenu = () => {
                 <Link href="/stats" onClick={() => setIsMenuOpen(false)}>
                   <Flex gap={2} alignItems="center" py={2}>
                     <Text fontSize="body-m" whiteSpace="nowrap">
-                      {t('Stats')}
+                      {t('Metrics')}
                     </Text>
                   </Flex>
                 </Link>

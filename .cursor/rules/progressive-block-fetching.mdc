@@ -1,0 +1,69 @@
+---
+description: Block-scanning pattern for recent blocks, transactions, token/NFT transfers — data extraction from expanded blocks and client-side pagination
+globs: services/veworld-indexer/recent-activity.ts, app/**/activity/**, app/**/transfers/**
+alwaysApply: false
+---
+
+# Block-Scanning Data Fetching
+
+## Why
+
+There is no global indexer endpoint for recent blocks, transactions, or transfers. All data is extracted from expanded blocks fetched directly from the Thor node.
+
+## Architecture
+
+```
+useRecentBlocksExpanded({ count })       ← shared foundation, fetches N most recent blocks
+  ├─ Blocks table                        ← 1:1 (every block = 1 row)
+  ├─ Transactions table (flatMap)        ← dense (many txs per block)
+  ├─ useRecentTokenTransfers({ count })  ← dense (static multiplier: count * 2)
+  └─ useRecentNFTTransfers({ count })    ← sparse (progressive expansion)
+```
+
+### `useRecentBlocksExpanded`
+
+- Each block = individual TanStack Query cached by `[network, blockNumber]`
+- Expanding the range only fetches new blocks; previously loaded blocks are cached
+- If some blocks fail to load, incrementally fetches more (+10 at a time)
+- `isPending` = `true` only when loading AND no blocks loaded yet
+
+### Event density spectrum
+
+| Data type | Density | Block multiplier | Expansion |
+|-----------|---------|-------------------|-----------|
+| Blocks | 1:1 | `count` (direct) | None needed |
+| Transactions | Dense | `max((page+2)*pageSize, 50)` | None needed |
+| Token transfers (VET/ERC20) | Dense | `count * 2` | None needed |
+| NFT transfers (ERC721) | Sparse | `count * 10` initial | Progressive: `+max(count*5, 100)` |
+
+### Progressive expansion (sparse events)
+
+When fewer results than `count` are found:
+
+1. Start with `max(count * 10, 50)` blocks
+2. If `results.length < count` and not pending, increase `blocksToFetch` by `max(count * 5, 100)`
+3. When `count` increases (page navigation), ratchet `blocksToFetch` up via `useEffect`
+4. Natural cap: `bestBlockNumber` (can't exceed chain history)
+5. Return `hasMore` flag so pagination controls stay enabled during expansion
+
+### Key conventions
+
+- **`isPending`**: only `true` when loading AND zero results — avoids skeleton flash during expansion
+- **Deduplication**: use `Map<id, item>` before sorting/slicing
+- **Sort order**: descending by `blockTimestamp`, then `blockNumber`
+- **Transfer identification**: ERC20 = 3 topics on Transfer signature; ERC721 = 4 topics (4th = tokenId)
+
+## Paginated views
+
+All paginated pages (`/activity/blocks`, `/activity/transactions`, `/transfers/token`, `/transfers/nft`) follow the same pattern:
+
+```tsx
+const totalToFetch = (page + 2) * pageSize         // look-ahead for next page
+const { data } = useHook({ count: totalToFetch })
+const paginated = data.slice(page * pageSize, (page + 1) * pageSize)
+const hasNext = data.length > (page + 1) * pageSize // or combine with hasMore for sparse
+```
+
+- `(page + 2)` ensures we always try to fetch one page ahead
+- Client-side pagination via `.slice()` on accumulated results
+- For sparse events, `hasNext` should also consider `hasMore` to keep the "next" button enabled while the hook is still expanding its search window

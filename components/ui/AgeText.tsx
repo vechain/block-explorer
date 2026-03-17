@@ -1,34 +1,45 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Text, type TextProps } from '@chakra-ui/react'
-import type { Locale as DateFnsLocale } from 'date-fns'
-import { formatDistanceToNow } from 'date-fns'
-import { de, el, enUS, es, fr, it, ja, pt, ru, tr, zhCN } from 'date-fns/locale'
 import { HiOutlineBolt } from 'react-icons/hi2'
-import type { Locale } from '@/i18n/config'
 import { useLocale } from '@/hooks/useLocale'
 
-const dateFnsLocales: Record<Locale, DateFnsLocale> = {
-  en: enUS,
-  es,
-  fr,
-  it,
-  ja,
-  pt,
-  ru,
-  tr,
-  de,
-  zh: zhCN,
-  el,
+const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ['year', 365 * 24 * 60 * 60],
+  ['month', 30 * 24 * 60 * 60],
+  ['week', 7 * 24 * 60 * 60],
+  ['day', 24 * 60 * 60],
+  ['hour', 60 * 60],
+  ['minute', 60],
+  ['second', 1],
+]
+
+function compactTimeAgo(timestamp: number, locale: string): string {
+  const seconds = Math.min(0, Math.round((timestamp - Date.now()) / 1000))
+  for (const [unit, threshold] of UNITS) {
+    if (Math.abs(seconds) >= threshold) {
+      const value = Math.round(seconds / threshold)
+      return new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'narrow' }).format(value, unit)
+    }
+  }
+  return new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'narrow' }).format(seconds, 'second')
 }
 
 export const AgeText = ({ timestamp, ...props }: { timestamp: number } & TextProps) => {
   const locale = useLocale()
+  const [text, setText] = useState(() => compactTimeAgo(timestamp, locale))
+
+  useEffect(() => {
+    setText(compactTimeAgo(timestamp, locale))
+    const id = setInterval(() => setText(compactTimeAgo(timestamp, locale)), 1000)
+    return () => clearInterval(id)
+  }, [timestamp, locale])
 
   return (
     <Text color="accent-secondary" display="flex" alignItems="center" textTransform="capitalize" gap={1} {...props}>
       <HiOutlineBolt size={16} />
-      {formatDistanceToNow(new Date(timestamp), { includeSeconds: true, locale: dateFnsLocales[locale] })}
+      {text}
     </Text>
   )
 }

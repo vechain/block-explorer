@@ -222,9 +222,8 @@ export const useAccountTokens = (address: AddressString) => {
     const rows: TokenValueRow[] = tokenValueRowsData.map((token, index) => {
       const priceQuery = tokenPriceQueries[index]
       const priceData = priceQuery?.data
-      // useTokenDailyPrices returns an array, get the latest price
-      const price =
-        Array.isArray(priceData) && priceData.length > 0 ? priceData[priceData.length - 1]?.price : undefined
+      const prices = priceData?.prices
+      const price = prices && prices.length > 0 ? prices[prices.length - 1]?.price : undefined
 
       let value: string
 

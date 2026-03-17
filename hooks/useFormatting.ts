@@ -4,7 +4,7 @@ import { useCallback } from 'react'
 import type { HexString } from '@/lib/schemas'
 import { useLocale } from './useLocale'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { formatAmount, formatCurrency, formatNumber } from '@/lib/utils/units'
+import { formatAmount, formatCompactCurrency, formatCurrency, formatNumber } from '@/lib/utils/units'
 import { formatDateFromTimestamp } from '@/lib/utils/date'
 
 /**
@@ -101,6 +101,18 @@ export const useFormatCurrency = () => {
  * // full: "1.23456789"
  * ```
  */
+export const useFormatCompactCurrency = () => {
+  const locale = useLocale()
+  const { currency: selectedCurrency } = useSettingsStore()
+
+  return useCallback(
+    (num: number, options?: Intl.NumberFormatOptions): string => {
+      return formatCompactCurrency(num, locale, selectedCurrency, options)
+    },
+    [locale, selectedCurrency],
+  )
+}
+
 export const useFormatAmount = () => {
   const locale = useLocale()
 
