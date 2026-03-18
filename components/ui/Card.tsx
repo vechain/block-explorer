@@ -42,6 +42,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(({ variant = 'primary'
       borderColor="border-primary"
       p={{ base: 4, md: 5 }}
       backdropFilter="blur(16px)"
+      outline="1px solid transparent"
       {...variantStyle}
       {...props}
     />
