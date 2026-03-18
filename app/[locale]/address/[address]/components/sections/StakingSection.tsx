@@ -1,10 +1,23 @@
 'use client'
 
-import { Accordion, HStack, Link, Skeleton, Stack, Text, VStack, useBreakpointValue } from '@chakra-ui/react'
+import {
+  Button,
+  Dialog,
+  Flex,
+  HStack,
+  IconButton,
+  Link,
+  Portal,
+  Skeleton,
+  Stack,
+  Text,
+  VStack,
+  useBreakpointValue,
+} from '@chakra-ui/react'
 import Image from 'next/image'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LuExternalLink } from 'react-icons/lu'
+import { LuExternalLink, LuEye, LuX } from 'react-icons/lu'
 import { useFormatAmount, useFormatNumber } from '@/hooks/useFormatting'
 
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
@@ -71,7 +84,25 @@ export const StakingSection = ({ address }: { address: AddressString }) => {
     return `${currencySymbol}${formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }, [vthoPrice, fullTotalEarned, currencySymbol, formatNumber])
 
+  const [isVthoDetailsOpen, setIsVthoDetailsOpen] = useState(false)
   const isMobile = useBreakpointValue({ base: true, md: false })
+  const vthoDetailItems = [
+    {
+      label: t('Block rewards'),
+      amount: formattedVthoBlockRewards,
+      fiatValue: fiatVthoBlockRewards,
+    },
+    {
+      label: t('Passive generation'),
+      amount: formattedVthoPassiveGeneration,
+      fiatValue: fiatVthoPassiveGeneration,
+    },
+    {
+      label: t('Claimed Stargate'),
+      amount: formattedVthoClaimedStargate,
+      fiatValue: fiatVthoClaimedStargate,
+    },
+  ]
 
   const items: DataCardGroupItem[] = [
     {
@@ -124,114 +155,41 @@ export const StakingSection = ({ address }: { address: AddressString }) => {
               <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
             </HStack>
           ) : (
-            <Accordion.Root collapsible>
-              <Accordion.Item value="vtho-earned" border="none" p="0" gap={4}>
-                <Accordion.ItemTrigger p="0" justifyContent="space-between" cursor="pointer">
-                  {isMobile && (
+            <Flex align="center" justify="space-between" gap={3} w="full">
+              {isMobile && (
+                <Text textStyle="bodyM" color="text-primary">
+                  {t('VTHO Earned')}
+                </Text>
+              )}
+              <HStack gap={2} ml="auto">
+                <VStack gap={1} alignItems="flex-end">
+                  <HStack gap={2}>
                     <Text textStyle="bodyM" color="text-primary">
-                      {t('VTHO Earned')}
+                      {formattedTotalEarned}
                     </Text>
-                  )}
-                  <HStack
-                    gap={2}
-                    justifyContent={{ base: 'flex-end', md: 'space-between' }}
-                    w={{ base: 'auto', md: 'full' }}
-                  >
-                    <VStack gap={1} alignItems="flex-end">
-                      <HStack gap={2}>
-                        <Text textStyle="bodyM" color="text-primary">
-                          {formattedTotalEarned}
-                        </Text>
-                        <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
-                      </HStack>
-                      {isVthoPriceLoading ? (
-                        <Skeleton height="16px" width="60px" />
-                      ) : (
-                        vthoFiatValue && (
-                          <Text textStyle="bodyS" color="text-secondary" textAlign="right">
-                            {vthoFiatValue}
-                          </Text>
-                        )
-                      )}
-                    </VStack>
-                    <Accordion.ItemIndicator _icon={{ width: '16px', height: '16px', color: 'text-secondary' }} />
+                    <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
                   </HStack>
-                </Accordion.ItemTrigger>
-
-                <Accordion.ItemContent rounded={'none'}>
-                  <Accordion.ItemBody pt={2} pb={0} px={0} display="flex" flexDirection="column" gap={4}>
-                    <Card variant="outline">
-                      <HStack
-                        justify="space-between"
-                        width="full"
-                        borderBottomWidth="1px"
-                        borderColor="border-primary"
-                        pb={2}
-                      >
-                        <Text textStyle="bodyS" color="text-secondary">
-                          {t('Block rewards')}
-                        </Text>
-                        <VStack gap={2} alignItems="flex-end">
-                          <HStack gap={2}>
-                            <Text textStyle="bodyS" color="text-primary">
-                              {formattedVthoBlockRewards}
-                            </Text>
-                            <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
-                          </HStack>
-                          {fiatVthoBlockRewards && (
-                            <Text textStyle="bodyS" color="text-secondary">
-                              {fiatVthoBlockRewards}
-                            </Text>
-                          )}
-                        </VStack>
-                      </HStack>
-                      <HStack
-                        justify="space-between"
-                        width="full"
-                        borderBottomWidth="1px"
-                        borderColor="border-primary"
-                        pb={2}
-                      >
-                        <Text textStyle="bodyS" color="text-secondary">
-                          {t('Passive generation')}
-                        </Text>
-                        <VStack gap={2} alignItems="flex-end">
-                          <HStack gap={2}>
-                            <Text textStyle="bodyS" color="text-primary">
-                              {formattedVthoPassiveGeneration}
-                            </Text>
-                            <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
-                          </HStack>
-                          {fiatVthoPassiveGeneration && (
-                            <Text textStyle="bodyS" color="text-secondary">
-                              {fiatVthoPassiveGeneration}
-                            </Text>
-                          )}
-                        </VStack>
-                      </HStack>
-                      <HStack justify="space-between" width="full">
-                        <Text textStyle="bodyS" color="text-secondary">
-                          {t('Claimed Stargate')}
-                        </Text>
-                        <VStack gap={2} alignItems="flex-end">
-                          <HStack gap={2}>
-                            <Text textStyle="bodyS" color="text-primary">
-                              {formattedVthoClaimedStargate}
-                            </Text>
-                            <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
-                          </HStack>
-                          {fiatVthoClaimedStargate && (
-                            <Text textStyle="bodyS" color="text-secondary">
-                              {fiatVthoClaimedStargate}
-                            </Text>
-                          )}
-                        </VStack>
-                      </HStack>
-                    </Card>
-                  </Accordion.ItemBody>
-                </Accordion.ItemContent>
-              </Accordion.Item>
-            </Accordion.Root>
+                  {isVthoPriceLoading ? (
+                    <Skeleton height="16px" width="60px" />
+                  ) : (
+                    vthoFiatValue && (
+                      <Text textStyle="bodyS" color="text-secondary" textAlign="right">
+                        {vthoFiatValue}
+                      </Text>
+                    )
+                  )}
+                </VStack>
+                <IconButton
+                  aria-label={t('Details')}
+                  title={t('Details')}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsVthoDetailsOpen(true)}
+                >
+                  <LuEye />
+                </IconButton>
+              </HStack>
+            </Flex>
           )}
         </Stack>
       ),
@@ -247,6 +205,106 @@ export const StakingSection = ({ address }: { address: AddressString }) => {
         mobileCardProps={{ w: 'full' }}
         desktopContainerProps={{ w: 'full' }}
       />
+
+      <Dialog.Root open={isVthoDetailsOpen} onOpenChange={details => setIsVthoDetailsOpen(details.open)}>
+        <Portal>
+          <Dialog.Backdrop bg="blackAlpha.600" />
+          <Dialog.Positioner alignItems={{ base: 'flex-end', md: 'center' }} px={{ base: 0, md: 4 }}>
+            <Dialog.Content
+              mb={{ base: 0, md: 'inherit' }}
+              bg="bg-primary"
+              backdropFilter="blur(32px)"
+              borderTopLeftRadius={{ base: '2xl', md: 'xl' }}
+              borderTopRightRadius={{ base: '2xl', md: 'xl' }}
+              borderBottomLeftRadius={{ base: 0, md: 'xl' }}
+              borderBottomRightRadius={{ base: 0, md: 'xl' }}
+              borderWidth="1px"
+              borderColor="border-primary"
+              maxW={{ base: '100vw', md: '520px' }}
+              w={{ base: '100vw', md: '90vw' }}
+              maxH={{ base: '85vh', md: 'unset' }}
+              overflow="hidden"
+              p={0}
+            >
+              <Dialog.Header p={4} borderBottomWidth="1px" borderColor="border-primary">
+                <Flex justify="space-between" align="center">
+                  <Dialog.Title textStyle="bodyL" fontWeight="semibold">
+                    {t('VTHO Earned')}
+                  </Dialog.Title>
+                  <Dialog.CloseTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      minW="44px"
+                      minH="44px"
+                      p={1}
+                      onClick={() => setIsVthoDetailsOpen(false)}
+                    >
+                      <LuX size={20} />
+                    </Button>
+                  </Dialog.CloseTrigger>
+                </Flex>
+              </Dialog.Header>
+
+              <Dialog.Body p={4}>
+                <Stack gap={4}>
+                  <VStack gap={1} alignItems="flex-start">
+                    <HStack gap={2}>
+                      <Text textStyle="displayXs" color="text-primary">
+                        {formattedTotalEarned}
+                      </Text>
+                      <Image src="/tokens/VTHO.svg" alt="VTHO" width={20} height={20} />
+                    </HStack>
+                    {isVthoPriceLoading ? (
+                      <Skeleton height="20px" width="90px" />
+                    ) : (
+                      vthoFiatValue && (
+                        <Text textStyle="bodyL" color="text-secondary">
+                          {vthoFiatValue}
+                        </Text>
+                      )
+                    )}
+                  </VStack>
+
+                  <Card variant="outline" gap={0}>
+                    {vthoDetailItems.map((item, index) => {
+                      const isLastItem = index === vthoDetailItems.length - 1
+
+                      return (
+                        <HStack
+                          key={item.label}
+                          justify="space-between"
+                          width="full"
+                          py={4}
+                          borderBottomWidth={isLastItem ? '0' : '1px'}
+                          borderColor="border-primary"
+                        >
+                          <Text textStyle="bodyM" color="text-secondary">
+                            {item.label}
+                          </Text>
+                          <VStack gap={1} alignItems="flex-end">
+                            <HStack gap={2}>
+                              <Text textStyle="bodyM" color="text-primary">
+                                {item.amount}
+                              </Text>
+                              <Image src="/tokens/VTHO.svg" alt="VTHO" width={16} height={16} />
+                            </HStack>
+                            {item.fiatValue && (
+                              <Text textStyle="bodyS" color="text-secondary">
+                                {item.fiatValue}
+                              </Text>
+                            )}
+                          </VStack>
+                        </HStack>
+                      )
+                    })}
+                  </Card>
+                </Stack>
+              </Dialog.Body>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </Stack>
   )
 }

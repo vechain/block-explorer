@@ -4,7 +4,7 @@ import { Grid, Skeleton, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
 import { DataCard } from '@/components/ui/DataCard'
-import { AddressLink } from '@/components/ui/Links'
+import { CopyableAddressLink } from '@/components/ui/Links'
 import type { AddressString } from '@/lib/schemas'
 import { useErc721Owner } from '@/services/thor/tokens/erc721'
 import { useMintEvent } from '@/services/veworld-indexer/nft-transfers'
@@ -32,7 +32,7 @@ export const NftStatsCards = ({ contractAddress, tokenId }: NftStatsCardsProps) 
         {isOwnerPending ? (
           <Skeleton height="24px" width="100%" />
         ) : owner ? (
-          <AddressLink address={owner} truncate />
+          <CopyableAddressLink address={owner} truncate />
         ) : (
           <Text color="text-secondary">-</Text>
         )}

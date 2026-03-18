@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from '@/components/ui-legacy/ErrorBoundary'
 import { type DecodedEvent, useDecodeEvent } from '@/hooks/useDecodeEvent'
 import { EventType, type RawEvent } from '@/lib/schemas'
-import { AddressLink } from './ui/Links'
+import { CopyableAddressLink } from './ui/Links'
 import { Card } from './ui/Card'
 import { ToggleGroup, type ToggleOption } from './ui/ToggleGroup'
 
@@ -71,7 +71,7 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
           <Text>#{index}</Text>
           <HStack gap="2" overflow="hidden">
             <Text>{t('emitter')}</Text>
-            <AddressLink address={event.raw.address} truncate={isMobile} />
+            <CopyableAddressLink address={event.raw.address} truncate={isMobile} />
           </HStack>
         </Card>
         <Flex>

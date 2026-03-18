@@ -13,8 +13,7 @@ import { useFormatDate } from '@/hooks/useFormatting'
 import { useAccountTokens } from '@/hooks/useAccountTokens'
 import { useVnsName } from '@/services/thor/vns'
 import { TokensSection } from './sections/TokensSection'
-import { AddressLink, BaseLink } from '@/components/ui/Links'
-import { truncateHex } from '@/lib/utils/truncateHex'
+import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getTokenRegistryEntry } from '@/lib/constants/token-registry'
 import { KnownContractSection } from './KnownContractSection'
@@ -52,8 +51,10 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
       title: t('Contract Master'),
       children: isPending ? (
         <Skeleton height="24px" width="120px" />
+      ) : contract?.master ? (
+        <CopyableAddressLink truncate address={contract.master} />
       ) : (
-        <AddressLink truncate address={contract?.master ?? '0x'} />
+        <Text color="text-secondary">-</Text>
       ),
     },
     {
@@ -61,10 +62,10 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
       title: t('Creation Transaction'),
       children: isPending ? (
         <Skeleton height="24px" width="120px" />
+      ) : contract?.deploymentTxId ? (
+        <CopyableTransactionIdLink txId={contract.deploymentTxId} />
       ) : (
-        <BaseLink href={`/transactions/${contract?.deploymentTxId ?? '0x'}`}>
-          {truncateHex(contract?.deploymentTxId ?? '0x')}
-        </BaseLink>
+        <Text color="text-secondary">-</Text>
       ),
     },
   ]
