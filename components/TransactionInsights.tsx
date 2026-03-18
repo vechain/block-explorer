@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { LuChevronRight } from 'react-icons/lu'
 import { useTranslation } from 'react-i18next'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
-import { AddressLink } from '@/components/ui/Links'
+import { CopyableAddressLink } from '@/components/ui/Links'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
 import { useTransactionGasInsights } from '@/hooks/useTransactionGasInsights'
 import { TxTypeBadge } from '@/components/ui/TxTypeBadge'
@@ -42,7 +42,7 @@ export const TransactionInsight = ({
   const transactionInsights: InsightType[] = [
     {
       label: t('Origin'),
-      value: <AddressLink address={transaction.origin} truncate />,
+      value: <CopyableAddressLink address={transaction.origin} truncate />,
     },
     {
       label: t('Type'),

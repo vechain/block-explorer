@@ -10,7 +10,7 @@ import { TransactionViews } from '@/components/TransactionViews'
 import { VTHOBalance } from '@/components/ui/Balance'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
-import { BaseLink } from '@/components/ui/Links'
+import { BaseLink, CopyableLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
@@ -102,9 +102,9 @@ const TransactionDetails = ({
               icon: <Image src="/icons/block-number.svg" alt="Block Number" />,
               title: t('Block Number'),
               children: (
-                <BaseLink href={`/block/${transaction.meta.blockID}`}>
+                <CopyableLink href={`/block/${transaction.meta.blockID}`} value={String(transaction.meta.blockNumber)}>
                   #{formatNumber(transaction.meta.blockNumber)}
-                </BaseLink>
+                </CopyableLink>
               ),
             },
             {

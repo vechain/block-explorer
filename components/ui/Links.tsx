@@ -51,25 +51,6 @@ export const ViewAllLink = ({ children, href, ...props }: BaseLinkProps) => {
   )
 }
 
-interface AddressLinkProps extends Omit<BaseLinkProps, 'href'> {
-  address: AddressString
-  truncate?: boolean
-}
-
-export const AddressLink = ({ address, truncate = false, ...props }: AddressLinkProps) => {
-  const { data: vnsName, isPending } = useVnsName(address)
-
-  if (isPending) {
-    return <Skeleton height="16px" width="100%" />
-  }
-
-  return (
-    <BaseLink href={`/address/${address}`} {...props}>
-      {vnsName ? vnsName : truncate ? truncateAddress(address) : address}
-    </BaseLink>
-  )
-}
-
 //************************* Copyable Links *************************//
 interface CopyableLinkProps extends BaseLinkProps {
   value: string

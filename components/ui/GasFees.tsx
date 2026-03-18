@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { InfoTip } from './InfoTip'
 import { AddressString } from '@/lib/schemas/common'
 import { VTHOBalance } from './Balance'
-import { AddressLink } from './Links'
+import { CopyableAddressLink } from './Links'
 import { useTranslation } from 'react-i18next'
 import { useFormatNumber } from '@/hooks/useFormatting'
 import type { TxGasFeesResult } from '@/hooks/useTransactionGasInsights'
@@ -25,7 +25,7 @@ export const TxFeePaid = ({ gasFees, gasPayer }: { gasFees: TxGasFeesResult; gas
         </HStack>
         <HStack alignItems="center" gap={2}>
           <Text textTransform="lowercase">{t('By')}</Text>
-          <AddressLink address={gasPayer} truncate />
+          <CopyableAddressLink address={gasPayer} truncate />
         </HStack>
       </Flex>
     )

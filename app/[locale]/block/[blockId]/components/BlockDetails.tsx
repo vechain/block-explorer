@@ -6,7 +6,8 @@ import { useTranslation } from 'react-i18next'
 import { NotFound } from '@/components/error/NotFound'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
-import { AddressLink, BaseLink } from '@/components/ui/Links'
+import { CopyableString } from '@/components/ui/CopyableString'
+import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import type { BlockRevision } from '@/lib/schemas'
 import { useBlockExpanded } from '@/services/thor/block'
@@ -44,9 +45,9 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
                 icon: <Image src="/icons/calendar.svg" alt="Calendar" />,
                 title: t('Block Number'),
                 children: (
-                  <Text textStyle="bodyL" color="text-primary">
+                  <CopyableString value={String(block.number)} textStyle="bodyL">
                     #{formatNumber(block.number)}
-                  </Text>
+                  </CopyableString>
                 ),
               },
               {
@@ -57,12 +58,16 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
               {
                 icon: <Image src="/icons/link.svg" alt="Signer" />,
                 title: t('Block Signer'),
-                children: <AddressLink address={block.signer} truncate />,
+                children: <CopyableAddressLink address={block.signer} truncate />,
               },
               {
                 icon: <Image src="/icons/link.svg" alt="Parent block" />,
                 title: t('Parent block'),
-                children: <BaseLink href={`/block/${block.parentID}`}>#{formatNumber(block.number - 1)}</BaseLink>,
+                children: (
+                  <CopyableLink href={`/block/${block.parentID}`} value={String(block.number - 1)}>
+                    #{formatNumber(block.number - 1)}
+                  </CopyableLink>
+                ),
               },
             ] as DataCardGroupItem[]
           }
