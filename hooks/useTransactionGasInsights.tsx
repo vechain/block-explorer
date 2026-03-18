@@ -44,20 +44,21 @@ export const useTransactionGasInsights = ({
 
   const transactionGasInsights = [
     {
-      label: t('Gas Used'),
-      value: <GasUsed gasUsed={receipt?.gasUsed ?? BigInt(0)} gasLimit={transaction.gas} />,
-    },
-    {
       label: t('Fee Paid'),
       value: <TxFeePaid gasFees={txGasFees} gasPayer={receipt?.gasPayer ?? null} />,
     },
     {
-      label: t('VTHO Rewarded'),
-      value: <VTHOBalance balance={receipt?.reward ?? BigInt(0)} />,
+      label: t('Gas Used'),
+      value: <GasUsed gasUsed={receipt?.gasUsed ?? BigInt(0)} gasLimit={transaction.gas} />,
     },
     {
-      label: t('VTHO Burned'),
-      value: <VTHOBalance balance={BigInt(receipt?.paid ?? 0) - BigInt(receipt?.reward ?? 0)} />,
+      label: t('Gas Price'),
+      value:
+        txGasFees.type === 'loading' ? (
+          <Skeleton h="20px" w="80px" />
+        ) : (
+          `${formatNumber(Number(formatGwei(txGasFees.gasPrice)))} Gwei`
+        ),
     },
     {
       label: t('Base Fee per Gas'),
@@ -68,14 +69,15 @@ export const useTransactionGasInsights = ({
           `${formatNumber(Number(formatGwei(txGasFees.baseFeePerGas)))} Gwei`
         ),
     },
+  ]
+  const vthoInsights = [
     {
-      label: t('Gas Price'),
-      value:
-        txGasFees.type === 'loading' ? (
-          <Skeleton h="20px" w="80px" />
-        ) : (
-          `${formatNumber(Number(formatGwei(txGasFees.gasPrice)))} Gwei`
-        ),
+      label: t('VTHO Rewarded'),
+      value: <VTHOBalance balance={receipt?.reward ?? BigInt(0)} />,
+    },
+    {
+      label: t('VTHO Burned'),
+      value: <VTHOBalance balance={BigInt(receipt?.paid ?? 0) - BigInt(receipt?.reward ?? 0)} />,
     },
   ]
 
@@ -93,6 +95,7 @@ export const useTransactionGasInsights = ({
           </HStack>
         ),
       },
+      ...vthoInsights,
     ]
   }
 
@@ -116,6 +119,7 @@ export const useTransactionGasInsights = ({
           </Stack>
         ),
       },
+      ...vthoInsights,
     ]
   }
 

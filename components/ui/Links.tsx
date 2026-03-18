@@ -13,7 +13,7 @@ interface BaseLinkProps extends Omit<ChakraLinkProps, 'href'> {
   href: NextLinkProps['href']
 }
 
-export const BaseLink = ({ children, href, ...props }: BaseLinkProps) => {
+const BaseLink = ({ children, href, ...props }: BaseLinkProps) => {
   return (
     <ChakraLink
       asChild

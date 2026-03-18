@@ -3,7 +3,6 @@
 import { Flex, HStack, Progress, Skeleton, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 
-import { InfoTip } from './InfoTip'
 import { AddressString } from '@/lib/schemas/common'
 import { VTHOBalance } from './Balance'
 import { CopyableAddressLink } from './Links'
@@ -36,19 +35,23 @@ export const TxFeePaid = ({ gasFees, gasPayer }: { gasFees: TxGasFeesResult; gas
 
 export const GasUsed = ({ gasUsed, gasLimit }: { gasUsed: bigint; gasLimit: bigint }) => {
   const formatNumber = useFormatNumber()
-  const gasUsedRatio = (Number(gasUsed) / Number(gasLimit)) * 100
+  const gasUsedRatio = gasLimit === 0n ? 0 : (Number(gasUsed) / Number(gasLimit)) * 100
 
   return (
-    <Flex alignItems="start" gap={2}>
-      <Progress.Root size="xs" rounded="full" w="20" value={gasUsedRatio} formatOptions={{ style: 'percent' }}>
-        <Progress.Track bgColor="bg-card-surface-2" shadow="none">
-          <Progress.Range bgColor="accent-secondary" rounded="full" />
-        </Progress.Track>
-        <Progress.Label textStyle="bodyS" color="text-alt">
+    <Flex direction={{ base: 'column', md: 'row' }} alignItems={{ base: 'flex-end', md: 'center' }} gap={2}>
+      <Text textStyle="bodyS" color="text-alt-secondary" whiteSpace="nowrap">
+        {formatNumber(Number(gasUsed))} / {formatNumber(Number(gasLimit))}
+      </Text>
+      <Flex alignItems="center" gap={1}>
+        <Progress.Root size="xs" rounded="full" w="20" value={gasUsedRatio}>
+          <Progress.Track bgColor="bg-card-surface-2" shadow="none">
+            <Progress.Range bgColor="accent-secondary" rounded="full" />
+          </Progress.Track>
+        </Progress.Root>
+        <Text textStyle="bodyS" color="text-alt" whiteSpace="nowrap">
           {`${gasUsedRatio.toFixed(0)}%`}
-        </Progress.Label>
-      </Progress.Root>
-      <InfoTip tooltip={[formatNumber(Number(gasUsed)), formatNumber(Number(gasLimit))].join(' / ')} />
+        </Text>
+      </Flex>
     </Flex>
   )
 }
