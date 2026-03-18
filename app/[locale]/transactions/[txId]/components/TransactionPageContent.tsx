@@ -105,7 +105,9 @@ const TransactionDetails = ({
             <TxStatusBadge status={status} flexShrink={0} />
           </Flex>
           <Card variant="outline" p="2" w="fit-content">
-            <CopyableString value={isMobile ? truncateHex(transaction.id, 16, 10) : transaction.id} truncate />
+            <CopyableString value={transaction.id} truncate>
+              {isMobile ? truncateHex(transaction.id, 16, 10) : transaction.id}
+            </CopyableString>
           </Card>
         </Stack>
 
