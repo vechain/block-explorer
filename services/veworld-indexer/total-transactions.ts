@@ -10,11 +10,10 @@ import { resolveUrl } from '.'
 const TOTAL_TRANSACTIONS_QUERY_KEY = 'getTotalTransactions'
 const GENESIS_TIMESTAMP = 1530316800
 
-const totalTransactionsQueryOptions = (networkName: NetworkName) => ({
+export const totalTransactionsQueryOptions = (networkName: NetworkName) => ({
   queryKey: [TOTAL_TRANSACTIONS_QUERY_KEY, networkName],
   queryFn: () => getTotalTransactions({ networkName }),
-  staleTime: 5 * 60 * 1000,
-  refetchInterval: 5 * 1000,
+  refetchInterval: 10 * 1000,
 })
 
 const getTotalTransactions = async ({ networkName }: { networkName: NetworkName }) => {
@@ -34,12 +33,10 @@ const getTotalTransactions = async ({ networkName }: { networkName: NetworkName 
   })
 
   if (parsedData.length === 0) return 0
-  if (parsedData.length === 1) return Number(parsedData[0].cumulativeNumTransactions)
 
-  const firstPoint = parsedData[0]
   const lastPoint = parsedData[parsedData.length - 1]
 
-  return Math.max(0, Number(lastPoint.cumulativeNumTransactions) - Number(firstPoint.cumulativeNumTransactions))
+  return Number(lastPoint.cumulativeNumTransactions)
 }
 
 export const useTotalTransactions = () => {

@@ -24,6 +24,7 @@ import {
   ValidatorStatus,
 } from '@/services/veworld-indexer/validators'
 import { TableSkeleton } from '@/components/ui/Table'
+import { totalTransactionsQueryOptions } from '@/services/veworld-indexer/total-transactions'
 
 export default async function HomePage({
   searchParams,
@@ -38,6 +39,7 @@ export default async function HomePage({
   const prefetchResults = await Promise.allSettled([
     queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
+    queryClient.prefetchQuery(totalTransactionsQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(accountTotalsQueryOptions(activeNetworkName, AccountTimeFrame.ALL)),
     queryClient.prefetchQuery(allValidatorsQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(validatorsCountQueryOptions(activeNetworkName, { status: ValidatorStatus.ACTIVE })),
@@ -47,6 +49,7 @@ export default async function HomePage({
   logPrefetchFailures(prefetchResults, [
     'bestBlockCompressed',
     'totalVetStaked',
+    'totalTransactions',
     'accountTotals',
     'allValidators',
     'validatorsCount:ACTIVE',
