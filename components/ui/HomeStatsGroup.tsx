@@ -1,21 +1,29 @@
 'use client'
 
 import { Grid, Skeleton, Text } from '@chakra-ui/react'
-import { Card } from './Card'
-import { useTranslation } from 'react-i18next'
+import Link from 'next/link'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { formatEther } from 'viem'
+import { getStargateLink } from '@/lib/constants/stargate-nft'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { AccountTimeFrame, useAccountTotals } from '@/services/veworld-indexer/account-totals'
-import { useTotalVetDelegated } from '@/services/veworld-indexer/total-vet-delegated'
+import { useTotalTransactions } from '@/services/veworld-indexer/total-transactions'
 import { useTotalVetStaked } from '@/services/veworld-indexer/total-vet-staked'
 import { ValidatorStatus, useValidators, useValidatorsCount } from '@/services/veworld-indexer/validators'
+import { Card } from './Card'
+import { MotionText } from './MotionText'
 import { useFormatNumber } from '@/hooks/useFormatting'
-import { useSettingsStore } from '@/lib/stores/settings'
-import { getStargateLink } from '@/lib/constants/stargate-nft'
 
-const SCALING_FACTOR = 1200
-const BASE_ISSUANCE = 64
-const ISSUANCE_COEFFICIENT = SCALING_FACTOR * BASE_ISSUANCE
+type Stat = {
+  title: string
+  loading: boolean
+  value: React.ReactNode
+  href: string
+  external: boolean
+  animate?: boolean
+  animationKey?: string | number
+}
 
 export const HomeStatsGroup = () => {
   const { t } = useTranslation()
@@ -24,8 +32,8 @@ export const HomeStatsGroup = () => {
   const { activeNetwork } = useSettingsStore()
   const STARGATE_LINK = getStargateLink(activeNetwork.name, '/market')
 
-  // General Information logic
   const { data: accountTotalsData, isLoading: isLoadingAccounts } = useAccountTotals(AccountTimeFrame.ALL)
+  const { data: totalTransactions, isLoading: isLoadingTransactions } = useTotalTransactions()
   const { data: activeValidatorsCount, isLoading: isLoadingActiveValidators } = useValidatorsCount({
     status: ValidatorStatus.ACTIVE,
   })
@@ -38,10 +46,8 @@ export const HomeStatsGroup = () => {
   const exitingValidators = exitingValidatorsCount ?? 0
   const validators = activeValidators + exitingValidators
 
-  // Stargate Market Stats logic
   const { data: validatorsList, isLoading: isLoadingValidators } = useValidators()
   const { data: totalVetStakedData, isLoading: isLoadingTotalVetStaked } = useTotalVetStaked()
-  const { data: totalVetDelegatedData, isLoading: isLoadingTotalVetDelegated } = useTotalVetDelegated()
 
   const totalValidatorStake = useMemo(() => {
     const list = validatorsList ?? []
@@ -58,55 +64,52 @@ export const HomeStatsGroup = () => {
     }
   }, [totalVetStakedData?.total])
 
-  const totalDelegatedVet = useMemo(() => {
-    try {
-      return Number(formatEther(totalVetDelegatedData?.total ?? 0n))
-    } catch {
-      return 0
-    }
-  }, [totalVetDelegatedData?.total])
-
   const totalTvl = totalValidatorStake + totalDelegatorStakedVet
-  const activeStake = totalValidatorStake + totalDelegatedVet
-  const vthoIssuance = ISSUANCE_COEFFICIENT * Math.sqrt(activeStake)
 
   const tvlLoading = isLoadingValidators || isLoadingTotalVetStaked
-  const vthoIssuanceLoading = isLoadingValidators || isLoadingTotalVetDelegated
 
   const compact = useMemo(
     () => ({ notation: 'compact', maximumFractionDigits: 1 }) satisfies Intl.NumberFormatOptions,
     [],
   )
 
-  const stats = [
+  const stats: Stat[] = [
     {
       title: t('Total Accounts'),
       loading: isLoadingAccounts,
       value: formatNumber(totalAccounts),
       href: STARGATE_LINK,
+      external: true,
+      animate: true,
+      animationKey: totalAccounts,
+    },
+    {
+      title: t('Total Transactions'),
+      loading: isLoadingTransactions,
+      value: formatNumber(totalTransactions ?? 0),
+      href: '/stats',
+      external: false,
+      animate: true,
+      animationKey: totalTransactions ?? 0,
     },
     {
       title: t('Validators'),
       loading: isLoadingActiveValidators || isLoadingExitingValidators,
       value: formatNumber(validators),
       href: STARGATE_LINK,
+      external: true,
     },
     {
       title: t('Total Value Locked'),
       loading: tvlLoading,
       value: <>{formatNumber(totalTvl, compact)} VET</>,
       href: STARGATE_LINK,
-    },
-    {
-      title: t('VTHO Issuance'),
-      loading: vthoIssuanceLoading,
-      value: <>{formatNumber(vthoIssuance, compact)} VTHO</>,
-      href: STARGATE_LINK,
+      external: true,
     },
   ]
 
   return (
-    <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }} gap={4}>
+    <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }} gap={4}>
       {stats.map((stat, index) => (
         <Card
           key={index}
@@ -120,20 +123,57 @@ export const HomeStatsGroup = () => {
           _hover={{ borderColor: 'border-hover', transform: 'scale(1.02)' }}
           transition="border-color 0.2s, transform 0.2s"
         >
-          <a href={stat.href} target="_blank" rel="noopener noreferrer">
-            <Text textStyle="bodyM" color="text-secondary">
-              {stat.title}
-            </Text>
-            {stat.loading ? (
-              <Skeleton height="24px" width="70px" />
-            ) : (
-              <Text textStyle={{ base: 'display2Xs', md: 'displayXs' }} color="text-primary">
-                {stat.value}
+          {stat.external ? (
+            <a href={stat.href} target="_blank" rel="noopener noreferrer">
+              <Text textStyle="bodyM" color="text-secondary">
+                {stat.title}
               </Text>
-            )}
-          </a>
+              {stat.loading ? <Skeleton height="24px" width="70px" /> : <StatValue stat={stat} />}
+            </a>
+          ) : (
+            <Link href={stat.href}>
+              <Text textStyle="bodyM" color="text-secondary">
+                {stat.title}
+              </Text>
+              {stat.loading ? <Skeleton height="24px" width="70px" /> : <StatValue stat={stat} />}
+            </Link>
+          )}
         </Card>
       ))}
     </Grid>
+  )
+}
+
+const StatValue = ({ stat }: { stat: Pick<Stat, 'value' | 'animate' | 'animationKey'> }) => {
+  if (!stat.animate) {
+    return (
+      <Text textStyle={{ base: 'display2Xs', md: 'displayXs' }} color="text-primary">
+        {stat.value}
+      </Text>
+    )
+  }
+
+  return (
+    <MotionText
+      key={stat.animationKey}
+      textStyle={{ base: 'display2Xs', md: 'displayXs' }}
+      color="text-primary"
+      display="inline-block"
+      transformOrigin="left center"
+      initial={{ scale: 1 }}
+      animate={{
+        scale: [1, 1.1, 1],
+        filter: ['brightness(1)', 'brightness(1.65)', 'brightness(1.2)', 'brightness(1)'],
+        textShadow: [
+          '0 0 0px rgba(231,130,255,0), 0 0 0px rgba(231,130,255,0)',
+          '0 0 22px rgba(231,130,255,0.42), 0 0 6px rgba(231,130,255,0.34)',
+          '0 0 12px rgba(231,130,255,0.22), 0 0 4px rgba(231,130,255,0.18)',
+          '0 0 0px rgba(231,130,255,0), 0 0 0px rgba(231,130,255,0)',
+        ],
+      }}
+      transition={{ duration: 1, times: [0, 0.3, 0.72, 1], ease: 'easeInOut' }}
+    >
+      {stat.value}
+    </MotionText>
   )
 }
