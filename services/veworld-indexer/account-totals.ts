@@ -32,7 +32,7 @@ const accountTotalsResponseSchema = indexerResponseSchema(accountTotalSchema)
 export const accountTotalsQueryOptions = (networkName: NetworkName, timeFrame: AccountTimeFrame) => ({
   queryKey: [ACCOUNT_TOTALS_QUERY_KEY, networkName, timeFrame],
   queryFn: () => getAccountTotals({ networkName, timeFrame }),
-  refetchInterval: 5 * 1000, // Refetch every 5 seconds
+  refetchInterval: 10 * 1000, // Refetch every 10 seconds
   placeholderData: keepPreviousData, // Prevent UI flickering during refetches
 })
 
