@@ -131,6 +131,14 @@ const NavigationMenu = () => {
                   </Flex>
                 </Link>
                 <Separator />
+                <Link href="/tokens" onClick={() => setIsMenuOpen(false)}>
+                  <Flex gap={2} alignItems="center" py={2}>
+                    <Text fontSize="body-m" whiteSpace="nowrap">
+                      {t('Tokens')}
+                    </Text>
+                  </Flex>
+                </Link>
+                <Separator />
                 <Link href="https://inspector.vecha.in/" target="_blank" rel="noopener noreferrer">
                   <Flex gap={2} alignItems="center" py={2}>
                     <Text fontSize="body-m" whiteSpace="nowrap">
