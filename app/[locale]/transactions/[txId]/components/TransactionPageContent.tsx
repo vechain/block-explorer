@@ -1,6 +1,6 @@
 'use client'
 
-import { Flex, Heading, Skeleton, Stack, Text, useBreakpointValue } from '@chakra-ui/react'
+import { Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { usePathname, useRouter, useSearchParams, type ReadonlyURLSearchParams } from 'next/navigation'
 import { useMemo } from 'react'
@@ -10,6 +10,7 @@ import { TransactionInsight } from '@/components/TransactionInsights'
 import { TxStatusBadge } from '@/components/TxStatus'
 import { TransactionViews } from '@/components/TransactionViews'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
+import { IDChip } from '@/components/ui/IDChip'
 import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
@@ -17,8 +18,6 @@ import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
 import { TransactionDetailsView, TransactionStatus } from '@/lib/types'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/transaction'
-import { CopyableString } from '@/components/ui/CopyableString'
-import { truncateHex } from '@/lib/utils/truncateHex'
 
 export const TransactionPageContent = ({
   transactionId,
@@ -79,7 +78,6 @@ const TransactionDetails = ({
   const { t } = useTranslation()
   const formatDate = useFormatDate()
   const formatNumber = useFormatNumber()
-  const isMobile = useBreakpointValue({ base: true, md: false })
   const status = receipt
     ? receipt.reverted
       ? TransactionStatus.REVERTED
@@ -104,11 +102,7 @@ const TransactionDetails = ({
             </Heading>
             <TxStatusBadge status={status} flexShrink={0} />
           </Flex>
-          <Card variant="outline" p="2" w="fit-content">
-            <CopyableString value={transaction.id} truncate>
-              {isMobile ? truncateHex(transaction.id, 16, 10) : transaction.id}
-            </CopyableString>
-          </Card>
+          <IDChip value={transaction.id} />
         </Stack>
 
         <DataCardGroup

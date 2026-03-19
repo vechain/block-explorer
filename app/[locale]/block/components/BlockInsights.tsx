@@ -1,35 +1,30 @@
 'use client'
 
-import { Flex, Heading, Text, VStack } from '@chakra-ui/react'
-import Image from 'next/image'
+import { Heading, Text, VStack } from '@chakra-ui/react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatGwei } from 'viem'
+import { VTHOBalanceWithFiat } from '@/components/ui/Balance'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { GasUsed } from '@/components/ui/GasFees'
-import type { ExpandedBlock } from '@/lib/schemas'
-import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
-import { useMemo } from 'react'
+import { CopyableLink } from '@/components/ui/Links'
 import { TxFeaturesBadge } from '@/components/ui/TxTypeBadge'
-import { formatGwei, formatUnits } from 'viem'
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useFormatNumber } from '@/hooks/useFormatting'
+import type { ExpandedBlock } from '@/lib/schemas'
 
 export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
-  const formatDate = useFormatDate()
-  const isMobile = useIsMobile()
 
-  // Calculate VTHO metrics from transaction receipts
   const vthoMetrics = useMemo(() => {
     const totalPaid = block.transactions.reduce((sum, tx) => sum + (tx.paid ?? 0n), 0n)
     const totalRewarded = block.transactions.reduce((sum, tx) => sum + (tx.reward ?? 0n), 0n)
-    const totalBurned = totalPaid - totalRewarded
 
-    // Convert from wei (18 decimals) to VTHO
-    const vthoPaid = parseFloat(formatUnits(totalPaid, 18))
-    const vthoRewarded = parseFloat(formatUnits(totalRewarded, 18))
-    const vthoBurned = parseFloat(formatUnits(totalBurned, 18))
-
-    return { vthoPaid, vthoRewarded, vthoBurned }
+    return {
+      totalPaid,
+      totalRewarded,
+      totalBurned: totalPaid - totalRewarded,
+    }
   }, [block.transactions])
 
   const blockInsights: DataCardGroupItem[] = [
@@ -38,8 +33,23 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
       children: <TxFeaturesBadge features={block.txsFeatures} />,
     },
     {
+      title: t('Parent block'),
+      children: (
+        <CopyableLink href={`/block/${block.parentID}`} value={String(block.number - 1)}>
+          #{formatNumber(block.number - 1)}
+        </CopyableLink>
+      ),
+    },
+    {
       title: t('Block Finality'),
       children: <Text>{block.isFinalized ? t('Finalized') : t('Finalizing')}</Text>,
+    },
+  ]
+
+  const feeAndGasItems: DataCardGroupItem[] = [
+    {
+      title: t('VTHO Paid'),
+      children: <VTHOBalanceWithFiat balance={vthoMetrics.totalPaid} />,
     },
     {
       title: t('Gas Used'),
@@ -56,65 +66,25 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
       ),
     },
     {
-      title: t('Transactions'),
-      children: <Text>{formatNumber(block.transactions.length)}</Text>,
+      title: t('VTHO Burned'),
+      children: <VTHOBalanceWithFiat balance={vthoMetrics.totalBurned} />,
     },
-    ...(isMobile
-      ? [
-          {
-            title: t('VTHO Paid'),
-            children: <Text>{formatNumber(vthoMetrics.vthoPaid, { maximumFractionDigits: 6 })} VTHO</Text>,
-          },
-          {
-            title: t('VTHO Burned'),
-            children: <Text>{formatNumber(vthoMetrics.vthoBurned, { maximumFractionDigits: 6 })} VTHO</Text>,
-          },
-          {
-            title: t('VTHO Rewarded'),
-            children: <Text>{formatNumber(vthoMetrics.vthoRewarded, { maximumFractionDigits: 6 })} VTHO</Text>,
-          },
-        ]
-      : ([] satisfies DataCardGroupItem[])),
+    {
+      title: t('VTHO Rewarded'),
+      children: <VTHOBalanceWithFiat balance={vthoMetrics.totalRewarded} />,
+    },
   ] satisfies DataCardGroupItem[]
 
   return (
     <VStack alignItems="stretch" gap={4}>
-      <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gapX="2" gapY="4">
-        <Heading as="h2" textStyle="displayXs">
-          {t('Block Insights')}
+      <DataCardGroup items={blockInsights} singleCard variant="outline" />
+
+      <VStack alignItems="stretch" gap="3">
+        <Heading as="h3" textStyle="bodyL" color="text-primary">
+          {t('Fees, Gas and VTHO')}
         </Heading>
-
-        <Text color="text-secondary">{formatDate(block.timestamp)}</Text>
-      </Flex>
-
-      <Flex alignItems="stretch" flexDirection={{ base: 'column', md: 'row' }} gap="4">
-        <DataCardGroup items={blockInsights} singleCard variant="outline" />
-
-        <DataCardGroup
-          variant="outline"
-          hidden={isMobile}
-          items={
-            [
-              {
-                icon: <Image src="/icons/coin.svg" alt="VTHO Paid" width={24} height={24} />,
-                title: t('VTHO Paid'),
-                children: <Text>{formatNumber(vthoMetrics.vthoPaid, { maximumFractionDigits: 6 })} VTHO</Text>,
-              },
-              {
-                icon: <Image src="/icons/flash.svg" alt="VTHO Burned" width={24} height={24} />,
-                title: t('VTHO Burned'),
-                children: <Text>{formatNumber(vthoMetrics.vthoBurned, { maximumFractionDigits: 6 })} VTHO</Text>,
-              },
-              {
-                icon: <Image src="/icons/reward.svg" alt="VTHO Rewarded" width={24} height={24} />,
-                title: t('VTHO Rewarded'),
-                children: <Text>{formatNumber(vthoMetrics.vthoRewarded, { maximumFractionDigits: 6 })} VTHO</Text>,
-              },
-            ] satisfies DataCardGroupItem[]
-          }
-          desktopContainerProps={{ h: 'fit-content' }}
-        />
-      </Flex>
+        <DataCardGroup items={feeAndGasItems} singleCard variant="outline" />
+      </VStack>
     </VStack>
   )
 }
