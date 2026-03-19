@@ -16,7 +16,6 @@ import { ActivitySection } from './components/ActivitySection'
 import { PriceCards } from './components/PriceCards'
 import { TokenTransfersSection } from './components/TokenTransfersSection'
 import { NFTTransfersSection } from './components/NFTTransfersSection'
-import { totalVetDelegatedQueryOptions } from '@/services/veworld-indexer/total-vet-delegated'
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
 import { AccountTimeFrame, accountTotalsQueryOptions } from '@/services/veworld-indexer/account-totals'
 import {
@@ -39,7 +38,6 @@ export default async function HomePage({
   const prefetchResults = await Promise.allSettled([
     queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
-    queryClient.prefetchQuery(totalVetDelegatedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(accountTotalsQueryOptions(activeNetworkName, AccountTimeFrame.ALL)),
     queryClient.prefetchQuery(allValidatorsQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(validatorsCountQueryOptions(activeNetworkName, { status: ValidatorStatus.ACTIVE })),
