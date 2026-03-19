@@ -8,6 +8,7 @@ import { Center, Spinner, Stack } from '@chakra-ui/react'
 import { AccountSummary } from './AccountSummary'
 import { AccountTransactionsSection } from './sections/AccountTransactionsSection'
 import { AccountActivitySection } from './sections/AccountActivitySection'
+import { EndorsedValidatorsSection } from './sections/EndorsedValidatorsSection'
 import { AccountNftsSection } from './sections/AccountNftsSection'
 import { DeployedContractsSection } from './sections/DeployedContractsSection'
 import { AccountTokenTransfersSection } from './sections/AccountTokenTransfersSection'
@@ -64,7 +65,8 @@ export const AddressPageContent = ({ address }: { address: AddressString }) => {
   return (
     <Stack flex={1} gap="8">
       <AccountSummary address={resolvedAddress} />
-      <AccountActivitySection address={resolvedAddress} />
+      <EndorsedValidatorsSection address={resolvedAddress} />
+      <AccountActivitySection address={resolvedAddress} showSummaryCards />
       <AccountTransactionsSection address={resolvedAddress} hasCode={account?.hasCode ?? false} />
       <AccountTokenTransfersSection address={resolvedAddress} />
       <AccountNftsSection address={resolvedAddress} />
