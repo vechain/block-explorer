@@ -18,6 +18,7 @@ export const IDChip = forwardRef<HTMLDivElement, IDChipProps>(({ value, vnsName,
       py="2"
       px="2"
       gap="2"
+      w="fit-content"
       alignItems="center"
       bg="bg-primary"
       color="text-secondary"

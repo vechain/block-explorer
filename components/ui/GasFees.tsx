@@ -4,7 +4,7 @@ import { Flex, HStack, Progress, Skeleton, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 
 import { AddressString } from '@/lib/schemas/common'
-import { VTHOBalance } from './Balance'
+import { VTHOBalanceWithFiat } from './Balance'
 import { CopyableAddressLink } from './Links'
 import { useTranslation } from 'react-i18next'
 import { useFormatNumber } from '@/hooks/useFormatting'
@@ -17,20 +17,23 @@ export const TxFeePaid = ({ gasFees, gasPayer }: { gasFees: TxGasFeesResult; gas
 
   if (gasPayer) {
     return (
-      <Flex alignItems="center" gap={2} flexWrap="wrap" textStyle="bodyM" justifyContent="flex-end">
-        <HStack alignItems="center" gap="2">
-          <VTHOBalance balance={gasFees.totalFeePaid} />
-          <Image src="/icons/success.svg" alt="check mark" width={16} height={16} />
-        </HStack>
-        <HStack alignItems="center" gap={2}>
-          <Text textTransform="lowercase">{t('By')}</Text>
-          <CopyableAddressLink address={gasPayer} truncate />
-        </HStack>
-      </Flex>
+      <VTHOBalanceWithFiat
+        balance={gasFees.totalFeePaid}
+        beforeAmount={<Image src="/icons/success.svg" alt="check mark" width={16} height={16} />}
+        footerInlineOnDesktop
+        footer={
+          <HStack alignItems="center" gap={2}>
+            <Text textStyle="bodyS" textTransform="lowercase">
+              {t('By')}
+            </Text>
+            <CopyableAddressLink address={gasPayer} truncate />
+          </HStack>
+        }
+      />
     )
   }
 
-  return <VTHOBalance balance={gasFees.totalFeePaid} />
+  return <VTHOBalanceWithFiat balance={gasFees.totalFeePaid} />
 }
 
 export const GasUsed = ({ gasUsed, gasLimit }: { gasUsed: bigint; gasLimit: bigint }) => {
