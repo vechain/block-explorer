@@ -18,7 +18,8 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
   const { t } = useTranslation()
   const { data: inputData, isLoading } = useDecodeInputData(data)
   const isDecoded = !!inputData?.decoded
-  const [view, setView] = useState<InputDataView>(() => (isDecoded ? InputDataView.DECODED : InputDataView.RAW))
+  const [view, setView] = useState<InputDataView | null>(null)
+  const activeView = view ?? (isDecoded ? InputDataView.DECODED : InputDataView.RAW)
 
   const viewOptions: ToggleOption<InputDataView>[] = useMemo(
     () => [
@@ -34,7 +35,7 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
         <ToggleGroup
           layoutId={`input-data-${clauseIndex}`}
           options={viewOptions}
-          value={view}
+          value={activeView}
           onChange={setView}
           size="sm"
         />
@@ -44,7 +45,7 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
           <Skeleton height="320px" width="100%" />
         </Card>
       ) : (
-        <InputDataViews inputData={inputData} activeView={view} />
+        <InputDataViews inputData={inputData} activeView={activeView} />
       )}
     </Card>
   )
