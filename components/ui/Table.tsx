@@ -13,6 +13,7 @@ import {
   type TextProps,
 } from '@chakra-ui/react'
 import { keyframes } from '@emotion/react'
+import { useRouter } from 'next/navigation'
 import type { AddressString } from '@/lib/schemas'
 
 const fadeIn = keyframes`
@@ -55,9 +56,11 @@ type DataTableProps<T extends TableRow = TableRow> = {
   rows: T[]
   gridProps?: GridProps
   containerProps?: BoxProps
+  getRowHref?: (row: T) => string | undefined
 }
 
 const border = '1px solid var(--chakra-colors-border-primary)'
+const interactiveTargetSelector = 'a, button, input, textarea, select, summary, [role="button"], [role="link"]'
 
 const getTemplateColumns = (columnCount: number) => {
   if (columnCount <= 2) return `repeat(${columnCount}, auto)`
@@ -96,7 +99,9 @@ export const DataTable = <T extends TableRow = TableRow>({
   rows,
   gridProps,
   containerProps,
+  getRowHref,
 }: DataTableProps<T>) => {
+  const router = useRouter()
   const prevRowIdsRef = useRef<Set<string>>(new Set())
   const isInitialRef = useRef(true)
 
@@ -115,6 +120,14 @@ export const DataTable = <T extends TableRow = TableRow>({
     prevRowIdsRef.current = new Set(rows.map(r => r.id))
     isInitialRef.current = false
   }, [rows])
+
+  const navigateToRow = (href?: string) => {
+    if (!href) return
+    router.push(href)
+  }
+
+  const shouldIgnoreRowNavigation = (target: EventTarget | null) =>
+    target instanceof Element && Boolean(target.closest(interactiveTargetSelector))
 
   return (
     <>
@@ -144,44 +157,78 @@ export const DataTable = <T extends TableRow = TableRow>({
           </Grid>
 
           {/* Data Rows */}
-          {rows.map((row, rowIndex) => (
-            <Grid
-              key={row.id}
-              gridColumn="1 / -1"
-              templateColumns="subgrid"
-              bg={rowIndex % 2 === 0 ? 'row-odd-bg-primary' : 'row-even-bg-primary'}
-              role="row"
-              aria-rowindex={rowIndex + 2}
-              css={newRowIds.has(row.id) ? fadeInStyle : undefined}
-            >
-              {columns.map((column, colIndex) => (
-                <Box
-                  key={`${row.id}-${column.key}`}
-                  whiteSpace="nowrap"
-                  p={4}
-                  textAlign="center"
-                  {...getCellBorders(rowIndex, colIndex, columns.length)}
-                  {...getCellBorderRadius(rowIndex, colIndex, rows.length, columns.length)}
-                  role="cell"
-                >
-                  <Flex justifyContent="center" alignItems="center" h="full">
-                    {column.Cell ? (
-                      <column.Cell value={row[column.key]} row={row} columnKey={column.key} />
-                    ) : (
-                      <TableText>{row[column.key]}</TableText>
-                    )}
-                  </Flex>
-                </Box>
-              ))}
-            </Grid>
-          ))}
+          {rows.map((row, rowIndex) => {
+            const rowHref = getRowHref?.(row)
+
+            return (
+              <Grid
+                key={row.id}
+                gridColumn="1 / -1"
+                templateColumns="subgrid"
+                bg={rowIndex % 2 === 0 ? 'row-odd-bg-primary' : 'row-even-bg-primary'}
+                role="row"
+                aria-rowindex={rowIndex + 2}
+                css={newRowIds.has(row.id) ? fadeInStyle : undefined}
+                cursor={rowHref ? 'pointer' : undefined}
+                tabIndex={rowHref ? 0 : undefined}
+                onClick={
+                  rowHref
+                    ? event => {
+                        if (shouldIgnoreRowNavigation(event.target)) return
+                        navigateToRow(rowHref)
+                      }
+                    : undefined
+                }
+                onKeyDown={
+                  rowHref
+                    ? event => {
+                        if (shouldIgnoreRowNavigation(event.target)) return
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          navigateToRow(rowHref)
+                        }
+                      }
+                    : undefined
+                }
+              >
+                {columns.map((column, colIndex) => (
+                  <Box
+                    key={`${row.id}-${column.key}`}
+                    whiteSpace="nowrap"
+                    p={4}
+                    textAlign="center"
+                    {...getCellBorders(rowIndex, colIndex, columns.length)}
+                    {...getCellBorderRadius(rowIndex, colIndex, rows.length, columns.length)}
+                    role="cell"
+                  >
+                    <Flex justifyContent="center" alignItems="center" h="full">
+                      {column.Cell ? (
+                        <column.Cell value={row[column.key]} row={row} columnKey={column.key} />
+                      ) : (
+                        <TableText>{row[column.key]}</TableText>
+                      )}
+                    </Flex>
+                  </Box>
+                ))}
+              </Grid>
+            )
+          })}
         </Grid>
       </Box>
 
       {/* Mobile: Card View */}
       <Stack gap={4} hideFrom="md">
         {rows.map((row, rowIndex) => (
-          <MobileCard key={row.id} row={row} columns={columns} rowIndex={rowIndex} isNew={newRowIds.has(row.id)} />
+          <MobileCard
+            key={row.id}
+            row={row}
+            columns={columns}
+            rowIndex={rowIndex}
+            isNew={newRowIds.has(row.id)}
+            rowHref={getRowHref?.(row)}
+            onNavigate={navigateToRow}
+            shouldIgnoreNavigation={shouldIgnoreRowNavigation}
+          />
         ))}
       </Stack>
     </>
@@ -196,11 +243,17 @@ const MobileCard = <T extends TableRow = TableRow>({
   columns,
   rowIndex,
   isNew,
+  rowHref,
+  onNavigate,
+  shouldIgnoreNavigation,
 }: {
   row: T
   columns: Column<T>[]
   rowIndex: number
   isNew?: boolean
+  rowHref?: string
+  onNavigate: (href?: string) => void
+  shouldIgnoreNavigation: (target: EventTarget | null) => boolean
 }) => {
   return (
     <Box
@@ -208,8 +261,29 @@ const MobileCard = <T extends TableRow = TableRow>({
       border={border}
       borderRadius="2xl"
       p={4}
-      role="article"
+      role={rowHref ? 'link' : 'article'}
       css={isNew ? fadeInStyle : undefined}
+      cursor={rowHref ? 'pointer' : undefined}
+      tabIndex={rowHref ? 0 : undefined}
+      onClick={
+        rowHref
+          ? event => {
+              if (shouldIgnoreNavigation(event.target)) return
+              onNavigate(rowHref)
+            }
+          : undefined
+      }
+      onKeyDown={
+        rowHref
+          ? event => {
+              if (shouldIgnoreNavigation(event.target)) return
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onNavigate(rowHref)
+              }
+            }
+          : undefined
+      }
     >
       <Stack gap={3}>
         {columns.map(column => (

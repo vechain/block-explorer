@@ -146,10 +146,10 @@ export default function TokensPage() {
     () => [
       { key: 'name', label: t('Name'), Cell: NameCell },
       { key: 'symbol', label: t('Symbol') },
+      { key: 'address', label: t('Address'), Cell: AddressCell },
       { key: 'marketCap', label: t('Market Cap'), Cell: MarketCapCell },
       { key: 'price', label: t('Price'), Cell: PriceCell },
       { key: 'totalSupply', label: t('Total Supply'), Cell: TotalSupplyCell },
-      { key: 'address', label: t('Address'), Cell: AddressCell },
       { key: 'website', label: t('Website'), Cell: WebsiteCell },
     ],
     [t],
@@ -162,7 +162,7 @@ export default function TokensPage() {
           {t('Tokens')}
         </Heading>
         <Box minHeight="400px">
-          <DataTable columns={columns} rows={rows} />
+          <DataTable columns={columns} rows={rows} getRowHref={row => `/address/${row.address}`} />
         </Box>
       </Card>
     </Stack>
