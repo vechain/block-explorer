@@ -16,20 +16,27 @@ export const useAccountStakedVet = (address: AddressString | undefined) => {
     address ? { endorser: address } : undefined,
   )
 
-  const totalStakedVet = useMemo(() => {
-    const direct = directStakedVet ?? 0n
-    const endorsed =
+  const delegationStake = directStakedVet ?? 0n
+
+  const validatorStake = useMemo(() => {
+    return (
       endorsedValidators
         ?.filter(v => v.status !== ValidatorStatus.EXITED)
         .reduce((sum, v) => {
           const vetInWei = BigInt(Math.floor(v.validatorVetStaked ?? 0)) * 10n ** 18n
           return sum + vetInWei
         }, 0n) ?? 0n
-    return direct + endorsed
-  }, [directStakedVet, endorsedValidators])
+    )
+  }, [endorsedValidators])
+
+  const totalStakedVet = useMemo(() => {
+    return delegationStake + validatorStake
+  }, [delegationStake, validatorStake])
 
   return {
     data: totalStakedVet,
+    delegationStake,
+    validatorStake,
     isPending: isDirectPending || isValidatorsPending,
   }
 }

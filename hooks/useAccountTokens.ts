@@ -215,7 +215,7 @@ export const useAccountTokens = (address: AddressString) => {
   const isPendingPrices = tokenPriceQueries.some(query => query.isPending)
 
   // Build token value rows: calculate value from balance * price
-  const { tokenValueRows, totalValue } = useMemo(() => {
+  const { tokenValueRows, totalValue, totalValueNumber } = useMemo(() => {
     let total = 0
     let hasError = false
 
@@ -261,6 +261,7 @@ export const useAccountTokens = (address: AddressString) => {
     return {
       tokenValueRows: rows,
       totalValue: formattedTotal,
+      totalValueNumber: hasError ? null : total,
     }
   }, [tokenValueRowsData, currencySymbol, formatNumber, tokenPriceQueries, formatAmount])
 
@@ -268,6 +269,7 @@ export const useAccountTokens = (address: AddressString) => {
     tokenBalanceRows,
     tokenValueRows,
     totalValue,
+    totalValueNumber,
     isPending: isPendingMetadata || isPendingBalances,
     isPendingPrices,
     isPendingAll: isPendingMetadata || isPendingBalances || isPendingPrices,

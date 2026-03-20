@@ -13,6 +13,7 @@ import { accountQueryOptions } from '@/services/thor/account'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { vnsNameQueryOptions } from '@/services/thor/vns'
 import { accountOverviewQueryOptions } from '@/services/veworld-indexer/account-overview'
+import { allValidatorsQueryOptions } from '@/services/veworld-indexer/validators'
 import {
   validatorDetailsQueryOptions,
   validatorDelegationsCountQueryOptions,
@@ -42,6 +43,7 @@ export default async function AddressPage({
     queryClient.prefetchQuery(accountQueryOptions(activeNetworkName, address)),
     queryClient.prefetchQuery(vnsNameQueryOptions(activeNetworkName, address)),
     queryClient.prefetchQuery(accountOverviewQueryOptions(activeNetworkName, address)),
+    queryClient.prefetchQuery(allValidatorsQueryOptions(activeNetworkName, { endorser: address })),
     queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(validatorDetailsQueryOptions(activeNetworkName, address)),
     queryClient.prefetchQuery(validatorDelegationsCountQueryOptions(activeNetworkName, address)),
@@ -54,6 +56,7 @@ export default async function AddressPage({
     'account',
     'vnsName',
     'accountOverview',
+    'endorsedValidators',
     'bestBlock',
     'validatorDetails',
     'validatorDelegationsCount',
