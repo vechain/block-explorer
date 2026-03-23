@@ -9,7 +9,7 @@ export enum IndexerVersion {
 
 export const INDEXER_HEADERS = { 'X-Project-Id': 'block-explorer' }
 
-export const indexerGet = <T>(args: Parameters<typeof apiClient.get<T>>[0]) =>
+export const indexerGet = <T>(args: Parameters<typeof apiClient.get>[0]) =>
   apiClient.get<T>({
     ...args,
     headers: { ...INDEXER_HEADERS, ...args.headers },
