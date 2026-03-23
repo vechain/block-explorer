@@ -34,6 +34,8 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(({ variant = 'primary'
   return (
     <Flex
       ref={ref}
+      position="relative"
+      isolation="isolate"
       flexDirection="column"
       gap={6}
       color="text-primary"
@@ -42,6 +44,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(({ variant = 'primary'
       borderColor="border-primary"
       p={{ base: 4, md: 5 }}
       backdropFilter="blur(16px)"
+      outline="1px solid transparent"
       {...variantStyle}
       {...props}
     />

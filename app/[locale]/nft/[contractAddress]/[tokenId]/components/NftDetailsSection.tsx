@@ -4,12 +4,12 @@ import { Badge, Box, Flex, Link, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { LuExternalLink } from 'react-icons/lu'
 import { Card } from '@/components/ui/Card'
-import { AddressLink, BaseLink } from '@/components/ui/Links'
+import { CopyableString } from '@/components/ui/CopyableString'
+import { CopyableAddressLink, CopyableLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import type { AddressString } from '@/lib/schemas'
 import type { NftMetadata } from '@/services/nft-metadata'
 import { type Erc721, useErc721CollectionStats } from '@/services/thor/tokens/erc721'
 import { useFormatNumber } from '@/hooks/useFormatting'
-import { truncateHex } from '@/lib/utils/truncateHex'
 import { truncateString } from '@/lib/utils/truncateString'
 import { useMintEvent } from '@/services/veworld-indexer/nft-transfers'
 import { useStargateNftInfo } from '@/services/thor/tokens/stargate'
@@ -63,6 +63,8 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
   const isMobile = useIsMobile()
   const truncateLength = isMobile ? 20 : 40
   const truncateEnd = isMobile ? 6 : 8
+  const nftName = metadata?.name || `#${tokenId.toString()}`
+  const tokenIdValue = tokenId.toString()
 
   const { data: collectionStats } = useErc721CollectionStats({ contractAddress })
   const { mintEvent } = useMintEvent({ contractAddress, tokenId })
@@ -85,31 +87,32 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
       {/* NFT Details */}
       <SectionCard title={t('NFT Details')}>
         <DetailRow label={t('Name')}>
-          <Text
+          <CopyableString
+            value={nftName}
+            containerProps={{ justifyContent: 'flex-end' }}
             textStyle="bodyM"
-            color="text-primary"
             overflow="hidden"
             textOverflow="ellipsis"
             whiteSpace="nowrap"
-            title={metadata?.name || `#${tokenId.toString()}`}
           >
-            {truncateString(metadata?.name || `#${tokenId.toString()}`, truncateLength, truncateEnd)}
-          </Text>
+            {truncateString(nftName, truncateLength, truncateEnd)}
+          </CopyableString>
         </DetailRow>
         <DetailRow label={t('Token ID')}>
-          <Text
+          <CopyableString
+            value={tokenIdValue}
+            title={`#${tokenIdValue}`}
+            containerProps={{ justifyContent: 'flex-end' }}
             textStyle="bodyM"
-            color="text-primary"
             overflow="hidden"
             textOverflow="ellipsis"
             whiteSpace="nowrap"
-            title={`#${tokenId.toString()}`}
           >
-            #{truncateString(tokenId.toString(), truncateLength, truncateEnd)}
-          </Text>
+            #{truncateString(tokenIdValue, truncateLength, truncateEnd)}
+          </CopyableString>
         </DetailRow>
         <DetailRow label={t('Contract Address')}>
-          <AddressLink address={contractAddress} truncate />
+          <CopyableAddressLink address={contractAddress} truncate />
         </DetailRow>
         <DetailRow label={t('Token Standard')}>
           <Badge bg="bg-alt-primary" px={2} py={1} borderRadius="md" color="text-primary">
@@ -154,13 +157,15 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
       {mintEvent && (
         <SectionCard title={t('NFT Mint')}>
           <DetailRow label={t('Block')}>
-            <BaseLink href={`/block/${mintEvent.blockId}`}>#{formatNumber(mintEvent.blockNumber)}</BaseLink>
+            <CopyableLink href={`/block/${mintEvent.blockId}`} value={String(mintEvent.blockNumber)}>
+              #{formatNumber(mintEvent.blockNumber)}
+            </CopyableLink>
           </DetailRow>
           <DetailRow label={t('Transaction ID')}>
-            <BaseLink href={`/transactions/${mintEvent.txId}`}>{truncateHex(mintEvent.txId)}</BaseLink>
+            <CopyableTransactionIdLink txId={mintEvent.txId} />
           </DetailRow>
           <DetailRow label={t('Minted by')}>
-            <AddressLink address={mintEvent.to} truncate />
+            <CopyableAddressLink address={mintEvent.to} truncate />
           </DetailRow>
         </SectionCard>
       )}
@@ -168,9 +173,9 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
       {/* Collection Details */}
       <SectionCard title={t('Collection Details')}>
         <DetailRow label={t('Collection')}>
-          <Text textStyle="bodyM" color="text-primary">
+          <CopyableString value={collection.name} containerProps={{ justifyContent: 'flex-end' }} textStyle="bodyM">
             {collection.name}
-          </Text>
+          </CopyableString>
         </DetailRow>
         <DetailRow label={t('Symbol')}>
           <Text textStyle="bodyM" color="text-primary">

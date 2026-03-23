@@ -215,16 +215,15 @@ export const useAccountTokens = (address: AddressString) => {
   const isPendingPrices = tokenPriceQueries.some(query => query.isPending)
 
   // Build token value rows: calculate value from balance * price
-  const { tokenValueRows, totalValue } = useMemo(() => {
+  const { tokenValueRows, totalValue, totalValueNumber } = useMemo(() => {
     let total = 0
     let hasError = false
 
     const rows: TokenValueRow[] = tokenValueRowsData.map((token, index) => {
       const priceQuery = tokenPriceQueries[index]
       const priceData = priceQuery?.data
-      // useTokenDailyPrices returns an array, get the latest price
-      const price =
-        Array.isArray(priceData) && priceData.length > 0 ? priceData[priceData.length - 1]?.price : undefined
+      const prices = priceData?.prices
+      const price = prices && prices.length > 0 ? prices[prices.length - 1]?.price : undefined
 
       let value: string
 
@@ -262,6 +261,7 @@ export const useAccountTokens = (address: AddressString) => {
     return {
       tokenValueRows: rows,
       totalValue: formattedTotal,
+      totalValueNumber: hasError ? null : total,
     }
   }, [tokenValueRowsData, currencySymbol, formatNumber, tokenPriceQueries, formatAmount])
 
@@ -269,6 +269,7 @@ export const useAccountTokens = (address: AddressString) => {
     tokenBalanceRows,
     tokenValueRows,
     totalValue,
+    totalValueNumber,
     isPending: isPendingMetadata || isPendingBalances,
     isPendingPrices,
     isPendingAll: isPendingMetadata || isPendingBalances || isPendingPrices,

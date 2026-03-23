@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { GasUsed, TxFeePaid } from '@/components/ui/GasFees'
 import { HStack, Skeleton, Stack, Text } from '@chakra-ui/react'
 import { formatPercentage } from '@/lib/utils/units'
-import { VTHOBalance } from '@/components/ui/Balance'
+import { VTHOBalanceWithFiat } from '@/components/ui/Balance'
 
 export type TxGasFeesResult =
   | {
@@ -19,6 +19,7 @@ export type TxGasFeesResult =
       type: 'legacy'
       gasPriceCoef: number
       baseFeePerGas: bigint
+      gasPrice: bigint
       totalFeePaid: bigint
     }
   | {
@@ -26,6 +27,7 @@ export type TxGasFeesResult =
       maxFeePerGas: bigint
       priorityFeePerGas: bigint
       baseFeePerGas: bigint
+      gasPrice: bigint
       totalFeePaid: bigint
     }
 
@@ -42,20 +44,21 @@ export const useTransactionGasInsights = ({
 
   const transactionGasInsights = [
     {
-      label: t('Gas Used'),
-      value: <GasUsed gasUsed={receipt?.gasUsed ?? BigInt(0)} gasLimit={transaction.gas} />,
-    },
-    {
       label: t('Fee Paid'),
       value: <TxFeePaid gasFees={txGasFees} gasPayer={receipt?.gasPayer ?? null} />,
     },
     {
-      label: t('VTHO Rewarded'),
-      value: <VTHOBalance balance={receipt?.reward ?? BigInt(0)} />,
+      label: t('Gas Used'),
+      value: <GasUsed gasUsed={receipt?.gasUsed ?? BigInt(0)} gasLimit={transaction.gas} />,
     },
     {
-      label: t('VTHO Burned'),
-      value: <VTHOBalance balance={BigInt(receipt?.paid ?? 0) - BigInt(receipt?.reward ?? 0)} />,
+      label: t('Gas Price'),
+      value:
+        txGasFees.type === 'loading' ? (
+          <Skeleton h="20px" w="80px" />
+        ) : (
+          `${formatNumber(Number(formatGwei(txGasFees.gasPrice)))} Gwei`
+        ),
     },
     {
       label: t('Base Fee per Gas'),
@@ -65,6 +68,16 @@ export const useTransactionGasInsights = ({
         ) : (
           `${formatNumber(Number(formatGwei(txGasFees.baseFeePerGas)))} Gwei`
         ),
+    },
+  ]
+  const vthoInsights = [
+    {
+      label: t('VTHO Rewarded'),
+      value: <VTHOBalanceWithFiat balance={receipt?.reward ?? BigInt(0)} />,
+    },
+    {
+      label: t('VTHO Burned'),
+      value: <VTHOBalanceWithFiat balance={BigInt(receipt?.paid ?? 0) - BigInt(receipt?.reward ?? 0)} />,
     },
   ]
 
@@ -82,6 +95,7 @@ export const useTransactionGasInsights = ({
           </HStack>
         ),
       },
+      ...vthoInsights,
     ]
   }
 
@@ -105,6 +119,7 @@ export const useTransactionGasInsights = ({
           </Stack>
         ),
       },
+      ...vthoInsights,
     ]
   }
 
@@ -130,12 +145,14 @@ const useTxGasFees = ({
 
   if (isDynamicFee) {
     const { maxFeePerGas, maxPriorityFeePerGas } = transaction
+    const priorityFeePerGas = calculatePriorityFeePerGas({ maxPriorityFeePerGas, maxFeePerGas, baseFeePerGas })
 
     return {
       type: 'dynamic',
       maxFeePerGas,
-      priorityFeePerGas: calculatePriorityFeePerGas({ maxPriorityFeePerGas, maxFeePerGas, baseFeePerGas }),
+      priorityFeePerGas,
       baseFeePerGas,
+      gasPrice: baseFeePerGas + priorityFeePerGas,
       totalFeePaid,
     }
   }
@@ -146,6 +163,7 @@ const useTxGasFees = ({
     type: 'legacy',
     gasPriceCoef,
     baseFeePerGas: legacyBaseFeePerGas,
+    gasPrice: (legacyBaseFeePerGas * BigInt(255 + gasPriceCoef)) / BigInt(255),
     totalFeePaid,
   }
 }

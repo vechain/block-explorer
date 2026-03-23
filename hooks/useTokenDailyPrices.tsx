@@ -5,11 +5,6 @@ import { apiClient } from '@/lib/api'
 import { zodParse } from '@/lib/utils/zod'
 import { Currency, useSettingsStore } from '@/lib/stores/settings'
 
-type TokenDailyPrice = {
-  timestamp: number
-  price: number
-}
-
 export type TokenDailyPricesToken = 'vechain' | 'vethor-token' | 'vebetterdao' | string
 
 const TOKEN_DAILY_PRICES_QUERY_KEY = 'tokenDailyPrices'
@@ -23,24 +18,26 @@ export const tokenDailyPricesQueryOptions = (token: TokenDailyPricesToken, curre
 
 export const useTokenDailyPrices = (token: TokenDailyPricesToken) => {
   const { currency } = useSettingsStore()
-  const { data, isLoading, error } = useQuery<TokenDailyPrice[]>(tokenDailyPricesQueryOptions(token, currency))
+  const { data, isLoading, error } = useQuery(tokenDailyPricesQueryOptions(token, currency))
 
   const dailyChangePercent = (() => {
-    if (!data || data.length < 2) return 0
-    const first = data[0]?.price
-    const last = data[data.length - 1]?.price
+    if (!data || data.prices.length < 2) return 0
+    const first = data.prices[0]?.price
+    const last = data.prices[data.prices.length - 1]?.price
     if (!first || !last) return 0
     return ((last - first) / first) * 100
   })()
 
-  const price = data?.[data.length - 1]?.price
+  const price = data?.prices[data.prices.length - 1]?.price
+  const marketCap = data?.marketCaps[data.marketCaps.length - 1]?.marketCap
 
   return {
-    data: data ?? [],
+    data: data?.prices ?? [],
     dailyChangePercent,
     isLoading,
     error,
     price,
+    marketCap,
   }
 }
 
@@ -61,10 +58,9 @@ const getTokenDailyPrices = async (token: TokenDailyPricesToken, currency: Curre
 const tokenDailyPricesSchema = z
   .object({
     prices: z.array(z.tuple([z.coerce.number(), z.coerce.number()])),
+    market_caps: z.array(z.tuple([z.coerce.number(), z.coerce.number()])),
   })
-  .transform(({ prices }) =>
-    prices.map(([timestamp, price]) => ({
-      timestamp,
-      price,
-    })),
-  )
+  .transform(({ prices, market_caps }) => ({
+    prices: prices.map(([timestamp, price]) => ({ timestamp, price })),
+    marketCaps: market_caps.map(([timestamp, marketCap]) => ({ timestamp, marketCap })),
+  }))

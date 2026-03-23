@@ -26,7 +26,14 @@ export function TransactionClauses({
   const isMobile = useBreakpointValue({ base: true, md: false })
 
   return (
-    <Accordion.Root multiple rounded="md" overflow="hidden" borderWidth="1px" borderColor="border-primary">
+    <Accordion.Root
+      multiple
+      defaultValue={transaction.clauses.length > 0 ? ['0'] : undefined}
+      rounded="md"
+      overflow="hidden"
+      borderWidth="1px"
+      borderColor="border-primary"
+    >
       {transaction.clauses.map((clause, index) => (
         <Accordion.Item
           key={index.toString()}

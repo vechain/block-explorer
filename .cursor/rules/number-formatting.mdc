@@ -1,0 +1,47 @@
+---
+description: Rules for formatting numbers, currencies, and large values — always use or create global utilities
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+# Number Formatting
+
+When you need to format, abbreviate, or display numbers/currencies, **always use an existing global utility** from `lib/utils/units.ts` (pure functions) and `hooks/useFormatting.ts` (React hooks). If no existing utility covers the use case, **create a new one in those files** — never define formatting helpers inline in components, pages, or feature-specific files.
+
+## Available utilities
+
+| Pure function (`lib/utils/units.ts`) | Hook (`hooks/useFormatting.ts`) | Purpose |
+| --- | --- | --- |
+| `formatNumber` | `useFormatNumber` | Locale-aware number formatting |
+| `formatCurrency` | `useFormatCurrency` | Locale + currency formatting |
+| `formatCompactCurrency` | `useFormatCompactCurrency` | Compact currency (e.g. `$1.5B`, `€250M`) |
+| `formatAbbreviated` | — | Compact bigint (wei → `1.5B`) |
+| `formatAmount` | `useFormatAmount` | Token amounts with decimals |
+| `formatPercentage` | — | Percentage strings |
+
+## Rules
+
+1. **All formatting logic lives in global utils** — any function that formats, abbreviates, or converts numbers for display must be defined in `lib/utils/units.ts`, not in component files. If the existing utilities don't cover your case, add a new function there with tests in `units.spec.ts`, then expose a hook in `hooks/useFormatting.ts`.
+2. **No inline abbreviation logic** — do not manually divide by 1,000 / 1,000,000 / 1,000,000,000 and append K/M/B in a component. Use `formatCompactCurrency` or `formatAbbreviated`.
+3. **No raw `Intl.NumberFormat`** in components — use `formatNumber` / `useFormatNumber` which caches formatter instances.
+4. **Hooks for React components** — prefer the `useFormat*` hooks (they inject locale and currency from stores). Use the pure functions only in non-React code or tests.
+
+## Bad
+
+```tsx
+// ❌ Formatting helper defined inside a component file
+const formatMarketCap = (n: number) => {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`
+  return `$${n}`
+}
+
+const MyComponent = () => <Text>{formatMarketCap(value)}</Text>
+```
+
+## Good
+
+```tsx
+// ✅ Use a shared global hook — if it doesn't exist yet, create the
+// pure function in lib/utils/units.ts first, then add a hook wrapper
+const formatCompact = useFormatCompactCurrency()
+return <Text>{formatCompact(marketCap)}</Text>
+```

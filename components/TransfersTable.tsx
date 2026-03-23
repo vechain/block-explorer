@@ -150,12 +150,12 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
   const columnsMemo = useMemo(
     () =>
       [
-        { key: 'age', label: t('Age'), Cell: ({ value }) => <AgeText timestamp={value as number} /> },
         {
           key: 'txId',
           label: t('Tx ID'),
           Cell: ({ value }) => <CopyableTransactionIdLink txId={value as `0x${string}`} />,
         },
+        { key: 'age', label: t('Age'), Cell: ({ value }) => <AgeText timestamp={value as number} /> },
         {
           key: 'from',
           label: t('From'),

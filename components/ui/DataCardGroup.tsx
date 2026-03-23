@@ -19,7 +19,7 @@ import { Card, type CardVariant } from './Card'
 
 export interface DataCardGroupItem {
   icon?: React.ReactElement<IconBaseProps>
-  title: string
+  title: React.ReactNode
   hiddenTitle?: boolean
   tooltip?: string
   children: React.ReactNode

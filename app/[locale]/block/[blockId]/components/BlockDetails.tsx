@@ -6,17 +6,19 @@ import { useTranslation } from 'react-i18next'
 import { NotFound } from '@/components/error/NotFound'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
-import { AddressLink, BaseLink } from '@/components/ui/Links'
+import { CopyableString } from '@/components/ui/CopyableString'
+import { CopyableAddressLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
+import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import type { BlockRevision } from '@/lib/schemas'
 import { useBlockExpanded } from '@/services/thor/block'
-import { useFormatNumber } from '@/hooks/useFormatting'
 import { TransactionsTable } from '../../../components/TransactionsTable'
 import { BlockInsight } from '../../components/BlockInsights'
 
 export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
   const { data: block, isPending } = useBlockExpanded(blockId)
   const { t } = useTranslation()
+  const formatDate = useFormatDate()
   const formatNumber = useFormatNumber()
 
   if (isPending) return <Skeleton height="400px" width="100%" />
@@ -24,6 +26,8 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
   if (!block) {
     return <NotFound title={t('Block not found')} description={t('The block you are looking for does not exist')} />
   }
+
+  const totalClauses = block.transactions.reduce((acc, tx) => acc + tx.clauses.length, 0)
 
   return (
     <Stack gap="8">
@@ -44,25 +48,25 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
                 icon: <Image src="/icons/calendar.svg" alt="Calendar" />,
                 title: t('Block Number'),
                 children: (
-                  <Text textStyle="bodyL" color="text-primary">
+                  <CopyableString value={String(block.number)} textStyle="bodyL">
                     #{formatNumber(block.number)}
-                  </Text>
+                  </CopyableString>
                 ),
-              },
-              {
-                icon: <Image src="/icons/clause.svg" alt="Clauses" />,
-                title: t('Total Clauses'),
-                children: <Text>{block.transactions.reduce((acc, tx) => acc + tx.clauses.length, 0)}</Text>,
               },
               {
                 icon: <Image src="/icons/link.svg" alt="Signer" />,
                 title: t('Block Signer'),
-                children: <AddressLink address={block.signer} truncate />,
+                children: <CopyableAddressLink address={block.signer} truncate />,
               },
               {
-                icon: <Image src="/icons/link.svg" alt="Parent block" />,
-                title: t('Parent block'),
-                children: <BaseLink href={`/block/${block.parentID}`}>#{formatNumber(block.number - 1)}</BaseLink>,
+                icon: <Image src="/icons/clock.svg" alt="Timestamp" />,
+                title: t('Timestamp'),
+                children: <Text>{formatDate(block.timestamp)}</Text>,
+              },
+              {
+                icon: <Image src="/icons/clause.svg" alt="Transactions and clauses" />,
+                title: `${t('Transactions')} / ${t('Clauses')}`,
+                children: <Text>{`${formatNumber(block.transactions.length)} / ${formatNumber(totalClauses)}`}</Text>,
               },
             ] as DataCardGroupItem[]
           }

@@ -17,11 +17,9 @@ export default function NFTTransfersPage() {
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[0])
 
-  // Fetch enough transfers to support pagination
   const totalToFetch = (page + 2) * pageSize
-  const { data: allTransfers, isPending } = useRecentNFTTransfers({ count: totalToFetch })
+  const { data: allTransfers, isPending, hasMore } = useRecentNFTTransfers({ count: totalToFetch })
 
-  // Paginate the transfers client-side
   const paginatedTransfers = useMemo(() => {
     if (!allTransfers) return []
     const start = page * pageSize
@@ -31,8 +29,8 @@ export default function NFTTransfersPage() {
 
   const hasNext = useMemo(() => {
     if (!allTransfers) return false
-    return allTransfers.length > (page + 1) * pageSize
-  }, [allTransfers, page, pageSize])
+    return allTransfers.length > (page + 1) * pageSize || hasMore
+  }, [allTransfers, page, pageSize, hasMore])
 
   const hasNoTransfers = !isPending && (!allTransfers || allTransfers.length === 0)
 

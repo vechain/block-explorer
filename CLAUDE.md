@@ -154,6 +154,7 @@ ESLint configuration (`.eslintrc.json`):
 5. **Type Predicates**: Use utilities in `lib/type-predicates.ts` for runtime type checking
 6. **Chakra UI v3**: This project uses Chakra UI v3 - when working with Chakra components, use the MCP tools to get accurate v3 API information
 7. **Figma Integration**: The project uses Figma MCP for design-to-code workflows. Component designs are sourced from the VeChain Block Explorer Figma file and converted to Chakra UI v3 components with custom theme tokens
+8. **Block-Scanning Data Fetching**: There are no global indexer endpoints for recent blocks, transactions, or transfers. All homepage/activity/transfer tables extract data from expanded blocks fetched directly from the Thor node via `useRecentBlocksExpanded`. Each block is individually cached by TanStack Query. Data density varies: blocks are 1:1, transactions are dense (flatMap from blocks), token transfers are dense (static `count * 2` multiplier), NFT transfers are sparse (progressive expansion — start at `count * 10` blocks, increase by `max(count * 5, 100)` until enough results). All paginated views use the same `(page + 2) * pageSize` look-ahead pattern with client-side `.slice()`. See `services/veworld-indexer/recent-activity.ts` and `.cursor/rules/progressive-block-fetching.mdc`.
 
 ## Deployment
 

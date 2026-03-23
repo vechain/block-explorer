@@ -19,6 +19,7 @@ export default function StatsPage() {
     <VStack gap={8} alignItems="stretch">
       <AFPTChart />
       <AFPUChart />
+      <BlockChart dataKey="usagePercentage" title={t('Block Usage')} color="#E782FF" chartType="line" yAxisUnit="%" />
       <BlockChart
         dataKey="gasUsed"
         title={t('Gas Used')}

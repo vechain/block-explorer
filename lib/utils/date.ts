@@ -1,7 +1,10 @@
 import { Locale } from '@/i18n/config'
 
 export const formatDateFromTimestamp = (timestamp: number, locale?: Locale, options?: Intl.DateTimeFormatOptions) => {
-  return new Date(timestamp).toLocaleString(locale || Locale.EN, {
+  const activeLocale = locale || Locale.EN
+  const dateLocale = activeLocale === Locale.EN ? 'en-GB' : activeLocale
+
+  return new Date(timestamp).toLocaleString(dateLocale, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
