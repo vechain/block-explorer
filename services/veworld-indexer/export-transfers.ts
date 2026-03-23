@@ -2,7 +2,7 @@ import { ApiError } from '@/lib/api/types'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from './index'
+import { INDEXER_HEADERS, resolveUrl } from './index'
 import { indexerResponseSchema, indexerTransferSchema, type IndexerTransfer } from './schemas'
 
 const MAX_PAGE_SIZE = 150
@@ -150,7 +150,7 @@ async function fetchTransfersPageWithRetry({
       searchParams.append('eventType', 'FUNGIBLE_TOKEN')
 
       const url = `${resolveUrl(networkName)}/transfers?${searchParams.toString()}`
-      const response = await fetch(url, { signal })
+      const response = await fetch(url, { signal, headers: INDEXER_HEADERS })
 
       if (!response.ok) {
         throw new ApiError({

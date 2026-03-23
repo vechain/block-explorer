@@ -1,12 +1,11 @@
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { useMemo } from 'react'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
-import { resolveUrl } from '.'
+import { indexerGet, resolveUrl } from '.'
 import { indexerResponseSchema } from './schemas'
 import { validatorMetadataQueryOptions } from './validator-metadata'
 
@@ -179,7 +178,7 @@ const getValidatorDetails = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<ValidatorIndexerData | null> => {
-  const { data } = await apiClient.get({
+  const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: `/validators/${validatorAddress}`,
   })
@@ -203,7 +202,7 @@ const getValidatorDelegationsCount = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<ValidatorDelegationsCount | null> => {
-  const result = await apiClient.get({
+  const result = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: '/validators/delegations/count',
     params: { validator: validatorAddress },
@@ -228,7 +227,7 @@ const getValidatorMissedBlocks = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<number> => {
-  const { data } = await apiClient.get({
+  const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: '/validators/blocks/missed',
     params: { timeframe: 'WEEK', validator: validatorAddress },
@@ -263,7 +262,7 @@ const getValidatorDelegations = async ({
 
   // Fetch all pages
   while (hasMore) {
-    const { data } = await apiClient.get({
+    const { data } = await indexerGet({
       baseUrl: resolveUrl(networkName),
       endPoint: '/validators/delegations',
       params: { validator: validatorAddress, page: String(page), size: String(pageSize) },

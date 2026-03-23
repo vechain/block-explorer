@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl, IndexerVersion } from '.'
+import { IndexerVersion, indexerGet, resolveUrl } from '.'
 import { indexerResponseSchema, tokenHistorySchema } from './schemas'
 import { ZERO_ADDRESS } from '@vechain/sdk-core'
 
@@ -29,7 +28,7 @@ const getTokenHistory = async (networkName: NetworkName, params: TokenHistoryPar
   if (size !== undefined) searchParams.set('size', String(size))
   if (direction) searchParams.set('direction', direction)
 
-  const { data } = await apiClient.get({
+  const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName, IndexerVersion.V2),
     endPoint: `/history/token/${tokenId}`,
     params: Object.fromEntries(searchParams),

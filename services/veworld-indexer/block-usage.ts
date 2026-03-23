@@ -1,10 +1,9 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { type BlockUsageResponse, blockUsageResponseSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from './index'
+import { indexerGet, resolveUrl } from './index'
 
 const blockUsageQueryOptions = (
   networkName: NetworkName,
@@ -56,7 +55,7 @@ const getBlockUsage = async ({
   endTimestamp: number
 }) => {
   const baseUrl = resolveUrl(networkName)
-  const { data } = await apiClient.get<BlockUsageResponse>({
+  const { data } = await indexerGet<BlockUsageResponse>({
     baseUrl,
     endPoint: '/explorer/block-usage',
     params: {

@@ -1,11 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { addressStringSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from '.'
+import { indexerGet, resolveUrl } from '.'
 
 const ACCOUNT_OVERVIEW_QUERY_KEY = 'getAccountOverview'
 
@@ -41,7 +40,7 @@ export const useAccountOverview = (address: string) => {
 }
 
 const getAccountOverview = async ({ networkName, address }: { networkName: NetworkName; address: string }) => {
-  const { data } = await apiClient.get({
+  const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: `/accounts/overview/${address}`,
   })
