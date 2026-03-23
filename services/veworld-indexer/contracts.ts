@@ -1,10 +1,9 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { type AddressString } from '@/lib/schemas/common'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from '.'
+import { indexerGet, resolveUrl } from '.'
 import { indexerContractSchema } from './schemas'
 
 const CONTRACT_QUERY_KEY = 'getContract'
@@ -22,7 +21,7 @@ export const useContract = ({ address }: { address: AddressString }) => {
 }
 
 const getContract = async ({ networkName, address }: { networkName: NetworkName; address: AddressString }) => {
-  const { data } = await apiClient.get({
+  const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: `/contracts/${address}`,
   })

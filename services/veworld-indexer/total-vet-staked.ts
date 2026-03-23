@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from '.'
+import { indexerGet, resolveUrl } from '.'
 
 const nftNameSchema = z.enum([
   'Dawn',
@@ -28,7 +27,7 @@ export const totalVetStakedQueryOptions = (networkName: NetworkName) => ({
 })
 
 const getTotalVetStaked = async ({ networkName }: { networkName: NetworkName }) => {
-  const { data } = await apiClient.get({
+  const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: '/stargate/total-vet-staked',
   })
