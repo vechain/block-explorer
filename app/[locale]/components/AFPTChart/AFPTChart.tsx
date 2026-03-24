@@ -22,6 +22,8 @@ import { useBlockUsage } from '@/services/veworld-indexer/block-usage'
 import { useFormatCurrency, useFormatDate } from '@/hooks/useFormatting'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { TimeRangeHeader } from '@/components/TimeRangeHeader/TimeRangeHeader'
+import { getNetworkGenesisTimestamp } from '@/lib/constants/network'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { TIME_RANGES, type TimeRangeKey } from '@/lib/constants/time-ranges'
 
 const VTHO_PER_GAS = 0.001
@@ -49,12 +51,14 @@ const getOrdinalSuffix = (day: number) => {
 
 export const AFPTChart = () => {
   const { t } = useTranslation()
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
   const [selectedRange, setSelectedRange] = useState<TimeRangeKey>('hourly')
   const [_selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [isLiveMode, setIsLiveMode] = useState(true)
+  const genesisTimestamp = getNetworkGenesisTimestamp(activeNetworkName)
 
   const selectedDate = isLiveMode ? new Date() : _selectedDate
-  const { dataPoints, canGoBack, canGoForward } = useAFPTData(selectedRange, selectedDate, isLiveMode)
+  const { dataPoints, canGoBack, canGoForward } = useAFPTData(selectedRange, selectedDate, isLiveMode, genesisTimestamp)
 
   const handleRangeChange = (newRange: TimeRangeKey) => {
     setSelectedRange(newRange)
@@ -327,15 +331,19 @@ const AFPTTooltip = ({ active, payload }: TooltipContentProps<number, string> & 
   )
 }
 
-const useAFPTData = (range: TimeRangeKey, date: Date, isLiveMode: boolean = true) => {
-  const GENESIS_TIMESTAMP = 1530316800
-
+const useAFPTData = (
+  range: TimeRangeKey,
+  date: Date,
+  isLiveMode: boolean = true,
+  genesisTimestamp: number | null = null,
+) => {
   const now = new Date()
-  let startTimestamp: number = GENESIS_TIMESTAMP
+  const minimumTimestamp = genesisTimestamp ?? 0
+  let startTimestamp: number = minimumTimestamp
   let endTimestamp: number = getUnixTime(now)
 
   if (range === 'all') {
-    startTimestamp = GENESIS_TIMESTAMP
+    startTimestamp = minimumTimestamp
     endTimestamp = getUnixTime(now)
   } else {
     const rangeConfig = TIME_RANGES[range]
@@ -360,7 +368,10 @@ const useAFPTData = (range: TimeRangeKey, date: Date, isLiveMode: boolean = true
   }
 
   const bufferSeconds = getBufferSeconds(startTimestamp, endTimestamp)
-  const adjustedStartTimestamp = Math.max(GENESIS_TIMESTAMP, startTimestamp - bufferSeconds)
+  const adjustedStartTimestamp =
+    genesisTimestamp === null
+      ? Math.max(0, startTimestamp - bufferSeconds)
+      : Math.max(minimumTimestamp, startTimestamp - bufferSeconds)
 
   const canGoBack = true
   const canGoForward = date.getTime() !== now.getTime()
