@@ -57,6 +57,8 @@ const NetworkToggle = () => {
   const queryClient = useQueryClient()
 
   const handleNetworkChange = async (newNetworkName: NetworkName) => {
+    if (newNetworkName === activeNetwork.name) return
+
     const thorClient = getThorClient(newNetworkName)
     const healthy = await thorClient.nodes.isHealthy()
     if (!healthy) {

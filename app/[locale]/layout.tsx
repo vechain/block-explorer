@@ -2,8 +2,10 @@ import '@/app/globals.css'
 import { Container, VStack } from '@chakra-ui/react'
 import type { Metadata } from 'next'
 import { Rubik } from 'next/font/google'
+import { Suspense } from 'react'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/navigation/Header'
+import { NetworkSearchParamSync } from '@/components/navigation/NetworkSearchParamSync'
 import { ChakraProvider } from '@/components/theme/provider'
 import type { Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
@@ -74,6 +76,9 @@ export default async function RootLayout({
 const Providers = ({ children, locale }: { children: React.ReactNode; locale: string }) => {
   return (
     <QueryClientProvider>
+      <Suspense fallback={null}>
+        <NetworkSearchParamSync />
+      </Suspense>
       <ChakraProvider>
         <TranslationsProvider locale={locale as Locale}>
           <MixpanelProvider>{children}</MixpanelProvider>
