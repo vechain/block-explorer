@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { usePathname, useRouter, useSearchParams, type ReadonlyURLSearchParams } from 'next/navigation'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NotFound } from '@/components/error/NotFound'
 import { TransactionInsight } from '@/components/TransactionInsights'
 import { TxStatusBadge } from '@/components/TxStatus'
 import { TransactionViews } from '@/components/TransactionViews'
@@ -15,6 +14,7 @@ import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
+import { useRedirectOnNotFound } from '@/hooks/useRedirectOnNotFound'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
 import { TransactionDetailsView, TransactionStatus } from '@/lib/types'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/transaction'
@@ -26,23 +26,16 @@ export const TransactionPageContent = ({
   transactionId: TransactionId
   view: string | undefined
 }) => {
-  const { t } = useTranslation()
   const { data: transaction, isPending: isTransactionPending } = useTransaction(transactionId)
   const { data: receipt, isPending: isReceiptPending } = useTransactionReceipt(transactionId)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  if (isTransactionPending || isReceiptPending) return <Skeleton height="400px" width="100%" />
+  const isNotFound = useRedirectOnNotFound({ isNotFound: !isTransactionPending && !transaction })
 
-  if (!transaction) {
-    return (
-      <NotFound
-        title={t('Transaction not found')}
-        description={t('The transaction you are looking for does not exist')}
-      />
-    )
-  }
+  if (isTransactionPending || isReceiptPending || isNotFound || !transaction)
+    return <Skeleton height="400px" width="100%" />
 
   const handleViewChange = (newView: TransactionDetailsView) => {
     router.replace(getTransactionViewHref(pathname, searchParams, newView, DETAILS_CARD_ID), { scroll: false })
