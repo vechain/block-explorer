@@ -15,23 +15,23 @@ import {
   YAxis,
 } from 'recharts'
 import { Card } from '@/components/ui/Card'
-import type { BlockUsageData } from '@/lib/schemas'
-import { transformBlockUsageCumulativeData } from '@/lib/utils/block-usage'
+import type { AFPUData } from '@/lib/schemas'
 import { timeFormat } from '@/lib/utils/date'
-import { useBlockUsage } from '@/services/veworld-indexer/block-usage'
-import { useFormatCurrency, useFormatDate } from '@/hooks/useFormatting'
+import { useAverageFeesPerUser } from '@/services/veworld-indexer/average-fees-per-user'
+import { useFormatCurrency, useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { TimeRangeHeader } from '@/components/TimeRangeHeader/TimeRangeHeader'
 import { getNetworkGenesisTimestamp } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { TIME_RANGES, type TimeRangeKey } from '@/lib/constants/time-ranges'
 
-const VTHO_PER_GAS = 0.001
-const CHART_COLOR = '#4ADE80'
+const CHART_COLOR = '#FF8A65'
 
-type AFPTDataPoint = {
+type AFPUDataPoint = {
   timestamp: number
-  afpt: number
+  afpu: number
+  dailyActiveUsers: number
+  totalFeesPaid: number
 }
 
 // Helper function to get ordinal suffix for day
@@ -49,16 +49,17 @@ const getOrdinalSuffix = (day: number) => {
   }
 }
 
-export const AFPTChart = () => {
+export const AFPUChart = () => {
   const { t } = useTranslation()
   const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
-  const [selectedRange, setSelectedRange] = useState<TimeRangeKey>('hourly')
+  const [selectedRange, setSelectedRange] = useState<TimeRangeKey>('weekly')
   const [_selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [isLiveMode, setIsLiveMode] = useState(true)
   const genesisTimestamp = getNetworkGenesisTimestamp(activeNetworkName)
+  const genesisDate = genesisTimestamp === null ? null : new Date(genesisTimestamp * 1000)
 
   const selectedDate = isLiveMode ? new Date() : _selectedDate
-  const { dataPoints, canGoBack, canGoForward } = useAFPTData(selectedRange, selectedDate, isLiveMode, genesisTimestamp)
+  const { dataPoints, canGoBack, canGoForward } = useAFPUData(selectedRange, selectedDate, isLiveMode, genesisTimestamp)
 
   const handleRangeChange = (newRange: TimeRangeKey) => {
     setSelectedRange(newRange)
@@ -67,7 +68,7 @@ export const AFPTChart = () => {
 
   const handleResetToNow = () => {
     setSelectedDate(new Date())
-    setSelectedRange('hourly')
+    setSelectedRange('weekly')
     setIsLiveMode(true)
   }
 
@@ -111,18 +112,19 @@ export const AFPTChart = () => {
       newSelectedDate = new Date(year, month - 1, 1, 0, 0, 0, 0)
     } else if (selectedDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
       const [year, month, day] = selectedDateStr.split('-').map(Number)
-      if (selectedRange === 'hourly') {
-        const currentHour = selectedDate.getHours()
-        newSelectedDate = new Date(year, month - 1, day, currentHour, 0, 0, 0)
-      } else {
-        newSelectedDate = new Date(year, month - 1, day, 0, 0, 0, 0)
-      }
+      newSelectedDate = new Date(year, month - 1, day, 0, 0, 0, 0)
     } else {
       return
     }
 
     const now = new Date()
-    if (Number.isNaN(newSelectedDate.getTime()) || newSelectedDate > now) {
+    const periodEnd = TIME_RANGES[selectedRange].endOf(newSelectedDate)
+
+    if (
+      Number.isNaN(newSelectedDate.getTime()) ||
+      newSelectedDate > now ||
+      (genesisDate !== null && periodEnd.getTime() < genesisDate.getTime())
+    ) {
       return
     }
 
@@ -149,9 +151,9 @@ export const AFPTChart = () => {
     setIsLiveMode(false)
   }
 
-  const avgAFPT =
+  const avgAFPU =
     dataPoints.length > 0
-      ? dataPoints.reduce((acc: number, curr: AFPTDataPoint) => acc + curr.afpt, 0) / dataPoints.length
+      ? dataPoints.reduce((acc: number, curr: AFPUDataPoint) => acc + curr.afpu, 0) / dataPoints.length
       : 0
 
   return (
@@ -167,17 +169,18 @@ export const AFPTChart = () => {
         onResetToNow={handleResetToNow}
         onDateChange={handleDateChange}
         onHourChange={handleHourChange}
-        title={t('Average Fees Per Transaction (AFPT)')}
+        title={t('Average Fees Per User (AFPU)')}
+        excludeRanges={['hourly', 'daily']}
       />
-      <AFPTPeriodTotal avgAFPT={avgAFPT} />
+      <AFPUPeriodTotal avgAFPU={avgAFPU} />
       <Card variant="secondary">
-        <AFPTInnerChart data={dataPoints} selectedRange={selectedRange} />
+        <AFPUInnerChart data={dataPoints} selectedRange={selectedRange} />
       </Card>
     </Card>
   )
 }
 
-const AFPTPeriodTotal = ({ avgAFPT }: { avgAFPT: number }) => {
+const AFPUPeriodTotal = ({ avgAFPU }: { avgAFPU: number }) => {
   const { t } = useTranslation()
   const formatCurrency = useFormatCurrency()
 
@@ -185,17 +188,17 @@ const AFPTPeriodTotal = ({ avgAFPT }: { avgAFPT: number }) => {
     <HStack gap={{ base: 4, md: 8 }} flexWrap="wrap">
       <Flex alignItems="baseline" gap={2}>
         <Text fontSize="sm" color="text-secondary">
-          {t('Avg AFPT')}:
+          {t('Avg AFPU')}:
         </Text>
         <Text fontSize="lg" fontWeight="bold" color={CHART_COLOR}>
-          {formatCurrency(avgAFPT)}
+          {formatCurrency(avgAFPU)}
         </Text>
       </Flex>
     </HStack>
   )
 }
 
-const AFPTInnerChart = ({ data, selectedRange }: { data: AFPTDataPoint[]; selectedRange: TimeRangeKey }) => {
+const AFPUInnerChart = ({ data, selectedRange }: { data: AFPUDataPoint[]; selectedRange: TimeRangeKey }) => {
   const formatCurrency = useFormatCurrency()
   const chartHeight = useBreakpointValue({ base: '250px', md: '300px' })
 
@@ -203,20 +206,14 @@ const AFPTInnerChart = ({ data, selectedRange }: { data: AFPTDataPoint[]; select
 
   const formatXAxis = useCallback(
     (timestamp: number) => {
-      const date = new Date(timestamp)
+      const date = new Date(timestamp * 1000)
 
       switch (selectedRange) {
         case 'hourly':
-          return date.toLocaleTimeString(undefined, {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-          })
         case 'daily':
-          return date.toLocaleTimeString(undefined, {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
+          return date.toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
           })
         case 'weekly': {
           const weekDay = date.getDate()
@@ -236,13 +233,13 @@ const AFPTInnerChart = ({ data, selectedRange }: { data: AFPTDataPoint[]; select
         case 'all':
           return date.getFullYear().toString()
         default:
-          return timeFormat(timestamp)
+          return timeFormat(timestamp * 1000)
       }
     },
     [selectedRange],
   )
 
-  const gradientId = 'afptGradient'
+  const gradientId = 'afpuGradient'
   const chartMargin = { top: 8, right: 8, bottom: -8, left: 0 }
 
   return (
@@ -267,7 +264,7 @@ const AFPTInnerChart = ({ data, selectedRange }: { data: AFPTDataPoint[]; select
             stroke="white"
           />
           <YAxis
-            dataKey="afpt"
+            dataKey="afpu"
             tickFormatter={formatYAxisTick}
             tick={{ style: { fontSize: '.8rem' } }}
             axisLine={false}
@@ -276,12 +273,12 @@ const AFPTInnerChart = ({ data, selectedRange }: { data: AFPTDataPoint[]; select
           <Tooltip
             contentStyle={{ fontSize: '.8rem' }}
             content={(props: TooltipContentProps<number, string>) => (
-              <AFPTTooltip {...props} selectedRange={selectedRange} />
+              <AFPUTooltip {...props} selectedRange={selectedRange} />
             )}
           />
           <Area
             type="monotone"
-            dataKey="afpt"
+            dataKey="afpu"
             stroke={CHART_COLOR}
             strokeWidth={2}
             fill={`url(#${gradientId})`}
@@ -293,23 +290,22 @@ const AFPTInnerChart = ({ data, selectedRange }: { data: AFPTDataPoint[]; select
   )
 }
 
-const AFPTTooltip = ({ active, payload }: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey }) => {
+const AFPUTooltip = ({ active, payload }: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey }) => {
   const isVisible = active && payload && payload.length > 0
   const { t } = useTranslation()
   const formatDate = useFormatDate()
   const formatCurrency = useFormatCurrency()
+  const formatNumber = useFormatNumber()
 
   if (!isVisible) return null
 
-  const dataPoint = payload[0].payload as AFPTDataPoint
+  const dataPoint = payload[0].payload as AFPUDataPoint
 
   const formatDateTime = (timestamp: number) => {
-    return formatDate(timestamp, {
+    return formatDate(timestamp * 1000, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
     })
   }
 
@@ -317,82 +313,70 @@ const AFPTTooltip = ({ active, payload }: TooltipContentProps<number, string> & 
     <Stack bg="tooltip-bg" border="1px solid" borderColor="border-primary" rounded="xl" p={4}>
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
-          {t('Date & Time')}:
+          {t('Date')}:
         </Text>
         <Text fontSize="sm">{formatDateTime(dataPoint.timestamp)}</Text>
       </Flex>
       <Flex alignItems="center" gap={2}>
         <Text fontSize="sm" fontWeight="bold">
-          {t('AFPT')}:
+          {t('AFPU')}:
         </Text>
-        <Text fontSize="sm">{formatCurrency(dataPoint.afpt)}</Text>
+        <Text fontSize="sm">{formatCurrency(dataPoint.afpu)}</Text>
+      </Flex>
+      <Flex alignItems="center" gap={2}>
+        <Text fontSize="sm" fontWeight="bold">
+          {t('Daily Active Users')}:
+        </Text>
+        <Text fontSize="sm">{formatNumber(dataPoint.dailyActiveUsers, { maximumFractionDigits: 0 })}</Text>
+      </Flex>
+      <Flex alignItems="center" gap={2}>
+        <Text fontSize="sm" fontWeight="bold">
+          {t('Total Fees Paid')}:
+        </Text>
+        <Text fontSize="sm">{formatCurrency(dataPoint.totalFeesPaid)}</Text>
       </Flex>
     </Stack>
   )
 }
 
-const useAFPTData = (
+const useAFPUData = (
   range: TimeRangeKey,
   date: Date,
   isLiveMode: boolean = true,
   genesisTimestamp: number | null = null,
 ) => {
   const now = new Date()
+  const rangeConfig = range === 'all' ? null : TIME_RANGES[range]
   const minimumTimestamp = genesisTimestamp ?? 0
-  let startTimestamp: number = minimumTimestamp
-  let endTimestamp: number = getUnixTime(now)
 
-  if (range === 'all') {
-    startTimestamp = minimumTimestamp
-    endTimestamp = getUnixTime(now)
-  } else {
-    const rangeConfig = TIME_RANGES[range]
-    const periodStart = rangeConfig.startOf?.(date)
-    const periodEnd = rangeConfig.endOf?.(date)
-    const nowMinusRange = rangeConfig.sub?.(now, 1)
-    startTimestamp = Math.min(getUnixTime(periodStart), getUnixTime(nowMinusRange))
-    endTimestamp = Math.min(getUnixTime(periodEnd), getUnixTime(now))
-  }
+  const rawStartTimestamp =
+    rangeConfig === null
+      ? minimumTimestamp
+      : Math.min(getUnixTime(rangeConfig.startOf(date)), getUnixTime(rangeConfig.sub(now, 1)))
 
-  const getBufferSeconds = (startTimestamp: number, endTimestamp: number): number => {
-    const rangeSeconds = endTimestamp - startTimestamp
-    if (rangeSeconds <= 4000) {
-      return 10
-    } else if (rangeSeconds <= 700000) {
-      return 1800
-    } else if (rangeSeconds <= 35000000) {
-      return 43200
-    } else {
-      return 1296000
-    }
-  }
+  const startTimestamp = genesisTimestamp === null ? rawStartTimestamp : Math.max(minimumTimestamp, rawStartTimestamp)
+  const endTimestamp =
+    rangeConfig === null ? getUnixTime(now) : Math.min(getUnixTime(rangeConfig.endOf(date)), getUnixTime(now))
 
-  const bufferSeconds = getBufferSeconds(startTimestamp, endTimestamp)
-  const adjustedStartTimestamp =
-    genesisTimestamp === null
-      ? Math.max(0, startTimestamp - bufferSeconds)
-      : Math.max(minimumTimestamp, startTimestamp - bufferSeconds)
+  const canGoBack =
+    rangeConfig !== null &&
+    (genesisTimestamp === null || getUnixTime(rangeConfig.endOf(rangeConfig.sub(date, 1))) >= minimumTimestamp)
+  const canGoForward = rangeConfig !== null && rangeConfig.add(date, 1) <= now
 
-  const canGoBack = true
-  const canGoForward = date.getTime() !== now.getTime()
-
-  const { data: cumulativeData = [] } = useBlockUsage(adjustedStartTimestamp, endTimestamp, isLiveMode)
+  const { data: afpuData = [] } = useAverageFeesPerUser(startTimestamp, endTimestamp, isLiveMode)
   const { price: vthoPrice = 0 } = useTokenDailyPrices('vethor-token')
 
-  const allDataPoints = useMemo(
-    () => transformBlockUsageCumulativeData(cumulativeData as BlockUsageData[]),
-    [cumulativeData],
-  )
-
-  const dataPoints: AFPTDataPoint[] = useMemo(
+  const dataPoints: AFPUDataPoint[] = useMemo(
     () =>
-      allDataPoints
-        .filter(point => point.timestamp >= startTimestamp)
+      (afpuData as AFPUData[])
+        .filter(point => point.dayStartTimestamp >= startTimestamp && point.dayStartTimestamp <= endTimestamp)
         .map(point => ({
-          timestamp: point.timestamp,
-          afpt: point.numTransactions > 0 ? (point.gasUsed * VTHO_PER_GAS * vthoPrice) / point.numTransactions : 0,
+          timestamp: point.dayStartTimestamp,
+          afpu: point.averageFeesPerUser * vthoPrice,
+          dailyActiveUsers: point.dailyActiveUsers,
+          totalFeesPaid: point.totalFeesPaid * vthoPrice,
         })),
-    [allDataPoints, startTimestamp, vthoPrice],
+    [afpuData, startTimestamp, endTimestamp, vthoPrice],
   )
 
   return { dataPoints, canGoBack, canGoForward }

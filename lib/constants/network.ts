@@ -15,6 +15,14 @@ export enum NetworkName {
   SOLO = 'solo',
 }
 
+const NETWORK_GENESIS_TIMESTAMPS: Record<NetworkName, number | null> = {
+  [NetworkName.MAINNET]: 1530316800,
+  [NetworkName.TESTNET]: 1530014400,
+  [NetworkName.SOLO]: null,
+}
+
+export const getNetworkGenesisTimestamp = (networkName: NetworkName) => NETWORK_GENESIS_TIMESTAMPS[networkName]
+
 const mainnet: Network = {
   name: NetworkName.MAINNET,
   url: MAINNET_URL,
