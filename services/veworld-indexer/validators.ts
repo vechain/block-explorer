@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from '.'
+import { indexerGet, resolveUrl } from '.'
 import { indexerResponseSchema } from './schemas'
 
 const ALL_VALIDATORS_COUNT_QUERY_KEY = 'getAllValidatorsCount'
@@ -83,7 +82,7 @@ const getValidators = async ({
     ...(sortBy && { sortBy }),
   }
 
-  const { data } = await apiClient.get({
+  const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: '/validators',
     params,

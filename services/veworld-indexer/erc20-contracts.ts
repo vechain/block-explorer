@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { addressStringSchema } from '@/lib/schemas/common'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from '.'
+import { indexerGet, resolveUrl } from '.'
 import { type IndexerGetErc20ContractsParams, indexerResponseSchema } from './schemas'
 
 const ERC20_CONTRACTS_QUERY_KEY = 'getErc20Contracts'
@@ -27,7 +26,7 @@ const getErc20Contracts = async ({
   networkName: NetworkName
   params: IndexerGetErc20ContractsParams
 }) => {
-  const { data } = await apiClient.get({
+  const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: '/transfers/fungible-tokens-contracts',
     params: serializeZodParams(params),
