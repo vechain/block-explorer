@@ -1,7 +1,7 @@
 'use client'
 
-import { notFound } from 'next/navigation'
 import type { AddressString } from '@/lib/schemas'
+import { useRedirectOnNotFound } from '@/hooks/useRedirectOnNotFound'
 import { useAccount } from '@/services/thor/account'
 import { useValidatorDetails } from '@/services/veworld-indexer/validator-details'
 import { Center, Spinner, Stack } from '@chakra-ui/react'
@@ -24,15 +24,14 @@ export const AddressPageContent = ({ address }: { address: AddressString }) => {
 
   const isLoading = isAccountLoading || !isValidatorFetched
 
-  if (isLoading)
+  const isNotFound = useRedirectOnNotFound({ isNotFound: !isLoading && isAccountFetched && !account })
+
+  if (isLoading || isNotFound)
     return (
       <Center height="50vh">
         <Spinner color="primary" size="xl" />
       </Center>
     )
-  if (isAccountFetched && !isAccountLoading && !account) {
-    notFound()
-  }
 
   // Determine address type based on available data
   const addressType: AddressType = isValidator && validator ? 'validator' : account?.hasCode ? 'contract' : 'account'
