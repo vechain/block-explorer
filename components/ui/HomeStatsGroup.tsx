@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { formatEther } from 'viem'
 import { getStargateLink } from '@/lib/constants/stargate-nft'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { AccountTimeFrame, useAccountTotals } from '@/services/veworld-indexer/account-totals'
+import { useAccountTotal } from '@/services/veworld-indexer/account-totals'
 import { useTotalTransactions } from '@/services/veworld-indexer/total-transactions'
 import { useTotalVetStaked } from '@/services/veworld-indexer/total-vet-staked'
 import { ValidatorStatus, useValidators, useValidatorsCount } from '@/services/veworld-indexer/validators'
@@ -32,7 +32,7 @@ export const HomeStatsGroup = () => {
   const { activeNetwork } = useSettingsStore()
   const STARGATE_LINK = getStargateLink(activeNetwork.name, '/market')
 
-  const { data: accountTotalsData, isLoading: isLoadingAccounts } = useAccountTotals(AccountTimeFrame.ALL)
+  const { data: totalAccounts, isLoading: isLoadingAccounts } = useAccountTotal()
   const { data: totalTransactions, isLoading: isLoadingTransactions } = useTotalTransactions()
   const { data: activeValidatorsCount, isLoading: isLoadingActiveValidators } = useValidatorsCount({
     status: ValidatorStatus.ACTIVE,
@@ -41,7 +41,7 @@ export const HomeStatsGroup = () => {
     status: ValidatorStatus.EXITING,
   })
 
-  const totalAccounts = accountTotalsData?.data?.[0]?.total ?? 0
+  const accounts = totalAccounts ?? 0
   const activeValidators = activeValidatorsCount ?? 0
   const exitingValidators = exitingValidatorsCount ?? 0
   const validators = activeValidators + exitingValidators
@@ -77,11 +77,11 @@ export const HomeStatsGroup = () => {
     {
       title: t('Total Accounts'),
       loading: isLoadingAccounts,
-      value: formatNumber(totalAccounts),
+      value: formatNumber(accounts),
       href: STARGATE_LINK,
       external: true,
       animate: true,
-      animationKey: totalAccounts,
+      animationKey: accounts,
     },
     {
       title: t('Total Transactions'),

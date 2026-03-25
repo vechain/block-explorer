@@ -17,7 +17,7 @@ import { PriceCards } from './components/PriceCards'
 import { TokenTransfersSection } from './components/TokenTransfersSection'
 import { NFTTransfersSection } from './components/NFTTransfersSection'
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
-import { AccountTimeFrame, accountTotalsQueryOptions } from '@/services/veworld-indexer/account-totals'
+import { accountTotalQueryOptions } from '@/services/veworld-indexer/account-totals'
 import {
   allValidatorsQueryOptions,
   validatorsCountQueryOptions,
@@ -40,7 +40,7 @@ export default async function HomePage({
     queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(totalTransactionsQueryOptions(activeNetworkName)),
-    queryClient.prefetchQuery(accountTotalsQueryOptions(activeNetworkName, AccountTimeFrame.ALL)),
+    queryClient.prefetchQuery(accountTotalQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(allValidatorsQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(validatorsCountQueryOptions(activeNetworkName, { status: ValidatorStatus.ACTIVE })),
     queryClient.prefetchQuery(validatorsCountQueryOptions(activeNetworkName, { status: ValidatorStatus.EXITING })),
@@ -50,7 +50,7 @@ export default async function HomePage({
     'bestBlockCompressed',
     'totalVetStaked',
     'totalTransactions',
-    'accountTotals',
+    'accountTotal',
     'allValidators',
     'validatorsCount:ACTIVE',
     'validatorsCount:EXITING',
