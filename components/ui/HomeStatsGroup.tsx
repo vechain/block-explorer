@@ -31,6 +31,7 @@ export const HomeStatsGroup = () => {
 
   const { activeNetwork } = useSettingsStore()
   const STARGATE_LINK = getStargateLink(activeNetwork.name, '/market')
+  const STATS_PAGE_HREF = '/stats'
 
   const { data: totalAccounts, isLoading: isLoadingAccounts } = useAccountTotal()
   const { data: totalTransactions, isLoading: isLoadingTransactions } = useTotalTransactions()
@@ -78,8 +79,8 @@ export const HomeStatsGroup = () => {
       title: t('Total Accounts'),
       loading: isLoadingAccounts,
       value: formatNumber(accounts),
-      href: STARGATE_LINK,
-      external: true,
+      href: STATS_PAGE_HREF,
+      external: false,
       animate: true,
       animationKey: accounts,
     },
@@ -87,7 +88,7 @@ export const HomeStatsGroup = () => {
       title: t('Total Transactions'),
       loading: isLoadingTransactions,
       value: formatNumber(totalTransactions ?? 0),
-      href: '/stats',
+      href: STATS_PAGE_HREF,
       external: false,
       animate: true,
       animationKey: totalTransactions ?? 0,
