@@ -1,6 +1,6 @@
 'use client'
 
-import { Grid, Skeleton, Text } from '@chakra-ui/react'
+import { Box, Grid, Skeleton, Text } from '@chakra-ui/react'
 import Link from 'next/link'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,6 +11,8 @@ import { useAccountTotal } from '@/services/veworld-indexer/account-totals'
 import { useTotalTransactions } from '@/services/veworld-indexer/total-transactions'
 import { useTotalVetStaked } from '@/services/veworld-indexer/total-vet-staked'
 import { ValidatorStatus, useValidators, useValidatorsCount } from '@/services/veworld-indexer/validators'
+import { FiArrowUpRight } from 'react-icons/fi'
+import { LuArrowRight } from 'react-icons/lu'
 import { Card } from './Card'
 import { MotionText } from './MotionText'
 import { useFormatNumber } from '@/hooks/useFormatting'
@@ -126,6 +128,9 @@ export const HomeStatsGroup = () => {
         >
           {stat.external ? (
             <a href={stat.href} target="_blank" rel="noopener noreferrer">
+              <Box position="absolute" top={3} right={3} color="text-secondary">
+                <FiArrowUpRight size={14} />
+              </Box>
               <Text textStyle="bodyM" color="text-secondary">
                 {stat.title}
               </Text>
@@ -133,6 +138,9 @@ export const HomeStatsGroup = () => {
             </a>
           ) : (
             <Link href={stat.href}>
+              <Box position="absolute" top={3} right={3} color="text-secondary">
+                <LuArrowRight size={14} />
+              </Box>
               <Text textStyle="bodyM" color="text-secondary">
                 {stat.title}
               </Text>
