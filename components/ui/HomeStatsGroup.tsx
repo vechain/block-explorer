@@ -12,7 +12,6 @@ import { useTotalTransactions } from '@/services/veworld-indexer/total-transacti
 import { useTotalVetStaked } from '@/services/veworld-indexer/total-vet-staked'
 import { ValidatorStatus, useValidators, useValidatorsCount } from '@/services/veworld-indexer/validators'
 import { FiArrowUpRight } from 'react-icons/fi'
-import { LuArrowRight } from 'react-icons/lu'
 import { Card } from './Card'
 import { MotionText } from './MotionText'
 import { useFormatNumber } from '@/hooks/useFormatting'
@@ -139,7 +138,7 @@ export const HomeStatsGroup = () => {
           ) : (
             <Link href={stat.href}>
               <Box position="absolute" top={3} right={3} color="text-secondary">
-                <LuArrowRight size={14} />
+                <FiArrowUpRight size={14} />
               </Box>
               <Text textStyle="bodyM" color="text-secondary">
                 {stat.title}
