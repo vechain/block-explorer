@@ -179,16 +179,17 @@ export const tokenHistorySchema = z.object({
   blockNumber: blockNumberSchema,
   blockTimestamp: z.number(),
   txId: transactionIdSchema,
-  origin: addressStringSchema,
-  gasPayer: addressStringSchema,
-  contractAddress: addressStringSchema,
+  origin: addressStringSchema.optional(),
+  gasPayer: addressStringSchema.optional(),
+  contractAddress: addressStringSchema.optional(),
   tokenId: z.string(),
   eventName: z.string(),
-  to: addressStringSchema,
-  from: addressStringSchema,
+  to: addressStringSchema.optional(),
+  from: addressStringSchema.optional(),
+  owner: addressStringSchema.optional(),
 })
 
-type TokenHistory = z.infer<typeof tokenHistorySchema>
+export type TokenHistoryItem = z.infer<typeof tokenHistorySchema>
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
 export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
 export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>

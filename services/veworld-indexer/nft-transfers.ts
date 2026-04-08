@@ -11,7 +11,7 @@ const TOKEN_HISTORY_QUERY_KEY = 'getTokenHistory'
 
 interface TokenHistoryParams {
   tokenId: bigint
-  contractAddress?: AddressString
+  contractAddress: AddressString
   eventName?: string[]
   page?: number
   size?: number
@@ -22,15 +22,16 @@ const getTokenHistory = async (networkName: NetworkName, params: TokenHistoryPar
   const { tokenId, contractAddress, eventName, page, size, direction } = params
 
   const searchParams = new URLSearchParams()
-  if (contractAddress) searchParams.set('contractAddress', contractAddress)
+  searchParams.set('tokenId', tokenId.toString())
+  searchParams.set('contractAddress', contractAddress)
   if (eventName?.length) eventName.forEach(e => searchParams.append('eventName', e))
   if (page !== undefined) searchParams.set('page', String(page))
   if (size !== undefined) searchParams.set('size', String(size))
   if (direction) searchParams.set('direction', direction)
 
   const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName, IndexerVersion.V2),
-    endPoint: `/history/token/${tokenId}`,
+    baseUrl: resolveUrl(networkName, IndexerVersion.V1),
+    endPoint: '/nfts/history',
     params: Object.fromEntries(searchParams),
   })
 
@@ -77,7 +78,7 @@ export const useMintEvent = ({ contractAddress, tokenId }: { contractAddress: Ad
     direction: 'ASC',
   })
 
-  const mintEvent = transfersData?.data.find(transfer => transfer.from.toLowerCase() === ZERO_ADDRESS.toLowerCase())
+  const mintEvent = transfersData?.data.find(transfer => transfer.from?.toLowerCase() === ZERO_ADDRESS.toLowerCase())
 
   return {
     mintEvent,
