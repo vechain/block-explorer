@@ -9,7 +9,7 @@ import { useTransactionGasInsights } from '@/hooks/useTransactionGasInsights'
 import { TxTypeBadge } from '@/components/ui/TxTypeBadge'
 import { useFormatNumber } from '@/hooks/useFormatting'
 import { useBestBlockCompressed } from '@/services/thor/block'
-import { useRevertReason } from '@/services/thor/transaction'
+import { useTransactionFailureInsight } from '@/services/thor/transaction'
 
 export const TransactionInsight = ({
   transaction,
@@ -23,7 +23,9 @@ export const TransactionInsight = ({
 
   const { data: bestBlock, isPending: isBestBlockPending } = useBestBlockCompressed()
   const isReverted = receipt?.reverted ?? false
-  const { data: revertReason } = useRevertReason(transaction, isReverted)
+  const { data: failureInsight } = useTransactionFailureInsight(transaction, isReverted)
+  const revertReason = failureInsight?.revertReason
+  const possibleSelectorMismatch = failureInsight?.possibleSelectorMismatch
 
   const feeAndGasInsights = useTransactionGasInsights({
     transaction,
@@ -90,6 +92,23 @@ export const TransactionInsight = ({
           <Alert.Content>
             <Alert.Title>{t('Revert Reason')}</Alert.Title>
             <Alert.Description>{revertReason}</Alert.Description>
+          </Alert.Content>
+        </Alert.Root>
+      )}
+      {isReverted && possibleSelectorMismatch && (
+        <Alert.Root status="warning">
+          <Alert.Indicator />
+          <Alert.Content>
+            <Alert.Title>{t('Possible selector mismatch')}</Alert.Title>
+            <Alert.Description>
+              {t(
+                'Clause #{{index}} with selector {{selector}} reverted immediately without a decoded reason. This often means the calldata was encoded with an outdated ABI or wrong function signature.',
+                {
+                  index: possibleSelectorMismatch.clauseIndex + 1,
+                  selector: possibleSelectorMismatch.selector,
+                },
+              )}
+            </Alert.Description>
           </Alert.Content>
         </Alert.Root>
       )}
