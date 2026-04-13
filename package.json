@@ -23,7 +23,7 @@
     "ts-check:staged": "node scripts/ts-check-staged.mjs",
     "token-registry:update": "node scripts/update-token-registry.mjs",
     "token-registry:check": "node scripts/check-token-registry.mjs",
-    "ghcr:push": "docker build --build-arg NEXT_PUBLIC_IS_SOLO=true --build-arg NEXT_PUBLIC_SOLO_NODE_URL=http://localhost:8669 --build-arg NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL=http://localhost:8089 -t ghcr.io/vechain/block-explorer:latest . && docker push ghcr.io/vechain/block-explorer:latest"
+    "ghcr:push": "docker build -t ghcr.io/vechain/block-explorer:latest . && docker push ghcr.io/vechain/block-explorer:latest"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.26.0",
