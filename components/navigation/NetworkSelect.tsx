@@ -1,8 +1,7 @@
 import { Box, Flex } from '@chakra-ui/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { IS_SOLO } from '@/env.public'
-import { NETWORKS, NetworkName } from '@/lib/constants/network'
+import { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import {
   getManualNetworkSwitchHref,
@@ -14,66 +13,26 @@ import { getTransaction } from '@/services/thor/transaction'
 import { MotionBox } from '../ui/MotionBox'
 import { MotionText } from '../ui/MotionText'
 
+const DEFAULT_NETWORKS: NetworkName[] = [NetworkName.MAINNET, NetworkName.TESTNET]
+const DEV_NETWORKS: NetworkName[] = [NetworkName.MAINNET, NetworkName.TESTNET, NetworkName.SOLO]
+
 export const NetworkSelect = () => {
-  if (IS_SOLO) {
-    return <SoloNetworkLabel />
-  }
-
-  return <NetworkToggle />
-}
-
-const SoloNetworkLabel = () => {
-  return (
-    <Flex
-      gap={1}
-      alignItems="center"
-      border="1px solid"
-      borderColor="border-primary"
-      bg="bg-primary"
-      p={1.5}
-      rounded="full"
-      textStyle="bodyMSemibold"
-    >
-      <Box py={{ base: 1, md: 2 }} px={{ base: 2, md: 4 }} position="relative">
-        <MotionBox
-          position="absolute"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          bg="accent-tertiary"
-          color="text-alt-primary"
-          rounded="full"
-        />
-        <MotionText
-          as="span"
-          position="relative"
-          color="text-alt-primary"
-          textTransform="capitalize"
-          fontSize={{ base: 'body-s', md: 'body-m' }}
-        >
-          {NetworkName.SOLO}
-        </MotionText>
-      </Box>
-    </Flex>
-  )
-}
-
-const NetworkToggle = () => {
-  const { activeNetwork, setActiveNetwork } = useSettingsStore()
+  const { activeNetwork, isDevMode, setActiveNetwork } = useSettingsStore()
   const queryClient = useQueryClient()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const availableNetworks = isDevMode ? DEV_NETWORKS : DEFAULT_NETWORKS
 
   const handleNetworkChange = async (newNetworkName: NetworkName) => {
     if (newNetworkName === activeNetwork.name) return
 
-    const thorClient = getThorClient(newNetworkName)
-    const healthy = await thorClient.nodes.isHealthy()
-    if (!healthy) {
-      console.error(`Network is not healthy: ${newNetworkName}`)
-      return
+    if (newNetworkName !== NetworkName.SOLO) {
+      const reachable = await isNetworkReachable(newNetworkName)
+      if (!reachable) {
+        console.error(`Network is not reachable: ${newNetworkName}`)
+        return
+      }
     }
 
     const transactionId = getTransactionIdFromPathname(pathname)
@@ -114,7 +73,7 @@ const NetworkToggle = () => {
       return
     }
 
-    setActiveNetwork(NETWORKS[newNetworkName])
+    setActiveNetwork(newNetworkName)
 
     queryClient.invalidateQueries()
   }
@@ -130,18 +89,27 @@ const NetworkToggle = () => {
       rounded="full"
       textStyle="bodyMSemibold"
     >
-      <NetworkItem
-        networkName={NetworkName.MAINNET}
-        isActive={activeNetwork.name === NetworkName.MAINNET}
-        onNetworkChange={handleNetworkChange}
-      />
-      <NetworkItem
-        networkName={NetworkName.TESTNET}
-        isActive={activeNetwork.name === NetworkName.TESTNET}
-        onNetworkChange={handleNetworkChange}
-      />
+      {availableNetworks.map(networkName => (
+        <NetworkItem
+          key={networkName}
+          networkName={networkName}
+          isActive={activeNetwork.name === networkName}
+          onNetworkChange={handleNetworkChange}
+        />
+      ))}
     </Flex>
   )
+}
+
+const isNetworkReachable = async (networkName: NetworkName) => {
+  try {
+    const thorClient = getThorClient(networkName)
+    await thorClient.blocks.getBestBlockCompressed()
+    return true
+  } catch (error) {
+    console.error(`Failed to reach network: ${networkName}`, error)
+    return false
+  }
 }
 
 const NetworkItem = ({
@@ -151,10 +119,11 @@ const NetworkItem = ({
 }: {
   networkName: NetworkName
   isActive: boolean
-  onNetworkChange: (network: NetworkName) => void
+  onNetworkChange: (network: NetworkName) => Promise<void>
 }) => {
   return (
     <Box
+      as="button"
       py={{ base: 1, md: 2 }}
       px={{ base: 2, md: 4 }}
       cursor="pointer"
@@ -162,6 +131,7 @@ const NetworkItem = ({
       onClick={() => {
         void onNetworkChange(networkName)
       }}
+      aria-pressed={isActive}
     >
       {isActive && (
         <MotionBox

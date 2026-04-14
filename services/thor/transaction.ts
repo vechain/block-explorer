@@ -4,13 +4,19 @@ import z from 'zod'
 import type { NetworkName } from '@/lib/constants/network'
 import { type Transaction, type TransactionId, transactionReceiptSchema, transactionSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { getPossibleSelectorMismatch, type PossibleSelectorMismatch } from '@/lib/transaction-failure-insights'
 import { zodParse } from '@/lib/utils/zod'
 import { getThorClient } from './client'
 
 const TRANSACTION_QUERY_KEY = 'getTransaction'
 const TRANSACTION_RECEIPT_QUERY_KEY = 'getTransactionReceipt'
 const LEGACY_BASE_GAS_PRICE_QUERY_KEY = 'getLegacyBaseGasPrice'
-const REVERT_REASON_QUERY_KEY = 'getRevertReason'
+const TRANSACTION_FAILURE_INSIGHT_QUERY_KEY = 'getTransactionFailureInsight'
+
+type TransactionFailureInsight = {
+  revertReason: string | null
+  possibleSelectorMismatch: PossibleSelectorMismatch | null
+}
 
 export const transactionQueryOptions = (networkName: NetworkName, transactionId: TransactionId | undefined) =>
   queryOptions({
@@ -89,26 +95,25 @@ const getLegacyBaseGasPrice = async ({ networkName }: { networkName: NetworkName
 /**
  * Revert reason - simulates the transaction to get the revert reason
  */
-const revertReasonQueryOptions = (
+const transactionFailureInsightQueryOptions = (
   networkName: NetworkName,
   transaction: Transaction | null | undefined,
   isReverted: boolean,
 ) =>
   queryOptions({
-    queryKey: [REVERT_REASON_QUERY_KEY, networkName, transaction?.id],
-    queryFn: transaction && isReverted ? () => getRevertReason({ networkName, transaction }) : skipToken,
+    queryKey: [TRANSACTION_FAILURE_INSIGHT_QUERY_KEY, networkName, transaction?.id],
+    queryFn: transaction && isReverted ? () => getTransactionFailureInsight({ networkName, transaction }) : skipToken,
     staleTime: Infinity,
   })
 
-const getRevertReason = async ({
+const getTransactionFailureInsight = async ({
   networkName,
   transaction,
 }: {
   networkName: NetworkName
   transaction: Transaction
-}): Promise<string | null> => {
+}): Promise<TransactionFailureInsight> => {
   const thorClient = getThorClient(networkName)
-
   const clauses = transaction.clauses.map(clause => ({
     to: clause.to ?? null,
     value: clause.value.toString(),
@@ -121,18 +126,34 @@ const getRevertReason = async ({
     gas: Number(transaction.gas),
   })
 
-  for (const simulation of simulations) {
-    if (simulation.reverted && simulation.vmError) {
-      return simulation.vmError
-    }
+  const possibleSelectorMismatch = getPossibleSelectorMismatch({
+    transaction,
+    simulations,
+  })
 
+  for (const simulation of simulations) {
     if (simulation.reverted && simulation.data && simulation.data !== '0x') {
       const decoded = thorClient.transactions.decodeRevertReason(simulation.data)
-      if (decoded) return decoded
+      if (decoded) {
+        return {
+          revertReason: decoded,
+          possibleSelectorMismatch,
+        }
+      }
+    }
+
+    if (simulation.reverted && simulation.vmError) {
+      return {
+        revertReason: simulation.vmError,
+        possibleSelectorMismatch,
+      }
     }
   }
 
-  return null
+  return {
+    revertReason: null,
+    possibleSelectorMismatch,
+  }
 }
 
 export const useTransaction = (transactionId: TransactionId | undefined, networkName?: NetworkName) => {
@@ -145,13 +166,13 @@ export const useTransactionReceipt = (transactionId: TransactionId | undefined, 
   return useQuery(transactionReceiptQueryOptions(networkName ?? activeNetworkName, transactionId))
 }
 
-export const useRevertReason = (
+export const useTransactionFailureInsight = (
   transaction: Transaction | null | undefined,
   isReverted: boolean,
   networkName?: NetworkName,
 ) => {
   const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
-  return useQuery(revertReasonQueryOptions(networkName ?? activeNetworkName, transaction, isReverted))
+  return useQuery(transactionFailureInsightQueryOptions(networkName ?? activeNetworkName, transaction, isReverted))
 }
 
 export const useLegacyBaseFeePerGas = (networkName?: NetworkName) => {

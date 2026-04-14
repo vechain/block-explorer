@@ -24,6 +24,7 @@ describe('Network utils', () => {
   it('parses supported network names', () => {
     expect(parseNetworkName('mainnet')).toBe(NetworkName.MAINNET)
     expect(parseNetworkName('testnet')).toBe(NetworkName.TESTNET)
+    expect(parseNetworkName('solo')).toBe(NetworkName.SOLO)
   })
 
   it('returns null for unsupported network names', () => {

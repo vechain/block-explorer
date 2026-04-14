@@ -1,11 +1,10 @@
 import z from 'zod'
 import { i18nConfig, type Locale } from '@/i18n/config'
-import { DEFAULT_NETWORK, NetworkName, NETWORKS } from '@/lib/constants/network'
+import { DEFAULT_NETWORK, NetworkName } from '@/lib/constants/network'
 import { type TransactionId, transactionIdSchema } from '@/lib/schemas'
 
 const DEFAULT_NETWORK_NAME = DEFAULT_NETWORK.name
-const AVAILABLE_NETWORK_NAMES = Object.keys(NETWORKS) as [NetworkName, ...NetworkName[]]
-const networkNameSchema = z.enum(AVAILABLE_NETWORK_NAMES)
+const networkNameSchema = z.enum([NetworkName.MAINNET, NetworkName.TESTNET, NetworkName.SOLO])
 
 type SearchParamsLike = Pick<URLSearchParams, 'get'> | null | undefined
 type SearchParamsWithToStringLike = Pick<URLSearchParams, 'toString'> | null | undefined

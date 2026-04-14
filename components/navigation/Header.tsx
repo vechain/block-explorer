@@ -1,6 +1,7 @@
 'use client'
 
 import { Box, Flex, HStack, Separator, Text, VStack } from '@chakra-ui/react'
+import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
@@ -8,10 +9,12 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowUpRight, FiMenu } from 'react-icons/fi'
 import { i18nConfig, type Locale } from '@/i18n/config'
 import { languageNames } from '@/i18n/utils'
+import { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { useColorMode } from '../theme/color-mode'
 import { MotionBox } from '../ui/MotionBox'
 import { CurrencyModal } from './CurrencyModal'
+import { DevModeModal } from './DevModeModal'
 import { LanguageModal } from './LanguageModal'
 import { NetworkSelect } from './NetworkSelect'
 import { SearchBar } from './SearchBar'
@@ -39,11 +42,13 @@ const NavigationMenu = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false)
   const [isCurrencyModalOpen, setIsCurrencyModalOpen] = useState(false)
+  const [isDevModeModalOpen, setIsDevModeModalOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const params = useParams()
+  const queryClient = useQueryClient()
   const currentLocale = (params.locale as Locale) || i18nConfig.defaultLocale
   const currentLanguage = languageNames[currentLocale]
-  const { currency } = useSettingsStore()
+  const { activeNetwork, currency, isDevMode, setIsDevMode } = useSettingsStore()
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -70,6 +75,26 @@ const NavigationMenu = () => {
   const handleCurrencyClick = () => {
     setIsMenuOpen(false)
     setIsCurrencyModalOpen(true)
+  }
+
+  const handleDevModeSettingsClick = () => {
+    setIsMenuOpen(false)
+    setIsDevModeModalOpen(true)
+  }
+
+  const handleDevModeToggle = () => {
+    const nextIsDevMode = !isDevMode
+    const shouldInvalidateQueries = !nextIsDevMode && activeNetwork.name === NetworkName.SOLO
+
+    setIsDevMode(nextIsDevMode)
+
+    if (!nextIsDevMode) {
+      setIsDevModeModalOpen(false)
+    }
+
+    if (shouldInvalidateQueries) {
+      queryClient.invalidateQueries()
+    }
   }
 
   const currencyInfo = CURRENCIES[currency]
@@ -176,6 +201,46 @@ const NavigationMenu = () => {
                     </Text>
                   </HStack>
                 </Box>
+                <Separator />
+                <Flex justify="space-between" alignItems="center" gap={3} py={2}>
+                  <Text fontSize="body-m" whiteSpace="nowrap">
+                    {t('Dev mode')}
+                  </Text>
+                  <Box
+                    as="button"
+                    onClick={handleDevModeToggle}
+                    role="switch"
+                    aria-checked={isDevMode}
+                    aria-label={t('Dev mode')}
+                    bg="transparent"
+                    borderRadius="full"
+                  >
+                    <Flex
+                      w="46px"
+                      h="26px"
+                      p="3px"
+                      bg={isDevMode ? 'accent-primary' : 'bg-secondary'}
+                      borderRadius="full"
+                      justifyContent={isDevMode ? 'flex-end' : 'flex-start'}
+                      alignItems="center"
+                      transition="background-color 0.2s ease"
+                    >
+                      <Box w="20px" h="20px" bg="white" borderRadius="full" />
+                    </Flex>
+                  </Box>
+                </Flex>
+                {isDevMode && (
+                  <>
+                    <Separator />
+                    <Box as="button" onClick={handleDevModeSettingsClick} w="100%" cursor="pointer">
+                      <Flex gap={2} alignItems="center" py={2}>
+                        <Text fontSize="body-m" whiteSpace="nowrap">
+                          {t('Configure Solo endpoints')}
+                        </Text>
+                      </Flex>
+                    </Box>
+                  </>
+                )}
               </MotionBox>
             )}
           </Box>
@@ -183,6 +248,7 @@ const NavigationMenu = () => {
       </Flex>
       <LanguageModal isOpen={isLanguageModalOpen} onClose={() => setIsLanguageModalOpen(false)} />
       <CurrencyModal isOpen={isCurrencyModalOpen} onClose={() => setIsCurrencyModalOpen(false)} />
+      <DevModeModal isOpen={isDevModeModalOpen} onClose={() => setIsDevModeModalOpen(false)} />
     </>
   )
 }
