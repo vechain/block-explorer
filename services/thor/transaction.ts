@@ -11,7 +11,7 @@ import { getThorClient } from './client'
 const TRANSACTION_QUERY_KEY = 'getTransaction'
 const TRANSACTION_RECEIPT_QUERY_KEY = 'getTransactionReceipt'
 const LEGACY_BASE_GAS_PRICE_QUERY_KEY = 'getLegacyBaseGasPrice'
-const REVERT_REASON_QUERY_KEY = 'getRevertReason'
+const TRANSACTION_FAILURE_INSIGHT_QUERY_KEY = 'getTransactionFailureInsight'
 
 type TransactionFailureInsight = {
   revertReason: string | null
@@ -101,7 +101,7 @@ const transactionFailureInsightQueryOptions = (
   isReverted: boolean,
 ) =>
   queryOptions({
-    queryKey: [REVERT_REASON_QUERY_KEY, networkName, transaction?.id],
+    queryKey: [TRANSACTION_FAILURE_INSIGHT_QUERY_KEY, networkName, transaction?.id],
     queryFn: transaction && isReverted ? () => getTransactionFailureInsight({ networkName, transaction }) : skipToken,
     staleTime: Infinity,
   })
@@ -156,22 +156,26 @@ const getTransactionFailureInsight = async ({
   }
 }
 
-export const useTransaction = (transactionId: TransactionId | undefined) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(transactionQueryOptions(activeNetwork.name, transactionId))
+export const useTransaction = (transactionId: TransactionId | undefined, networkName?: NetworkName) => {
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  return useQuery(transactionQueryOptions(networkName ?? activeNetworkName, transactionId))
 }
 
-export const useTransactionReceipt = (transactionId: TransactionId | undefined) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(transactionReceiptQueryOptions(activeNetwork.name, transactionId))
+export const useTransactionReceipt = (transactionId: TransactionId | undefined, networkName?: NetworkName) => {
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  return useQuery(transactionReceiptQueryOptions(networkName ?? activeNetworkName, transactionId))
 }
 
-export const useTransactionFailureInsight = (transaction: Transaction | null | undefined, isReverted: boolean) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(transactionFailureInsightQueryOptions(activeNetwork.name, transaction, isReverted))
+export const useTransactionFailureInsight = (
+  transaction: Transaction | null | undefined,
+  isReverted: boolean,
+  networkName?: NetworkName,
+) => {
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  return useQuery(transactionFailureInsightQueryOptions(networkName ?? activeNetworkName, transaction, isReverted))
 }
 
-export const useLegacyBaseFeePerGas = () => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(legacyBaseFeePerGasQueryOptions(activeNetwork.name))
+export const useLegacyBaseFeePerGas = (networkName?: NetworkName) => {
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  return useQuery(legacyBaseFeePerGasQueryOptions(networkName ?? activeNetworkName))
 }

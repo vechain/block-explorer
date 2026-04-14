@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer'
 import { Header } from '@/components/navigation/Header'
 import { NetworkSearchParamSync } from '@/components/navigation/NetworkSearchParamSync'
 import { ChakraProvider } from '@/components/theme/provider'
+import { Toaster } from '@/components/ui/toaster'
 import type { Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
 import { MixpanelProvider } from '@/lib/analytics/MixpanelProvider'
@@ -76,12 +77,15 @@ export default async function RootLayout({
 const Providers = ({ children, locale }: { children: React.ReactNode; locale: string }) => {
   return (
     <QueryClientProvider>
-      <Suspense fallback={null}>
-        <NetworkSearchParamSync />
-      </Suspense>
       <ChakraProvider>
         <TranslationsProvider locale={locale as Locale}>
-          <MixpanelProvider>{children}</MixpanelProvider>
+          <Suspense fallback={null}>
+            <NetworkSearchParamSync />
+          </Suspense>
+          <MixpanelProvider>
+            {children}
+            <Toaster />
+          </MixpanelProvider>
         </TranslationsProvider>
       </ChakraProvider>
     </QueryClientProvider>

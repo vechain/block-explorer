@@ -1,8 +1,15 @@
 import { Box, Flex } from '@chakra-ui/react'
 import { useQueryClient } from '@tanstack/react-query'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
+import {
+  getManualNetworkSwitchHref,
+  getTransactionIdFromPathname,
+  markNextNetworkSearchParamSyncAsManual,
+} from '@/lib/utils/network'
 import { getThorClient } from '@/services/thor/client'
+import { getTransaction } from '@/services/thor/transaction'
 import { MotionBox } from '../ui/MotionBox'
 import { MotionText } from '../ui/MotionText'
 
@@ -10,8 +17,11 @@ const DEFAULT_NETWORKS: NetworkName[] = [NetworkName.MAINNET, NetworkName.TESTNE
 const DEV_NETWORKS: NetworkName[] = [NetworkName.MAINNET, NetworkName.TESTNET, NetworkName.SOLO]
 
 export const NetworkSelect = () => {
-  const { setActiveNetwork, activeNetwork, isDevMode } = useSettingsStore()
+  const { activeNetwork, isDevMode, setActiveNetwork } = useSettingsStore()
   const queryClient = useQueryClient()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const availableNetworks = isDevMode ? DEV_NETWORKS : DEFAULT_NETWORKS
 
   const handleNetworkChange = async (newNetworkName: NetworkName) => {
@@ -23,6 +33,44 @@ export const NetworkSelect = () => {
         console.error(`Network is not reachable: ${newNetworkName}`)
         return
       }
+    }
+
+    const transactionId = getTransactionIdFromPathname(pathname)
+
+    if (transactionId) {
+      try {
+        const transaction = await getTransaction({
+          networkName: newNetworkName,
+          transactionId,
+        })
+        const nextHref = getManualNetworkSwitchHref({
+          pathname,
+          searchParams,
+          networkName: newNetworkName,
+          transactionExistsOnTargetNetwork: Boolean(transaction),
+        })
+
+        if (nextHref) {
+          markNextNetworkSearchParamSyncAsManual(newNetworkName)
+          router.push(nextHref)
+          return
+        }
+      } catch (error) {
+        console.error('Failed to resolve transaction on the selected network', error)
+        return
+      }
+    }
+
+    const nextHref = getManualNetworkSwitchHref({
+      pathname,
+      searchParams,
+      networkName: newNetworkName,
+    })
+
+    if (nextHref) {
+      markNextNetworkSearchParamSyncAsManual(newNetworkName)
+      router.push(nextHref)
+      return
     }
 
     setActiveNetwork(newNetworkName)
@@ -71,7 +119,7 @@ const NetworkItem = ({
 }: {
   networkName: NetworkName
   isActive: boolean
-  onNetworkChange: (network: NetworkName) => void
+  onNetworkChange: (network: NetworkName) => Promise<void>
 }) => {
   return (
     <Box
@@ -80,7 +128,9 @@ const NetworkItem = ({
       px={{ base: 2, md: 4 }}
       cursor="pointer"
       position="relative"
-      onClick={() => onNetworkChange(networkName)}
+      onClick={() => {
+        void onNetworkChange(networkName)
+      }}
       aria-pressed={isActive}
     >
       {isActive && (

@@ -78,9 +78,9 @@ const baseFeePerGasQueryOptions = (networkName: NetworkName, blockId: BlockId | 
     select: data => data.baseFeePerGas,
   })
 
-export const useBestBlockCompressed = () => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
+export const useBestBlockCompressed = (networkName?: NetworkName) => {
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  return useQuery(bestBlockCompressedQueryOptions(networkName ?? activeNetworkName))
 }
 
 export const useBlockExpanded = (revision: BlockRevision | undefined) => {
@@ -88,7 +88,7 @@ export const useBlockExpanded = (revision: BlockRevision | undefined) => {
   return useQuery(blockExpandedQueryOptions(activeNetwork.name, revision))
 }
 
-export const useBaseFeePerGas = (blockId: BlockId | undefined) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(baseFeePerGasQueryOptions(activeNetwork.name, blockId))
+export const useBaseFeePerGas = (blockId: BlockId | undefined, networkName?: NetworkName) => {
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  return useQuery(baseFeePerGasQueryOptions(networkName ?? activeNetworkName, blockId))
 }

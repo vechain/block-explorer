@@ -4,6 +4,7 @@ import { Alert, Badge, Box, Heading, Skeleton, Text, VStack } from '@chakra-ui/r
 import { LuChevronRight } from 'react-icons/lu'
 import { useTranslation } from 'react-i18next'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
+import type { NetworkName } from '@/lib/constants/network'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
 import { useTransactionGasInsights } from '@/hooks/useTransactionGasInsights'
 import { TxTypeBadge } from '@/components/ui/TxTypeBadge'
@@ -14,22 +15,25 @@ import { useTransactionFailureInsight } from '@/services/thor/transaction'
 export const TransactionInsight = ({
   transaction,
   receipt,
+  networkName,
 }: {
   transaction: Transaction
   receipt: TransactionReceipt | null
+  networkName?: NetworkName
 }) => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
 
-  const { data: bestBlock, isPending: isBestBlockPending } = useBestBlockCompressed()
+  const { data: bestBlock, isPending: isBestBlockPending } = useBestBlockCompressed(networkName)
   const isReverted = receipt?.reverted ?? false
-  const { data: failureInsight } = useTransactionFailureInsight(transaction, isReverted)
+  const { data: failureInsight } = useTransactionFailureInsight(transaction, isReverted, networkName)
   const revertReason = failureInsight?.revertReason
   const possibleSelectorMismatch = failureInsight?.possibleSelectorMismatch
 
   const feeAndGasInsights = useTransactionGasInsights({
     transaction,
     receipt,
+    networkName,
   })
 
   const confirmations = getConfirmations(bestBlock?.number, transaction.meta.blockNumber)
