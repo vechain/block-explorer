@@ -135,22 +135,26 @@ const getRevertReason = async ({
   return null
 }
 
-export const useTransaction = (transactionId: TransactionId | undefined) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(transactionQueryOptions(activeNetwork.name, transactionId))
+export const useTransaction = (transactionId: TransactionId | undefined, networkName?: NetworkName) => {
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  return useQuery(transactionQueryOptions(networkName ?? activeNetworkName, transactionId))
 }
 
-export const useTransactionReceipt = (transactionId: TransactionId | undefined) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(transactionReceiptQueryOptions(activeNetwork.name, transactionId))
+export const useTransactionReceipt = (transactionId: TransactionId | undefined, networkName?: NetworkName) => {
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  return useQuery(transactionReceiptQueryOptions(networkName ?? activeNetworkName, transactionId))
 }
 
-export const useRevertReason = (transaction: Transaction | null | undefined, isReverted: boolean) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(revertReasonQueryOptions(activeNetwork.name, transaction, isReverted))
+export const useRevertReason = (
+  transaction: Transaction | null | undefined,
+  isReverted: boolean,
+  networkName?: NetworkName,
+) => {
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  return useQuery(revertReasonQueryOptions(networkName ?? activeNetworkName, transaction, isReverted))
 }
 
-export const useLegacyBaseFeePerGas = () => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(legacyBaseFeePerGasQueryOptions(activeNetwork.name))
+export const useLegacyBaseFeePerGas = (networkName?: NetworkName) => {
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  return useQuery(legacyBaseFeePerGasQueryOptions(networkName ?? activeNetworkName))
 }

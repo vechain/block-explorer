@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { identifySearchTermType, normalizeSearchTerm, search, SearchTermType } from './useSearch'
+import { getBlockCompressed } from '@/services/thor/block'
+import { getTransaction } from '@/services/thor/transaction'
 import { getVnsAddress } from '@/services/thor/vns'
 import { Network, NetworkName } from '@/lib/constants/network'
 
@@ -9,6 +11,8 @@ vi.mock('@/services/thor/block')
 vi.mock('@/services/thor/transaction')
 vi.mock('@/services/thor/vns')
 
+const mockGetBlockCompressed = vi.mocked(getBlockCompressed)
+const mockGetTransaction = vi.mocked(getTransaction)
 const mockGetVnsAddress = vi.mocked(getVnsAddress)
 
 describe('useSearch', () => {
@@ -491,6 +495,129 @@ describe('VNS fallback integration', () => {
       expect(mockGetVnsAddress).toHaveBeenCalledWith({
         networkName: NetworkName.MAINNET,
         name: 'nonexistent.vet',
+      })
+    })
+  })
+
+  describe('TRANSACTION_ID handler', () => {
+    const transactionId = '0x30a8a2d5990e21ad2d5bbb2a225038fbe605080473a3b3a16601dbcf2c3c9b62'
+    const mockTransaction = { id: transactionId } as unknown as Awaited<ReturnType<typeof getTransaction>>
+    const fallbackBlockId = '0x017771db5036bf5f8a4ef0f5069c0099931339536834dca95d86b61411b4208c'
+    const mockBlock = { id: fallbackBlockId } as unknown as Awaited<ReturnType<typeof getBlockCompressed>>
+    const testnetNetwork: Network = {
+      name: NetworkName.TESTNET,
+      url: 'https://testnet.vechain.org',
+      contracts: {},
+    }
+
+    it('should redirect to the fallback network when the transaction exists there', async () => {
+      mockGetTransaction.mockResolvedValueOnce(null).mockResolvedValueOnce(mockTransaction)
+
+      const result = await search({
+        searchTerm: transactionId,
+        activeNetwork: testnetNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: `/transactions/${transactionId}?network=${NetworkName.MAINNET}` })
+      expect(mockGetTransaction).toHaveBeenNthCalledWith(1, {
+        networkName: NetworkName.TESTNET,
+        transactionId,
+      })
+      expect(mockGetTransaction).toHaveBeenNthCalledWith(2, {
+        networkName: NetworkName.MAINNET,
+        transactionId,
+      })
+      expect(mockGetBlockCompressed).not.toHaveBeenCalled()
+    })
+
+    it('should keep the active network when the transaction is found immediately', async () => {
+      mockGetTransaction.mockResolvedValueOnce(mockTransaction)
+
+      const result = await search({
+        searchTerm: transactionId,
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: `/transactions/${transactionId}` })
+      expect(mockGetTransaction).toHaveBeenCalledTimes(1)
+      expect(mockGetTransaction).toHaveBeenCalledWith({
+        networkName: NetworkName.MAINNET,
+        transactionId,
+      })
+    })
+
+    it('should redirect to the fallback network when the hash resolves as a block there', async () => {
+      mockGetTransaction.mockResolvedValueOnce(null).mockResolvedValueOnce(null)
+      mockGetBlockCompressed.mockRejectedValueOnce(new Error('Block not found')).mockResolvedValueOnce(mockBlock)
+
+      const result = await search({
+        searchTerm: fallbackBlockId,
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: `/block/${fallbackBlockId}?network=${NetworkName.TESTNET}` })
+      expect(mockGetTransaction).toHaveBeenNthCalledWith(1, {
+        networkName: NetworkName.MAINNET,
+        transactionId: fallbackBlockId,
+      })
+      expect(mockGetTransaction).toHaveBeenNthCalledWith(2, {
+        networkName: NetworkName.TESTNET,
+        transactionId: fallbackBlockId,
+      })
+      expect(mockGetBlockCompressed).toHaveBeenNthCalledWith(1, {
+        networkName: NetworkName.MAINNET,
+        revision: fallbackBlockId,
+      })
+      expect(mockGetBlockCompressed).toHaveBeenNthCalledWith(2, {
+        networkName: NetworkName.TESTNET,
+        revision: fallbackBlockId,
+      })
+    })
+  })
+
+  describe('BLOCK_REVISION handler', () => {
+    const blockRevision = '24605147'
+    const parsedBlockRevision = 24605147
+    const fallbackBlockId = '0x017771db5036bf5f8a4ef0f5069c0099931339536834dca95d86b61411b4208c'
+    const mockBlock = { id: fallbackBlockId } as unknown as Awaited<ReturnType<typeof getBlockCompressed>>
+    const testnetNetwork: Network = {
+      name: NetworkName.TESTNET,
+      url: 'https://testnet.vechain.org',
+      contracts: {},
+    }
+
+    it('should redirect to the fallback network when the block exists there', async () => {
+      mockGetBlockCompressed.mockRejectedValueOnce(new Error('Block not found')).mockResolvedValueOnce(mockBlock)
+
+      const result = await search({
+        searchTerm: blockRevision,
+        activeNetwork: mockNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: `/block/${fallbackBlockId}?network=${NetworkName.TESTNET}` })
+      expect(mockGetBlockCompressed).toHaveBeenNthCalledWith(1, {
+        networkName: NetworkName.MAINNET,
+        revision: parsedBlockRevision,
+      })
+      expect(mockGetBlockCompressed).toHaveBeenNthCalledWith(2, {
+        networkName: NetworkName.TESTNET,
+        revision: parsedBlockRevision,
+      })
+    })
+
+    it('should keep the active network when the block is found immediately', async () => {
+      mockGetBlockCompressed.mockResolvedValueOnce(mockBlock)
+
+      const result = await search({
+        searchTerm: blockRevision,
+        activeNetwork: testnetNetwork,
+      })
+
+      expect(result).toEqual({ redirectTo: `/block/${fallbackBlockId}` })
+      expect(mockGetBlockCompressed).toHaveBeenCalledTimes(1)
+      expect(mockGetBlockCompressed).toHaveBeenCalledWith({
+        networkName: NetworkName.TESTNET,
+        revision: parsedBlockRevision,
       })
     })
   })

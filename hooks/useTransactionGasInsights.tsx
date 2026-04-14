@@ -1,4 +1,5 @@
 import { type Transaction, transactionTypeSchema } from '@/lib/schemas/transactions'
+import type { NetworkName } from '@/lib/constants/network'
 import { useBaseFeePerGas } from '@/services/thor/block'
 import { useLegacyBaseFeePerGas } from '@/services/thor/transaction'
 import type { TransactionReceipt } from '@/lib/schemas'
@@ -34,11 +35,13 @@ export type TxGasFeesResult =
 export const useTransactionGasInsights = ({
   transaction,
   receipt,
+  networkName,
 }: {
   transaction: Transaction
   receipt: TransactionReceipt | null
+  networkName?: NetworkName
 }): InsightType[] => {
-  const txGasFees = useTxGasFees({ transaction, receipt })
+  const txGasFees = useTxGasFees({ transaction, receipt, networkName })
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
 
@@ -129,14 +132,19 @@ export const useTransactionGasInsights = ({
 const useTxGasFees = ({
   transaction,
   receipt,
+  networkName,
 }: {
   transaction: Transaction
   receipt: TransactionReceipt | null
+  networkName?: NetworkName
 }): TxGasFeesResult => {
   const totalFeePaid = receipt?.paid ?? BigInt(0)
 
-  const { isLoading: isBaseFeePerGasLoading, data: baseFeePerGas } = useBaseFeePerGas(transaction?.meta.blockID)
-  const { isLoading: isLegacyBaseFeePerGasLoading, data: legacyBaseFeePerGas } = useLegacyBaseFeePerGas()
+  const { isLoading: isBaseFeePerGasLoading, data: baseFeePerGas } = useBaseFeePerGas(
+    transaction?.meta.blockID,
+    networkName,
+  )
+  const { isLoading: isLegacyBaseFeePerGasLoading, data: legacyBaseFeePerGas } = useLegacyBaseFeePerGas(networkName)
 
   if (isBaseFeePerGasLoading || !baseFeePerGas || isLegacyBaseFeePerGasLoading || !legacyBaseFeePerGas)
     return { type: 'loading' }
