@@ -1,10 +1,9 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from './index'
+import { indexerGet, resolveUrl } from './index'
 import { type IndexerGetContractTransactionsParams, indexerTransactionSchema, indexerResponseSchema } from './schemas'
 
 const CONTRACT_TRANSACTIONS_QUERY_KEY = 'getContractTransactions'
@@ -38,7 +37,7 @@ const getContractTransactions = async ({
   networkName: NetworkName
   params: IndexerGetContractTransactionsParams
 }) => {
-  const { data } = await apiClient.get({
+  const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: '/transactions/contract',
     params: serializeZodParams(params),

@@ -164,9 +164,11 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
           <DetailRow label={t('Transaction ID')}>
             <CopyableTransactionIdLink txId={mintEvent.txId} />
           </DetailRow>
-          <DetailRow label={t('Minted by')}>
-            <CopyableAddressLink address={mintEvent.to} truncate />
-          </DetailRow>
+          {mintEvent.to && (
+            <DetailRow label={t('Minted by')}>
+              <CopyableAddressLink address={mintEvent.to} truncate />
+            </DetailRow>
+          )}
         </SectionCard>
       )}
 

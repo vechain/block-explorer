@@ -9,7 +9,6 @@ import { Card } from '@/components/ui/Card'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
 import { CopyableAddressLink } from '@/components/ui/Links'
-import { Picasso } from '@/components/ui/Picasso'
 import type { AddressString } from '@/lib/schemas'
 import { LevelName, type ValidatorDetails, ValidatorStatus } from '@/services/veworld-indexer/validator-details'
 import { useVnsName } from '@/services/thor/vns'
@@ -234,85 +233,95 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
   return (
     <Stack gap="8">
       <Card>
-        <Flex
-          flexDirection={{ base: 'column', md: 'row' }}
-          gap={4}
-          alignItems={{ base: 'flex-start', md: 'center' }}
-          justifyContent="space-between"
-          flexWrap="wrap"
-        >
-          <HStack gap={2}>
-            {/* Validator Logo */}
-            {validator.metadata?.logo ? (
-              <Box position="relative">
-                <Image
-                  src={validator.metadata.logo}
-                  alt={validator.metadata?.name ?? 'Validator'}
-                  width={48}
-                  height={48}
-                  style={{ borderRadius: '50%' }}
-                />
-              </Box>
-            ) : (
-              <Picasso address={address} size={48} />
-            )}
-            <Link
-              href={stargateValidatorLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              display="flex"
-              alignItems="center"
-              gap={2}
-              _hover={{ textDecoration: 'none', opacity: 0.8 }}
-              _focus={{ outline: 'none', boxShadow: 'none' }}
-              _focusVisible={{ outline: 'none', boxShadow: 'none' }}
-            >
-              <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap">
-                {t('Validator')}
-              </Heading>
-              <LuExternalLink size={16} color="var(--chakra-colors-text-secondary)" />
-            </Link>
-            <Badge bg={statusBadge.bg} color={statusBadge.color} px={2} py={0.5} borderRadius="md" fontSize="xs">
-              {t(statusBadge.labelKey)}
-            </Badge>
-          </HStack>
-          <IDChip value={address} vnsName={vnsName} />
-        </Flex>
-        {/* Header Section */}
-        <HStack justify="space-between" align="flex-start" flexWrap="wrap" gap={4}>
-          <HStack gap={3}>
-            {/* Status */}
-            <VStack align="start" gap={1}>
-              {/* Location */}
-              {validator.metadata?.location && (
-                <HStack gap={1} color="text-secondary">
-                  <LuMapPin size={14} />
-                  <Text textStyle="bodyS">{validator.metadata.location}</Text>
-                </HStack>
+        <Flex>
+          <HStack gap={3} alignItems="flex-start" flex={1} minW={0}>
+            <VStack align="start" gap={2} flex={1} minW={0}>
+              <Flex justifyContent="space-between" alignItems="flex-start" gap={4} w="full">
+                <Heading as="h2" textStyle="displayXs" whiteSpace="nowrap">
+                  {t('Validator')}
+                </Heading>
+                <Badge
+                  bg={statusBadge.bg}
+                  color={statusBadge.color}
+                  px={2}
+                  py={0.5}
+                  borderRadius="md"
+                  fontSize="xs"
+                  flexShrink={0}
+                >
+                  {t(statusBadge.labelKey)}
+                </Badge>
+              </Flex>
+              {validator.metadata?.name && (
+                <Text
+                  textStyle="bodyS"
+                  color="text-secondary"
+                  maxW="full"
+                  overflow="hidden"
+                  textOverflow="ellipsis"
+                  whiteSpace="nowrap"
+                >
+                  {validator.metadata.name}
+                </Text>
               )}
-
-              {/* Website */}
-              {validator.metadata?.website && (
-                <HStack gap={1}>
-                  <LuGlobe size={14} color="var(--chakra-colors-text-secondary)" />
-                  <Link
-                    href={validator.metadata.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    color="text-link"
-                    textStyle="bodyS"
-                    display="flex"
-                    alignItems="center"
-                    gap={1}
-                  >
-                    {t('Visit website')}
-                    <LuExternalLink size={12} />
-                  </Link>
-                </HStack>
-              )}
+              <IDChip
+                value={address}
+                vnsName={vnsName}
+                maxW="full"
+                avatarSrc={validator.metadata?.logo}
+                avatarAlt={validator.metadata?.name ?? 'Validator'}
+                showPicasso
+              />
+              <Link
+                href={stargateValidatorLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                color="accent-primary"
+                textStyle="bodyS"
+                display="flex"
+                alignItems="center"
+                gap={1}
+                _hover={{ textDecoration: 'underline' }}
+              >
+                {t('View it on Stargate')}
+                <LuExternalLink size={12} />
+              </Link>
             </VStack>
           </HStack>
-        </HStack>
+        </Flex>
+        {(validator.metadata?.location || validator.metadata?.website) && (
+          <HStack justify="space-between" align="flex-start" flexWrap="wrap" gap={4}>
+            <HStack gap={3}>
+              <VStack align="start" gap={1}>
+                {validator.metadata?.location && (
+                  <HStack gap={1} color="text-secondary">
+                    <LuMapPin size={14} />
+                    <Text textStyle="bodyS">{validator.metadata.location}</Text>
+                  </HStack>
+                )}
+
+                {validator.metadata?.website && (
+                  <HStack gap={1}>
+                    <LuGlobe size={14} color="var(--chakra-colors-text-secondary)" />
+                    <Link
+                      href={validator.metadata.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      color="text-link"
+                      textStyle="bodyS"
+                      display="flex"
+                      alignItems="center"
+                      gap={1}
+                    >
+                      {t('Visit website')}
+                      <LuExternalLink size={12} />
+                    </Link>
+                  </HStack>
+                )}
+              </VStack>
+            </HStack>
+          </HStack>
+        )}
 
         {/* Description */}
         {validator.metadata?.desc && (
@@ -428,7 +437,7 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
                 <HStack gap={2}>
                   <Box width="12px" height="12px" borderRadius="full" bg="purple.700" />
                   <Text textStyle="bodyS" color="text-secondary">
-                    {t('Delegated')}
+                    {t('Delegated Stake')}
                   </Text>
                 </HStack>
                 <HStack gap={1}>

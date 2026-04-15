@@ -1,10 +1,9 @@
 import { queryOptions, keepPreviousData, useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from './index'
+import { indexerGet, resolveUrl } from './index'
 import { type IndexerGetTransfersParams, indexerResponseSchema, indexerTransferSchema } from './schemas'
 
 const ACCOUNT_TRANSFERS_QUERY_KEY = 'getAccountTransfers'
@@ -39,7 +38,7 @@ const getAccountTransfers = async ({
   networkName: NetworkName
   params: IndexerGetTransfersParams
 }) => {
-  const { data } = await apiClient.get({
+  const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: '/transfers',
     params: serializeZodParams(params),

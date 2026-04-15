@@ -1,60 +1,104 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from '.'
-import { indexerResponseSchema } from './schemas'
+import { IndexerVersion, indexerGet, resolveUrl } from '.'
 
+const ACCOUNT_TOTAL_QUERY_KEY = 'getAccountTotal'
 const ACCOUNT_TOTALS_QUERY_KEY = 'getAccountTotals'
 
-/** @public */
-export enum AccountTimeFrame {
-  DAY = 'DAY',
-  WEEK = 'WEEK',
-  MONTH = 'MONTH',
-  YEAR = 'YEAR',
-  ALL = 'ALL',
+const accountTotalResponseSchema = z.number()
+const accountTotalsResponseSchema = z.array(
+  z.object({
+    blockId: z.string(),
+    blockNumber: z.number(),
+    blockTimestamp: z.number(),
+    totalAccounts: z.number(),
+  }),
+)
+
+export const accountTotalQueryOptions = (networkName: NetworkName) => ({
+  queryKey: [ACCOUNT_TOTAL_QUERY_KEY, networkName],
+  queryFn: () => getAccountTotal(networkName),
+  refetchInterval: 10 * 1000,
+  placeholderData: keepPreviousData,
+})
+
+const getRefetchInterval = (rangeSeconds: number) => {
+  if (rangeSeconds <= 3600) {
+    return 1000 * 30
+  }
+  if (rangeSeconds <= 604800) {
+    return 1000 * 60 * 5
+  }
+  if (rangeSeconds <= 2592000) {
+    return 1000 * 60 * 15
+  }
+  if (rangeSeconds <= 31536000) {
+    return 1000 * 60 * 30
+  }
+  return 1000 * 60 * 60
 }
 
-const accountTotalSchema = z.object({
-  total: z.number(),
-  timeFrame: z.enum(AccountTimeFrame),
-  dayOfMonth: z.number().nullable().optional(),
-  weekOfYear: z.number().nullable().optional(),
-  month: z.number().nullable().optional(),
-  year: z.number().nullable().optional(),
-})
+const accountTotalsQueryOptions = (
+  networkName: NetworkName,
+  startTimestamp: number,
+  endTimestamp: number,
+  isLiveMode: boolean = true,
+) => {
+  const rangeSeconds = endTimestamp - startTimestamp
+  const refetchInterval: number | false = isLiveMode ? getRefetchInterval(rangeSeconds) : false
 
-const accountTotalsResponseSchema = indexerResponseSchema(accountTotalSchema)
+  return {
+    queryKey: [ACCOUNT_TOTALS_QUERY_KEY, networkName, startTimestamp, endTimestamp, isLiveMode],
+    queryFn: () => getAccountTotals({ networkName, startTimestamp, endTimestamp }),
+    staleTime: isLiveMode ? getRefetchInterval(rangeSeconds) : Infinity,
+    refetchInterval,
+    placeholderData: keepPreviousData,
+  }
+}
 
-export const accountTotalsQueryOptions = (networkName: NetworkName, timeFrame: AccountTimeFrame) => ({
-  queryKey: [ACCOUNT_TOTALS_QUERY_KEY, networkName, timeFrame],
-  queryFn: () => getAccountTotals({ networkName, timeFrame }),
-  refetchInterval: 10 * 1000, // Refetch every 10 seconds
-  placeholderData: keepPreviousData, // Prevent UI flickering during refetches
-})
-
-export const useAccountTotals = (timeFrame: AccountTimeFrame) => {
+export const useAccountTotal = () => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(accountTotalsQueryOptions(activeNetwork.name, timeFrame))
+  return useQuery(accountTotalQueryOptions(activeNetwork.name))
+}
+
+export const useAccountTotals = (startTimestamp: number, endTimestamp: number, isLiveMode: boolean = true) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery(accountTotalsQueryOptions(activeNetwork.name, startTimestamp, endTimestamp, isLiveMode))
+}
+
+const getAccountTotal = async (networkName: NetworkName) => {
+  const { data } = await indexerGet({
+    baseUrl: resolveUrl(networkName, IndexerVersion.V2),
+    endPoint: '/accounts/total',
+  })
+  return zodParse({
+    data,
+    schema: accountTotalResponseSchema,
+    errorMessage: 'Invalid account total response from VeWorld Indexer',
+  })
 }
 
 const getAccountTotals = async ({
   networkName,
-  timeFrame,
+  startTimestamp,
+  endTimestamp,
 }: {
   networkName: NetworkName
-  timeFrame: AccountTimeFrame
+  startTimestamp: number
+  endTimestamp: number
 }) => {
-  const { data } = await apiClient.get({
-    baseUrl: resolveUrl(networkName),
+  const { data } = await indexerGet({
+    baseUrl: resolveUrl(networkName, IndexerVersion.V2),
     endPoint: '/accounts/totals',
     params: {
-      timeFrame: timeFrame.toString(),
+      startTimestamp: startTimestamp.toString(),
+      endTimestamp: endTimestamp.toString(),
     },
   })
+
   return zodParse({
     data,
     schema: accountTotalsResponseSchema,

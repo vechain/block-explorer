@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { usePathname, useRouter, useSearchParams, type ReadonlyURLSearchParams } from 'next/navigation'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NotFound } from '@/components/error/NotFound'
 import { TransactionInsight } from '@/components/TransactionInsights'
 import { TxStatusBadge } from '@/components/TxStatus'
 import { TransactionViews } from '@/components/TransactionViews'
@@ -15,8 +14,12 @@ import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
+import { useRedirectOnNotFound } from '@/hooks/useRedirectOnNotFound'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
+import { type NetworkName } from '@/lib/constants/network'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { TransactionDetailsView, TransactionStatus } from '@/lib/types'
+import { getNetworkNameFromSearchParams } from '@/lib/utils/network'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/transaction'
 
 export const TransactionPageContent = ({
@@ -26,26 +29,24 @@ export const TransactionPageContent = ({
   transactionId: TransactionId
   view: string | undefined
 }) => {
-  const { t } = useTranslation()
-  const { data: transaction, isPending: isTransactionPending } = useTransaction(transactionId)
-  const { data: receipt, isPending: isReceiptPending } = useTransactionReceipt(transactionId)
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  const requestedNetworkName = getNetworkNameFromSearchParams(searchParams)
+  const transactionNetworkName = requestedNetworkName ?? activeNetworkName
+  const { data: transaction, isPending: isTransactionPending } = useTransaction(transactionId, transactionNetworkName)
+  const { data: receipt, isPending: isReceiptPending } = useTransactionReceipt(transactionId, transactionNetworkName)
 
-  if (isTransactionPending || isReceiptPending) return <Skeleton height="400px" width="100%" />
+  const isNotFound = useRedirectOnNotFound({
+    isNotFound: !isTransactionPending && !transaction,
+  })
 
-  if (!transaction) {
-    return (
-      <NotFound
-        title={t('Transaction not found')}
-        description={t('The transaction you are looking for does not exist')}
-      />
-    )
-  }
+  if (isTransactionPending || isReceiptPending || isNotFound || !transaction)
+    return <Skeleton height="400px" width="100%" />
 
   const handleViewChange = (newView: TransactionDetailsView) => {
-    router.replace(getTransactionViewHref(pathname, searchParams, newView, DETAILS_CARD_ID), { scroll: false })
+    router.replace(getTransactionHref(pathname, searchParams, { view: newView }, DETAILS_CARD_ID), { scroll: false })
   }
 
   if (receipt === undefined) {
@@ -58,6 +59,7 @@ export const TransactionPageContent = ({
     <TransactionDetails
       transaction={transaction}
       receipt={receipt}
+      networkName={transactionNetworkName}
       view={currentView}
       onViewChange={handleViewChange}
     />
@@ -67,12 +69,14 @@ export const TransactionPageContent = ({
 const TransactionDetails = ({
   transaction,
   receipt,
+  networkName,
   view = TransactionDetailsView.CLAUSES,
   onViewChange,
 }: {
   view: TransactionDetailsView
   transaction: Transaction
   receipt: TransactionReceipt | null
+  networkName: NetworkName
   onViewChange: (view: TransactionDetailsView) => void
 }) => {
   const { t } = useTranslation()
@@ -136,7 +140,7 @@ const TransactionDetails = ({
           }
         />
 
-        <TransactionInsight transaction={transaction} receipt={receipt} />
+        <TransactionInsight transaction={transaction} receipt={receipt} networkName={networkName} />
       </Card>
 
       <Card variant="primary" id={DETAILS_CARD_ID}>
@@ -168,14 +172,22 @@ const getTransactionDetailsView = (view: string | undefined): TransactionDetails
   return TransactionDetailsView.CLAUSES
 }
 
-const getTransactionViewHref = (
+const getTransactionHref = (
   pathname: string,
   searchParams: ReadonlyURLSearchParams,
-  view: TransactionDetailsView,
+  updates: Partial<Record<'network' | 'view', string>>,
   hash?: string,
 ) => {
   const nextSearchParams = new URLSearchParams(searchParams.toString())
-  nextSearchParams.set('view', view)
+
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value) {
+      nextSearchParams.set(key, value)
+      return
+    }
+
+    nextSearchParams.delete(key)
+  })
 
   const queryString = nextSearchParams.toString()
   const hashSuffix = hash ? `#${hash}` : ''

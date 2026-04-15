@@ -1,5 +1,5 @@
-import { IS_SOLO, SOLO_NODE_URL } from '@/env.public'
 import { MAINNET_URL, TESTNET_URL } from '@vechain/sdk-network'
+import { DEV_MODE_DEFAULTS } from './dev-mode'
 
 export type Network = {
   name: NetworkName
@@ -15,6 +15,14 @@ export enum NetworkName {
   SOLO = 'solo',
 }
 
+const NETWORK_GENESIS_TIMESTAMPS: Record<NetworkName, number | null> = {
+  [NetworkName.MAINNET]: 1530316800,
+  [NetworkName.TESTNET]: 1530014400,
+  [NetworkName.SOLO]: null,
+}
+
+export const getNetworkGenesisTimestamp = (networkName: NetworkName) => NETWORK_GENESIS_TIMESTAMPS[networkName]
+
 const mainnet: Network = {
   name: NetworkName.MAINNET,
   url: MAINNET_URL,
@@ -29,12 +37,14 @@ const testnet: Network = {
 
 const solo: Network = {
   name: NetworkName.SOLO,
-  url: SOLO_NODE_URL,
+  url: DEV_MODE_DEFAULTS.soloNodeUrl,
   contracts: {},
 }
 
-export const DEFAULT_NETWORK: Network = IS_SOLO ? solo : mainnet
+export const DEFAULT_NETWORK: Network = mainnet
 
-export const NETWORKS: Record<string, Network> = IS_SOLO
-  ? { [NetworkName.SOLO]: solo }
-  : { [NetworkName.MAINNET]: mainnet, [NetworkName.TESTNET]: testnet }
+export const NETWORKS: Record<NetworkName, Network> = {
+  [NetworkName.MAINNET]: mainnet,
+  [NetworkName.TESTNET]: testnet,
+  [NetworkName.SOLO]: solo,
+}

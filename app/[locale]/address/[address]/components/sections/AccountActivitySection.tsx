@@ -4,28 +4,82 @@ import { Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
 import { LuArrowDownLeft, LuArrowUpRight, LuFlame } from 'react-icons/lu'
+import { Balance, VETBalance, VTHOBalance } from '@/components/ui/Balance'
 import { Card } from '@/components/ui/Card'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
-import { Balance, VETBalance, VTHOBalance } from '@/components/ui/Balance'
 import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
-import { useFormatDate } from '@/hooks/useFormatting'
+import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import type { AddressString } from '@/lib/schemas'
-import { useContract } from '@/services/veworld-indexer/contracts'
 import { useAccountOverview } from '@/services/veworld-indexer/account-overview'
+import { useContract } from '@/services/veworld-indexer/contracts'
 
 export const AccountActivitySection = ({
   address,
   isContract = false,
+  showSummaryCards = false,
 }: {
   address: AddressString
   isContract?: boolean
+  showSummaryCards?: boolean
 }) => {
   const { t } = useTranslation()
+  const formatNumber = useFormatNumber()
   const formatDate = useFormatDate()
-  const { data: overview } = useAccountOverview(address)
+  const { data: overview, isPending: isOverviewPending } = useAccountOverview(address)
   const { data: contract, isPending: isContractPending } = useContract({ address, enabled: isContract })
 
+  const firstSeenDate = overview && overview.firstSeen > 0 ? formatDate(overview.firstSeen * 1000) : null
+  const lastSeenDate = overview && overview.lastSeen > 0 ? formatDate(overview.lastSeen * 1000) : null
+
   const items: DataCardGroupItem[] = [
+    ...(showSummaryCards
+      ? [
+          {
+            icon: <Image src="/icons/calendar.svg" alt="Calendar" width={24} height={24} />,
+            title: t('First Seen'),
+            children: isOverviewPending ? (
+              <Skeleton height="24px" width="120px" />
+            ) : (
+              <Text textStyle="bodyL" color={firstSeenDate ? 'text-primary' : 'text-secondary'}>
+                {firstSeenDate ?? '-'}
+              </Text>
+            ),
+          },
+          {
+            icon: <Image src="/icons/calendar.svg" alt="Calendar" width={24} height={24} />,
+            title: t('Last Seen'),
+            children: isOverviewPending ? (
+              <Skeleton height="24px" width="120px" />
+            ) : (
+              <Text textStyle="bodyL" color={lastSeenDate ? 'text-primary' : 'text-secondary'}>
+                {lastSeenDate ?? '-'}
+              </Text>
+            ),
+          },
+          {
+            icon: <Image src="/icons/transaction.svg" alt="Transactions" width={24} height={24} />,
+            title: t('Total Transactions'),
+            children: isOverviewPending ? (
+              <Skeleton height="24px" width="80px" />
+            ) : (
+              <Text textStyle="bodyL" color="text-primary">
+                {overview ? formatNumber(overview.transactionsSent) : '0'}
+              </Text>
+            ),
+          },
+          {
+            icon: <Image src="/icons/clause.svg" alt="Clauses" width={24} height={24} />,
+            title: t('Total Clauses'),
+            children: isOverviewPending ? (
+              <Skeleton height="24px" width="80px" />
+            ) : (
+              <Text textStyle="bodyL" color="text-primary">
+                {overview ? formatNumber(overview.clausesSent) : '0'}
+              </Text>
+            ),
+          },
+        ]
+      : []),
     ...(isContract
       ? [
           {

@@ -73,12 +73,14 @@ const getCellBorderRadius = (rowIndex: number, colIndex: number, totalRows: numb
   const isLastRow = rowIndex === totalRows - 1
   const isFirstCol = colIndex === 0
   const isLastCol = colIndex === totalCols - 1
+  const borderRadius: BoxProps = {}
 
-  if (isFirstRow && isFirstCol) return { borderTopLeftRadius: 'lg' }
-  if (isFirstRow && isLastCol) return { borderTopRightRadius: 'lg' }
-  if (isLastRow && isFirstCol) return { borderBottomLeftRadius: 'lg' }
-  if (isLastRow && isLastCol) return { borderBottomRightRadius: 'lg' }
-  return {}
+  if (isFirstRow && isFirstCol) borderRadius.borderTopLeftRadius = 'lg'
+  if (isFirstRow && isLastCol) borderRadius.borderTopRightRadius = 'lg'
+  if (isLastRow && isFirstCol) borderRadius.borderBottomLeftRadius = 'lg'
+  if (isLastRow && isLastCol) borderRadius.borderBottomRightRadius = 'lg'
+
+  return borderRadius
 }
 
 const getCellBorders = (rowIndex: number, colIndex: number, totalCols: number) => {

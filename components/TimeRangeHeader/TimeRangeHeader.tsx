@@ -19,6 +19,7 @@ interface TimeRangeHeaderProps {
   onDateChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   onHourChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
   title?: string
+  excludeRanges?: TimeRangeKey[]
 }
 
 export const TimeRangeHeader = ({
@@ -33,6 +34,7 @@ export const TimeRangeHeader = ({
   onDateChange,
   onHourChange,
   title,
+  excludeRanges,
 }: TimeRangeHeaderProps) => {
   const { t } = useTranslation()
 
@@ -48,7 +50,7 @@ export const TimeRangeHeader = ({
           {title ?? t('Block Usage')}
         </Heading>
         <Flex gap={2} hideFrom="md">
-          <TimeRangeSelect selectedRange={selectedRange} onRangeChange={onRangeChange} />
+          <TimeRangeSelect selectedRange={selectedRange} onRangeChange={onRangeChange} excludeRanges={excludeRanges} />
           <NowButton onClick={onResetToNow} />
         </Flex>
       </HStack>
@@ -66,7 +68,7 @@ export const TimeRangeHeader = ({
           />
         )}
         <Flex gap={2} hideBelow="md">
-          <TimeRangeSelect selectedRange={selectedRange} onRangeChange={onRangeChange} />
+          <TimeRangeSelect selectedRange={selectedRange} onRangeChange={onRangeChange} excludeRanges={excludeRanges} />
           <NowButton onClick={onResetToNow} />
         </Flex>
       </HStack>

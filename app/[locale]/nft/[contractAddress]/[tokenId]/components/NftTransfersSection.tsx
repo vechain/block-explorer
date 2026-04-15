@@ -3,7 +3,7 @@
 import { Flex, Heading, Text } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { HiArrowRight, HiOutlineFire, HiOutlineSparkles } from 'react-icons/hi2'
+import { HiArrowRight, HiOutlineFire, HiOutlineShoppingBag, HiOutlineSparkles } from 'react-icons/hi2'
 import { Card } from '@/components/ui/Card'
 import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import { AgeText } from '@/components/ui/AgeText'
@@ -11,6 +11,7 @@ import { PaginationControls } from '@/components/ui/PaginationControls'
 import { type Column, DataTable, TableSkeleton } from '@/components/ui/Table'
 import type { AddressString } from '@/lib/schemas'
 import { useNftTransfers } from '@/services/veworld-indexer/nft-transfers'
+import type { TokenHistoryItem } from '@/services/veworld-indexer/schemas'
 import { ZERO_ADDRESS } from '@vechain/sdk-core'
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50] as const
@@ -20,9 +21,27 @@ interface NftTransfersSectionProps {
   tokenId: bigint
 }
 
-type TransferType = 'mint' | 'burn' | 'transfer'
+type TransferType = 'mint' | 'burn' | 'transfer' | 'sale'
 
-const getTransferType = (from: string, to: string): TransferType => {
+/** NFT_SALE rows often omit `from`/`to` but populate `origin` / `owner`. */
+const displayParties = (transfer: TokenHistoryItem): { from: string; to: string } => {
+  if (transfer.eventName === 'NFT_SALE') {
+    return {
+      from: transfer.from ?? transfer.origin ?? '',
+      to: transfer.to ?? transfer.owner ?? '',
+    }
+  }
+  return {
+    from: transfer.from ?? '',
+    to: transfer.to ?? '',
+  }
+}
+
+const getTransferType = (transfer: TokenHistoryItem): TransferType | null => {
+  if (transfer.eventName === 'NFT_SALE') return 'sale'
+
+  const { from, to } = displayParties(transfer)
+  if (!from || !to) return null
   const nullAddr = ZERO_ADDRESS.toLowerCase()
   if (from.toLowerCase() === nullAddr) return 'mint'
   if (to.toLowerCase() === nullAddr) return 'burn'
@@ -33,6 +52,7 @@ const transferConfig = {
   mint: { label: 'Mint', icon: HiOutlineSparkles, color: 'green.400' },
   burn: { label: 'Burn', icon: HiOutlineFire, color: 'red.400' },
   transfer: { label: 'Transfer', icon: HiArrowRight, color: 'blue.400' },
+  sale: { label: 'Sale', icon: HiOutlineShoppingBag, color: 'purple.400' },
 } as const
 
 export const NftTransfersSection = ({ contractAddress, tokenId }: NftTransfersSectionProps) => {
@@ -66,7 +86,14 @@ export const NftTransfersSection = ({ contractAddress, tokenId }: NftTransfersSe
     const Cell = ({ row }: { row: { id: string } }) => {
       const transfer = transferMap.get(row.id)
       if (!transfer) return null
-      const type = getTransferType(transfer.from, transfer.to)
+      const type = getTransferType(transfer)
+      if (type === null) {
+        return (
+          <Text textStyle="bodyM" color="text-primary" fontFamily="mono" fontSize="sm">
+            {transfer.eventName}
+          </Text>
+        )
+      }
       const { label, icon: Icon, color } = transferConfig[type]
       return (
         <Flex alignItems="center" gap={1.5}>
@@ -83,14 +110,17 @@ export const NftTransfersSection = ({ contractAddress, tokenId }: NftTransfersSe
 
   const rows = useMemo(
     () =>
-      transfers.map(transfer => ({
-        id: transfer.id,
-        age: transfer.blockTimestamp * 1000,
-        txId: transfer.txId,
-        type: '',
-        from: transfer.from,
-        to: transfer.to,
-      })),
+      transfers.map(transfer => {
+        const { from, to } = displayParties(transfer)
+        return {
+          id: transfer.id,
+          age: transfer.blockTimestamp * 1000,
+          txId: transfer.txId,
+          type: '',
+          from,
+          to,
+        }
+      }),
     [transfers],
   )
 
@@ -107,12 +137,26 @@ export const NftTransfersSection = ({ contractAddress, tokenId }: NftTransfersSe
         {
           key: 'from',
           label: t('From'),
-          Cell: ({ value }) => <CopyableAddressLink truncate address={value as AddressString} />,
+          Cell: ({ value }) =>
+            typeof value === 'string' && value ? (
+              <CopyableAddressLink truncate address={value as AddressString} />
+            ) : (
+              <Text textStyle="bodyM" color="text-secondary">
+                —
+              </Text>
+            ),
         },
         {
           key: 'to',
           label: t('To'),
-          Cell: ({ value }) => <CopyableAddressLink truncate address={value as AddressString} />,
+          Cell: ({ value }) =>
+            typeof value === 'string' && value ? (
+              <CopyableAddressLink truncate address={value as AddressString} />
+            ) : (
+              <Text textStyle="bodyM" color="text-secondary">
+                —
+              </Text>
+            ),
         },
       ] as Column<(typeof rows)[number]>[],
     [t, TypeCell],

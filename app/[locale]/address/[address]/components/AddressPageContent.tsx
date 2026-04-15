@@ -1,13 +1,14 @@
 'use client'
 
-import { notFound } from 'next/navigation'
 import type { AddressString } from '@/lib/schemas'
+import { useRedirectOnNotFound } from '@/hooks/useRedirectOnNotFound'
 import { useAccount } from '@/services/thor/account'
 import { useValidatorDetails } from '@/services/veworld-indexer/validator-details'
 import { Center, Spinner, Stack } from '@chakra-ui/react'
 import { AccountSummary } from './AccountSummary'
 import { AccountTransactionsSection } from './sections/AccountTransactionsSection'
 import { AccountActivitySection } from './sections/AccountActivitySection'
+import { EndorsedValidatorsSection } from './sections/EndorsedValidatorsSection'
 import { AccountNftsSection } from './sections/AccountNftsSection'
 import { DeployedContractsSection } from './sections/DeployedContractsSection'
 import { AccountTokenTransfersSection } from './sections/AccountTokenTransfersSection'
@@ -23,15 +24,14 @@ export const AddressPageContent = ({ address }: { address: AddressString }) => {
 
   const isLoading = isAccountLoading || !isValidatorFetched
 
-  if (isLoading)
+  const isNotFound = useRedirectOnNotFound({ isNotFound: !isLoading && isAccountFetched && !account })
+
+  if (isLoading || isNotFound)
     return (
       <Center height="50vh">
         <Spinner color="primary" size="xl" />
       </Center>
     )
-  if (isAccountFetched && !isAccountLoading && !account) {
-    notFound()
-  }
 
   // Determine address type based on available data
   const addressType: AddressType = isValidator && validator ? 'validator' : account?.hasCode ? 'contract' : 'account'
@@ -64,7 +64,8 @@ export const AddressPageContent = ({ address }: { address: AddressString }) => {
   return (
     <Stack flex={1} gap="8">
       <AccountSummary address={resolvedAddress} />
-      <AccountActivitySection address={resolvedAddress} />
+      <EndorsedValidatorsSection address={resolvedAddress} />
+      <AccountActivitySection address={resolvedAddress} showSummaryCards />
       <AccountTransactionsSection address={resolvedAddress} hasCode={account?.hasCode ?? false} />
       <AccountTokenTransfersSection address={resolvedAddress} />
       <AccountNftsSection address={resolvedAddress} />

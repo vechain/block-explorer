@@ -23,7 +23,7 @@ const VET_ENTRY: TokenRegistryEntry = {
   name: 'VeChain',
   symbol: TokenSymbol.VET,
   decimals: 18,
-  address: '0x0000000000000000000000000000000000000000',
+  address: '-',
   desc: 'VET is the native token of the VeChainThor blockchain.',
   icon: '',
   website: 'https://www.vechain.org/',
@@ -231,6 +231,10 @@ const TotalSupplyCell = ({ row }: CellComponentProps<TokenRowData>) => {
 }
 
 const AddressCell = ({ row }: CellComponentProps<TokenRowData>) => {
+  if (row.address === '-') {
+    return <Text color="text-secondary">-</Text>
+  }
+
   const address = row.address as AddressString
 
   return (

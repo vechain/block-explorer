@@ -92,7 +92,20 @@ const blockUsageDataSchema = z.object({
 
 export const blockUsageResponseSchema = z.array(blockUsageDataSchema)
 
+// Average fees per user schema for indexer endpoint
+const afpuDataSchema = z.object({
+  date: z.string(),
+  dayStartTimestamp: z.number(),
+  totalFeesPaid: z.number(),
+  dailyActiveUsers: z.number(),
+  averageFeesPerUser: z.number(),
+})
+
+export const afpuResponseSchema = z.array(afpuDataSchema)
+
 export type ExpandedBlock = z.infer<typeof blockExpandedSchema>
 export type BlockRevision = z.infer<typeof blockRevisionSchema>
 export type BlockUsageData = z.infer<typeof blockUsageDataSchema>
 export type BlockUsageResponse = z.infer<typeof blockUsageResponseSchema>
+export type AFPUData = z.infer<typeof afpuDataSchema>
+export type AFPUResponse = z.infer<typeof afpuResponseSchema>

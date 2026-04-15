@@ -1,8 +1,15 @@
 import { useMutation } from '@tanstack/react-query'
-import type { Network } from '@/lib/constants/network'
+import type { Network, NetworkName } from '@/lib/constants/network'
 import { getTokenByNameOrSymbol } from '@/lib/constants/token-registry'
-import { addressStringSchema, blockRevisionSchema, transactionIdSchema } from '@/lib/schemas'
+import {
+  addressStringSchema,
+  blockRevisionSchema,
+  type BlockRevision,
+  type TransactionId,
+  transactionIdSchema,
+} from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { getFallbackNetworkName } from '@/lib/utils/network'
 import { getAccount } from '@/services/thor/account'
 import { getBlockCompressed } from '@/services/thor/block'
 import { getTransaction } from '@/services/thor/transaction'
@@ -86,6 +93,110 @@ const attemptVnsResolution = async (searchTerm: string, activeNetwork: Network, 
   throw new Error(errorMessage)
 }
 
+const getRedirectTo = ({
+  pathname,
+  activeNetworkName,
+  targetNetworkName,
+}: {
+  pathname: string
+  activeNetworkName: NetworkName
+  targetNetworkName: NetworkName
+}) => {
+  if (activeNetworkName === targetNetworkName) return pathname
+
+  return `${pathname}?network=${targetNetworkName}`
+}
+
+const tryGetBlockCompressed = async ({
+  networkName,
+  revision,
+}: {
+  networkName: NetworkName
+  revision: BlockRevision
+}) => {
+  try {
+    return await getBlockCompressed({ networkName, revision })
+  } catch {
+    return null
+  }
+}
+
+const findBlockRedirect = async ({ activeNetwork, revision }: { activeNetwork: Network; revision: BlockRevision }) => {
+  const block = await tryGetBlockCompressed({
+    networkName: activeNetwork.name,
+    revision,
+  })
+
+  if (block) {
+    return {
+      redirectTo: getRedirectTo({
+        pathname: `/block/${block.id}`,
+        activeNetworkName: activeNetwork.name,
+        targetNetworkName: activeNetwork.name,
+      }),
+    }
+  }
+
+  const fallbackNetworkName = getFallbackNetworkName(activeNetwork.name)
+  if (!fallbackNetworkName) return null
+
+  const fallbackBlock = await tryGetBlockCompressed({
+    networkName: fallbackNetworkName,
+    revision,
+  })
+
+  if (!fallbackBlock) return null
+
+  return {
+    redirectTo: getRedirectTo({
+      pathname: `/block/${fallbackBlock.id}`,
+      activeNetworkName: activeNetwork.name,
+      targetNetworkName: fallbackNetworkName,
+    }),
+  }
+}
+
+const findTransactionRedirect = async ({
+  activeNetwork,
+  transactionId,
+}: {
+  activeNetwork: Network
+  transactionId: TransactionId
+}) => {
+  const transaction = await getTransaction({
+    networkName: activeNetwork.name,
+    transactionId,
+  })
+
+  if (transaction) {
+    return {
+      redirectTo: getRedirectTo({
+        pathname: `/transactions/${transaction.id}`,
+        activeNetworkName: activeNetwork.name,
+        targetNetworkName: activeNetwork.name,
+      }),
+    }
+  }
+
+  const fallbackNetworkName = getFallbackNetworkName(activeNetwork.name)
+  if (!fallbackNetworkName) return null
+
+  const fallbackTransaction = await getTransaction({
+    networkName: fallbackNetworkName,
+    transactionId,
+  })
+
+  if (!fallbackTransaction) return null
+
+  return {
+    redirectTo: getRedirectTo({
+      pathname: `/transactions/${fallbackTransaction.id}`,
+      activeNetworkName: activeNetwork.name,
+      targetNetworkName: fallbackNetworkName,
+    }),
+  }
+}
+
 const searchHandlers = {
   [SearchTermType.ADDRESS]: async (searchTerm: string, activeNetwork: Network) => {
     // Add 0x prefix if missing
@@ -103,13 +214,13 @@ const searchHandlers = {
 
   [SearchTermType.BLOCK_REVISION]: async (searchTerm: string, activeNetwork: Network) => {
     const parsedRevision = blockRevisionSchema.parse(searchTerm)
-    const block = await getBlockCompressed({
-      networkName: activeNetwork.name,
+    const blockRedirect = await findBlockRedirect({
+      activeNetwork,
       revision: parsedRevision,
     })
-    if (block) {
-      return { redirectTo: `/block/${block.id}` }
-    }
+
+    if (blockRedirect) return blockRedirect
+
     throw new Error('Block not found')
   },
 
@@ -120,14 +231,12 @@ const searchHandlers = {
     // Try transaction first
     try {
       const parsedHex = transactionIdSchema.parse(normalizedHex)
-      const transaction = await getTransaction({
-        networkName: activeNetwork.name,
+      const transactionRedirect = await findTransactionRedirect({
+        activeNetwork,
         transactionId: parsedHex,
       })
-      if (transaction) {
-        return { redirectTo: `/transactions/${transaction.id}` }
-      }
-      // If transaction is null/undefined, fall through to block lookup
+
+      if (transactionRedirect) return transactionRedirect
     } catch {
       // If transaction parsing/lookup throws, fall through to block lookup
     }
@@ -135,13 +244,12 @@ const searchHandlers = {
     // If transaction lookup failed or returned null, try as block ID
     try {
       const parsedRevision = blockRevisionSchema.parse(normalizedHex)
-      const block = await getBlockCompressed({
-        networkName: activeNetwork.name,
+      const blockRedirect = await findBlockRedirect({
+        activeNetwork,
         revision: parsedRevision,
       })
-      if (block) {
-        return { redirectTo: `/block/${block.id}` }
-      }
+
+      if (blockRedirect) return blockRedirect
     } catch {
       // Block lookup failed
     }

@@ -8,12 +8,16 @@ import type { TranslationKey } from '@/i18n/types'
 interface TimeRangeSelectProps {
   selectedRange: TimeRangeKey
   onRangeChange: (newRange: TimeRangeKey) => void
+  excludeRanges?: TimeRangeKey[]
 }
 
-export const TimeRangeSelect = ({ selectedRange, onRangeChange }: TimeRangeSelectProps) => {
+export const TimeRangeSelect = ({ selectedRange, onRangeChange, excludeRanges }: TimeRangeSelectProps) => {
   const { t } = useTranslation()
+  const filteredItems = excludeRanges
+    ? timeRangeCollection.items.filter(item => !excludeRanges.includes(item.value))
+    : timeRangeCollection.items
   const translatedTimeRanges = createListCollection<{ label: string; value: TimeRangeKey }>({
-    items: timeRangeCollection.items.map(item => ({
+    items: filteredItems.map(item => ({
       ...item,
       label: t(item.label as TranslationKey),
     })),

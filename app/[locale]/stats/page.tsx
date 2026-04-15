@@ -3,8 +3,10 @@
 import { VStack } from '@chakra-ui/react'
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { AccountTotalsChart } from '../components/AccountTotalsChart/AccountTotalsChart'
 import { useFormatNumber } from '@/hooks/useFormatting'
 import { AFPTChart } from '../components/AFPTChart/AFPTChart'
+import { AFPUChart } from '../components/AFPUChart/AFPUChart'
 import { BlockChart } from '../components/BlockChart/BlockChart'
 
 export default function StatsPage() {
@@ -17,6 +19,8 @@ export default function StatsPage() {
   return (
     <VStack gap={8} alignItems="stretch">
       <AFPTChart />
+      <AFPUChart />
+      <AccountTotalsChart />
       <BlockChart dataKey="usagePercentage" title={t('Block Usage')} color="#E782FF" chartType="line" yAxisUnit="%" />
       <BlockChart
         dataKey="gasUsed"

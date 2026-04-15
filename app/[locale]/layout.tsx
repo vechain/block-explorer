@@ -2,9 +2,12 @@ import '@/app/globals.css'
 import { Container, VStack } from '@chakra-ui/react'
 import type { Metadata } from 'next'
 import { Rubik } from 'next/font/google'
+import { Suspense } from 'react'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/navigation/Header'
+import { NetworkSearchParamSync } from '@/components/navigation/NetworkSearchParamSync'
 import { ChakraProvider } from '@/components/theme/provider'
+import { Toaster } from '@/components/ui/toaster'
 import type { Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
 import { MixpanelProvider } from '@/lib/analytics/MixpanelProvider'
@@ -76,7 +79,13 @@ const Providers = ({ children, locale }: { children: React.ReactNode; locale: st
     <QueryClientProvider>
       <ChakraProvider>
         <TranslationsProvider locale={locale as Locale}>
-          <MixpanelProvider>{children}</MixpanelProvider>
+          <Suspense fallback={null}>
+            <NetworkSearchParamSync />
+          </Suspense>
+          <MixpanelProvider>
+            {children}
+            <Toaster />
+          </MixpanelProvider>
         </TranslationsProvider>
       </ChakraProvider>
     </QueryClientProvider>

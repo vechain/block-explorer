@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { getUnixTime } from 'date-fns'
-import { apiClient } from '@/lib/api'
-import type { NetworkName } from '@/lib/constants/network'
+import { getNetworkGenesisTimestamp, type NetworkName } from '@/lib/constants/network'
 import { blockUsageResponseSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from '.'
+import { indexerGet, resolveUrl } from '.'
 
 const TOTAL_TRANSACTIONS_QUERY_KEY = 'getTotalTransactions'
-const GENESIS_TIMESTAMP = 1530316800
 
 export const totalTransactionsQueryOptions = (networkName: NetworkName) => ({
   queryKey: [TOTAL_TRANSACTIONS_QUERY_KEY, networkName],
@@ -17,11 +15,13 @@ export const totalTransactionsQueryOptions = (networkName: NetworkName) => ({
 })
 
 const getTotalTransactions = async ({ networkName }: { networkName: NetworkName }) => {
-  const { data } = await apiClient.get({
+  const genesisTimestamp = getNetworkGenesisTimestamp(networkName) ?? 0
+
+  const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: '/explorer/block-usage',
     params: {
-      startTimestamp: GENESIS_TIMESTAMP.toString(),
+      startTimestamp: genesisTimestamp.toString(),
       endTimestamp: getUnixTime(new Date()).toString(),
     },
   })

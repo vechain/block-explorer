@@ -3,13 +3,13 @@
 import { Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
-import { NotFound } from '@/components/error/NotFound'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
 import { CopyableString } from '@/components/ui/CopyableString'
 import { CopyableAddressLink } from '@/components/ui/Links'
 import { Card } from '@/components/ui/Card'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
+import { useRedirectOnNotFound } from '@/hooks/useRedirectOnNotFound'
 import type { BlockRevision } from '@/lib/schemas'
 import { useBlockExpanded } from '@/services/thor/block'
 import { TransactionsTable } from '../../../components/TransactionsTable'
@@ -21,11 +21,9 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
   const formatDate = useFormatDate()
   const formatNumber = useFormatNumber()
 
-  if (isPending) return <Skeleton height="400px" width="100%" />
+  const isNotFound = useRedirectOnNotFound({ isNotFound: !isPending && !block })
 
-  if (!block) {
-    return <NotFound title={t('Block not found')} description={t('The block you are looking for does not exist')} />
-  }
+  if (isPending || isNotFound || !block) return <Skeleton height="400px" width="100%" />
 
   const totalClauses = block.transactions.reduce((acc, tx) => acc + tx.clauses.length, 0)
 

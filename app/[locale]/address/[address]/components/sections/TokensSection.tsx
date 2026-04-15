@@ -11,11 +11,15 @@ import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardG
 import { StackedTokenIcons } from '@/components/ui/StackedTokenIcons'
 import { COMBINED_TOKENS } from '@/lib/constants/tokens'
 
+const sectionTotalPaddingEnd = { base: 4, md: 5 }
+
 interface TokensSectionProps {
   tokenBalanceRows: TokenBalanceRow[]
   tokenValueRows: TokenValueRow[]
   totalValue: string
   isPending: boolean
+  isTotalValuePending?: boolean
+  prependItems?: DataCardGroupItem[]
 }
 
 interface ExpandableTokenBalanceProps {
@@ -32,8 +36,14 @@ const ExpandableTokenBalance = ({ formattedBalance, fiatValue, breakdown, decima
   return (
     <Accordion.Root collapsible width="100%">
       <Accordion.Item value="breakdown" border="none">
-        <Accordion.ItemTrigger p={0} cursor="pointer" justifyContent="flex-end" _hover={{ opacity: 0.8 }}>
-          <HStack gap={2}>
+        <Accordion.ItemTrigger
+          p={0}
+          cursor="pointer"
+          justifyContent="flex-end"
+          alignItems="flex-start"
+          _hover={{ opacity: 0.8 }}
+        >
+          <HStack gap={2} alignItems="flex-start">
             <Stack gap={0} alignItems="flex-end">
               <Text textStyle="bodyM" color="text-primary">
                 {formattedBalance}
@@ -74,7 +84,14 @@ const ExpandableTokenBalance = ({ formattedBalance, fiatValue, breakdown, decima
 
 const TOKEN_LIMIT = 5
 
-export const TokensSection = ({ tokenBalanceRows, tokenValueRows, totalValue, isPending }: TokensSectionProps) => {
+export const TokensSection = ({
+  tokenBalanceRows,
+  tokenValueRows,
+  totalValue,
+  isPending,
+  isTotalValuePending = false,
+  prependItems = [],
+}: TokensSectionProps) => {
   const { t } = useTranslation()
   const formatAmount = useFormatAmount()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -93,7 +110,7 @@ export const TokensSection = ({ tokenBalanceRows, tokenValueRows, totalValue, is
     return { displayRows: rows, hasMoreTokens: hasMore }
   }, [tokenBalanceRows, isExpanded])
 
-  const items: DataCardGroupItem[] = useMemo(() => {
+  const tokenItems: DataCardGroupItem[] = useMemo(() => {
     return displayRows.map(token => {
       const [formatted] = formatAmount({ amount: token.balance ?? BigInt(0), decimals: token.decimals })
       const iconPath = getTokenIconPath(token.symbol)
@@ -118,7 +135,7 @@ export const TokensSection = ({ tokenBalanceRows, tokenValueRows, totalValue, is
       return {
         title: token.symbol,
         children: (
-          <HStack gap={2}>
+          <HStack gap={2} alignItems="flex-start">
             <Stack gap={0} alignItems="flex-end">
               <Text textStyle="bodyM" color="text-primary">
                 {formatted}
@@ -137,21 +154,23 @@ export const TokensSection = ({ tokenBalanceRows, tokenValueRows, totalValue, is
     })
   }, [displayRows, formatAmount, valueMap])
 
+  const items = useMemo(() => [...prependItems, ...tokenItems], [prependItems, tokenItems])
+
   return (
     <Stack gap={4}>
-      <Flex alignItems="baseline" gap={2}>
+      <Flex alignItems="flex-start" justifyContent="space-between" gap={4} flexWrap="wrap">
         <Heading as="h3" textStyle="bodyL" color="text-primary">
           {t('Tokens')}
         </Heading>
-        {!isPending && totalValue !== 'n/a' && (
-          <Text textStyle="bodyM" color="text-secondary">
+        {!isTotalValuePending && totalValue !== 'n/a' && (
+          <Text textStyle="bodyM" color="text-secondary" textAlign="right" pe={sectionTotalPaddingEnd}>
             {totalValue}
           </Text>
         )}
       </Flex>
       {isPending ? (
         <Skeleton height="120px" borderRadius="md" />
-      ) : tokenBalanceRows.length === 0 ? (
+      ) : items.length === 0 ? (
         <DataCardGroup singleCard variant="outline" items={[{ title: t('No tokens'), children: null }]} />
       ) : (
         <DataCardGroup singleCard variant="outline" items={items} />

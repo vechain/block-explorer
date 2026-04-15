@@ -168,9 +168,6 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             NEXT_PUBLIC_APP_VERSION=${{ needs.build-and-push.outputs.tag }}
-            NEXT_PUBLIC_IS_SOLO="true"
-            NEXT_PUBLIC_SOLO_NODE_URL="http://localhost:8669"
-            NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL="http://localhost:8089"
 
   create-release:
     runs-on: ubuntu-latest
