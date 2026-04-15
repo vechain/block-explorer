@@ -15,9 +15,9 @@ const contractQueryOptions = (networkName: NetworkName, address: AddressString) 
   placeholderData: keepPreviousData,
 })
 
-export const useContract = ({ address }: { address: AddressString }) => {
+export const useContract = ({ address, enabled = true }: { address: AddressString; enabled?: boolean }) => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(contractQueryOptions(activeNetwork.name, address))
+  return useQuery({ ...contractQueryOptions(activeNetwork.name, address), enabled })
 }
 
 const getContract = async ({ networkName, address }: { networkName: NetworkName; address: AddressString }) => {

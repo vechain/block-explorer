@@ -75,6 +75,14 @@ export function getTokenRegistryEntry(networkName: NetworkName, address: Address
 }
 
 /**
+ * Get all token registry entries for the given network.
+ */
+export function getTokenRegistryEntries(networkName: NetworkName): TokenRegistryEntry[] {
+  const tokens = networkName === NetworkName.MAINNET ? mainTokens : testTokens
+  return tokens as TokenRegistryEntry[]
+}
+
+/**
  * Get the icon URL for a token from the registry.
  * Returns null if the token has no icon.
  */

@@ -19,7 +19,7 @@ export const KnownContractSection = ({ token }: KnownContractSectionProps) => {
     token.website || token.links?.twitter || token.links?.telegram || token.links?.medium || token.links?.github
 
   return (
-    <Card variant="outline" bg="bg-alt-primary" p={{ base: 4, md: 5 }}>
+    <Card variant="outline" p={{ base: 4, md: 5 }}>
       <Flex gap={{ base: 4, md: 6 }} flexDirection={{ base: 'column', md: 'row' }} alignItems={{ md: 'flex-start' }}>
         {/* Token Icon */}
         {iconUrl && (

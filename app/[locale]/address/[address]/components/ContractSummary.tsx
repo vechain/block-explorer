@@ -1,74 +1,29 @@
 'use client'
 
-import { Flex, Heading, Stack, Text, Skeleton } from '@chakra-ui/react'
-import Image from 'next/image'
+import { Flex, Heading, Stack } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
-import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
 import { Card } from '@/components/ui/Card'
 import type { AddressString } from '@/lib/schemas'
-import { useContract } from '@/services/veworld-indexer/contracts'
-import { useFormatDate } from '@/hooks/useFormatting'
 import { useAccountTokens } from '@/hooks/useAccountTokens'
 import { useVnsName } from '@/services/thor/vns'
 import { TokensSection } from './sections/TokensSection'
-import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getTokenRegistryEntry } from '@/lib/constants/token-registry'
 import { KnownContractSection } from './KnownContractSection'
 
 export const ContractSummary = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
-  const formatDate = useFormatDate()
   const { data: vnsName } = useVnsName(address)
   const activeNetwork = useSettingsStore(state => state.activeNetwork)
   const { tokenBalanceRows, tokenValueRows, totalValue, isPendingAll: isPendingAllTokens } = useAccountTokens(address)
-  const { data: contract, isPending: isContractPending } = useContract({ address })
 
   // Check if this contract is a known token from the registry
   const tokenRegistryEntry = useMemo(
     () => getTokenRegistryEntry(activeNetwork.name, address),
     [activeNetwork.name, address],
   )
-
-  const isPending = isPendingAllTokens || isContractPending
-
-  const contractDataCards: DataCardGroupItem[] = [
-    {
-      icon: <Image src="/icons/calendar.svg" alt="Calendar" width={24} height={24} />,
-      title: t('Contract creation'),
-      children: isPending ? (
-        <Skeleton height="24px" width="120px" />
-      ) : (
-        <Text textStyle="bodyL" color="text-primary">
-          {formatDate(contract?.createdOn ?? 0)}
-        </Text>
-      ),
-    },
-    {
-      icon: <Image src="/icons/calendar.svg" alt="Calendar" width={24} height={24} />,
-      title: t('Contract Master'),
-      children: isPending ? (
-        <Skeleton height="24px" width="120px" />
-      ) : contract?.master ? (
-        <CopyableAddressLink truncate address={contract.master} />
-      ) : (
-        <Text color="text-secondary">-</Text>
-      ),
-    },
-    {
-      icon: <Image src="/icons/transaction.svg" alt="Transactions" width={24} height={24} />,
-      title: t('Creation Transaction'),
-      children: isPending ? (
-        <Skeleton height="24px" width="120px" />
-      ) : contract?.deploymentTxId ? (
-        <CopyableTransactionIdLink txId={contract.deploymentTxId} />
-      ) : (
-        <Text color="text-secondary">-</Text>
-      ),
-    },
-  ]
 
   return (
     <Stack gap="8">
@@ -82,8 +37,6 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
 
         {/* Show known token info if contract is in the token registry */}
         {tokenRegistryEntry && <KnownContractSection token={tokenRegistryEntry} />}
-
-        <DataCardGroup items={contractDataCards} desktopColumns={3} variant="outline" />
 
         <TokensSection
           tokenBalanceRows={tokenBalanceRows}

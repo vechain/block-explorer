@@ -53,7 +53,7 @@ export const AddressPageContent = ({ address }: { address: AddressString }) => {
     return (
       <Stack flex={1} gap="8">
         <ContractSummary address={resolvedAddress} />
-        <AccountActivitySection address={resolvedAddress} />
+        <AccountActivitySection address={resolvedAddress} isContract />
         <AccountTransactionsSection address={resolvedAddress} hasCode={true} />
         <AccountTokenTransfersSection address={resolvedAddress} />
       </Stack>
