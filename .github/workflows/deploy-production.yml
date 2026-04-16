@@ -69,8 +69,30 @@ jobs:
           # ECR tags keep the original format (v.1.0.0)
           ECR_TAG="$VERSION"
 
+          # Only push latest tag for stable versions (X.Y.Z)
+          if echo "$GHCR_TAG" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "stable=true" >> $GITHUB_OUTPUT
+          else
+            echo "stable=false" >> $GITHUB_OUTPUT
+          fi
+
           echo "ghcr_tag=${GHCR_TAG}" >> $GITHUB_OUTPUT
           echo "tag=${ECR_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Wait for GHCR image availability
+        env:
+          GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}:${{ steps.meta.outputs.ghcr_tag }}
+        run: |
+          for attempt in $(seq 1 6); do
+            if docker buildx imagetools inspect "$GHCR_IMAGE" > /dev/null 2>&1; then
+              echo "GHCR image is available: $GHCR_IMAGE"
+              exit 0
+            fi
+            echo "Attempt $attempt/6: GHCR image not yet available, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::GHCR image not found after 60s: $GHCR_IMAGE"
+          exit 1
 
       - name: Copy image from GHCR to ECR
         env:
@@ -79,9 +101,12 @@ jobs:
         run: |
           docker pull --platform linux/amd64 "$GHCR_IMAGE"
           docker tag "$GHCR_IMAGE" "$ECR_IMAGE:${{ steps.meta.outputs.tag }}"
-          docker tag "$GHCR_IMAGE" "$ECR_IMAGE:latest"
           docker push "$ECR_IMAGE:${{ steps.meta.outputs.tag }}"
-          docker push "$ECR_IMAGE:latest"
+
+          if [ "${{ steps.meta.outputs.stable }}" = "true" ]; then
+            docker tag "$GHCR_IMAGE" "$ECR_IMAGE:latest"
+            docker push "$ECR_IMAGE:latest"
+          fi
 
   deploy:
     name: Deploy to Production
