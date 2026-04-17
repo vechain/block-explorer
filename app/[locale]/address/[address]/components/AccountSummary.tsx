@@ -9,6 +9,7 @@ import { useFormatAmount, useFormatNumber } from '@/hooks/useFormatting'
 import { IDChip } from '@/components/ui/IDChip'
 import { Card } from '@/components/ui/Card'
 import { CURRENCIES } from '@/lib/constants/currencies'
+import { NetworkName } from '@/lib/constants/network'
 import { getStargateLink } from '@/lib/constants/stargate-nft'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getTokenIconPath } from '@/lib/utils/tokens'
@@ -28,6 +29,8 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
   const { currency, activeNetwork } = useSettingsStore()
   const currencySymbol = CURRENCIES[currency].symbol
   const stargateLink = getStargateLink(activeNetwork.name)
+  // Solo networks have no real validator/staking infrastructure; hide Stargate stake rows.
+  const showStargateStakes = activeNetwork.name !== NetworkName.SOLO
   const vetIconPath = getTokenIconPath('VET')
   const {
     tokenBalanceRows,
@@ -79,6 +82,7 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
   }, [currencySymbol, formatNumber, delegationStakeValueNumber])
 
   const displayTotalValue = useMemo(() => {
+    if (!showStargateStakes) return totalValue
     if (totalValueNumber === null || vetStakedValueNumber === null) {
       return totalValue
     }
@@ -87,9 +91,9 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`
-  }, [currencySymbol, formatNumber, totalValue, totalValueNumber, vetStakedValueNumber])
+  }, [currencySymbol, formatNumber, showStargateStakes, totalValue, totalValueNumber, vetStakedValueNumber])
 
-  const isTotalValuePending = isPendingAllTokens || isStakedVetPending || isVetPriceLoading
+  const isTotalValuePending = isPendingAllTokens || (showStargateStakes && (isStakedVetPending || isVetPriceLoading))
 
   const createStargateLinkedTitle = (
     translationKey: 'Validator stake on Stargate' | 'Delegation stake on Stargate',
@@ -131,9 +135,11 @@ export const AccountSummary = ({ address }: { address: AddressString }) => {
     },
   ]
 
-  const visibleStargateStakeItems = isStakedVetPending
-    ? stargateStakeItems
-    : stargateStakeItems.filter(item => item.amount > 0n)
+  const visibleStargateStakeItems = !showStargateStakes
+    ? []
+    : isStakedVetPending
+      ? stargateStakeItems
+      : stargateStakeItems.filter(item => item.amount > 0n)
 
   const prependItems: DataCardGroupItem[] = visibleStargateStakeItems.map(item => ({
     title: item.title,
