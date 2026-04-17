@@ -1,3 +1,4 @@
+import type { AddressString } from '@/lib/schemas'
 import packageJson from '@/package.json'
 
 /** App version - set at build time from git tag, falls back to package.json for local dev @public */
@@ -17,6 +18,16 @@ const assertIndexerBaseUrl = (name: string, value: string, example: string) => {
   }
 
   return value
+}
+
+const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/
+
+const parseAddressEnv = (name: string, value: string | undefined): AddressString | undefined => {
+  if (!value) return undefined
+  if (!ADDRESS_PATTERN.test(value)) {
+    throw new Error(`${name} must be a 0x-prefixed 40-char hex address`)
+  }
+  return value as AddressString
 }
 
 if (!process.env.NEXT_PUBLIC_COIN_API_URL) {
@@ -43,3 +54,21 @@ if (!process.env.NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL) {
 }
 
 export const IPFS_GATEWAY_PROXY_URL = process.env.NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL
+
+// Optional solo-network contract overrides (local dev only)
+export const SOLO_B3TR_ADDRESS = parseAddressEnv(
+  'NEXT_PUBLIC_SOLO_B3TR_ADDRESS',
+  process.env.NEXT_PUBLIC_SOLO_B3TR_ADDRESS,
+)
+export const SOLO_VOT3_ADDRESS = parseAddressEnv(
+  'NEXT_PUBLIC_SOLO_VOT3_ADDRESS',
+  process.env.NEXT_PUBLIC_SOLO_VOT3_ADDRESS,
+)
+export const SOLO_STARGATE_NFT_ADDRESS = parseAddressEnv(
+  'NEXT_PUBLIC_SOLO_STARGATE_NFT_ADDRESS',
+  process.env.NEXT_PUBLIC_SOLO_STARGATE_NFT_ADDRESS,
+)
+export const SOLO_STARGATE_DELEGATION_ADDRESS = parseAddressEnv(
+  'NEXT_PUBLIC_SOLO_STARGATE_DELEGATION_ADDRESS',
+  process.env.NEXT_PUBLIC_SOLO_STARGATE_DELEGATION_ADDRESS,
+)

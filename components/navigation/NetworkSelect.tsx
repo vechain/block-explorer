@@ -1,6 +1,7 @@
 import { Box, Flex } from '@chakra-ui/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { IS_DEV_MODE_ALLOWED } from '@/lib/constants/dev-mode'
 import { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import {
@@ -22,7 +23,7 @@ export const NetworkSelect = () => {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const availableNetworks = isDevMode ? DEV_NETWORKS : DEFAULT_NETWORKS
+  const availableNetworks = IS_DEV_MODE_ALLOWED && isDevMode ? DEV_NETWORKS : DEFAULT_NETWORKS
 
   const handleNetworkChange = async (newNetworkName: NetworkName) => {
     if (newNetworkName === activeNetwork.name) return

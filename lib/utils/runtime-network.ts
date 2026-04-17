@@ -1,6 +1,13 @@
-import { VEWORLD_INDEXER_MAINNET_URL, VEWORLD_INDEXER_TESTNET_URL } from '@/env.public'
+import {
+  SOLO_B3TR_ADDRESS,
+  SOLO_STARGATE_DELEGATION_ADDRESS,
+  SOLO_STARGATE_NFT_ADDRESS,
+  SOLO_VOT3_ADDRESS,
+  VEWORLD_INDEXER_MAINNET_URL,
+  VEWORLD_INDEXER_TESTNET_URL,
+} from '@/env.public'
 import { DEV_MODE_DEFAULTS } from '@/lib/constants/dev-mode'
-import { NETWORKS, type Network, NetworkName } from '@/lib/constants/network'
+import { NETWORKS, type Network, type NetworkContracts, NetworkName } from '@/lib/constants/network'
 
 type PersistedSettings = {
   state?: {
@@ -66,6 +73,13 @@ const getRuntimeSoloIndexerUrl = () => {
   return isValidIndexerBaseUrl(normalizedUrl) ? normalizedUrl : DEFAULT_SOLO_INDEXER_URL
 }
 
+export const getSoloContracts = (): NetworkContracts => ({
+  ...(SOLO_B3TR_ADDRESS ? { b3tr: SOLO_B3TR_ADDRESS } : {}),
+  ...(SOLO_VOT3_ADDRESS ? { vot3: SOLO_VOT3_ADDRESS } : {}),
+  ...(SOLO_STARGATE_NFT_ADDRESS ? { stargateNft: SOLO_STARGATE_NFT_ADDRESS } : {}),
+  ...(SOLO_STARGATE_DELEGATION_ADDRESS ? { stargateDelegation: SOLO_STARGATE_DELEGATION_ADDRESS } : {}),
+})
+
 export const getRuntimeNetwork = (networkName: NetworkName): Network => {
   if (networkName !== NetworkName.SOLO) {
     return NETWORKS[networkName]
@@ -74,6 +88,7 @@ export const getRuntimeNetwork = (networkName: NetworkName): Network => {
   return {
     ...NETWORKS[NetworkName.SOLO],
     url: getRuntimeSoloNodeUrl(),
+    contracts: getSoloContracts(),
   }
 }
 

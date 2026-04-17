@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
+import { IS_DEV_MODE_ALLOWED } from '@/lib/constants/dev-mode'
 import { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { consumeManualNetworkSearchParamSync, getNetworkNameFromSearchParams } from '@/lib/utils/network'
@@ -16,7 +17,7 @@ export const NetworkSearchParamSync = () => {
 
   useEffect(() => {
     const networkName = getNetworkNameFromSearchParams(searchParams)
-    if (networkName === NetworkName.SOLO && !isDevMode) return
+    if (networkName === NetworkName.SOLO && !(IS_DEV_MODE_ALLOWED && isDevMode)) return
 
     if (!networkName) return
 
