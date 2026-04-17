@@ -14,7 +14,9 @@ export const SETTINGS_STORAGE_KEY = 'settings'
 export const normalizeConfigUrl = (value: string) => value.trim().replace(/\/+$/, '')
 
 export const DEFAULT_SOLO_NODE_URL = normalizeConfigUrl(DEV_MODE_DEFAULTS.soloNodeUrl)
-export const DEFAULT_SOLO_INDEXER_URL = normalizeConfigUrl(DEV_MODE_DEFAULTS.soloIndexerUrl)
+export const DEFAULT_SOLO_INDEXER_URL = normalizeConfigUrl(
+  process.env.NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL || DEV_MODE_DEFAULTS.soloIndexerUrl,
+)
 
 const isNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0
 
