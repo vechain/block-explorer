@@ -3,6 +3,8 @@ export const DEV_MODE_DEFAULTS = {
   soloIndexerUrl: 'http://localhost:8080',
 } as const
 
-// Dev mode (solo network + configurable solo endpoints) is only available in local development.
-// Next.js inlines NODE_ENV at build time, so production/preview builds evaluate this to false.
-export const IS_DEV_MODE_ALLOWED = process.env.NODE_ENV === 'development'
+// Dev mode (solo network + configurable solo endpoints) is opt-in.
+// `pnpm dev` enables it automatically; other builds must be built with NEXT_PUBLIC_ALLOW_DEV_MODE=true.
+// Next.js inlines both values at build time, so prod/preview images built without the flag exclude dev mode.
+export const IS_DEV_MODE_ALLOWED =
+  process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_ALLOW_DEV_MODE === 'true'
