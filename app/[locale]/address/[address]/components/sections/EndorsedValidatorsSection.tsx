@@ -6,7 +6,9 @@ import { Card } from '@/components/ui/Card'
 import { CopyableAddressLink } from '@/components/ui/Links'
 import { type Column, DataTable, type TableRow, TableSkeleton } from '@/components/ui/Table'
 import { useFormatNumber } from '@/hooks/useFormatting'
+import { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { useValidators, ValidatorStatus } from '@/services/veworld-indexer/validators'
 
 interface EndorsedValidatorRow extends TableRow {
@@ -42,7 +44,13 @@ const getStatusBadgeProps = (status: ValidatorStatus): StatusBadgeConfig => {
 export const EndorsedValidatorsSection = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
+  const { activeNetwork } = useSettingsStore()
   const { data: validators, isPending } = useValidators({ endorser: address })
+  const containerProps = useBreakpointValue({ base: { m: -4, p: 4 }, md: { m: -5, p: 5 } })
+
+  // Solo networks have no validator set; the underlying query is disabled there so isPending
+  // would otherwise stay true forever, leaving an infinite skeleton.
+  if (activeNetwork.name === NetworkName.SOLO) return null
 
   const rows: EndorsedValidatorRow[] = (validators ?? []).map(validator => ({
     id: validator.id as AddressString,
@@ -87,8 +95,6 @@ export const EndorsedValidatorsSection = ({ address }: { address: AddressString 
       Cell: ({ row }) => <Text>{formatNumber(row.totalStaked)} VET</Text>,
     },
   ]
-
-  const containerProps = useBreakpointValue({ base: { m: -4, p: 4 }, md: { m: -5, p: 5 } })
 
   if (isPending) {
     return (
