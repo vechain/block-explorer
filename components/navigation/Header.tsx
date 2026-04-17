@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowUpRight, FiMenu } from 'react-icons/fi'
 import { i18nConfig, type Locale } from '@/i18n/config'
 import { languageNames } from '@/i18n/utils'
+import { IS_DEV_MODE_ALLOWED } from '@/lib/constants/dev-mode'
 import { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { useColorMode } from '../theme/color-mode'
@@ -209,44 +210,48 @@ const NavigationMenu = () => {
                     </Text>
                   </HStack>
                 </Box>
-                <Separator />
-                <Flex justify="space-between" alignItems="center" gap={3} py={2}>
-                  <Text fontSize="body-m" whiteSpace="nowrap">
-                    {t('Dev mode')}
-                  </Text>
-                  <Box
-                    as="button"
-                    onClick={handleDevModeToggle}
-                    role="switch"
-                    aria-checked={isDevMode}
-                    aria-label={t('Dev mode')}
-                    bg="transparent"
-                    borderRadius="full"
-                  >
-                    <Flex
-                      w="46px"
-                      h="26px"
-                      p="3px"
-                      bg={isDevMode ? 'accent-primary' : 'bg-secondary'}
-                      borderRadius="full"
-                      justifyContent={isDevMode ? 'flex-end' : 'flex-start'}
-                      alignItems="center"
-                      transition="background-color 0.2s ease"
-                    >
-                      <Box w="20px" h="20px" bg="white" borderRadius="full" />
-                    </Flex>
-                  </Box>
-                </Flex>
-                {isDevMode && (
+                {IS_DEV_MODE_ALLOWED && (
                   <>
                     <Separator />
-                    <Box as="button" onClick={handleDevModeSettingsClick} w="100%" cursor="pointer">
-                      <Flex gap={2} alignItems="center" py={2}>
-                        <Text fontSize="body-m" whiteSpace="nowrap">
-                          {t('Configure Solo endpoints')}
-                        </Text>
-                      </Flex>
-                    </Box>
+                    <Flex justify="space-between" alignItems="center" gap={3} py={2}>
+                      <Text fontSize="body-m" whiteSpace="nowrap">
+                        {t('Dev mode')}
+                      </Text>
+                      <Box
+                        as="button"
+                        onClick={handleDevModeToggle}
+                        role="switch"
+                        aria-checked={isDevMode}
+                        aria-label={t('Dev mode')}
+                        bg="transparent"
+                        borderRadius="full"
+                      >
+                        <Flex
+                          w="46px"
+                          h="26px"
+                          p="3px"
+                          bg={isDevMode ? 'accent-primary' : 'bg-secondary'}
+                          borderRadius="full"
+                          justifyContent={isDevMode ? 'flex-end' : 'flex-start'}
+                          alignItems="center"
+                          transition="background-color 0.2s ease"
+                        >
+                          <Box w="20px" h="20px" bg="white" borderRadius="full" />
+                        </Flex>
+                      </Box>
+                    </Flex>
+                    {isDevMode && (
+                      <>
+                        <Separator />
+                        <Box as="button" onClick={handleDevModeSettingsClick} w="100%" cursor="pointer">
+                          <Flex gap={2} alignItems="center" py={2}>
+                            <Text fontSize="body-m" whiteSpace="nowrap">
+                              {t('Configure Solo endpoints')}
+                            </Text>
+                          </Flex>
+                        </Box>
+                      </>
+                    )}
                   </>
                 )}
               </MotionBox>

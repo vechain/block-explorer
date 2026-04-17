@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import type { NetworkName } from '@/lib/constants/network'
+import type { Network } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getThorClient } from '@/services/thor/client'
-import { isStargateNftContract, STARGATE_NFT_CONTRACT_ADDRESS, STARGATE_NFTS } from '@/lib/constants/stargate-nft'
+import { getStargateNftAddress, isStargateNftContract, STARGATE_NFTS } from '@/lib/constants/stargate-nft'
 
 const STARGATE_NFT_INFO_QUERY_KEY = 'getStargateNftInfo'
 
@@ -36,12 +36,15 @@ interface StargateNftInfo {
   levelName: string
 }
 
-const getStargateNftInfo = async (networkName: NetworkName, tokenId: bigint): Promise<StargateNftInfo | null> => {
+const getStargateNftInfo = async (network: Network, tokenId: bigint): Promise<StargateNftInfo | null> => {
   try {
-    const thorClient = getThorClient(networkName)
+    const stargateNftAddress = getStargateNftAddress(network)
+    if (!stargateNftAddress) return null
+
+    const thorClient = getThorClient(network.name)
 
     // Get token data from Stargate NFT contract
-    const nftContract = thorClient.contracts.load(STARGATE_NFT_CONTRACT_ADDRESS, STARGATE_NFT_ABI)
+    const nftContract = thorClient.contracts.load(stargateNftAddress, STARGATE_NFT_ABI)
     const [tokenData] = await nftContract.read.getToken(tokenId)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,9 +67,9 @@ const getStargateNftInfo = async (networkName: NetworkName, tokenId: bigint): Pr
   }
 }
 
-const stargateNftInfoQueryOptions = (networkName: NetworkName, tokenId: bigint, enabled: boolean) => ({
-  queryKey: [STARGATE_NFT_INFO_QUERY_KEY, networkName, tokenId.toString()],
-  queryFn: () => getStargateNftInfo(networkName, tokenId),
+const stargateNftInfoQueryOptions = (network: Network, tokenId: bigint, enabled: boolean) => ({
+  queryKey: [STARGATE_NFT_INFO_QUERY_KEY, network.name, tokenId.toString()],
+  queryFn: () => getStargateNftInfo(network, tokenId),
   enabled,
   staleTime: 60_000,
 })
@@ -79,7 +82,7 @@ export const useStargateNftInfo = ({
   tokenId: bigint
 }) => {
   const { activeNetwork } = useSettingsStore()
-  const isStargate = isStargateNftContract(contractAddress, activeNetwork.name)
+  const isStargate = isStargateNftContract(contractAddress, activeNetwork)
 
-  return useQuery(stargateNftInfoQueryOptions(activeNetwork.name, tokenId, isStargate))
+  return useQuery(stargateNftInfoQueryOptions(activeNetwork, tokenId, isStargate))
 }

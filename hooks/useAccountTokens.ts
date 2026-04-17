@@ -14,6 +14,7 @@ import {
   COMBINED_TOKENS,
   isCombinedToken,
 } from '@/lib/constants/tokens'
+import { NetworkName } from '@/lib/constants/network'
 import { isNotNullish } from '@/lib/type-predicates'
 import { getTokenSlug } from '@/lib/utils/tokens'
 import { getTokenInfo } from '@/lib/constants/token-registry'
@@ -75,10 +76,23 @@ export const useAccountTokens = (address: AddressString) => {
     return balanceMap
   }, [erc20s, erc20BalanceQueries])
 
-  // Filter ERC20 tokens to only include those in the token registry
+  // Filter ERC20 tokens to only include those in the token registry.
+  // On solo, fall back to configured B3TR/VOT3 addresses so the combined row renders.
   const registeredErc20s = useMemo(() => {
-    return erc20s.filter(erc20 => getTokenInfo(activeNetwork.name, erc20.address) !== null)
-  }, [erc20s, activeNetwork.name])
+    const soloAddresses =
+      activeNetwork.name === NetworkName.SOLO
+        ? new Set(
+            [activeNetwork.contracts.b3tr, activeNetwork.contracts.vot3]
+              .filter(isNotNullish)
+              .map(address => address.toLowerCase()),
+          )
+        : null
+
+    return erc20s.filter(erc20 => {
+      if (getTokenInfo(activeNetwork.name, erc20.address) !== null) return true
+      return soloAddresses?.has(erc20.address.toLowerCase()) ?? false
+    })
+  }, [erc20s, activeNetwork])
 
   // Build token balance rows: VET, VTHO, and B3TR/VOT3 first (in that order), then other ERC20 tokens
   const tokenBalanceRows = useMemo((): TokenBalanceRow[] => {

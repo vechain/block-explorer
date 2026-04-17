@@ -70,7 +70,7 @@ export const NftDetailsSection = ({ collection, contractAddress, tokenId, metada
   const { mintEvent } = useMintEvent({ contractAddress, tokenId })
 
   // Fetch Stargate NFT info if this is a Stargate NFT
-  const isStargate = isStargateNftContract(contractAddress, activeNetwork.name)
+  const isStargate = isStargateNftContract(contractAddress, activeNetwork)
   const { data: stargateNftInfo, isLoading: isLoadingStargateInfo } = useStargateNftInfo({
     contractAddress,
     tokenId,
