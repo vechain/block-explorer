@@ -6,6 +6,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatEther } from 'viem'
 import { getStargateLink } from '@/lib/constants/stargate-nft'
+import { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { useAccountTotal } from '@/services/veworld-indexer/account-totals'
 import { useTotalTransactions } from '@/services/veworld-indexer/total-transactions'
@@ -24,6 +25,8 @@ type Stat = {
   external: boolean
   animate?: boolean
   animationKey?: string | number
+  disabled?: boolean
+  disabledMessage?: string
 }
 
 export const HomeStatsGroup = () => {
@@ -31,6 +34,8 @@ export const HomeStatsGroup = () => {
   const formatNumber = useFormatNumber()
 
   const { activeNetwork } = useSettingsStore()
+  const isSoloNetwork = activeNetwork.name === NetworkName.SOLO
+  const soloDisabledMessage = t('Not available in solo mode')
   const STARGATE_LINK = getStargateLink(activeNetwork.name, '/market')
   const STATS_PAGE_HREF = '/stats'
 
@@ -96,58 +101,86 @@ export const HomeStatsGroup = () => {
     },
     {
       title: t('Validators'),
-      loading: isLoadingActiveValidators || isLoadingExitingValidators,
+      loading: !isSoloNetwork && (isLoadingActiveValidators || isLoadingExitingValidators),
       value: formatNumber(validators),
       href: STARGATE_LINK,
       external: true,
+      disabled: isSoloNetwork,
+      disabledMessage: soloDisabledMessage,
     },
     {
       title: t('Total Value Locked'),
-      loading: tvlLoading,
+      loading: !isSoloNetwork && tvlLoading,
       value: <>{formatNumber(totalTvl, compact)} VET</>,
       href: STARGATE_LINK,
       external: true,
+      disabled: isSoloNetwork,
+      disabledMessage: soloDisabledMessage,
     },
   ]
 
   return (
     <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }} gap={4}>
-      {stats.map((stat, index) => (
-        <Card
-          key={index}
-          asChild
-          alignItems="flex-start"
-          justifyContent="center"
-          py={5}
-          px={4}
-          gap={1}
-          cursor="pointer"
-          _hover={{ borderColor: 'border-hover', transform: 'scale(1.02)' }}
-          transition="border-color 0.2s, transform 0.2s"
-        >
-          {stat.external ? (
-            <a href={stat.href} target="_blank" rel="noopener noreferrer">
-              <Box position="absolute" top={3} right={3} color="text-secondary">
-                <FiArrowUpRight size={14} />
-              </Box>
+      {stats.map((stat, index) => {
+        if (stat.disabled) {
+          return (
+            <Card
+              key={index}
+              alignItems="flex-start"
+              justifyContent="center"
+              py={5}
+              px={4}
+              gap={1}
+              opacity={0.6}
+              cursor="not-allowed"
+            >
               <Text textStyle="bodyM" color="text-secondary">
                 {stat.title}
               </Text>
-              {stat.loading ? <Skeleton height="24px" width="70px" /> : <StatValue stat={stat} />}
-            </a>
-          ) : (
-            <Link href={stat.href}>
-              <Box position="absolute" top={3} right={3} color="text-secondary">
-                <FiArrowUpRight size={14} />
-              </Box>
-              <Text textStyle="bodyM" color="text-secondary">
-                {stat.title}
+              <Text textStyle="bodyS" color="text-secondary">
+                {stat.disabledMessage}
               </Text>
-              {stat.loading ? <Skeleton height="24px" width="70px" /> : <StatValue stat={stat} />}
-            </Link>
-          )}
-        </Card>
-      ))}
+            </Card>
+          )
+        }
+
+        return (
+          <Card
+            key={index}
+            asChild
+            alignItems="flex-start"
+            justifyContent="center"
+            py={5}
+            px={4}
+            gap={1}
+            cursor="pointer"
+            _hover={{ borderColor: 'border-hover', transform: 'scale(1.02)' }}
+            transition="border-color 0.2s, transform 0.2s"
+          >
+            {stat.external ? (
+              <a href={stat.href} target="_blank" rel="noopener noreferrer">
+                <Box position="absolute" top={3} right={3} color="text-secondary">
+                  <FiArrowUpRight size={14} />
+                </Box>
+                <Text textStyle="bodyM" color="text-secondary">
+                  {stat.title}
+                </Text>
+                {stat.loading ? <Skeleton height="24px" width="70px" /> : <StatValue stat={stat} />}
+              </a>
+            ) : (
+              <Link href={stat.href}>
+                <Box position="absolute" top={3} right={3} color="text-secondary">
+                  <FiArrowUpRight size={14} />
+                </Box>
+                <Text textStyle="bodyM" color="text-secondary">
+                  {stat.title}
+                </Text>
+                {stat.loading ? <Skeleton height="24px" width="70px" /> : <StatValue stat={stat} />}
+              </Link>
+            )}
+          </Card>
+        )
+      })}
     </Grid>
   )
 }

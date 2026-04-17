@@ -32,28 +32,32 @@ export default async function HomePage({
   searchParams: Promise<{ network: NetworkName | undefined }>
 }) {
   const activeNetworkName = await parseNetworkFromParams(searchParams)
+  const isSoloNetwork = activeNetworkName === NetworkName.SOLO
 
   const queryClient = getQueryClient()
 
   // Prefetch only critical above-the-fold data
   const prefetchResults = await Promise.allSettled([
     queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
-    queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(totalTransactionsQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(accountTotalQueryOptions(activeNetworkName)),
-    queryClient.prefetchQuery(allValidatorsQueryOptions(activeNetworkName)),
-    queryClient.prefetchQuery(validatorsCountQueryOptions(activeNetworkName, { status: ValidatorStatus.ACTIVE })),
-    queryClient.prefetchQuery(validatorsCountQueryOptions(activeNetworkName, { status: ValidatorStatus.EXITING })),
+    ...(isSoloNetwork
+      ? []
+      : [
+          queryClient.prefetchQuery(totalVetStakedQueryOptions(activeNetworkName)),
+          queryClient.prefetchQuery(allValidatorsQueryOptions(activeNetworkName)),
+          queryClient.prefetchQuery(validatorsCountQueryOptions(activeNetworkName, { status: ValidatorStatus.ACTIVE })),
+          queryClient.prefetchQuery(
+            validatorsCountQueryOptions(activeNetworkName, { status: ValidatorStatus.EXITING }),
+          ),
+        ]),
   ])
 
   logPrefetchFailures(prefetchResults, [
     'bestBlockCompressed',
-    'totalVetStaked',
     'totalTransactions',
     'accountTotal',
-    'allValidators',
-    'validatorsCount:ACTIVE',
-    'validatorsCount:EXITING',
+    ...(isSoloNetwork ? [] : ['totalVetStaked', 'allValidators', 'validatorsCount:ACTIVE', 'validatorsCount:EXITING']),
   ])
 
   return (
