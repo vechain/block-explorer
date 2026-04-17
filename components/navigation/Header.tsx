@@ -9,8 +9,8 @@ import { useTranslation } from 'react-i18next'
 import { FiArrowUpRight, FiMenu } from 'react-icons/fi'
 import { i18nConfig, type Locale } from '@/i18n/config'
 import { languageNames } from '@/i18n/utils'
-import { IS_DEV_MODE_ALLOWED } from '@/lib/constants/dev-mode'
 import { NetworkName } from '@/lib/constants/network'
+import { getRuntimeConfig } from '@/lib/runtime-config/get'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { useColorMode } from '../theme/color-mode'
 import { MotionBox } from '../ui/MotionBox'
@@ -50,6 +50,7 @@ const NavigationMenu = () => {
   const currentLocale = (params.locale as Locale) || i18nConfig.defaultLocale
   const currentLanguage = languageNames[currentLocale]
   const { activeNetwork, currency, isDevMode, setIsDevMode } = useSettingsStore()
+  const { allowDevMode } = getRuntimeConfig()
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -210,7 +211,7 @@ const NavigationMenu = () => {
                     </Text>
                   </HStack>
                 </Box>
-                {IS_DEV_MODE_ALLOWED && (
+                {allowDevMode && (
                   <>
                     <Separator />
                     <Flex justify="space-between" alignItems="center" gap={3} py={2}>

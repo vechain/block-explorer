@@ -1,13 +1,7 @@
-import {
-  SOLO_B3TR_ADDRESS,
-  SOLO_STARGATE_DELEGATION_ADDRESS,
-  SOLO_STARGATE_NFT_ADDRESS,
-  SOLO_VOT3_ADDRESS,
-  VEWORLD_INDEXER_MAINNET_URL,
-  VEWORLD_INDEXER_TESTNET_URL,
-} from '@/env.public'
+import { VEWORLD_INDEXER_MAINNET_URL, VEWORLD_INDEXER_TESTNET_URL } from '@/env.public'
 import { DEV_MODE_DEFAULTS } from '@/lib/constants/dev-mode'
 import { NETWORKS, type Network, type NetworkContracts, NetworkName } from '@/lib/constants/network'
+import { getRuntimeConfig } from '@/lib/runtime-config/get'
 
 type PersistedSettings = {
   state?: {
@@ -73,12 +67,15 @@ const getRuntimeSoloIndexerUrl = () => {
   return isValidIndexerBaseUrl(normalizedUrl) ? normalizedUrl : DEFAULT_SOLO_INDEXER_URL
 }
 
-export const getSoloContracts = (): NetworkContracts => ({
-  ...(SOLO_B3TR_ADDRESS ? { b3tr: SOLO_B3TR_ADDRESS } : {}),
-  ...(SOLO_VOT3_ADDRESS ? { vot3: SOLO_VOT3_ADDRESS } : {}),
-  ...(SOLO_STARGATE_NFT_ADDRESS ? { stargateNft: SOLO_STARGATE_NFT_ADDRESS } : {}),
-  ...(SOLO_STARGATE_DELEGATION_ADDRESS ? { stargateDelegation: SOLO_STARGATE_DELEGATION_ADDRESS } : {}),
-})
+export const getSoloContracts = (): NetworkContracts => {
+  const { soloContracts } = getRuntimeConfig()
+  return {
+    ...(soloContracts.b3tr ? { b3tr: soloContracts.b3tr } : {}),
+    ...(soloContracts.vot3 ? { vot3: soloContracts.vot3 } : {}),
+    ...(soloContracts.stargateNft ? { stargateNft: soloContracts.stargateNft } : {}),
+    ...(soloContracts.stargateDelegation ? { stargateDelegation: soloContracts.stargateDelegation } : {}),
+  }
+}
 
 export const getRuntimeNetwork = (networkName: NetworkName): Network => {
   if (networkName !== NetworkName.SOLO) {

@@ -3,8 +3,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { ColorMode } from '@/components/theme/config'
-import { IS_DEV_MODE_ALLOWED } from '@/lib/constants/dev-mode'
 import { DEFAULT_NETWORK, NETWORKS, type Network, NetworkName } from '@/lib/constants/network'
+import { getRuntimeConfig } from '@/lib/runtime-config/get'
 import {
   DEFAULT_SOLO_INDEXER_URL,
   DEFAULT_SOLO_NODE_URL,
@@ -129,9 +129,9 @@ export const useSettingsStore = create<SettingsStore>()(
         const activeNetworkName = getPersistedNetworkName(state.activeNetwork)
         const persistedIsDevMode =
           typeof state.isDevMode === 'boolean' ? state.isDevMode : activeNetworkName === NetworkName.SOLO
-        // Force-disable dev mode in builds where it isn't allowed (prod/preview) so any pre-existing
-        // persisted `isDevMode: true` / active solo network from an earlier build is neutralised.
-        const isDevMode = IS_DEV_MODE_ALLOWED && persistedIsDevMode
+        // Force-disable dev mode whenever the current runtime says it's not allowed, so stale
+        // `isDevMode: true` / active solo network from a previous deployment is neutralised.
+        const isDevMode = getRuntimeConfig().allowDevMode && persistedIsDevMode
 
         return {
           ...state,
