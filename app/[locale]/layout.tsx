@@ -12,6 +12,7 @@ import type { Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
 import { MixpanelProvider } from '@/lib/analytics/MixpanelProvider'
 import { QueryClientProvider } from '@/lib/query-client/provider'
+import { RuntimeConfigScript } from '@/lib/runtime-config/script'
 
 const rubik = Rubik({
   subsets: ['latin'],
@@ -28,6 +29,11 @@ export const metadata: Metadata = {
   icons: { icon: '/vechain-logo.png' },
 }
 
+// Force per-request rendering so RuntimeConfigScript reads process.env at runtime,
+// not at build time. Without this, a prebuilt standalone server would bake in whatever
+// env vars were set when the image was built.
+export const dynamic = 'force-dynamic'
+
 export default async function RootLayout({
   children,
   params,
@@ -40,6 +46,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={rubik.variable}>
+        <RuntimeConfigScript />
         <Providers locale={locale}>
           <VStack
             as="main"
