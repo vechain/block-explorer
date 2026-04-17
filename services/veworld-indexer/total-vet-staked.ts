@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
-import type { NetworkName } from '@/lib/constants/network'
+import { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { indexerGet, resolveUrl } from '.'
@@ -40,7 +40,10 @@ const getTotalVetStaked = async ({ networkName }: { networkName: NetworkName }) 
 
 export const useTotalVetStaked = () => {
   const { activeNetwork } = useSettingsStore()
-  return useQuery(totalVetStakedQueryOptions(activeNetwork.name))
+  return useQuery({
+    ...totalVetStakedQueryOptions(activeNetwork.name),
+    enabled: activeNetwork.name !== NetworkName.SOLO,
+  })
 }
 
 const totalVetStakedSchema = z.object({
