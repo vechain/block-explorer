@@ -9,7 +9,7 @@ env:
   AWS_REGION: eu-west-1
   ECR_REPOSITORY: block-explorer
   ENVIRONMENT: prod
-  TERRAFORM_VERSION: 1.6.0
+  TERRAFORM_VERSION: 1.10.0
 
 jobs:
   validate-version-format:

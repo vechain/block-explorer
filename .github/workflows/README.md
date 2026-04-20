@@ -169,7 +169,7 @@ permissions:
 ```yaml
 AWS_REGION: eu-west-1
 ECR_REPOSITORY: block-explorer
-TERRAFORM_VERSION: 1.6.0
+TERRAFORM_VERSION: 1.10.0
 PROJECT_NAME: block-explorer
 PREVIEW_DOMAIN_SUFFIX: block-explorer-preview.vechain.org
 ```
