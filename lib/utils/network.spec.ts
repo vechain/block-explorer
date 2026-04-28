@@ -140,6 +140,11 @@ describe('Network utils', () => {
     expect(appendNetworkSearchParam('mailto:foo@bar.com', NetworkName.SOLO)).toBe('mailto:foo@bar.com')
   })
 
+  it('leaves protocol-relative hrefs unchanged when appending the network search param', () => {
+    expect(appendNetworkSearchParam('//example.com/foo', NetworkName.SOLO)).toBe('//example.com/foo')
+    expect(appendNetworkSearchParam('//example.com', NetworkName.SOLO)).toBe('//example.com')
+  })
+
   it('suppresses the next matching manual network sync only once', () => {
     markNextNetworkSearchParamSyncAsManual(NetworkName.TESTNET)
 

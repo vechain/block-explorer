@@ -33,7 +33,9 @@ export const getNetworkNameFromSearchParams = (searchParams: SearchParamsLike): 
 }
 
 export const appendNetworkSearchParam = (href: string, networkName: NetworkName): string => {
-  if (!href.startsWith('/')) return href
+  // Internal links start with a single `/`. Protocol-relative URLs (`//host/path`) also start with
+  // `/` but resolve to an external origin via the URL constructor, so exclude them explicitly.
+  if (!href.startsWith('/') || href.startsWith('//')) return href
 
   const url = new URL(href, 'http://placeholder')
   url.searchParams.set('network', networkName)
