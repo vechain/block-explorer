@@ -12,6 +12,7 @@ import { languageNames } from '@/i18n/utils'
 import { NetworkName } from '@/lib/constants/network'
 import { getRuntimeConfig } from '@/lib/runtime-config/get'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { useNetworkAwareHref } from '@/hooks/useNetworkAwareHref'
 import { useColorMode } from '../theme/color-mode'
 import { MotionBox } from '../ui/MotionBox'
 import { CurrencyModal } from './CurrencyModal'
@@ -51,6 +52,8 @@ const NavigationMenu = () => {
   const currentLanguage = languageNames[currentLocale]
   const { activeNetwork, currency, isDevMode, setIsDevMode } = useSettingsStore()
   const { allowDevMode } = getRuntimeConfig()
+  const statsHref = useNetworkAwareHref('/stats')
+  const tokensHref = useNetworkAwareHref('/tokens')
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -150,7 +153,7 @@ const NavigationMenu = () => {
                 zIndex={10}
                 minW="160px"
               >
-                <Link href="/stats" onClick={() => setIsMenuOpen(false)}>
+                <Link href={statsHref} onClick={() => setIsMenuOpen(false)}>
                   <Flex gap={2} alignItems="center" py={2}>
                     <Text fontSize="body-m" whiteSpace="nowrap">
                       {t('Metrics')}
@@ -158,7 +161,7 @@ const NavigationMenu = () => {
                   </Flex>
                 </Link>
                 <Separator />
-                <Link href="/tokens" onClick={() => setIsMenuOpen(false)}>
+                <Link href={tokensHref} onClick={() => setIsMenuOpen(false)}>
                   <Flex gap={2} alignItems="center" py={2}>
                     <Text fontSize="body-m" whiteSpace="nowrap">
                       {t('Tokens')}

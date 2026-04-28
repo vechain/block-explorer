@@ -1,25 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NetworkName } from '@/lib/constants/network'
 
-const { redirectError, notFoundError, mockRedirect, mockNotFound, mockFetchQuery, mockPrefetchQuery, mockDehydrate } =
-  vi.hoisted(() => {
+const { redirectError, mockRedirect, mockNotFound, mockPrefetchQuery, mockGetQueryData, mockDehydrate } = vi.hoisted(
+  () => {
     const redirectError = new Error('redirect')
     const notFoundError = new Error('notFound')
 
     return {
       redirectError,
-      notFoundError,
       mockRedirect: vi.fn(() => {
         throw redirectError
       }),
       mockNotFound: vi.fn(() => {
         throw notFoundError
       }),
-      mockFetchQuery: vi.fn(),
       mockPrefetchQuery: vi.fn(),
+      mockGetQueryData: vi.fn(),
       mockDehydrate: vi.fn(() => ({ dehydrated: true })),
     }
-  })
+  },
+)
 
 vi.mock('next/navigation', () => ({
   redirect: mockRedirect,
@@ -33,8 +33,8 @@ vi.mock('@tanstack/react-query', () => ({
 
 vi.mock('@/lib/query-client/query-client', () => ({
   getQueryClient: () => ({
-    fetchQuery: mockFetchQuery,
     prefetchQuery: mockPrefetchQuery,
+    getQueryData: mockGetQueryData,
   }),
 }))
 
@@ -57,14 +57,23 @@ describe('TransactionPage', () => {
   const transactionId = '0x1890a7d5ffce967a849a35d9f5cc24b5cb85e1d1de02cc1d6f5698d35ae58ba5'
   const transaction = { id: transactionId }
 
+  const stubTransactionLookups = (lookups: Partial<Record<NetworkName, unknown>>) => {
+    mockGetQueryData.mockImplementation((queryKey: unknown[]) => {
+      if (queryKey[0] !== 'getTransaction') return undefined
+      const networkName = queryKey[1] as NetworkName
+      return lookups[networkName]
+    })
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
     mockDehydrate.mockReturnValue({ dehydrated: true })
     mockPrefetchQuery.mockResolvedValue(undefined)
+    mockGetQueryData.mockReturnValue(undefined)
   })
 
   it('redirects a direct transaction URL to the fallback network', async () => {
-    mockFetchQuery.mockResolvedValueOnce(null).mockResolvedValueOnce(transaction)
+    stubTransactionLookups({ [NetworkName.MAINNET]: null, [NetworkName.TESTNET]: transaction })
 
     await expect(
       TransactionPage({
@@ -74,11 +83,10 @@ describe('TransactionPage', () => {
     ).rejects.toBe(redirectError)
 
     expect(mockRedirect).toHaveBeenCalledWith(`/transactions/${transactionId}?network=${NetworkName.TESTNET}`)
-    expect(mockPrefetchQuery).not.toHaveBeenCalled()
   })
 
   it('preserves the selected view when redirecting to the fallback network', async () => {
-    mockFetchQuery.mockResolvedValueOnce(null).mockResolvedValueOnce(transaction)
+    stubTransactionLookups({ [NetworkName.MAINNET]: null, [NetworkName.TESTNET]: transaction })
 
     await expect(
       TransactionPage({
@@ -93,7 +101,7 @@ describe('TransactionPage', () => {
   })
 
   it('prefetches the receipt when the requested network is already correct', async () => {
-    mockFetchQuery.mockResolvedValueOnce(transaction)
+    stubTransactionLookups({ [NetworkName.TESTNET]: transaction })
 
     await expect(
       TransactionPage({
@@ -103,7 +111,7 @@ describe('TransactionPage', () => {
     ).resolves.toBeDefined()
 
     expect(mockRedirect).not.toHaveBeenCalled()
-    expect(mockFetchQuery).toHaveBeenCalledWith({
+    expect(mockPrefetchQuery).toHaveBeenCalledWith({
       queryKey: ['getTransaction', NetworkName.TESTNET, transactionId],
     })
     expect(mockPrefetchQuery).toHaveBeenCalledWith({
@@ -111,16 +119,39 @@ describe('TransactionPage', () => {
     })
   })
 
-  it('renders not found when the transaction is missing on both networks', async () => {
-    mockFetchQuery.mockResolvedValueOnce(null).mockResolvedValueOnce(null)
+  it('renders the page without redirecting when the transaction is missing on both networks', async () => {
+    stubTransactionLookups({ [NetworkName.MAINNET]: null, [NetworkName.TESTNET]: null })
 
     await expect(
       TransactionPage({
         params: Promise.resolve({ txId: transactionId }),
         searchParams: Promise.resolve({ network: undefined, view: undefined }),
       }),
-    ).rejects.toBe(notFoundError)
+    ).resolves.toBeDefined()
 
-    expect(mockNotFound).toHaveBeenCalled()
+    expect(mockNotFound).not.toHaveBeenCalled()
+    expect(mockRedirect).not.toHaveBeenCalled()
+  })
+
+  it('renders the page without redirecting when the active network is unreachable', async () => {
+    // Unreachable node: prefetchQuery returns no data, getQueryData returns undefined.
+    // No fallback for SOLO either, so we just render and let the client take over.
+    stubTransactionLookups({})
+
+    await expect(
+      TransactionPage({
+        params: Promise.resolve({ txId: transactionId }),
+        searchParams: Promise.resolve({ network: NetworkName.SOLO, view: undefined }),
+      }),
+    ).resolves.toBeDefined()
+
+    expect(mockRedirect).not.toHaveBeenCalled()
+    expect(mockNotFound).not.toHaveBeenCalled()
+    expect(mockPrefetchQuery).toHaveBeenCalledWith({
+      queryKey: ['getTransaction', NetworkName.SOLO, transactionId],
+    })
+    expect(mockPrefetchQuery).toHaveBeenCalledWith({
+      queryKey: ['getTransactionReceipt', NetworkName.SOLO, transactionId],
+    })
   })
 })

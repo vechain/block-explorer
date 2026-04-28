@@ -32,6 +32,14 @@ export const getNetworkNameFromSearchParams = (searchParams: SearchParamsLike): 
   return parseNetworkName(searchParams?.get('network') ?? undefined)
 }
 
+export const appendNetworkSearchParam = (href: string, networkName: NetworkName): string => {
+  if (!href.startsWith('/')) return href
+
+  const url = new URL(href, 'http://placeholder')
+  url.searchParams.set('network', networkName)
+  return `${url.pathname}${url.search}${url.hash}`
+}
+
 export const getHrefWithNetworkSearchParam = ({
   pathname,
   searchParams,
