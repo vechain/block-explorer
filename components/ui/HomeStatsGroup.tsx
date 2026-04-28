@@ -16,6 +16,7 @@ import { FiArrowUpRight } from 'react-icons/fi'
 import { Card } from './Card'
 import { MotionText } from './MotionText'
 import { useFormatNumber } from '@/hooks/useFormatting'
+import { useNetworkAwareHref } from '@/hooks/useNetworkAwareHref'
 
 type Stat = {
   title: string
@@ -37,7 +38,7 @@ export const HomeStatsGroup = () => {
   const isSoloNetwork = activeNetwork.name === NetworkName.SOLO
   const soloDisabledMessage = t('Not available in solo mode')
   const STARGATE_LINK = getStargateLink(activeNetwork.name, '/market')
-  const STATS_PAGE_HREF = '/stats'
+  const STATS_PAGE_HREF = useNetworkAwareHref('/stats')
 
   const { data: totalAccounts, isLoading: isLoadingAccounts } = useAccountTotal()
   const { data: totalTransactions, isLoading: isLoadingTransactions } = useTotalTransactions()

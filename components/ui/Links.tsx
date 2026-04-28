@@ -1,3 +1,5 @@
+'use client'
+
 import { Link as ChakraLink, type LinkProps as ChakraLinkProps, Flex, Skeleton, Text } from '@chakra-ui/react'
 import Link, { type LinkProps as NextLinkProps } from 'next/link'
 import { LuArrowRight } from 'react-icons/lu'
@@ -8,12 +10,20 @@ import { truncateHex } from '@/lib/utils/truncateHex'
 import { CopyToClipBoard } from './CopyToClipBoard'
 import { useVnsName } from '@/services/thor/vns'
 import { useMemo } from 'react'
+import { useNetworkAwareHref } from '@/hooks/useNetworkAwareHref'
 
 interface BaseLinkProps extends Omit<ChakraLinkProps, 'href'> {
   href: NextLinkProps['href']
 }
 
+const useNetworkAwareLinkHref = (href: NextLinkProps['href']): NextLinkProps['href'] => {
+  const stringHref = typeof href === 'string' ? href : ''
+  const networkAwareStringHref = useNetworkAwareHref(stringHref)
+  return typeof href === 'string' ? networkAwareStringHref : href
+}
+
 const BaseLink = ({ children, href, ...props }: BaseLinkProps) => {
+  const finalHref = useNetworkAwareLinkHref(href)
   return (
     <ChakraLink
       asChild
@@ -24,12 +34,13 @@ const BaseLink = ({ children, href, ...props }: BaseLinkProps) => {
       _focus={{ outline: 'none' }}
       {...props}
     >
-      <Link href={href}>{children}</Link>
+      <Link href={finalHref}>{children}</Link>
     </ChakraLink>
   )
 }
 
 export const ViewAllLink = ({ children, href, ...props }: BaseLinkProps) => {
+  const finalHref = useNetworkAwareLinkHref(href)
   return (
     <ChakraLink
       asChild
@@ -43,7 +54,7 @@ export const ViewAllLink = ({ children, href, ...props }: BaseLinkProps) => {
       _hover={{ textDecoration: 'underline' }}
       {...props}
     >
-      <Link href={href}>
+      <Link href={finalHref}>
         {children}
         <LuArrowRight />
       </Link>

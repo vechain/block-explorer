@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { DEFAULT_NETWORK, NetworkName } from '@/lib/constants/network'
 import {
+  appendNetworkSearchParam,
   consumeManualNetworkSearchParamSync,
   getDashboardPathname,
   getFallbackNetworkName,
@@ -119,6 +120,29 @@ describe('Network utils', () => {
         networkName: NetworkName.TESTNET,
       }),
     ).toBeNull()
+  })
+
+  it('appends the network search param to internal hrefs', () => {
+    expect(appendNetworkSearchParam('/transactions/0xabc', NetworkName.SOLO)).toBe('/transactions/0xabc?network=solo')
+    expect(appendNetworkSearchParam('/transactions/0xabc?view=events', NetworkName.SOLO)).toBe(
+      '/transactions/0xabc?view=events&network=solo',
+    )
+    expect(appendNetworkSearchParam('/transactions/0xabc#section', NetworkName.SOLO)).toBe(
+      '/transactions/0xabc?network=solo#section',
+    )
+    expect(appendNetworkSearchParam('/transactions/0xabc?network=mainnet', NetworkName.TESTNET)).toBe(
+      '/transactions/0xabc?network=testnet',
+    )
+  })
+
+  it('leaves non-internal hrefs unchanged when appending the network search param', () => {
+    expect(appendNetworkSearchParam('https://example.com/foo', NetworkName.SOLO)).toBe('https://example.com/foo')
+    expect(appendNetworkSearchParam('mailto:foo@bar.com', NetworkName.SOLO)).toBe('mailto:foo@bar.com')
+  })
+
+  it('leaves protocol-relative hrefs unchanged when appending the network search param', () => {
+    expect(appendNetworkSearchParam('//example.com/foo', NetworkName.SOLO)).toBe('//example.com/foo')
+    expect(appendNetworkSearchParam('//example.com', NetworkName.SOLO)).toBe('//example.com')
   })
 
   it('suppresses the next matching manual network sync only once', () => {

@@ -4,9 +4,9 @@ import { notFound, redirect } from 'next/navigation'
 // ISR: Cache page for 10 seconds - confirmations increase with each new block
 export const revalidate = 10
 
-import { NetworkName } from '@/lib/constants/network'
+import type { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
-import { type TransactionId, transactionIdSchema } from '@/lib/schemas'
+import { type Transaction, type TransactionId, transactionIdSchema } from '@/lib/schemas'
 import {
   getFallbackNetworkName,
   getHrefWithNetworkSearchParam,
@@ -36,28 +36,26 @@ export default async function TransactionPage({
   const requestedNetworkName = parseNetworkName(network)
 
   const queryClient = getQueryClient()
-  const transaction = await queryClient.fetchQuery(transactionQueryOptions(activeNetworkName, transactionId))
 
-  let resolvedNetworkName = activeNetworkName
-
-  if (!transaction) {
-    const fallbackNetworkName = getFallbackNetworkName(activeNetworkName)
-    if (!fallbackNetworkName) {
-      notFound()
-    }
-
-    const fallbackTransaction = await queryClient.fetchQuery(
-      transactionQueryOptions(fallbackNetworkName, transactionId),
-    )
-
-    if (!fallbackTransaction) {
-      notFound()
-    }
-
-    resolvedNetworkName = fallbackNetworkName
+  // Try to resolve the tx server-side. prefetchQuery (vs fetchQuery) swallows network errors,
+  // so an unreachable node — including a solo node the server can't see — leaves the cache empty
+  // rather than crashing the page. Anything that doesn't resolve here falls through to the client,
+  // where the user's actual active network and node URL are available.
+  const tryResolveTransaction = async (networkName: NetworkName): Promise<NetworkName | null> => {
+    const options = transactionQueryOptions(networkName, transactionId)
+    await queryClient.prefetchQuery(options)
+    return queryClient.getQueryData<Transaction | null>(options.queryKey) ? networkName : null
   }
 
-  if (requestedNetworkName !== resolvedNetworkName) {
+  let resolvedNetworkName = await tryResolveTransaction(activeNetworkName)
+  if (!resolvedNetworkName) {
+    const fallbackNetworkName = getFallbackNetworkName(activeNetworkName)
+    if (fallbackNetworkName) {
+      resolvedNetworkName = await tryResolveTransaction(fallbackNetworkName)
+    }
+  }
+
+  if (resolvedNetworkName && requestedNetworkName !== resolvedNetworkName) {
     const redirectSearchParams = new URLSearchParams()
 
     if (view) {
@@ -73,8 +71,11 @@ export default async function TransactionPage({
     )
   }
 
+  // If the tx wasn't resolved (unreachable node or genuinely missing), render anyway and let
+  // TransactionPageContent + useRedirectOnNotFound handle it on the client.
+  const prefetchNetworkName = resolvedNetworkName ?? activeNetworkName
   const prefetchResults = await Promise.allSettled([
-    queryClient.prefetchQuery(transactionReceiptQueryOptions(resolvedNetworkName, transactionId)),
+    queryClient.prefetchQuery(transactionReceiptQueryOptions(prefetchNetworkName, transactionId)),
   ])
 
   logPrefetchFailures(prefetchResults, ['transactionReceipt'])

@@ -25,13 +25,13 @@ const EmptyStateContainer = ({ title, description, icon }: EmptyStateContainerPr
   )
 }
 
-export const NoTransactions = () => {
+export const NoTransactions = ({ description }: { description?: string } = {}) => {
   const { t } = useTranslation()
   return (
     <EmptyStateContainer
       icon={<LuArrowLeftRight />}
       title={t('No transactions')}
-      description={t('This account has not made any transactions yet')}
+      description={description ?? t('No transactions have been recorded yet')}
     />
   )
 }

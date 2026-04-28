@@ -2,10 +2,12 @@
 
 import { Flex, Image, ImageProps, Text } from '@chakra-ui/react'
 import Link from 'next/link'
+import { useNetworkAwareHref } from '@/hooks/useNetworkAwareHref'
 
 export const Logo = ({ h = { base: '18px', md: '30px' } }: { h?: ImageProps['h'] }) => {
+  const href = useNetworkAwareHref('/')
   return (
-    <Link href="/">
+    <Link href={href}>
       <Flex gap={2} alignItems="baseline">
         <Image src="/vechain-light.svg" alt="VeChain logo" h={h} w="auto" />
 

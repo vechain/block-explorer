@@ -90,7 +90,7 @@ export const AccountTransactionsTable = ({
   }
 
   if (transactions.length === 0) {
-    return <NoTransactions />
+    return <NoTransactions description={t('This account has not made any transactions yet')} />
   }
 
   return <DataTable columns={columns} rows={rows} containerProps={containerProps} gridProps={{ w: 'fit-content' }} />
