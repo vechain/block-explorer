@@ -67,6 +67,13 @@ export const getBlockCompressed = async ({
   })
 }
 
+export const blockCompressedQueryOptions = (networkName: NetworkName, revision: BlockRevision | undefined) =>
+  queryOptions({
+    queryKey: [BLOCK_COMPRESSED_QUERY_KEY, networkName, revision],
+    queryFn: revision ? () => getBlockCompressed({ networkName, revision }) : skipToken,
+    staleTime: Infinity,
+  })
+
 /**
  * Base fee per gas
  */

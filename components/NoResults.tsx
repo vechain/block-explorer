@@ -3,7 +3,7 @@
 import { EmptyState, VStack } from '@chakra-ui/react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LuArrowLeftRight, LuBox, LuCoins, LuFileCode, LuImage } from 'react-icons/lu'
+import { LuArrowLeftRight, LuBox, LuCoins, LuFileCode } from 'react-icons/lu'
 
 interface EmptyStateContainerProps {
   title: string
@@ -48,17 +48,6 @@ export const NoTokenTransfers = () => {
       icon={<LuCoins />}
       title={t('No token transfers')}
       description={t('No token transfers have been recorded yet')}
-    />
-  )
-}
-
-export const NoNFTTransfers = () => {
-  const { t } = useTranslation()
-  return (
-    <EmptyStateContainer
-      icon={<LuImage />}
-      title={t('No NFT transfers')}
-      description={t('No NFT transfers have been recorded yet')}
     />
   )
 }

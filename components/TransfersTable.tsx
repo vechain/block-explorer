@@ -8,16 +8,14 @@ import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/
 import { type CellComponentProps, type Column, DataTable } from '@/components/ui/Table'
 import { AmountWithHover } from '@/components/ui-legacy/AmountWithHover'
 import type { IndexerTransfer } from '@/services/veworld-indexer/schemas'
-import type { TransferFromBlock } from '@/services/veworld-indexer/recent-activity'
 import { useErc20Contracts } from '@/services/thor/tokens/erc20'
 import { useErc721Contracts } from '@/services/thor/tokens/erc721'
 import { isNotNullish } from '@/lib/type-predicates'
 import { truncateString } from '@/lib/utils/truncateString'
 
-type TransferType = 'FUNGIBLE_TOKEN' | 'NFT' | 'VET' | 'all'
+type TransferType = 'FUNGIBLE_TOKEN' | 'NFT' | 'VET' | 'SEMI_FUNGIBLE_TOKEN' | 'all'
 
-// Union type to support both IndexerTransfer and TransferFromBlock
-type TransferInput = IndexerTransfer | TransferFromBlock
+type TransferInput = IndexerTransfer
 
 type TransfersTableProps = {
   transfers: TransferInput[]
@@ -43,11 +41,14 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
     [filteredTransfers],
   )
 
-  // Get unique token addresses for ERC721 (NFTs)
+  // Get unique token addresses for ERC721 / ERC1155 (NFT + semi-fungible)
   const nftTokenAddresses = useMemo(
     () =>
       filteredTransfers
-        .filter(transfer => transfer.eventType === 'NFT' && transfer.tokenAddress)
+        .filter(
+          transfer =>
+            (transfer.eventType === 'NFT' || transfer.eventType === 'SEMI_FUNGIBLE_TOKEN') && transfer.tokenAddress,
+        )
         .map(transfer => transfer.tokenAddress!)
         .filter(isNotNullish),
     [filteredTransfers],
@@ -70,6 +71,7 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
   // Determine if we should show Amount or NFT column based on transfer types
   const hasFungibleTokens = filteredTransfers.some(t => t.eventType === 'FUNGIBLE_TOKEN' || t.eventType === 'VET')
   const hasNfts = filteredTransfers.some(t => t.eventType === 'NFT')
+  const hasSemiFungible = filteredTransfers.some(t => t.eventType === 'SEMI_FUNGIBLE_TOKEN')
 
   const LastColumnCell = useMemo(() => {
     const CellComponent = (props: CellComponentProps) => {
@@ -97,6 +99,42 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
               </Text>
             )}
             {!collectionName && tokenId === '-' && (
+              <Text as="span" color="text-secondary" fontSize="sm">
+                -
+              </Text>
+            )}
+          </Flex>
+        )
+      }
+
+      // Handle ERC1155 (semi-fungible): collectionName? #tokenId × value
+      if (transfer.eventType === 'SEMI_FUNGIBLE_TOKEN') {
+        const erc1155 = transfer.tokenAddress ? erc721Map?.get(transfer.tokenAddress) : null
+        const rawCollectionName = erc1155?.name ?? ''
+        const collectionName = rawCollectionName ? truncateString(rawCollectionName, 16, 4) : ''
+        const tokenId = transfer.tokenId ? truncateString(transfer.tokenId, 12, 4) : null
+
+        return (
+          <Flex alignItems="center" gap={1} flexWrap="wrap">
+            {collectionName && (
+              <Text as="span" color="text-primary" fontSize="sm">
+                {collectionName}
+              </Text>
+            )}
+            {tokenId && (
+              <Text as="span" color="text-secondary" fontSize="sm">
+                #{tokenId}
+              </Text>
+            )}
+            {transfer.value > 0n && (
+              <>
+                <Text as="span" color="text-secondary" fontSize="sm">
+                  ×
+                </Text>
+                <AmountWithHover amount={transfer.value} decimals={0} />
+              </>
+            )}
+            {!collectionName && !tokenId && transfer.value === 0n && (
               <Text as="span" color="text-secondary" fontSize="sm">
                 -
               </Text>
@@ -139,13 +177,17 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
     [filteredTransfers],
   )
 
-  // Determine column label based on transfer types
+  // Determine column label based on transfer types. Mixed feeds get an empty
+  // header — each row's cell renders its own type-appropriate content.
   const lastColumnLabel = useMemo(() => {
-    if (hasNfts && !hasFungibleTokens) return t('NFT')
-    if (hasFungibleTokens && !hasNfts) return t('Amount')
-    // Mixed types - use a generic label or default to Amount
-    return t('Amount')
-  }, [hasNfts, hasFungibleTokens, t])
+    const distinctTypes = (hasFungibleTokens ? 1 : 0) + (hasNfts ? 1 : 0) + (hasSemiFungible ? 1 : 0)
+    if (distinctTypes <= 1) {
+      if (hasNfts) return t('NFT')
+      if (hasSemiFungible) return t('Token')
+      return t('Amount')
+    }
+    return ''
+  }, [hasNfts, hasFungibleTokens, hasSemiFungible, t])
 
   const columnsMemo = useMemo(
     () =>

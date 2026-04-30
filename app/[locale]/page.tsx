@@ -14,8 +14,7 @@ import { logPrefetchFailures } from '@/lib/utils/prefetch'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { ActivitySection } from './components/ActivitySection'
 import { PriceCards } from './components/PriceCards'
-import { TokenTransfersSection } from './components/TokenTransfersSection'
-import { NFTTransfersSection } from './components/NFTTransfersSection'
+import { TransfersSection } from './components/TransfersSection'
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
 import { accountTotalQueryOptions } from '@/services/veworld-indexer/account-totals'
 import {
@@ -71,10 +70,7 @@ export default async function HomePage({
           <ActivitySection />
         </Suspense>
         <Suspense fallback={<TableSkeleton />}>
-          <TokenTransfersSection />
-        </Suspense>
-        <Suspense fallback={<TableSkeleton />}>
-          <NFTTransfersSection />
+          <TransfersSection />
         </Suspense>
       </VStack>
     </HydrationBoundary>
