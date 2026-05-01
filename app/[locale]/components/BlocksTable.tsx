@@ -6,15 +6,18 @@ import { useTranslation } from 'react-i18next'
 import { AgeText } from '@/components/ui/AgeText'
 import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
 import { type Column, DataTable } from '@/components/ui/Table'
-import type { ExpandedBlock } from '@/lib/schemas'
+import type { CompressedBlock, ExpandedBlock } from '@/lib/schemas'
 import { useFormatCurrency, useFormatNumber } from '@/hooks/useFormatting'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { Balance } from '@/components/ui/Balance'
 
-type BlocksTableProps = {
-  blocks: ExpandedBlock[]
-  showDetails?: boolean
-}
+type BlocksTableProps =
+  | { blocks: CompressedBlock[]; showDetails?: false }
+  | { blocks: ExpandedBlock[]; showDetails: true }
+
+const isExpandedTransactions = (
+  txs: ExpandedBlock['transactions'] | CompressedBlock['transactions'],
+): txs is ExpandedBlock['transactions'] => txs.length === 0 || typeof txs[0] !== 'string'
 
 export const BlocksTable = ({ blocks, showDetails = false }: BlocksTableProps) => {
   const { t } = useTranslation()
@@ -23,8 +26,13 @@ export const BlocksTable = ({ blocks, showDetails = false }: BlocksTableProps) =
   const { price: vthoPrice } = useTokenDailyPrices('vethor-token')
 
   const rows = blocks.map(block => {
-    const totalClauses = block.transactions.reduce((sum, tx) => sum + tx.clauses.length, 0)
-    const totalVthoPaid = block.transactions.reduce((sum, tx) => sum + tx.paid, BigInt(0))
+    const txCount = block.transactions.length
+    const totalClauses = isExpandedTransactions(block.transactions)
+      ? block.transactions.reduce((sum, tx) => sum + tx.clauses.length, 0)
+      : 0
+    const totalVthoPaid = isExpandedTransactions(block.transactions)
+      ? block.transactions.reduce((sum, tx) => sum + tx.paid, BigInt(0))
+      : 0n
     return {
       id: block.id,
       blockNumber: `#${block.number.toString()}`,
@@ -32,7 +40,7 @@ export const BlocksTable = ({ blocks, showDetails = false }: BlocksTableProps) =
       age: block.timestamp,
       block: formatNumber(block.number),
       signer: block.signer,
-      txsClauses: `${block.transactions.length}/${totalClauses}`,
+      txsClauses: `${txCount}/${totalClauses}`,
       gasUsed: formatNumber(Number(block.gasUsed)),
       vthoPaid: totalVthoPaid,
     }

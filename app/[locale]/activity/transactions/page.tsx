@@ -1,13 +1,13 @@
 'use client'
 
 import { Box, Heading, Stack } from '@chakra-ui/react'
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { NoTransactions } from '@/components/NoResults'
-import { useRecentBlocksExpanded } from '@/services/veworld-indexer/recent-activity'
+import { useLatestTransactions } from '@/services/veworld-indexer/latest-transactions'
 import { ActivityTransactionsTable } from '../../components/ActivityTransactionsTable'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
@@ -17,35 +17,23 @@ export default function AllTransactionsPage() {
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[0])
 
-  // Fetch enough blocks to get transactions - we need more blocks to get enough transactions
-  const blocksToFetch = Math.max((page + 2) * pageSize, 50)
-  const { data: allBlocks, isPending } = useRecentBlocksExpanded({ count: blocksToFetch })
+  const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useLatestTransactions({
+    size: pageSize,
+    expanded: false,
+  })
 
-  // Extract all transactions from blocks
-  const allTransactions = useMemo(() => {
-    if (!allBlocks || allBlocks.length === 0) return []
+  const pages = data?.pages ?? []
+  const currentPageData = pages[page]?.data ?? []
+  const hasNext = page < pages.length - 1 || Boolean(hasNextPage)
 
-    return allBlocks.flatMap(block =>
-      block.transactions.map(tx => ({
-        ...tx,
-        blockNumber: block.number,
-        blockTimestamp: block.timestamp,
-      })),
-    )
-  }, [allBlocks])
+  const hasNoTransactions = !isPending && pages.length > 0 && pages.every(p => p.data.length === 0)
 
-  // Paginate the transactions client-side
-  const paginatedTransactions = useMemo(() => {
-    const start = page * pageSize
-    const end = start + pageSize
-    return allTransactions.slice(start, end)
-  }, [allTransactions, page, pageSize])
-
-  const hasNext = useMemo(() => {
-    return allTransactions.length > (page + 1) * pageSize
-  }, [allTransactions, page, pageSize])
-
-  const hasNoTransactions = !isPending && allTransactions.length === 0
+  const handlePageChange = async (newPage: number) => {
+    if (newPage > pages.length - 1 && hasNextPage && !isFetchingNextPage) {
+      await fetchNextPage()
+    }
+    setPage(newPage)
+  }
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
@@ -64,7 +52,7 @@ export default function AllTransactionsPage() {
           ) : hasNoTransactions ? (
             <NoTransactions />
           ) : (
-            <ActivityTransactionsTable transactions={paginatedTransactions} showDetails />
+            <ActivityTransactionsTable transactions={currentPageData} showDetails />
           )}
         </Box>
         <PaginationControls
@@ -72,7 +60,7 @@ export default function AllTransactionsPage() {
           pageSize={pageSize}
           pageSizeOptions={PAGE_SIZE_OPTIONS}
           hasNext={hasNext}
-          onPageChange={setPage}
+          onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
         />
       </Card>

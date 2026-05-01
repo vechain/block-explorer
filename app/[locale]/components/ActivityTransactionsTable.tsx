@@ -1,20 +1,18 @@
 'use client'
 
 import { useTranslation } from 'react-i18next'
+import { AgeText } from '@/components/ui/AgeText'
 import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import { type Column, DataTable, type TableRow } from '@/components/ui/Table'
 import { TxTypeBadge } from '@/components/ui/TxTypeBadge'
 import { TxStatusIcon } from '@/components/TxStatus'
 import { TransactionStatus } from '@/lib/types'
-import type { AddressString, ExpandedBlock, HexString, TransactionType } from '@/lib/schemas'
-
-type TransactionWithBlockInfo = ExpandedBlock['transactions'][number] & {
-  blockNumber: number
-  blockTimestamp: number
-}
+import type { AddressString, HexString, TransactionType } from '@/lib/schemas'
+import type { IndexerTransaction } from '@/services/veworld-indexer/schemas'
 
 interface ActivityTransactionRow extends TableRow {
   id: HexString
+  age: number
   type: TransactionType
   clausesCount: number
   origin: AddressString
@@ -22,7 +20,7 @@ interface ActivityTransactionRow extends TableRow {
 }
 
 interface Props {
-  transactions: TransactionWithBlockInfo[]
+  transactions: IndexerTransaction[]
   showDetails?: boolean
 }
 
@@ -35,6 +33,7 @@ export const ActivityTransactionsTable = ({ transactions, showDetails = false }:
       label: t('Tx ID'),
       Cell: ({ row }) => <CopyableTransactionIdLink txId={row.id} />,
     },
+    { key: 'age', label: t('Age'), Cell: ({ value }) => <AgeText timestamp={value as number} /> },
     {
       key: 'origin',
       label: t('Origin'),
@@ -59,8 +58,9 @@ export const ActivityTransactionsTable = ({ transactions, showDetails = false }:
 
   const rows: ActivityTransactionRow[] = transactions.map(tx => ({
     id: tx.id,
+    age: tx.blockTimestamp,
     type: tx.type,
-    clausesCount: tx.clauses.length,
+    clausesCount: tx.clauseCount ?? tx.clauses?.length ?? 0,
     origin: tx.origin,
     status: tx.reverted ? TransactionStatus.REVERTED : TransactionStatus.SUCCESS,
   }))

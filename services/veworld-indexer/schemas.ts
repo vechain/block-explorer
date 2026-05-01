@@ -27,6 +27,7 @@ const paginationSchema = z.object({
   totalPages: z.number().nullable().optional(),
   totalElements: z.number().nullable().optional(),
   hasNext: z.boolean(),
+  cursor: z.string().optional(),
 })
 
 export const indexerResponseSchema = <T extends z.ZodSchema>(schema: T) =>
@@ -63,7 +64,8 @@ const indexerGetContractTransactionsParamsSchema = z
   })
   .extend(paginationParamsSchema.shape)
 
-const transferEventTypeSchema = z.enum(['FUNGIBLE_TOKEN', 'NFT', 'VET'])
+const transferEventTypeSchema = z.enum(['FUNGIBLE_TOKEN', 'NFT', 'VET', 'SEMI_FUNGIBLE_TOKEN'])
+export type TransferEventType = z.infer<typeof transferEventTypeSchema>
 
 const indexerGetTransfersParamsSchema = z
   .object({
@@ -129,6 +131,7 @@ export const indexerTransactionSchema = baseTransactionSchema
     maxPriorityFeePerGas: dynamicFeeTransactionFieldsSchema.shape.maxPriorityFeePerGas.nullable().optional(),
     type: transactionTypeSchema,
     clauses: z.array(withEmptyObjects(clauseSchema)).optional(),
+    clauseCount: z.number().nullable().optional(),
     outputs: z.array(withEmptyObjects(transactionOutputSchema)).optional(),
     reverted: z.boolean(),
   })

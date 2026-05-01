@@ -11,14 +11,25 @@ export const get = async <T>({
 }: {
   baseUrl: string
   endPoint: string
-  params?: Record<string, string>
+  params?: Record<string, string | string[] | undefined>
   timeout?: number
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   headers?: Record<string, string>
 }): Promise<ApiResponse<T>> => {
   try {
-    // Build URL safely
-    const queryString = params ? `?${new URLSearchParams(params).toString()}` : ''
+    // Build URL safely. Arrays serialize as repeated keys (?k=a&k=b).
+    const searchParams = new URLSearchParams()
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        if (value === undefined) continue
+        if (Array.isArray(value)) {
+          value.forEach(v => searchParams.append(key, v))
+        } else {
+          searchParams.set(key, value)
+        }
+      }
+    }
+    const queryString = searchParams.size > 0 ? `?${searchParams.toString()}` : ''
     const url = [baseUrl, endPoint, queryString].join('')
 
     // Create AbortController for timeout
