@@ -8,6 +8,6 @@ on:
 
 jobs:
   semantic-versioning:
-    uses: vechain/github-actions/.github/workflows/semantic-versioning.yaml@v.1.9.0
+    uses: vechain/github-actions-public/.github/workflows/semantic-versioning.yaml@c8645e5723b09ce657b865f78924b87a357df036 # v.2.3.1
     secrets:
       DEPLOY_KEY: ${{ secrets.VECHAINCI_SSH_PRIVATE_KEYS }}
