@@ -28,6 +28,8 @@ jobs:
       pull-requests: write
     # Only run if the PR was actually deployed (has the environment)
     if: github.event.pull_request.head.repo.full_name == github.repository
+    environment:
+      name: preview-pr-${{ github.event.pull_request.number }}
 
     steps:
       - name: Checkout code

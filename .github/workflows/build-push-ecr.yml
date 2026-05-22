@@ -26,6 +26,10 @@ on:
                 required: false
                 type: string
                 default: "eu-west-1"
+            environment_name:
+                description: "GitHub Environment to scope AWS credentials to"
+                required: true
+                type: string
         secrets:
             aws_role_arn:
                 description: "AWS IAM role ARN for OIDC authentication"
@@ -45,6 +49,8 @@ jobs:
         permissions:
             id-token: write
             contents: read
+        environment:
+            name: ${{ inputs.environment_name }}
         outputs:
             tag: ${{ steps.meta.outputs.tag }}
             uri: ${{ steps.meta.outputs.uri }}

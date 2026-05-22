@@ -38,6 +38,8 @@ jobs:
       id-token: write
       contents: read
       packages: read
+    environment:
+      name: prod
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
     env:

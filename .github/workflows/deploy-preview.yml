@@ -113,6 +113,7 @@ jobs:
       ecr_repository: block-explorer
       image_tag: ${{ needs.prepare-metadata.outputs.image_tag }}
       aws_region: eu-west-1
+      environment_name: preview-pr-${{ github.event.pull_request.number }}
     secrets:
       aws_role_arn: ${{ secrets.AWS_ACC_ROLE }}
 
