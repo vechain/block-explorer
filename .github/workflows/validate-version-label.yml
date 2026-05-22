@@ -6,6 +6,6 @@ on:
 
 jobs:
   validate:
-    uses: vechain/github-actions/.github/workflows/validate-pr-label.yaml@v.1.13.2
+    uses: vechain/github-actions-public/.github/workflows/validate-pr-label.yaml@c8645e5723b09ce657b865f78924b87a357df036 # v.2.3.1
     with:
       FAIL_IF_MISSING_LABEL: true
