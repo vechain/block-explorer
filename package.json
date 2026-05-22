@@ -44,7 +44,7 @@
     "react": "19.1.2",
     "react-dom": "19.1.2",
     "react-error-boundary": "^6.0.0",
-    "react-i18next": "^15.7.3",
+    "react-i18next": "^15.7.4",
     "react-icons": "^5.5.0",
     "recharts": "^3.2.1",
     "viem": "^2.36.0",
