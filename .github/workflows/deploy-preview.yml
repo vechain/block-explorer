@@ -26,21 +26,32 @@ env:
   TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
 
 jobs:
-  # The preview deploy is gated by exactly one of `gate-auto` or
-  # `gate-approval`. Routing is decided in `classify`, which checks the
-  # PR author against the repository's collaborators API — this is the
-  # authoritative way to recognize org members with write access. We do
-  # not rely on `github.event.pull_request.author_association` because
-  # that field can return CONTRIBUTOR for confirmed org members,
-  # depending on how the org/team membership is exposed at webhook time.
+  # Preview deploys are gated by `classify`, which decides routing using
+  # only signals that are reliable in a `pull_request` event:
   #
-  # Dependabot PRs cannot access AWS secrets and would always fail, so
-  # they short-circuit `classify` and skip both gates entirely.
+  # - Dependabot PRs: classify itself is skipped (no AWS secret access).
+  # - Fork PRs: classify is skipped — `pull_request` does not pass repo
+  #   or environment secrets to fork-authored runs, so an env-approval
+  #   gate cannot recover access; even after approval the AWS step
+  #   would fail. Routing forks to approval here would be theatre.
+  # - Renovate PRs: routed to `gate-approval` so a reviewer opts in
+  #   when they want to see a dependency-bump preview.
+  # - Everything else (in-repo human PRs): routed to `gate-auto`.
+  #   Push access to an in-repo branch is already enforced by GitHub,
+  #   so the author is trusted to deploy a preview without review.
+  #
+  # `github.event.pull_request.author_association` is intentionally not
+  # consulted: the webhook payload can return CONTRIBUTOR for confirmed
+  # org members. The repository collaborators API is not used either:
+  # the default GITHUB_TOKEN cannot resolve team-based access on
+  # org-owned repos.
 
   classify:
     name: Classify PR author
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login != 'dependabot[bot]'
+    if: >-
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       auto: ${{ steps.check.outputs.auto }}
     steps:
@@ -48,31 +59,20 @@ jobs:
         id: check
         env:
           AUTHOR: ${{ github.event.pull_request.user.login }}
-          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
-          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          if [ "$HEAD_REPO" != "$REPO" ]; then
-            echo "Fork PR — routing to approval"
-            echo "auto=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
           if [ "$AUTHOR" = "renovate[bot]" ]; then
             echo "Renovate PR — routing to approval (opt-in)"
             echo "auto=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # In-repo human PR: GitHub already enforced that the author has
-          # push access to land a branch on this repo, so the author is
-          # trusted to deploy a preview without an additional review.
           echo "In-repo human PR — routing to auto"
           echo "auto=true" >> "$GITHUB_OUTPUT"
 
   gate-auto:
-    # Collaborators (org members with write access + outside
-    # collaborators) deploy without human review via the no-rules
+    # In-repo human PRs deploy without human review via the no-rules
     # `preview-auto` environment.
-    name: Auto-approve preview deploy (collaborator)
+    name: Auto-approve preview deploy (in-repo)
     runs-on: ubuntu-latest
     needs: [classify]
     if: needs.classify.outputs.auto == 'true'
@@ -83,10 +83,9 @@ jobs:
         run: echo "Auto-approved for ${{ github.event.pull_request.user.login }}"
 
   gate-approval:
-    # Everyone else — Renovate, external contributors, fork PRs — lands
-    # in `preview-approval`, which has required reviewers and pauses
-    # the workflow until a reviewer with write access clicks "Approve
-    # and deploy".
+    # Renovate lands in `preview-approval`, which has required reviewers
+    # and pauses the workflow until a reviewer with write access clicks
+    # "Approve and deploy".
     name: Require approval for preview deploy
     runs-on: ubuntu-latest
     needs: [classify]

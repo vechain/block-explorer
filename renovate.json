@@ -8,10 +8,20 @@
   "timezone": "Europe/Rome",
   "schedule": ["before 8am on the first day of the month"],
   "minimumReleaseAge": "7 days",
-  "labels": ["dependencies", "increment:patch"],
+  "labels": ["dependencies"],
   "prConcurrentLimit": 5,
   "osvVulnerabilityAlerts": true,
   "packageRules": [
+    {
+      "description": "Tag non-major bumps with increment:patch for the release-versioning gate",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "addLabels": ["increment:patch"]
+    },
+    {
+      "description": "Tag major bumps with increment:major so the release reflects the breaking dependency change",
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["increment:major"]
+    },
     {
       "description": "Batch minor/patch/digest/pin updates into a single monthly PR",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
@@ -36,11 +46,11 @@
     "enabled": true,
     "schedule": ["before 8am on the first day of the month"],
     "groupName": "lockfile maintenance",
-    "labels": ["dependencies", "lockfile", "increment:patch"]
+    "addLabels": ["lockfile", "increment:patch"]
   },
   "vulnerabilityAlerts": {
     "enabled": true,
-    "labels": ["dependencies", "security", "increment:patch"],
+    "addLabels": ["security", "increment:patch"],
     "schedule": ["at any time"],
     "minimumReleaseAge": "0 days",
     "prCreation": "immediate"
