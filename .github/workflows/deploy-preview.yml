@@ -26,15 +26,23 @@ env:
   TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
 
 jobs:
-  # The preview deploy is gated by exactly one of these two jobs, chosen by
-  # the PR author's relationship with the repo. We use two explicit jobs
-  # instead of a dynamic `environment.name` expression because that GitHub
-  # Actions expression form has been observed to silently route everything
-  # to the fallback environment.
-  #
-  # Dependabot PRs cannot access AWS secrets and would always fail, so they
-  # skip both gates and the downstream merge job — effectively skipping the
-  # whole preview workflow.
+  # Temporary diagnostic
+  gate-debug:
+    name: Diagnostic
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump event
+        env:
+          AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
+          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "author_login=${AUTHOR_LOGIN}"
+          echo "author_association=${AUTHOR_ASSOCIATION}"
+          echo "head_repo=${HEAD_REPO}"
+          echo "repo=${REPO}"
+          echo "or-eval: $([[ "${AUTHOR_ASSOCIATION}" == OWNER || "${AUTHOR_ASSOCIATION}" == MEMBER || "${AUTHOR_ASSOCIATION}" == COLLABORATOR ]] && echo TRUE || echo FALSE)"
 
   gate-auto:
     # Maintainer-authored, in-repo PRs (OWNER, MEMBER, COLLABORATOR) deploy
