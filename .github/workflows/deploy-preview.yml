@@ -26,27 +26,60 @@ env:
   TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
 
 jobs:
-  gate:
-    name: Approve preview deploy
+  # The preview deploy is gated by exactly one of these two jobs, chosen by
+  # the PR author's relationship with the repo. We use two explicit jobs
+  # instead of a dynamic `environment.name` expression because that GitHub
+  # Actions expression form has been observed to silently route everything
+  # to the fallback environment.
+  #
+  # Dependabot PRs cannot access AWS secrets and would always fail, so they
+  # skip both gates and the downstream merge job — effectively skipping the
+  # whole preview workflow.
+
+  gate-auto:
+    # Maintainer-authored PRs (OWNER, MEMBER, COLLABORATOR) deploy without
+    # human review: the `preview-auto` environment has no protection rules.
+    name: Auto-approve preview deploy (maintainer)
     runs-on: ubuntu-latest
-    # Dependabot PRs cannot access AWS secrets, so a preview deploy would
-    # always fail; skip them outright. Renovate PRs do have secret access
-    # (in-repo branch) and the preview is the only place we can catch UI
-    # regressions introduced by a dependency bump, since CI is unit-tests
-    # only. Renovate PRs fall through to `preview-approval` (author is
-    # NONE) so a reviewer opts in with a single click when they want to
-    # see the preview.
-    if: github.event.pull_request.user.login != 'dependabot[bot]'
-    # Maintainer-authored PRs use the no-rules `preview-auto` environment
-    # (auto-approved). Everyone else falls back to `preview-approval`,
-    # which has required reviewers and pauses the workflow until a
-    # reviewer with write access clicks "Approve and deploy".
+    if: >-
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      contains(fromJson('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
     environment:
-      name: ${{ contains(fromJson('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) && 'preview-auto' || 'preview-approval' }}
+      name: preview-auto
     steps:
-      - name: Record approval
+      - name: Record auto-approval
         run: |
-          echo "Preview deploy approved for ${{ github.event.pull_request.user.login }} (${{ github.event.pull_request.author_association }})"
+          echo "Auto-approved for ${{ github.event.pull_request.user.login }} (${{ github.event.pull_request.author_association }})"
+
+  gate-approval:
+    # Everyone else (Renovate, external contributors, fork PRs) lands in
+    # `preview-approval`, which has required reviewers and pauses the
+    # workflow until a reviewer with write access clicks "Approve and
+    # deploy".
+    name: Require approval for preview deploy
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      !contains(fromJson('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+    environment:
+      name: preview-approval
+    steps:
+      - name: Record reviewer approval
+        run: |
+          echo "Reviewer-approved for ${{ github.event.pull_request.user.login }} (${{ github.event.pull_request.author_association }})"
+
+  gate:
+    # Single downstream entry point. Succeeds if either of the two gates
+    # above succeeded; skipped when both were skipped (Dependabot path).
+    name: Preview deploy gate
+    runs-on: ubuntu-latest
+    needs: [gate-auto, gate-approval]
+    if: >-
+      !cancelled() && !failure() &&
+      (needs.gate-auto.result == 'success' || needs.gate-approval.result == 'success')
+    steps:
+      - name: Confirm gate
+        run: echo "Preview deploy gate passed"
 
   pr-comment:
     name: Post Initial PR Comment
