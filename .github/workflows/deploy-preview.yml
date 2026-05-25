@@ -36,27 +36,17 @@ jobs:
   # skip both gates and the downstream merge job — effectively skipping the
   # whole preview workflow.
 
-  gate-debug:
-    # Temporary diagnostic: prints what the workflow actually sees for
-    # author_association so we can confirm the gating logic.
-    name: Diagnostic
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump event context
-        env:
-          AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
-          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
-        run: |
-          echo "author_login=${AUTHOR_LOGIN}"
-          echo "author_association=${AUTHOR_ASSOCIATION}"
-
   gate-auto:
-    # Maintainer-authored PRs (OWNER, MEMBER, COLLABORATOR) deploy without
-    # human review: the `preview-auto` environment has no protection rules.
+    # Maintainer-authored, in-repo PRs (OWNER, MEMBER, COLLABORATOR) deploy
+    # without human review: the `preview-auto` environment has no protection
+    # rules. Fork PRs always fall through to `gate-approval`, even when the
+    # author is a maintainer — maintainers have write access and have no
+    # reason to fork, so a fork PR is treated as untrusted by default.
     name: Auto-approve preview deploy (maintainer)
     runs-on: ubuntu-latest
     if: >-
       github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
       (
         github.event.pull_request.author_association == 'OWNER' ||
         github.event.pull_request.author_association == 'MEMBER' ||
@@ -70,17 +60,22 @@ jobs:
           echo "Auto-approved for ${{ github.event.pull_request.user.login }} (${{ github.event.pull_request.author_association }})"
 
   gate-approval:
-    # Everyone else (Renovate, external contributors, fork PRs) lands in
-    # `preview-approval`, which has required reviewers and pauses the
-    # workflow until a reviewer with write access clicks "Approve and
-    # deploy".
+    # Everyone else — Renovate, external contributors, and any fork PR
+    # regardless of author association — lands in `preview-approval`,
+    # which has required reviewers and pauses the workflow until a
+    # reviewer with write access clicks "Approve and deploy".
     name: Require approval for preview deploy
     runs-on: ubuntu-latest
     if: >-
       github.event.pull_request.user.login != 'dependabot[bot]' &&
-      github.event.pull_request.author_association != 'OWNER' &&
-      github.event.pull_request.author_association != 'MEMBER' &&
-      github.event.pull_request.author_association != 'COLLABORATOR'
+      (
+        github.event.pull_request.head.repo.full_name != github.repository ||
+        (
+          github.event.pull_request.author_association != 'OWNER' &&
+          github.event.pull_request.author_association != 'MEMBER' &&
+          github.event.pull_request.author_association != 'COLLABORATOR'
+        )
+      )
     environment:
       name: preview-approval
     steps:
