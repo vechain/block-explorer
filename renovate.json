@@ -42,7 +42,7 @@
     "enabled": true,
     "labels": ["dependencies", "security", "increment:patch"],
     "schedule": ["at any time"],
-    "minimumReleaseAge": "0",
+    "minimumReleaseAge": "0 days",
     "prCreation": "immediate"
   }
 }
