@@ -36,6 +36,20 @@ jobs:
   # skip both gates and the downstream merge job — effectively skipping the
   # whole preview workflow.
 
+  gate-debug:
+    # Temporary diagnostic: prints what the workflow actually sees for
+    # author_association so we can confirm the gating logic.
+    name: Diagnostic
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump event context
+        env:
+          AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
+          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
+        run: |
+          echo "author_login=${AUTHOR_LOGIN}"
+          echo "author_association=${AUTHOR_ASSOCIATION}"
+
   gate-auto:
     # Maintainer-authored PRs (OWNER, MEMBER, COLLABORATOR) deploy without
     # human review: the `preview-auto` environment has no protection rules.
@@ -43,7 +57,11 @@ jobs:
     runs-on: ubuntu-latest
     if: >-
       github.event.pull_request.user.login != 'dependabot[bot]' &&
-      contains(fromJson('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+      (
+        github.event.pull_request.author_association == 'OWNER' ||
+        github.event.pull_request.author_association == 'MEMBER' ||
+        github.event.pull_request.author_association == 'COLLABORATOR'
+      )
     environment:
       name: preview-auto
     steps:
@@ -60,7 +78,9 @@ jobs:
     runs-on: ubuntu-latest
     if: >-
       github.event.pull_request.user.login != 'dependabot[bot]' &&
-      !contains(fromJson('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+      github.event.pull_request.author_association != 'OWNER' &&
+      github.event.pull_request.author_association != 'MEMBER' &&
+      github.event.pull_request.author_association != 'COLLABORATOR'
     environment:
       name: preview-approval
     steps:
