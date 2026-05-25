@@ -26,74 +26,80 @@ env:
   TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
 
 jobs:
-  # Temporary diagnostic
-  gate-debug:
-    name: Diagnostic
+  # The preview deploy is gated by exactly one of `gate-auto` or
+  # `gate-approval`. Routing is decided in `classify`, which checks the
+  # PR author against the repository's collaborators API — this is the
+  # authoritative way to recognize org members with write access. We do
+  # not rely on `github.event.pull_request.author_association` because
+  # that field can return CONTRIBUTOR for confirmed org members,
+  # depending on how the org/team membership is exposed at webhook time.
+  #
+  # Dependabot PRs cannot access AWS secrets and would always fail, so
+  # they short-circuit `classify` and skip both gates entirely.
+
+  classify:
+    name: Classify PR author
     runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
+    permissions:
+      contents: read
+    outputs:
+      auto: ${{ steps.check.outputs.auto }}
     steps:
-      - name: Dump event
+      - name: Decide auto vs approval
+        id: check
         env:
-          AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
-          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
           HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
           REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "author_login=${AUTHOR_LOGIN}"
-          echo "author_association=${AUTHOR_ASSOCIATION}"
-          echo "head_repo=${HEAD_REPO}"
-          echo "repo=${REPO}"
-          echo "or-eval: $([[ "${AUTHOR_ASSOCIATION}" == OWNER || "${AUTHOR_ASSOCIATION}" == MEMBER || "${AUTHOR_ASSOCIATION}" == COLLABORATOR ]] && echo TRUE || echo FALSE)"
+          set -euo pipefail
+          if [ "$HEAD_REPO" != "$REPO" ]; then
+            echo "Fork PR — routing to approval"
+            echo "auto=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if gh api "repos/${REPO}/collaborators/${AUTHOR}" --silent >/dev/null 2>&1; then
+            echo "Collaborator confirmed — routing to auto"
+            echo "auto=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Not a collaborator — routing to approval"
+            echo "auto=false" >> "$GITHUB_OUTPUT"
+          fi
 
   gate-auto:
-    # Maintainer-authored, in-repo PRs (OWNER, MEMBER, COLLABORATOR) deploy
-    # without human review: the `preview-auto` environment has no protection
-    # rules. Fork PRs always fall through to `gate-approval`, even when the
-    # author is a maintainer — maintainers have write access and have no
-    # reason to fork, so a fork PR is treated as untrusted by default.
-    name: Auto-approve preview deploy (maintainer)
+    # Collaborators (org members with write access + outside
+    # collaborators) deploy without human review via the no-rules
+    # `preview-auto` environment.
+    name: Auto-approve preview deploy (collaborator)
     runs-on: ubuntu-latest
-    if: >-
-      github.event.pull_request.user.login != 'dependabot[bot]' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      (
-        github.event.pull_request.author_association == 'OWNER' ||
-        github.event.pull_request.author_association == 'MEMBER' ||
-        github.event.pull_request.author_association == 'COLLABORATOR'
-      )
+    needs: [classify]
+    if: needs.classify.outputs.auto == 'true'
     environment:
       name: preview-auto
     steps:
       - name: Record auto-approval
-        run: |
-          echo "Auto-approved for ${{ github.event.pull_request.user.login }} (${{ github.event.pull_request.author_association }})"
+        run: echo "Auto-approved for ${{ github.event.pull_request.user.login }}"
 
   gate-approval:
-    # Everyone else — Renovate, external contributors, and any fork PR
-    # regardless of author association — lands in `preview-approval`,
-    # which has required reviewers and pauses the workflow until a
-    # reviewer with write access clicks "Approve and deploy".
+    # Everyone else — Renovate, external contributors, fork PRs — lands
+    # in `preview-approval`, which has required reviewers and pauses
+    # the workflow until a reviewer with write access clicks "Approve
+    # and deploy".
     name: Require approval for preview deploy
     runs-on: ubuntu-latest
-    if: >-
-      github.event.pull_request.user.login != 'dependabot[bot]' &&
-      (
-        github.event.pull_request.head.repo.full_name != github.repository ||
-        (
-          github.event.pull_request.author_association != 'OWNER' &&
-          github.event.pull_request.author_association != 'MEMBER' &&
-          github.event.pull_request.author_association != 'COLLABORATOR'
-        )
-      )
+    needs: [classify]
+    if: needs.classify.outputs.auto == 'false'
     environment:
       name: preview-approval
     steps:
       - name: Record reviewer approval
-        run: |
-          echo "Reviewer-approved for ${{ github.event.pull_request.user.login }} (${{ github.event.pull_request.author_association }})"
+        run: echo "Reviewer-approved for ${{ github.event.pull_request.user.login }}"
 
   gate:
-    # Single downstream entry point. Succeeds if either of the two gates
-    # above succeeded; skipped when both were skipped (Dependabot path).
+    # Single downstream entry point. Succeeds when either gate above
+    # succeeded; skipped when classify itself was skipped (Dependabot).
     name: Preview deploy gate
     runs-on: ubuntu-latest
     needs: [gate-auto, gate-approval]
