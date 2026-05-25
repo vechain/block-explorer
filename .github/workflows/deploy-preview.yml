@@ -29,8 +29,13 @@ jobs:
   gate:
     name: Approve preview deploy
     runs-on: ubuntu-latest
-    # Dependabot PRs cannot access AWS secrets and the preview is not
-    # useful for dependency bumps, so skip them entirely.
+    # Dependabot PRs cannot access AWS secrets, so a preview deploy would
+    # always fail; skip them outright. Renovate PRs do have secret access
+    # (in-repo branch) and the preview is the only place we can catch UI
+    # regressions introduced by a dependency bump, since CI is unit-tests
+    # only. Renovate PRs fall through to `preview-approval` (author is
+    # NONE) so a reviewer opts in with a single click when they want to
+    # see the preview.
     if: github.event.pull_request.user.login != 'dependabot[bot]'
     # Maintainer-authored PRs use the no-rules `preview-auto` environment
     # (auto-approved). Everyone else falls back to `preview-approval`,

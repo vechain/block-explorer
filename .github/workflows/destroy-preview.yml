@@ -27,7 +27,9 @@ jobs:
       contents: read
       pull-requests: write
     # Only run if the PR was actually deployed (in-repo PR, not Dependabot).
-    # Dependabot PRs are skipped by deploy-preview, so no preview exists to destroy.
+    # Dependabot PRs are skipped by deploy-preview, so no preview exists to
+    # destroy. Renovate PRs can deploy a preview when a reviewer approves,
+    # so destroy runs for them too.
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]'
