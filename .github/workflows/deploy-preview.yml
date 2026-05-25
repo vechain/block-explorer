@@ -41,8 +41,6 @@ jobs:
     name: Classify PR author
     runs-on: ubuntu-latest
     if: github.event.pull_request.user.login != 'dependabot[bot]'
-    permissions:
-      contents: read
     outputs:
       auto: ${{ steps.check.outputs.auto }}
     steps:
@@ -52,7 +50,6 @@ jobs:
           AUTHOR: ${{ github.event.pull_request.user.login }}
           HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
           REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           if [ "$HEAD_REPO" != "$REPO" ]; then
@@ -60,13 +57,16 @@ jobs:
             echo "auto=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if gh api "repos/${REPO}/collaborators/${AUTHOR}" --silent >/dev/null 2>&1; then
-            echo "Collaborator confirmed — routing to auto"
-            echo "auto=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Not a collaborator — routing to approval"
+          if [ "$AUTHOR" = "renovate[bot]" ]; then
+            echo "Renovate PR — routing to approval (opt-in)"
             echo "auto=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          # In-repo human PR: GitHub already enforced that the author has
+          # push access to land a branch on this repo, so the author is
+          # trusted to deploy a preview without an additional review.
+          echo "In-repo human PR — routing to auto"
+          echo "auto=true" >> "$GITHUB_OUTPUT"
 
   gate-auto:
     # Collaborators (org members with write access + outside
@@ -114,6 +114,13 @@ jobs:
     name: Post Initial PR Comment
     runs-on: ubuntu-latest
     needs: [gate]
+    # Explicit `if:` is required to opt out of GitHub Actions' implicit
+    # "cascade skip": when `gate-auto` is skipped because routing chose
+    # the approval path, the skip status propagates through `gate` to
+    # every downstream job that has no `if:`, even when `gate` itself
+    # ran successfully. The same opt-out is applied to the other
+    # downstream jobs below.
+    if: needs.gate.result == 'success'
     permissions:
       pull-requests: write
     outputs:
@@ -179,6 +186,7 @@ jobs:
     name: Prepare Build Metadata
     runs-on: ubuntu-latest
     needs: [gate]
+    if: needs.gate.result == 'success'
     outputs:
       image_tag: ${{ steps.meta.outputs.image_tag }}
       short_sha: ${{ steps.meta.outputs.short_sha }}
@@ -194,6 +202,7 @@ jobs:
 
   build-and-push:
     needs: [gate, prepare-metadata]
+    if: needs.gate.result == 'success' && needs.prepare-metadata.result == 'success'
     uses: ./.github/workflows/build-push-ecr.yml
     with:
       ecr_repository: block-explorer
@@ -207,7 +216,10 @@ jobs:
     name: Deploy Preview Environment
     runs-on: ubuntu-latest
     needs: [gate, prepare-metadata, build-and-push]
-    if: success()
+    if: >-
+      needs.gate.result == 'success' &&
+      needs.prepare-metadata.result == 'success' &&
+      needs.build-and-push.result == 'success'
     permissions:
       id-token: write
       contents: read
