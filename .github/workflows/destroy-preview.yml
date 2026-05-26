@@ -26,8 +26,13 @@ jobs:
       id-token: write
       contents: read
       pull-requests: write
-    # Only run if the PR was actually deployed (in-repo PR, not Dependabot).
-    # Dependabot PRs are skipped by deploy-preview, so no preview exists to destroy.
+    # Skip the two categories that deploy-preview never deploys for:
+    # Dependabot PRs (cannot access AWS secrets) and fork PRs (security
+    # boundary). Everything else — including Renovate PRs and in-repo PRs
+    # whose preview gate was never approved — runs through and relies on
+    # the `terraform workspace select` step below (with continue-on-error)
+    # to detect that no preview exists and exit cleanly via the
+    # `workspace.exists` output.
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]'
