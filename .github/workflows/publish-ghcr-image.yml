@@ -1,4 +1,4 @@
-name: Build & Publish GHCR Image
+name: Build & Publish Release Image
 
 on:
   push:
@@ -17,7 +17,12 @@ concurrency:
 
 env:
   versionTag: ${{ inputs.version || github.ref_name }}
-  registry: ghcr.io
+  ghcrRegistry: ghcr.io
+  dockerHubRegistry: docker.io
+  # GHCR follows the GitHub repo namespace (case-sensitive), Docker Hub uses
+  # the lowercase `vechain/block-explorer` repo created on the org account.
+  imageName: ${{ github.repository }}
+  dockerHubImage: vechain/block-explorer
 
 jobs:
   build:
@@ -50,9 +55,16 @@ jobs:
       - name: Login to GHCR
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
-          registry: ${{ env.registry }}
+          registry: ${{ env.ghcrRegistry }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.dockerHubRegistry }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push by digest
         id: build
@@ -67,7 +79,9 @@ jobs:
           sbom: false
           cache-from: type=gha,scope=buildkit-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=buildkit-${{ matrix.arch }}
-          outputs: type=image,name=${{ env.registry }}/${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
+          outputs: |
+            type=image,name=${{ env.ghcrRegistry }}/${{ env.imageName }},push-by-digest=true,name-canonical=true,push=true
+            type=image,name=${{ env.dockerHubRegistry }}/${{ env.dockerHubImage }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -104,9 +118,16 @@ jobs:
       - name: Login to GHCR
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
-          registry: ${{ env.registry }}
+          registry: ${{ env.ghcrRegistry }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.dockerHubRegistry }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract version tags
         id: version
@@ -124,24 +145,40 @@ jobs:
             echo "stable=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create manifest list and push
+      - name: Create manifest lists and push
         working-directory: /tmp/digests
         env:
-          IMAGE: ${{ env.registry }}/${{ github.repository }}
+          GHCR_IMAGE: ${{ env.ghcrRegistry }}/${{ env.imageName }}
+          DOCKERHUB_IMAGE: ${{ env.dockerHubRegistry }}/${{ env.dockerHubImage }}
+          FULL_VERSION: ${{ steps.version.outputs.full }}
+          STABLE: ${{ steps.version.outputs.stable }}
+          MAJOR: ${{ steps.version.outputs.major }}
+          MINOR: ${{ steps.version.outputs.minor }}
         run: |
-          TAGS="-t ${{ env.IMAGE }}:${{ steps.version.outputs.full }}"
+          set -euo pipefail
 
-          if [ "${{ steps.version.outputs.stable }}" = "true" ]; then
-            TAGS="$TAGS -t ${{ env.IMAGE }}:${{ steps.version.outputs.minor }}"
-            TAGS="$TAGS -t ${{ env.IMAGE }}:${{ steps.version.outputs.major }}"
-            TAGS="$TAGS -t ${{ env.IMAGE }}:latest"
-          fi
-
-          IMAGE_REFS=()
+          # Collect per-arch digest sources once and reuse for both registries
+          sources=()
           for digest in *; do
-            IMAGE_REFS+=("${IMAGE}@sha256:${digest}")
+            sources+=("@sha256:${digest}")
           done
 
-          docker buildx imagetools create \
-            $TAGS \
-            "${IMAGE_REFS[@]}"
+          push_manifest() {
+            local image="$1"
+            local tags=("-t" "${image}:${FULL_VERSION}")
+            if [ "${STABLE}" = "true" ]; then
+              tags+=("-t" "${image}:${MINOR}")
+              tags+=("-t" "${image}:${MAJOR}")
+              tags+=("-t" "${image}:latest")
+            fi
+
+            local refs=()
+            for s in "${sources[@]}"; do
+              refs+=("${image}${s}")
+            done
+
+            docker buildx imagetools create "${tags[@]}" "${refs[@]}"
+          }
+
+          push_manifest "$GHCR_IMAGE"
+          push_manifest "$DOCKERHUB_IMAGE"
