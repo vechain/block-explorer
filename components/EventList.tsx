@@ -2,7 +2,9 @@ import { Box, Flex, Grid, HStack, ScrollArea, Skeleton, Text, useBreakpointValue
 import { Fragment, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from '@/components/ui-legacy/ErrorBoundary'
+import { useContractName } from '@/hooks/useContractName'
 import { type DecodedEvent, useDecodeEvent } from '@/hooks/useDecodeEvent'
+import { formatArgForDisplay } from '@/lib/abi-registry'
 import { EventType, type RawEvent } from '@/lib/schemas'
 import { CopyableAddressLink } from './ui/Links'
 import { Card } from './ui/Card'
@@ -31,10 +33,11 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
 
   const { event, isPending } = useDecodeEvent(eventLog)
   const isMobile = useBreakpointValue({ base: true, md: false })
+  const { name: emitterName } = useContractName(eventLog.address)
 
-  const isDecoded = event.type === EventType.DECODED
-
-  const [view, setView] = useState<EventType>(() => (isDecoded ? EventType.DECODED : EventType.RAW))
+  // Default to decoded; the "No ABI found" placeholder is shown in the
+  // decoded pane when nothing resolves so the UI feels consistently verified.
+  const [view, setView] = useState<EventType>(EventType.DECODED)
 
   const viewOptions: ToggleOption<EventType>[] = useMemo(
     () => [
@@ -71,6 +74,11 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
           <Text>#{index}</Text>
           <HStack gap="2" overflow="hidden">
             <Text>{t('emitter')}</Text>
+            {emitterName && (
+              <Text fontWeight="medium" color="accent-primary">
+                {emitterName}
+              </Text>
+            )}
             <CopyableAddressLink address={event.raw.address} truncate={isMobile} />
           </HStack>
         </Card>
@@ -201,7 +209,7 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
                 </Flex>
               </Flex>
               <Text wordBreak="break-all" fontSize="sm">
-                {input.name ? event.args[input.name] : 'N/A'}
+                {formatArgForDisplay(event.args[input.name || String(index)]) || 'N/A'}
               </Text>
             </Box>
           ))}
@@ -247,7 +255,7 @@ const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
                     </Flex>
 
                     <Text textAlign="left" pl="4" minW="0">
-                      {input.name ? event.args[input.name] : 'N/A'}
+                      {formatArgForDisplay(event.args[input.name || String(index)]) || 'N/A'}
                     </Text>
                   </Grid>
                 ))}

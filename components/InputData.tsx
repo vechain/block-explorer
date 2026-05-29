@@ -5,7 +5,8 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { InputData as InputDataType } from '@/hooks/useDecodeInputData'
 import { type DecodedInputData, useDecodeInputData } from '@/hooks/useDecodeInputData'
-import type { HexString } from '@/lib/schemas'
+import { formatArgForDisplay } from '@/lib/abi-registry'
+import type { AddressString, HexString } from '@/lib/schemas'
 import { Card } from './ui/Card'
 import { ToggleGroup, type ToggleOption } from './ui/ToggleGroup'
 
@@ -14,12 +15,20 @@ enum InputDataView {
   DECODED = 'decoded',
 }
 
-export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: HexString }) => {
+export const InputData = ({
+  clauseIndex,
+  data,
+  address,
+}: {
+  clauseIndex: number
+  data: HexString
+  address?: AddressString | null
+}) => {
   const { t } = useTranslation()
-  const { data: inputData, isLoading } = useDecodeInputData(data)
-  const isDecoded = !!inputData?.decoded
-  const [view, setView] = useState<InputDataView | null>(null)
-  const activeView = view ?? (isDecoded ? InputDataView.DECODED : InputDataView.RAW)
+  const { data: inputData, isPending } = useDecodeInputData(data, address)
+  // Default to the decoded view; the "No ABI found" placeholder in the
+  // decoded pane is the user-visible signal when nothing resolved.
+  const [activeView, setActiveView] = useState<InputDataView>(InputDataView.DECODED)
 
   const viewOptions: ToggleOption<InputDataView>[] = useMemo(
     () => [
@@ -36,11 +45,11 @@ export const InputData = ({ clauseIndex, data }: { clauseIndex: number; data: He
           layoutId={`input-data-${clauseIndex}`}
           options={viewOptions}
           value={activeView}
-          onChange={setView}
+          onChange={setActiveView}
           size="sm"
         />
       </Flex>
-      {isLoading ? (
+      {isPending ? (
         <Card variant="outline">
           <Skeleton height="320px" width="100%" />
         </Card>
@@ -103,7 +112,7 @@ const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: Decoded
                 </Text>
               </Flex>
               <Text wordBreak="break-all" fontSize="sm">
-                {decodedInputData.args?.[index] ?? '0x'}
+                {formatArgForDisplay(decodedInputData.args?.[index]) || '0x'}
               </Text>
             </Box>
           ))}
@@ -147,7 +156,7 @@ const DecodedInputDataTable = ({ decodedInputData }: { decodedInputData: Decoded
                     <Text>{input.name}</Text>
                     <Text>{input.type}</Text>
                     <Text textAlign="left" pl="4" wordBreak="break-all">
-                      {decodedInputData.args?.[index] ?? '0x'}
+                      {formatArgForDisplay(decodedInputData.args?.[index]) || '0x'}
                     </Text>
                   </Grid>
                 ))}

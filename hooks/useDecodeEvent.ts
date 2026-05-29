@@ -1,73 +1,83 @@
 'use client'
 
-import { ABIEvent, Hex } from '@vechain/sdk-core'
-import type { Abi } from 'viem'
+import { useMemo } from 'react'
 import z from 'zod'
-import type { RawEvent } from '@/lib/schemas'
+import { decodeEventLog as decodeEventLogFromAbi, signatureToEventItem } from '@/lib/abi-registry'
+import type { HexString, RawEvent } from '@/lib/schemas'
 import { addressStringSchema, EventType, rawEventSchema } from '@/lib/schemas'
 import * as abi from '@/lib/schemas/abi'
 import { zodParse } from '@/lib/utils/zod'
 import { useAbi } from '@/services/b32'
+import { useOpenChainSignature } from '@/services/openchain'
+import { useResolvedAbi } from '@/services/sourcify'
 
 export const useDecodeEvent = (rawEvent: RawEvent) => {
-  const [signature] = rawEvent.topics
+  const topic0 = rawEvent.topics[0] as HexString | undefined
 
-  const { data: abi, ...rest } = useAbi(signature)
+  // 1. Address-aware: emitter's known/Sourcify ABI.
+  const { data: resolved, isPending: resolvedPending } = useResolvedAbi(rawEvent.address)
+  const resolvedDecoded = useMemo(() => {
+    if (!resolved?.abi || !topic0) return null
+    return decodeEventLogFromAbi(resolved.abi, { topics: rawEvent.topics as HexString[], data: rawEvent.data })
+  }, [resolved, rawEvent, topic0])
 
-  return { event: parseEvent(abi, rawEvent), ...rest }
-}
+  // 2. b32 by topic0.
+  const skipB32 = resolvedDecoded !== null || resolvedPending
+  const { data: b32Abi, isPending: b32Pending } = useAbi((skipB32 ? '' : topic0) ?? '')
 
-const parseEvent = (abi: Abi | undefined, rawEvent: RawEvent): ParsedEvent => {
-  const parsedRawEvent = parsedRawEventSchema.parse({
-    type: EventType.RAW,
-    raw: rawEvent,
-  })
+  const b32Decoded = useMemo(() => {
+    if (resolvedDecoded || !b32Abi || !topic0) return null
+    return decodeEventLogFromAbi(b32Abi, { topics: rawEvent.topics as HexString[], data: rawEvent.data })
+  }, [resolvedDecoded, b32Abi, rawEvent, topic0])
 
-  if (!abi) {
-    return parsedRawEvent
-  }
+  // 3. OpenChain cross-chain signature fallback. We try the canonical
+  // OZ "indexed first" layout first; if decoding throws we retry with
+  // indexed pushed to the end.
+  const wantOpenChain = !resolvedDecoded && !b32Decoded && !b32Pending && !resolvedPending
+  const { data: openChainSig, isPending: openChainPending } = useOpenChainSignature(
+    'event',
+    wantOpenChain ? (topic0 ?? null) : null,
+  )
 
-  const [signature] = rawEvent.topics
-
-  for (const abiItem of abi) {
-    if (abiItem.type === 'event') {
-      try {
-        const eventAbi = new ABIEvent(abiItem)
-
-        if (eventAbi.signatureHash === signature) {
-          const { args } = eventAbi.decodeEventLog({
-            data: Hex.of(rawEvent.data),
-            topics: rawEvent.topics.map(topic => Hex.of(topic)),
-          })
-
-          const data = {
-            address: rawEvent.address,
-            signature: eventAbi.format(),
-            signatureHash: eventAbi.signatureHash,
-            name: eventAbi.signature.name,
-            inputs: eventAbi.signature.inputs,
-            args,
-          }
-
-          const decoded = zodParse({
-            data,
-            schema: decodedEventSchema,
-            errorMessage: 'Failed to parse decoded event',
-          })
-
-          return {
-            type: EventType.DECODED,
-            raw: parsedRawEvent.raw,
-            decoded,
-          }
-        }
-      } catch {
-        return parsedRawEvent
-      }
+  const openChainDecoded = useMemo(() => {
+    if (!wantOpenChain || !openChainSig || !topic0) return null
+    const numIndexed = rawEvent.topics.length - 1
+    const candidates = [
+      signatureToEventItem(openChainSig, numIndexed, false),
+      signatureToEventItem(openChainSig, numIndexed, true),
+    ]
+    for (const item of candidates) {
+      if (!item) continue
+      const decoded = decodeEventLogFromAbi([item], { topics: rawEvent.topics as HexString[], data: rawEvent.data })
+      if (decoded) return decoded
     }
-  }
+    return null
+  }, [wantOpenChain, openChainSig, rawEvent, topic0])
 
-  return parsedRawEvent
+  const decoded = resolvedDecoded ?? b32Decoded ?? openChainDecoded
+
+  const event: ParsedEvent = useMemo(() => {
+    const parsedRaw = parsedRawEventSchema.parse({ type: EventType.RAW, raw: rawEvent })
+    if (!decoded) return parsedRaw
+    const decodedPayload = zodParse({
+      data: {
+        address: rawEvent.address,
+        signature: decoded.signature,
+        signatureHash: decoded.signatureHash,
+        name: decoded.name,
+        inputs: decoded.inputs,
+        args: decoded.args,
+      },
+      schema: decodedEventSchema,
+      errorMessage: 'Failed to parse decoded event',
+    })
+    return { type: EventType.DECODED, raw: parsedRaw.raw, decoded: decodedPayload }
+  }, [decoded, rawEvent])
+
+  return {
+    event,
+    isPending: resolvedPending || b32Pending || openChainPending,
+  }
 }
 
 const decodedEventSchema = z.object({

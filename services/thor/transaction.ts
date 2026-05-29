@@ -1,11 +1,29 @@
 import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
 import { Revision } from '@vechain/sdk-core'
 import z from 'zod'
+import {
+  decodeCustomError,
+  decodePanic,
+  decodeStringRevert,
+  getSelector,
+  SELECTOR_ERROR_STRING,
+  SELECTOR_PANIC,
+  signatureToFunctionItem,
+} from '@/lib/abi-registry'
 import type { NetworkName } from '@/lib/constants/network'
-import { type Transaction, type TransactionId, transactionReceiptSchema, transactionSchema } from '@/lib/schemas'
+import {
+  type AddressString,
+  type HexString,
+  type Transaction,
+  type TransactionId,
+  transactionReceiptSchema,
+  transactionSchema,
+} from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getPossibleSelectorMismatch, type PossibleSelectorMismatch } from '@/lib/transaction-failure-insights'
 import { zodParse } from '@/lib/utils/zod'
+import { getOpenChainSignature } from '@/services/openchain'
+import { getResolvedAbi } from '@/services/sourcify'
 import { getThorClient } from './client'
 
 const TRANSACTION_QUERY_KEY = 'getTransaction'
@@ -13,8 +31,21 @@ const TRANSACTION_RECEIPT_QUERY_KEY = 'getTransactionReceipt'
 const LEGACY_BASE_GAS_PRICE_QUERY_KEY = 'getLegacyBaseGasPrice'
 const TRANSACTION_FAILURE_INSIGHT_QUERY_KEY = 'getTransactionFailureInsight'
 
+type RevertKind = 'string' | 'panic' | 'custom' | 'vm-error' | 'raw' | 'none'
+
 type TransactionFailureInsight = {
   revertReason: string | null
+  revertKind: RevertKind
+  // Populated when revertKind is 'custom' or 'panic' so the UI can render
+  // arg breakdowns. String / vm-error / raw use just `revertReason`.
+  decoded?:
+    | { kind: 'panic'; code: HexString; description: string }
+    | {
+        kind: 'custom'
+        name: string
+        signature: string
+        args: readonly unknown[]
+      }
   possibleSelectorMismatch: PossibleSelectorMismatch | null
 }
 
@@ -92,6 +123,103 @@ const getLegacyBaseGasPrice = async ({ networkName }: { networkName: NetworkName
   })
 }
 
+const formatArgs = (args: readonly unknown[]): string => {
+  return args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(', ')
+}
+
+const decodeRevertPayload = async (
+  networkName: NetworkName,
+  target: AddressString | null,
+  data: HexString,
+): Promise<
+  | { revertKind: 'string'; revertReason: string }
+  | {
+      revertKind: 'panic'
+      revertReason: string
+      decoded: { kind: 'panic'; code: HexString; description: string }
+    }
+  | {
+      revertKind: 'custom'
+      revertReason: string
+      decoded: { kind: 'custom'; name: string; signature: string; args: readonly unknown[] }
+    }
+  | null
+> => {
+  const selector = getSelector(data)
+  if (!selector) return null
+
+  if (selector.toLowerCase() === SELECTOR_ERROR_STRING) {
+    const decoded = decodeStringRevert(data)
+    if (decoded) return { revertKind: 'string', revertReason: decoded.message }
+  }
+
+  if (selector.toLowerCase() === SELECTOR_PANIC) {
+    const decoded = decodePanic(data)
+    if (decoded) {
+      return {
+        revertKind: 'panic',
+        revertReason: `Panic(${decoded.code}): ${decoded.description}`,
+        decoded,
+      }
+    }
+  }
+
+  // Custom error — try the target's resolved ABI first, then OpenChain.
+  if (target) {
+    const resolved = await getResolvedAbi(networkName, target)
+    if (resolved?.abi) {
+      const decoded = decodeCustomError(resolved.abi, data)
+      if (decoded) {
+        const reason = decoded.args.length > 0 ? `${decoded.name}(${formatArgs(decoded.args)})` : `${decoded.name}()`
+        return {
+          revertKind: 'custom',
+          revertReason: reason,
+          decoded: {
+            kind: 'custom',
+            name: decoded.name,
+            signature: decoded.signature,
+            args: decoded.args,
+          },
+        }
+      }
+    }
+  }
+
+  // OpenChain fallback. Custom errors share the function-selector
+  // encoding scheme, so we can re-use the function-signature lookup.
+  const openChainSig = await getOpenChainSignature('function', selector)
+  if (openChainSig) {
+    const synthetic = signatureToFunctionItem(openChainSig)
+    if (synthetic) {
+      const decoded = decodeCustomError(
+        [
+          {
+            type: 'error',
+            name: synthetic.name,
+            inputs: synthetic.inputs,
+          },
+        ],
+        data,
+      )
+      if (decoded) {
+        const reason = decoded.args.length > 0 ? `${decoded.name}(${formatArgs(decoded.args)})` : `${decoded.name}()`
+        return {
+          revertKind: 'custom',
+          revertReason: reason,
+          decoded: {
+            kind: 'custom',
+            name: decoded.name,
+            signature: decoded.signature,
+            args: decoded.args,
+          },
+        }
+      }
+    }
+  }
+
+  return null
+}
+
 /**
  * Revert reason - simulates the transaction to get the revert reason
  */
@@ -131,20 +259,47 @@ const getTransactionFailureInsight = async ({
     simulations,
   })
 
-  for (const simulation of simulations) {
-    if (simulation.reverted && simulation.data && simulation.data !== '0x') {
-      const decoded = thorClient.transactions.decodeRevertReason(simulation.data)
+  for (let i = 0; i < simulations.length; i++) {
+    const simulation = simulations[i]
+    if (!simulation.reverted) continue
+
+    if (simulation.data && simulation.data !== '0x') {
+      const data = simulation.data as HexString
+      const target = transaction.clauses[i]?.to ?? null
+
+      const decoded = await decodeRevertPayload(
+        networkName,
+        target ? (target.toLowerCase() as AddressString) : null,
+        data,
+      )
       if (decoded) {
         return {
-          revertReason: decoded,
+          ...decoded,
           possibleSelectorMismatch,
         }
       }
+
+      // Last-resort: the SDK's own helper (handles plain Error(string)).
+      const sdkDecoded = thorClient.transactions.decodeRevertReason(data)
+      if (sdkDecoded) {
+        return {
+          revertReason: sdkDecoded,
+          revertKind: 'string',
+          possibleSelectorMismatch,
+        }
+      }
+
+      return {
+        revertReason: data,
+        revertKind: 'raw',
+        possibleSelectorMismatch,
+      }
     }
 
-    if (simulation.reverted && simulation.vmError) {
+    if (simulation.vmError) {
       return {
         revertReason: simulation.vmError,
+        revertKind: 'vm-error',
         possibleSelectorMismatch,
       }
     }
@@ -152,6 +307,7 @@ const getTransactionFailureInsight = async ({
 
   return {
     revertReason: null,
+    revertKind: 'none',
     possibleSelectorMismatch,
   }
 }

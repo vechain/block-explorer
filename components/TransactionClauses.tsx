@@ -3,6 +3,7 @@
 import { Accordion, Box, Flex, Text, useBreakpointValue } from '@chakra-ui/react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useContractName } from '@/hooks/useContractName'
 import type { RawEvent } from '@/lib/schemas/events'
 import type { Clause, Transaction, TransactionReceipt } from '@/lib/schemas/transactions'
 import { EventsList } from './EventList'
@@ -52,7 +53,7 @@ export function TransactionClauses({
                 <ClauseTypeBadge />
               </Flex>
             </Accordion.ItemTrigger>
-            <CopyableAddressLink truncate={isMobile} address={clause.to ?? '0x'} fontSize={'sm'} />
+            <ClauseTarget clause={clause} truncate={isMobile} />
             <Accordion.ItemTrigger p="0" justifyContent="center" cursor="pointer">
               <VETBalance balance={clause.value} flex="1" textAlign="center" />
               <Accordion.ItemIndicator _icon={{ width: '16px', height: '16px', color: 'text-primary' }} />
@@ -63,6 +64,20 @@ export function TransactionClauses({
         </Accordion.Item>
       ))}
     </Accordion.Root>
+  )
+}
+
+const ClauseTarget = ({ clause, truncate }: { clause: Clause; truncate: boolean | undefined }) => {
+  const { name } = useContractName(clause.to ?? null)
+  return (
+    <Flex alignItems="center" gap="2" overflow="hidden">
+      {name && (
+        <Text fontSize="sm" fontWeight="medium" color="accent-primary" whiteSpace="nowrap">
+          {name}
+        </Text>
+      )}
+      <CopyableAddressLink truncate={truncate} address={clause.to ?? '0x'} fontSize="sm" />
+    </Flex>
   )
 }
 
@@ -84,7 +99,9 @@ const ClauseContent = ({ clause, eventLogs, index }: { clause: Clause; eventLogs
         <Flex>
           <ToggleGroup layoutId={`clause-${index}`} options={viewOptions} value={view} onChange={setView} size="sm" />
         </Flex>
-        {view === ClauseView.INPUT_DATA && <InputData clauseIndex={index} data={clause.data} />}
+        {view === ClauseView.INPUT_DATA && (
+          <InputData clauseIndex={index} data={clause.data} address={clause.to ?? null} />
+        )}
         {view === ClauseView.EVENTS && <EventsList clauseIndex={index} eventLogs={eventLogs} />}
       </Accordion.ItemBody>
     </Accordion.ItemContent>

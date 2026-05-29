@@ -1,75 +1,77 @@
 'use client'
 
-import { ABIFunction, Hex } from '@vechain/sdk-core'
-import type { Abi } from 'viem'
+import { useMemo } from 'react'
+import type { AbiParameter } from 'viem'
 import z from 'zod'
-import { type HexString, hexStringSchema } from '@/lib/schemas'
+import { decodeCalldata as decodeCalldataFromAbi, getSelector, signatureToFunctionItem } from '@/lib/abi-registry'
+import { type AddressString, hexStringSchema, type HexString } from '@/lib/schemas'
 import * as abi from '@/lib/schemas/abi'
 import { zodParse } from '@/lib/utils/zod'
 import { useAbi } from '@/services/b32'
+import { useOpenChainSignature } from '@/services/openchain'
+import { useResolvedAbi } from '@/services/sourcify'
 
 export type InputData = {
   raw: HexString
   decoded?: DecodedInputData
 }
 
-export const useDecodeInputData = (hexData: HexString) => {
-  const signature = hexStringSchema.parse(hexData.substring(0, 10))
+export const useDecodeInputData = (hexData: HexString, address?: AddressString | null) => {
+  // 1. Address-aware: known contracts + Sourcify (with EIP-1967 proxy follow).
+  const { data: resolved, isPending: resolvedPending } = useResolvedAbi(address ?? null)
+  const resolvedDecoded = useMemo(() => {
+    if (!resolved?.abi) return null
+    return decodeCalldataFromAbi(resolved.abi, hexData)
+  }, [resolved, hexData])
 
-  const { data: abi, ...rest } = useAbi(signature)
+  const selector = getSelector(hexData)
+  const upstreamPending = resolvedPending
+  const skipB32 = resolvedDecoded !== null || upstreamPending
 
-  return { data: parseInputData({ abi, signature, hexData }), ...rest }
-}
+  // 2. b32 keccak DB by 4-byte selector.
+  const { data: b32Abi, isPending: b32Pending } = useAbi((skipB32 ? '' : selector) ?? '')
 
-const parseInputData = ({
-  abi,
-  signature,
-  hexData,
-}: {
-  abi: Abi | undefined
-  signature: HexString
-  hexData: HexString
-}): InputData => {
-  const rawDataObject: InputData = { raw: hexData }
+  const b32Decoded = useMemo(() => {
+    if (resolvedDecoded || !b32Abi || !selector) return null
+    return decodeCalldataFromAbi(b32Abi, hexData)
+  }, [resolvedDecoded, b32Abi, selector, hexData])
 
-  if (!abi) {
-    return rawDataObject
+  // 3. OpenChain canonical-signature fallback.
+  const wantOpenChain = !resolvedDecoded && !b32Decoded && !b32Pending && !upstreamPending
+  const { data: openChainSig, isPending: openChainPending } = useOpenChainSignature(
+    'function',
+    wantOpenChain ? selector : null,
+  )
+
+  const openChainDecoded = useMemo(() => {
+    if (!wantOpenChain || !openChainSig) return null
+    const item = signatureToFunctionItem(openChainSig)
+    if (!item) return null
+    return decodeCalldataFromAbi([item], hexData)
+  }, [wantOpenChain, openChainSig, hexData])
+
+  const decoded = resolvedDecoded ?? b32Decoded ?? openChainDecoded
+
+  const data: InputData = useMemo(() => {
+    if (!decoded) return { raw: hexStringSchema.parse(hexData) }
+    const parsedDecoded = zodParse({
+      data: {
+        signature: decoded.signature,
+        signatureHash: decoded.signatureHash,
+        name: decoded.name,
+        inputs: decoded.inputs as readonly AbiParameter[],
+        args: decoded.args as readonly unknown[],
+      },
+      schema: decodedInputDataSchema,
+      errorMessage: 'Failed to parse decoded input data',
+    })
+    return { raw: hexStringSchema.parse(hexData), decoded: parsedDecoded }
+  }, [decoded, hexData])
+
+  return {
+    data,
+    isPending: resolvedPending || b32Pending || openChainPending,
   }
-
-  for (const abiItem of abi) {
-    if (abiItem.type === 'function') {
-      try {
-        const functionAbi = new ABIFunction(abiItem)
-
-        if (functionAbi.signatureHash === signature) {
-          const decodedInputData = functionAbi.decodeData(Hex.of(hexData))
-
-          const data = {
-            signature: functionAbi.format(),
-            signatureHash: functionAbi.signatureHash,
-            args: decodedInputData.args,
-            name: functionAbi.signature.name,
-            inputs: functionAbi.signature.inputs,
-          }
-
-          const result = zodParse({
-            data,
-            schema: decodedInputDataSchema,
-            errorMessage: 'Failed to parse decoded input data',
-          })
-
-          return {
-            ...rawDataObject,
-            decoded: result,
-          }
-        }
-      } catch {
-        return rawDataObject
-      }
-    }
-  }
-
-  return rawDataObject
 }
 
 const decodedInputDataSchema = z.object({
