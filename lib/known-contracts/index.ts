@@ -24,7 +24,9 @@ import emissionsAbi from './abis/emissions.json'
 import galaxyMemberAbi from './abis/galaxy-member.json'
 import grantsManagerAbi from './abis/grants-manager.json'
 import legacyVechainNodesAbi from './abis/legacy-vechain-nodes.json'
+import multiSigWalletAbi from './abis/multi-sig-wallet.json'
 import navigatorRegistryAbi from './abis/navigator-registry.json'
+import nodeManagementAbi from './abis/node-management.json'
 import oracleVechainEnergyAbi from './abis/oracle-vechain-energy.json'
 import relayersRewardsPoolAbi from './abis/relayers-rewards-pool.json'
 import smartAccountFactoryAbi from './abis/smart-account-factory.json'
@@ -84,6 +86,8 @@ const CURATED_ABIS_BY_NAME: Record<string, KnownContract> = {
   'Smart Account Factory': { name: 'Smart Account Factory', abi: smartAccountFactoryAbi as Abi },
   'Legacy VeChain Nodes': { name: 'Legacy VeChain Nodes', abi: legacyVechainNodesAbi as Abi },
   'Oracle (vechain.energy)': { name: 'Oracle (vechain.energy)', abi: oracleVechainEnergyAbi as Abi },
+  'Node Management': { name: 'Node Management', abi: nodeManagementAbi as Abi },
+  'B3TR MultiSig': { name: 'B3TR MultiSig', abi: multiSigWalletAbi as Abi },
 }
 
 const CURATED_ADDRESS_TO_NAME: Record<NetworkName, Record<AddressString, string>> = {
@@ -107,6 +111,8 @@ const CURATED_ADDRESS_TO_NAME: Record<NetworkName, Record<AddressString, string>
     '0x055d20914657834c914d7c44bf65b566ab4b45a2': 'Grants Manager',
     '0xef238e33fc78ecc79beaf8386254a0fc67d048e0': 'Navigator Registry',
     '0x92a98f23ca4f9703781cf56088b76a1482667166': 'B3TR Challenges',
+    '0xb0ef9d89c6b49cba6bbf86bf2fdf0eee4968c6ab': 'Node Management',
+    '0x4dd13fcb7b4f7dc19048ce0d23aaebbdb3f3a1d9': 'B3TR MultiSig',
     '0x1856c533ac2d94340aaa8544d35a5c1d4a21dee7': 'StarGate NFT',
     '0x03c557be98123fdb6fad325328ac6eb77de7248c': 'StarGate Delegation',
     '0xc06ad8573022e2be416ca89da47e8c592971679a': 'Smart Account Factory',
@@ -126,8 +132,14 @@ const CURATED_ADDRESS_TO_NAME: Record<NetworkName, Record<AddressString, string>
     '0x2d2a2207c68a46fc79325d7718e639d1047b0d8b': 'X2EarnRewardsPool',
     '0x6f7b4bc19b4dc99005b473b9c45ce2815bbe7533': 'XAllocationPool',
     '0x8800592c463f0b21ae08732559ee8e146db1d7b2': 'XAllocationVoting',
+    '0x592c756df7a5d39de1735030e8b9c18b7417e6c4': 'VeBetter Passport',
+    '0x328710f4925c3e4c04961882b96c50cc7cd9d958': 'DBA Pool',
+    '0x92b5a7484970d9b2ad981e8135ff14e6f996dc04': 'Relayers Rewards Pool',
+    '0xb89f0ecdaf9987f87912d6c77756435fe4085b05': 'X2Earn Creator NFT',
+    '0x005af71e9b2d629c0c6e2f9d39fdfd1bb967c0ea': 'Grants Manager',
     '0x15a38b65f26bdbca50addf3865732613a45bbc00': 'Navigator Registry',
     '0x9529916b152357e7e2990c3ce4fe5373d7da54bc': 'B3TR Challenges',
+    '0xde17d0a516c38c168d37685bb71465f656aa256e': 'Node Management',
     '0x887d9102f0003f1724d8fd5d4fe95a11572fcd77': 'StarGate NFT',
     '0x1e02b2953adefec225cf0ec49805b1146a4429c1': 'StarGate Delegation',
     '0x713b908bcf77f3e00efef328e50b657a1a23aeaf': 'Smart Account Factory',
