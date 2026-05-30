@@ -91,11 +91,13 @@ export const TransactionInsight = ({
   return (
     <VStack alignItems="stretch" gap="4">
       {isReverted && revertReason && (
-        <Alert.Root status="error">
+        <Alert.Root status="error" alignItems="flex-start">
           <Alert.Indicator />
-          <Alert.Content>
+          <Alert.Content minW="0">
             <Alert.Title>{t('Revert Reason')}</Alert.Title>
-            <Alert.Description>{revertReason}</Alert.Description>
+            <Alert.Description wordBreak="break-all" whiteSpace="normal">
+              {revertReason}
+            </Alert.Description>
           </Alert.Content>
         </Alert.Root>
       )}

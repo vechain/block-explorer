@@ -1,6 +1,8 @@
 import type { Abi } from 'viem'
 import { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
+
+// Protocol built-ins (same address on every network, not on Sourcify).
 import authorityAbi from './abis/authority.json'
 import energyAbi from './abis/energy.json'
 import executorAbi from './abis/executor.json'
@@ -9,14 +11,42 @@ import paramsAbi from './abis/params.json'
 import prototypeAbi from './abis/prototype.json'
 import stakerAbi from './abis/staker.json'
 
+// VeBetterDAO / Stargate / friends. b32 keeps these per contract name; we
+// bundle them and map per-network addresses to a name → ABI lookup so the
+// same ABI works for mainnet and testnet deployments.
+import b3trAbi from './abis/b3tr.json'
+import b3trChallengesAbi from './abis/b3tr-challenges.json'
+import b3trGovernorAbi from './abis/b3tr-governor.json'
+import b3trTimelockAbi from './abis/b3tr-timelock.json'
+import b3trTreasuryAbi from './abis/b3tr-treasury.json'
+import dbaPoolAbi from './abis/dba-pool.json'
+import emissionsAbi from './abis/emissions.json'
+import galaxyMemberAbi from './abis/galaxy-member.json'
+import grantsManagerAbi from './abis/grants-manager.json'
+import legacyVechainNodesAbi from './abis/legacy-vechain-nodes.json'
+import navigatorRegistryAbi from './abis/navigator-registry.json'
+import oracleVechainEnergyAbi from './abis/oracle-vechain-energy.json'
+import relayersRewardsPoolAbi from './abis/relayers-rewards-pool.json'
+import smartAccountFactoryAbi from './abis/smart-account-factory.json'
+import stargateDelegationAbi from './abis/stargate-delegation.json'
+import stargateNftAbi from './abis/stargate-nft.json'
+import vebetterPassportAbi from './abis/vebetter-passport.json'
+import vot3Abi from './abis/vot3.json'
+import voterRewardsAbi from './abis/voter-rewards.json'
+import x2earnAppsAbi from './abis/x2earn-apps.json'
+import x2earnCreatorAbi from './abis/x2earn-creator.json'
+import x2earnRewardsPoolAbi from './abis/x2earn-rewards-pool.json'
+import xAllocationPoolAbi from './abis/x-allocation-pool.json'
+import xAllocationVotingAbi from './abis/x-allocation-voting.json'
+
 interface KnownContract {
   name: string
   abi: Abi
 }
 
-// Built-in VeChainThor protocol contracts. They live at the same special
-// non-CA addresses on every network and aren't deployed via a normal
-// contract-creation tx, so Sourcify will never have them.
+// Built-in VeChainThor protocol contracts — live at the same non-CA address
+// on every network and aren't deployed by a regular tx, so Sourcify never
+// has them. Address keys are lowercase.
 const BUILTIN: Record<AddressString, KnownContract> = {
   '0x0000000000000000000000417574686f72697479': { name: 'Authority', abi: authorityAbi as Abi },
   '0x0000000000000000000000000000456e65726779': { name: 'VTHO', abi: energyAbi as Abi },
@@ -27,10 +57,36 @@ const BUILTIN: Record<AddressString, KnownContract> = {
   '0x00000000000000000000000000005374616b6572': { name: 'Staker', abi: stakerAbi as Abi },
 }
 
-// Curated names for well-known VeBetterDAO / Stargate / etc. contracts. Most
-// of these are EIP-1967 proxies whose implementation is verified on Sourcify,
-// so we let Sourcify provide the ABI and just supply the human-readable name.
-const CURATED_NAMES: Record<NetworkName, Record<AddressString, string>> = {
+// Curated VeBetterDAO / Stargate contracts. The name-to-ABI map is global;
+// per-network deployment addresses live below.
+const CURATED_ABIS_BY_NAME: Record<string, KnownContract> = {
+  B3TR: { name: 'B3TR', abi: b3trAbi as Abi },
+  VOT3: { name: 'VOT3', abi: vot3Abi as Abi },
+  'B3TR Governor': { name: 'B3TR Governor', abi: b3trGovernorAbi as Abi },
+  'B3TR Emissions': { name: 'B3TR Emissions', abi: emissionsAbi as Abi },
+  'Galaxy Member': { name: 'Galaxy Member', abi: galaxyMemberAbi as Abi },
+  'B3TR TimeLock': { name: 'B3TR TimeLock', abi: b3trTimelockAbi as Abi },
+  'B3TR Treasury': { name: 'B3TR Treasury', abi: b3trTreasuryAbi as Abi },
+  'Voter Rewards': { name: 'Voter Rewards', abi: voterRewardsAbi as Abi },
+  X2EarnApps: { name: 'X2EarnApps', abi: x2earnAppsAbi as Abi },
+  X2EarnRewardsPool: { name: 'X2EarnRewardsPool', abi: x2earnRewardsPoolAbi as Abi },
+  XAllocationPool: { name: 'XAllocationPool', abi: xAllocationPoolAbi as Abi },
+  XAllocationVoting: { name: 'XAllocationVoting', abi: xAllocationVotingAbi as Abi },
+  'VeBetter Passport': { name: 'VeBetter Passport', abi: vebetterPassportAbi as Abi },
+  'DBA Pool': { name: 'DBA Pool', abi: dbaPoolAbi as Abi },
+  'Relayers Rewards Pool': { name: 'Relayers Rewards Pool', abi: relayersRewardsPoolAbi as Abi },
+  'X2Earn Creator NFT': { name: 'X2Earn Creator NFT', abi: x2earnCreatorAbi as Abi },
+  'Grants Manager': { name: 'Grants Manager', abi: grantsManagerAbi as Abi },
+  'Navigator Registry': { name: 'Navigator Registry', abi: navigatorRegistryAbi as Abi },
+  'B3TR Challenges': { name: 'B3TR Challenges', abi: b3trChallengesAbi as Abi },
+  'StarGate NFT': { name: 'StarGate NFT', abi: stargateNftAbi as Abi },
+  'StarGate Delegation': { name: 'StarGate Delegation', abi: stargateDelegationAbi as Abi },
+  'Smart Account Factory': { name: 'Smart Account Factory', abi: smartAccountFactoryAbi as Abi },
+  'Legacy VeChain Nodes': { name: 'Legacy VeChain Nodes', abi: legacyVechainNodesAbi as Abi },
+  'Oracle (vechain.energy)': { name: 'Oracle (vechain.energy)', abi: oracleVechainEnergyAbi as Abi },
+}
+
+const CURATED_ADDRESS_TO_NAME: Record<NetworkName, Record<AddressString, string>> = {
   [NetworkName.MAINNET]: {
     '0x5ef79995fe8a89e0812330e4378eb2660cede699': 'B3TR',
     '0x76ca782b59c74d088c7d2cce2f211bc00836c602': 'VOT3',
@@ -88,8 +144,13 @@ function getKnownContract(networkName: NetworkName, address: AddressString | nul
   const key = normalize(address)
   const builtin = BUILTIN[key]
   if (builtin) return builtin
-  const curatedName = CURATED_NAMES[networkName]?.[key]
-  if (curatedName) return { name: curatedName, abi: [] }
+  const curatedName = CURATED_ADDRESS_TO_NAME[networkName]?.[key]
+  if (curatedName) {
+    const entry = CURATED_ABIS_BY_NAME[curatedName]
+    if (entry) return entry
+    // Curated address with no bundled ABI — caller (resolver) will try Sourcify.
+    return { name: curatedName, abi: [] }
+  }
   return null
 }
 
@@ -101,11 +162,9 @@ export function getKnownContractName(
 }
 
 export function getKnownContractAbi(networkName: NetworkName, address: AddressString | null | undefined): Abi | null {
-  if (!address) return null
-  const key = normalize(address)
-  const builtin = BUILTIN[key]
-  if (builtin) return builtin.abi
-  return null
+  const entry = getKnownContract(networkName, address)
+  if (!entry || entry.abi.length === 0) return null
+  return entry.abi
 }
 
 export function isBuiltinAddress(address: AddressString | null | undefined): boolean {
