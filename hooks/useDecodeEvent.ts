@@ -15,15 +15,15 @@ export const useDecodeEvent = (rawEvent: RawEvent) => {
   const topic0 = rawEvent.topics[0] as HexString | undefined
 
   // 1. Address-aware: emitter's known/Sourcify ABI.
-  const { data: resolved, isPending: resolvedPending } = useResolvedAbi(rawEvent.address)
+  const { data: resolved, isFetching: resolvedFetching } = useResolvedAbi(rawEvent.address)
   const resolvedDecoded = useMemo(() => {
     if (!resolved?.abi || !topic0) return null
     return decodeEventLogFromAbi(resolved.abi, { topics: rawEvent.topics as HexString[], data: rawEvent.data })
   }, [resolved, rawEvent, topic0])
 
   // 2. b32 by topic0.
-  const skipB32 = resolvedDecoded !== null || resolvedPending
-  const { data: b32Abi, isPending: b32Pending } = useAbi((skipB32 ? '' : topic0) ?? '')
+  const skipB32 = resolvedDecoded !== null || resolvedFetching
+  const { data: b32Abi, isFetching: b32Fetching } = useAbi((skipB32 ? '' : topic0) ?? '')
 
   const b32Decoded = useMemo(() => {
     if (resolvedDecoded || !b32Abi || !topic0) return null
@@ -33,8 +33,8 @@ export const useDecodeEvent = (rawEvent: RawEvent) => {
   // 3. OpenChain cross-chain signature fallback. We try the canonical
   // OZ "indexed first" layout first; if decoding throws we retry with
   // indexed pushed to the end.
-  const wantOpenChain = !resolvedDecoded && !b32Decoded && !b32Pending && !resolvedPending
-  const { data: openChainSig, isPending: openChainPending } = useOpenChainSignature(
+  const wantOpenChain = !resolvedDecoded && !b32Decoded && !b32Fetching && !resolvedFetching
+  const { data: openChainSig, isFetching: openChainFetching } = useOpenChainSignature(
     'event',
     wantOpenChain ? (topic0 ?? null) : null,
   )
@@ -74,9 +74,12 @@ export const useDecodeEvent = (rawEvent: RawEvent) => {
     return { type: EventType.DECODED, raw: parsedRaw.raw, decoded: decodedPayload }
   }, [decoded, rawEvent])
 
+  // Only treat the hook as "pending" when a request is genuinely in flight.
+  // skipToken keeps a query in status='pending' indefinitely, so the older
+  // `isPending` aggregation never went false once any branch was skipped.
   return {
     event,
-    isPending: resolvedPending || b32Pending || openChainPending,
+    isPending: resolvedFetching || b32Fetching || openChainFetching,
   }
 }
 

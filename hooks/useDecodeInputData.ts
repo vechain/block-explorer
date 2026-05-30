@@ -18,18 +18,17 @@ export type InputData = {
 
 export const useDecodeInputData = (hexData: HexString, address?: AddressString | null) => {
   // 1. Address-aware: known contracts + Sourcify (with EIP-1967 proxy follow).
-  const { data: resolved, isPending: resolvedPending } = useResolvedAbi(address ?? null)
+  const { data: resolved, isFetching: resolvedFetching } = useResolvedAbi(address ?? null)
   const resolvedDecoded = useMemo(() => {
     if (!resolved?.abi) return null
     return decodeCalldataFromAbi(resolved.abi, hexData)
   }, [resolved, hexData])
 
   const selector = getSelector(hexData)
-  const upstreamPending = resolvedPending
-  const skipB32 = resolvedDecoded !== null || upstreamPending
+  const skipB32 = resolvedDecoded !== null || resolvedFetching
 
   // 2. b32 keccak DB by 4-byte selector.
-  const { data: b32Abi, isPending: b32Pending } = useAbi((skipB32 ? '' : selector) ?? '')
+  const { data: b32Abi, isFetching: b32Fetching } = useAbi((skipB32 ? '' : selector) ?? '')
 
   const b32Decoded = useMemo(() => {
     if (resolvedDecoded || !b32Abi || !selector) return null
@@ -37,8 +36,8 @@ export const useDecodeInputData = (hexData: HexString, address?: AddressString |
   }, [resolvedDecoded, b32Abi, selector, hexData])
 
   // 3. OpenChain canonical-signature fallback.
-  const wantOpenChain = !resolvedDecoded && !b32Decoded && !b32Pending && !upstreamPending
-  const { data: openChainSig, isPending: openChainPending } = useOpenChainSignature(
+  const wantOpenChain = !resolvedDecoded && !b32Decoded && !b32Fetching && !resolvedFetching
+  const { data: openChainSig, isFetching: openChainFetching } = useOpenChainSignature(
     'function',
     wantOpenChain ? selector : null,
   )
@@ -68,9 +67,12 @@ export const useDecodeInputData = (hexData: HexString, address?: AddressString |
     return { raw: hexStringSchema.parse(hexData), decoded: parsedDecoded }
   }, [decoded, hexData])
 
+  // Only treat the hook as "pending" when a request is genuinely in flight.
+  // skipToken keeps a query in status='pending' indefinitely, so the older
+  // `isPending` aggregation never went false once any branch was skipped.
   return {
     data,
-    isPending: resolvedPending || b32Pending || openChainPending,
+    isPending: resolvedFetching || b32Fetching || openChainFetching,
   }
 }
 
