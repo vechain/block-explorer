@@ -11,6 +11,7 @@ import {
   signatureToFunctionItem,
 } from '@/lib/abi-registry'
 import type { NetworkName } from '@/lib/constants/network'
+import { getAllBundledAbis } from '@/lib/known-contracts'
 import {
   type AddressString,
   type HexString,
@@ -164,7 +165,9 @@ const decodeRevertPayload = async (
     }
   }
 
-  // Custom error — try the target's resolved ABI first, then OpenChain.
+  // Custom error — try the target's resolved ABI first, then sweep every
+  // bundled ABI (reverts often surface from a contract called internally,
+  // not the clause's target), then OpenChain as a last resort.
   if (target) {
     const resolved = await getResolvedAbi(networkName, target)
     if (resolved?.abi) {
@@ -181,6 +184,23 @@ const decodeRevertPayload = async (
             args: decoded.args,
           },
         }
+      }
+    }
+  }
+
+  for (const abi of getAllBundledAbis()) {
+    const decoded = decodeCustomError(abi, data)
+    if (decoded) {
+      const reason = decoded.args.length > 0 ? `${decoded.name}(${formatArgs(decoded.args)})` : `${decoded.name}()`
+      return {
+        revertKind: 'custom',
+        revertReason: reason,
+        decoded: {
+          kind: 'custom',
+          name: decoded.name,
+          signature: decoded.signature,
+          args: decoded.args,
+        },
       }
     }
   }

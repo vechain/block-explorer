@@ -171,3 +171,14 @@ export function isBuiltinAddress(address: AddressString | null | undefined): boo
   if (!address) return false
   return normalize(address) in BUILTIN
 }
+
+// Returns every bundled ABI (built-ins + curated). Useful for error / event
+// selector lookup when we don't know which contract emitted the data —
+// reverts in particular often come from a contract called internally, not
+// the clause's target.
+export function getAllBundledAbis(): Abi[] {
+  const out: Abi[] = []
+  for (const v of Object.values(BUILTIN)) out.push(v.abi)
+  for (const v of Object.values(CURATED_ABIS_BY_NAME)) out.push(v.abi)
+  return out
+}
