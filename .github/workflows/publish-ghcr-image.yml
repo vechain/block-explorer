@@ -19,8 +19,6 @@ env:
   versionTag: ${{ inputs.version || github.ref_name }}
   ghcrRegistry: ghcr.io
   dockerHubRegistry: docker.io
-  # GHCR follows the GitHub repo namespace (case-sensitive), Docker Hub uses
-  # the lowercase `vechain/block-explorer` repo created on the org account.
   imageName: ${{ github.repository }}
   dockerHubImage: vechain/block-explorer
 
@@ -59,13 +57,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        with:
-          registry: ${{ env.dockerHubRegistry }}
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
@@ -79,9 +70,7 @@ jobs:
           sbom: false
           cache-from: type=gha,scope=buildkit-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=buildkit-${{ matrix.arch }}
-          outputs: |
-            type=image,name=${{ env.ghcrRegistry }}/${{ env.imageName }},push-by-digest=true,name-canonical=true,push=true
-            type=image,name=${{ env.dockerHubRegistry }}/${{ env.dockerHubImage }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ env.ghcrRegistry }}/${{ env.imageName }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -145,8 +134,32 @@ jobs:
             echo "stable=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create manifest lists and push
+      - name: Create GHCR manifest list
         working-directory: /tmp/digests
+        env:
+          GHCR_IMAGE: ${{ env.ghcrRegistry }}/${{ env.imageName }}
+          FULL_VERSION: ${{ steps.version.outputs.full }}
+          STABLE: ${{ steps.version.outputs.stable }}
+          MAJOR: ${{ steps.version.outputs.major }}
+          MINOR: ${{ steps.version.outputs.minor }}
+        run: |
+          set -euo pipefail
+
+          tags=("-t" "${GHCR_IMAGE}:${FULL_VERSION}")
+          if [ "${STABLE}" = "true" ]; then
+            tags+=("-t" "${GHCR_IMAGE}:${MINOR}")
+            tags+=("-t" "${GHCR_IMAGE}:${MAJOR}")
+            tags+=("-t" "${GHCR_IMAGE}:latest")
+          fi
+
+          refs=()
+          for digest in *; do
+            refs+=("${GHCR_IMAGE}@sha256:${digest}")
+          done
+
+          docker buildx imagetools create "${tags[@]}" "${refs[@]}"
+
+      - name: Mirror manifest from GHCR to Docker Hub
         env:
           GHCR_IMAGE: ${{ env.ghcrRegistry }}/${{ env.imageName }}
           DOCKERHUB_IMAGE: ${{ env.dockerHubRegistry }}/${{ env.dockerHubImage }}
@@ -157,28 +170,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Collect per-arch digest sources once and reuse for both registries
-          sources=()
-          for digest in *; do
-            sources+=("@sha256:${digest}")
-          done
-
-          push_manifest() {
-            local image="$1"
-            local tags=("-t" "${image}:${FULL_VERSION}")
-            if [ "${STABLE}" = "true" ]; then
-              tags+=("-t" "${image}:${MINOR}")
-              tags+=("-t" "${image}:${MAJOR}")
-              tags+=("-t" "${image}:latest")
-            fi
-
-            local refs=()
-            for s in "${sources[@]}"; do
-              refs+=("${image}${s}")
-            done
-
-            docker buildx imagetools create "${tags[@]}" "${refs[@]}"
+          copy_tag() {
+            local tag="$1"
+            docker buildx imagetools create -t "${DOCKERHUB_IMAGE}:${tag}" "${GHCR_IMAGE}:${tag}"
           }
 
-          push_manifest "$GHCR_IMAGE"
-          push_manifest "$DOCKERHUB_IMAGE"
+          copy_tag "${FULL_VERSION}"
+          if [ "${STABLE}" = "true" ]; then
+            copy_tag "${MINOR}"
+            copy_tag "${MAJOR}"
+            copy_tag "latest"
+          fi
