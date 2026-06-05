@@ -1,138 +1,161 @@
 'use client'
 
-import { Accordion, Box, Flex, Text, useBreakpointValue } from '@chakra-ui/react'
-import { useMemo, useState } from 'react'
+import { Accordion, Box, Flex, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { useContractName } from '@/hooks/useContractName'
-import type { RawEvent } from '@/lib/schemas/events'
+import { useDecodeInputData } from '@/hooks/useDecodeInputData'
 import type { Clause, Transaction, TransactionReceipt } from '@/lib/schemas/transactions'
-import { EventsList } from './EventList'
 import { InputData } from './InputData'
 import { VETBalance } from './ui/Balance'
 import { CopyableAddressLink } from './ui/Links'
-import { ToggleGroup, type ToggleOption } from './ui/ToggleGroup'
-
-enum ClauseView {
-  INPUT_DATA = 'input-data',
-  EVENTS = 'events',
-}
 
 export function TransactionClauses({
   transaction,
-  receipt,
   expert = false,
 }: {
   transaction: Transaction
   receipt: TransactionReceipt | null
   expert?: boolean
 }) {
-  const isMobile = useBreakpointValue({ base: true, md: false })
-
   return (
     <Accordion.Root
       multiple
       defaultValue={transaction.clauses.length > 0 ? ['0'] : undefined}
-      rounded="md"
-      overflow="hidden"
-      borderWidth="1px"
-      borderColor="border-primary"
+      display="flex"
+      flexDirection="column"
+      gap="3"
     >
       {transaction.clauses.map((clause, index) => (
-        <Accordion.Item
-          key={index.toString()}
-          value={index.toString()}
-          px="4"
-          py="5"
-          border="none"
-          borderTopWidth={index !== 0 ? '1px solid' : 'none'}
-          borderColor="border-primary"
-          bg={index % 2 === 0 ? 'row-even-bg-primary' : 'row-odd-bg-primary'}
-        >
-          <Flex>
-            <Accordion.ItemTrigger p="0" justifyContent="space-between" cursor="pointer">
-              <Flex alignItems="center" gap={{ base: '2', md: '5' }}>
-                <Text textStyle="bodyM">{(index + 1).toString()}</Text>
-                <ClauseTypeBadge />
-              </Flex>
-            </Accordion.ItemTrigger>
-            <ClauseTarget clause={clause} truncate={isMobile} />
-            <Accordion.ItemTrigger p="0" justifyContent="center" cursor="pointer">
-              <VETBalance balance={clause.value} flex="1" textAlign="center" />
-              <Accordion.ItemIndicator _icon={{ width: '16px', height: '16px', color: 'text-primary' }} />
-            </Accordion.ItemTrigger>
-          </Flex>
-
-          <ClauseContent
-            index={index}
-            clause={clause}
-            eventLogs={receipt?.outputs[index]?.events ?? []}
-            expert={expert}
-          />
-        </Accordion.Item>
+        <ClauseRow key={index.toString()} clause={clause} index={index} expert={expert} />
       ))}
     </Accordion.Root>
   )
 }
 
-const ClauseTarget = ({ clause, truncate }: { clause: Clause; truncate: boolean | undefined }) => {
-  const { name } = useContractName(clause.to ?? null)
+const ClauseRow = ({ clause, index, expert }: { clause: Clause; index: number; expert: boolean }) => {
+  const { t } = useTranslation()
+  const isTransfer = (clause.data === '0x' || clause.data === '0x0') && clause.value > 0n
+  const isContractCreation = !clause.to
+
   return (
-    <Flex alignItems="center" gap="2" overflow="hidden">
+    <Accordion.Item
+      value={index.toString()}
+      borderWidth="1px"
+      borderColor="border-primary"
+      borderRadius="2xl"
+      bg="row-even-bg-primary"
+      overflow="hidden"
+    >
+      <Accordion.ItemTrigger px="4" py="3" cursor="pointer">
+        <Flex w="full" alignItems="center" gap="3" justifyContent="space-between">
+          <Flex alignItems="center" gap="3" minW="0" flex="1">
+            <ClauseIndex>{index + 1}</ClauseIndex>
+            {expert && <ClauseTypeBadge type={isContractCreation ? 'create' : isTransfer ? 'transfer' : 'call'} />}
+            <ClauseTarget clause={clause} expert={expert} />
+          </Flex>
+          <Flex alignItems="center" gap="3" flexShrink={0}>
+            <VETBalance balance={clause.value} textStyle="bodyM" />
+            <Accordion.ItemIndicator _icon={{ width: '16px', height: '16px', color: 'text-secondary' }} />
+          </Flex>
+        </Flex>
+      </Accordion.ItemTrigger>
+      <Accordion.ItemContent>
+        <Accordion.ItemBody
+          px="4"
+          pb="4"
+          pt="3"
+          borderTopWidth="1px"
+          borderColor="border-primary"
+          display="flex"
+          flexDirection="column"
+          gap="3"
+        >
+          {isTransfer ? (
+            <Text textStyle="bodyS" color="text-secondary">
+              {t('Plain VET transfer — no contract call data.')}
+            </Text>
+          ) : (
+            <InputData clauseIndex={index} data={clause.data} address={clause.to ?? null} expert={expert} />
+          )}
+        </Accordion.ItemBody>
+      </Accordion.ItemContent>
+    </Accordion.Item>
+  )
+}
+
+const ClauseIndex = ({ children }: { children: React.ReactNode }) => (
+  <Flex
+    flexShrink={0}
+    alignItems="center"
+    justifyContent="center"
+    width="26px"
+    height="26px"
+    borderRadius="lg"
+    bg="accent-primary/20"
+    color="accent-primary"
+    textStyle="bodyS"
+    fontWeight="semibold"
+  >
+    {children}
+  </Flex>
+)
+
+type ClauseType = 'call' | 'transfer' | 'create'
+
+const ClauseTypeBadge = ({ type }: { type: ClauseType }) => {
+  const { t } = useTranslation()
+  const config = {
+    call: { label: t('Call'), bg: 'accent-primary/20', color: 'accent-primary' },
+    transfer: { label: t('Transfer'), bg: 'success-surface', color: 'success-text' },
+    create: { label: t('Create'), bg: 'pending-surface', color: 'pending-text' },
+  }[type]
+  return (
+    <Box bg={config.bg} px="3" py="1" rounded="full" flexShrink={0}>
+      <Text textStyle="bodyXs" fontWeight="semibold" color={config.color}>
+        {config.label}
+      </Text>
+    </Box>
+  )
+}
+
+const ClauseTarget = ({ clause, expert }: { clause: Clause; expert: boolean }) => {
+  const { t } = useTranslation()
+  const { name } = useContractName(clause.to ?? null)
+  // Re-uses the same decode the InputData panel triggers below — React
+  // Query dedupes, so this is free. We just want the method name for the
+  // header.
+  const { data: decoded } = useDecodeInputData(clause.data, clause.to ?? null)
+  const methodName = decoded?.decoded?.name
+
+  if (!clause.to) {
+    return (
+      <Text textStyle="bodyS" color="text-secondary" fontStyle="italic">
+        {t('contract creation')}
+      </Text>
+    )
+  }
+
+  return (
+    <Flex alignItems="center" gap="2" minW="0" flex="1" overflow="hidden">
       {name && (
-        <Text fontSize="sm" fontWeight="medium" color="accent-primary" whiteSpace="nowrap">
+        <Text textStyle="bodyS" fontWeight="medium" color="accent-primary" whiteSpace="nowrap" flexShrink={0}>
           {name}
         </Text>
       )}
-      <CopyableAddressLink truncate={truncate} address={clause.to ?? '0x'} fontSize="sm" />
+      <CopyableAddressLink truncate address={clause.to} fontSize="sm" />
+      {expert && methodName && (
+        <Text
+          textStyle="bodyS"
+          fontFamily="mono"
+          color="text-primary"
+          whiteSpace="nowrap"
+          overflow="hidden"
+          textOverflow="ellipsis"
+          minW="0"
+        >
+          · {methodName}
+        </Text>
+      )}
     </Flex>
-  )
-}
-
-const ClauseContent = ({
-  clause,
-  eventLogs,
-  index,
-  expert,
-}: {
-  clause: Clause
-  eventLogs: RawEvent[]
-  index: number
-  expert: boolean
-}) => {
-  const { t } = useTranslation()
-  const [view, setView] = useState<ClauseView>(ClauseView.INPUT_DATA)
-
-  const viewOptions: ToggleOption<ClauseView>[] = useMemo(
-    () => [
-      { value: ClauseView.INPUT_DATA, label: t('Input data') },
-      { value: ClauseView.EVENTS, label: t('Events') },
-    ],
-    [t],
-  )
-
-  return (
-    <Accordion.ItemContent>
-      <Accordion.ItemBody py={{ base: '4', md: '6' }} display="flex" flexDirection="column" gap="4">
-        <Flex>
-          <ToggleGroup layoutId={`clause-${index}`} options={viewOptions} value={view} onChange={setView} size="sm" />
-        </Flex>
-        {view === ClauseView.INPUT_DATA && (
-          <InputData clauseIndex={index} data={clause.data} address={clause.to ?? null} expert={expert} />
-        )}
-        {view === ClauseView.EVENTS && <EventsList clauseIndex={index} eventLogs={eventLogs} expert={expert} />}
-      </Accordion.ItemBody>
-    </Accordion.ItemContent>
-  )
-}
-
-const ClauseTypeBadge = () => {
-  const { t } = useTranslation()
-
-  return (
-    <Box bg="accent-primary/20" px={4} py={1.5} rounded="full">
-      <Text textStyle="bodyM" color="accent-primary">
-        {t('Call')}
-      </Text>
-    </Box>
   )
 }

@@ -1,13 +1,13 @@
-import { Box, Flex, Grid, HStack, ScrollArea, Skeleton, Text, useBreakpointValue, VStack } from '@chakra-ui/react'
-import { Fragment, useMemo, useState } from 'react'
+import { Box, Flex, Skeleton, Stack, Text, useBreakpointValue } from '@chakra-ui/react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from '@/components/ui-legacy/ErrorBoundary'
 import { useContractName } from '@/hooks/useContractName'
 import { type DecodedEvent, useDecodeEvent } from '@/hooks/useDecodeEvent'
 import { formatArgForDisplay } from '@/lib/abi-registry'
-import { EventType, type RawEvent } from '@/lib/schemas'
+import { EventType, type HexString, type RawEvent } from '@/lib/schemas'
 import { CopyableAddressLink } from './ui/Links'
-import { Card } from './ui/Card'
+import { ParamRows } from './InputData'
 import { ToggleGroup, type ToggleOption } from './ui/ToggleGroup'
 
 export const EventsList = ({
@@ -23,32 +23,27 @@ export const EventsList = ({
 
   if (eventLogs.length === 0) {
     return (
-      <Card variant="outline">
-        <Text>{t('No events')}</Text>
-      </Card>
+      <Box borderWidth="1px" borderColor="border-primary" rounded="md" px="4" py="6" textAlign="center">
+        <Text textStyle="bodyS" color="text-secondary">
+          {t('No events — this transaction emitted no logs.')}
+        </Text>
+      </Box>
     )
   }
 
-  return eventLogs.map((eventLog, index) => (
-    <ErrorBoundary key={`${index}-${eventLog.address}`}>
-      <EventCard layoutId={`event-${clauseIndex}-${index}`} index={index} eventLog={eventLog} expert={expert} />
-    </ErrorBoundary>
-  ))
+  return (
+    <Stack gap="3">
+      {eventLogs.map((eventLog, index) => (
+        <ErrorBoundary key={`${index}-${eventLog.address}`}>
+          <EventCard layoutId={`event-${clauseIndex}-${index}`} eventLog={eventLog} expert={expert} />
+        </ErrorBoundary>
+      ))}
+    </Stack>
+  )
 }
 
-const EventCard = ({
-  layoutId,
-  index,
-  eventLog,
-  expert,
-}: {
-  layoutId: string
-  index: number
-  eventLog: RawEvent
-  expert: boolean
-}) => {
+const EventCard = ({ layoutId, eventLog, expert }: { layoutId: string; eventLog: RawEvent; expert: boolean }) => {
   const { t } = useTranslation()
-
   const { event, isPending } = useDecodeEvent(eventLog)
   const isMobile = useBreakpointValue({ base: true, md: false })
   const { name: emitterName } = useContractName(eventLog.address)
@@ -66,229 +61,146 @@ const EventCard = ({
   )
 
   if (isPending) {
-    return (
-      <Card variant="tertiary">
-        <Skeleton height="320px" width="100%" />
-      </Card>
-    )
+    return <Skeleton height="120px" width="100%" rounded="md" />
   }
 
-  // Outside of expert mode we suppress the Raw view entirely and lean on
-  // the decoded pane's "No ABI found" placeholder.
   const effectiveView = expert ? view : EventType.DECODED
+  const isDecoded = event.type === EventType.DECODED
+  const decoded: DecodedEvent | undefined = isDecoded ? event.decoded : undefined
+  const eventName = decoded?.name ?? null
 
   return (
-    <Card variant="tertiary" overflow="hidden">
-      <Flex justifyContent="space-between" alignItems="center" flexWrap="wrap" gap="2">
-        <Card
-          variant="outline"
-          flexDirection="row"
-          display="flex"
-          alignItems="center"
-          gap={{ base: '2', md: '5' }}
-          rounded="full"
-          whiteSpace="nowrap"
-          p={0}
-          py={2}
-          px={{ base: 2, md: 4 }}
-          maxW="100%"
-        >
-          <Text>#{index}</Text>
-          <HStack gap="2" overflow="hidden">
-            <Text>{t('emitter')}</Text>
+    <Box
+      borderWidth="1px"
+      borderColor="border-primary"
+      bg="bg-primary"
+      rounded="xl"
+      px="4"
+      py="3"
+      display="flex"
+      flexDirection="column"
+      gap="3"
+    >
+      <Flex justifyContent="space-between" alignItems="flex-start" gap="3" flexWrap="wrap">
+        <Stack gap="0.5" minW="0">
+          <Text fontFamily="mono" textStyle="bodyM" color="accent-primary" wordBreak="break-all">
+            {eventName ?? t('Unknown event')}
+          </Text>
+          <Flex gap="2" alignItems="center" flexWrap="wrap" color="text-secondary">
+            <Text textStyle="bodyXs">{t('emitted by')}</Text>
             {emitterName && (
-              <Text fontWeight="medium" color="accent-primary">
+              <Text textStyle="bodyXs" color="text-primary" fontWeight="medium">
                 {emitterName}
               </Text>
             )}
-            <CopyableAddressLink address={event.raw.address} truncate={isMobile} />
-          </HStack>
-        </Card>
-        {expert && (
-          <Flex>
-            <ToggleGroup
-              layoutId={layoutId}
-              options={viewOptions}
-              value={view}
-              onChange={setView}
-              mt={{ base: '4', md: '0' }}
-              size="sm"
-            />
+            <CopyableAddressLink address={eventLog.address} truncate={isMobile} />
           </Flex>
-        )}
+        </Stack>
+        {expert && <ToggleGroup layoutId={layoutId} options={viewOptions} value={view} onChange={setView} size="sm" />}
       </Flex>
 
       {effectiveView === EventType.DECODED ? (
-        <DecodedEventCard event={event.type === EventType.DECODED ? event.decoded : undefined} />
+        <DecodedEventBody event={decoded} isMobile={!!isMobile} />
       ) : (
-        <RawEventCard event={event.raw} />
+        <RawEventBody event={eventLog} />
       )}
-    </Card>
+
+      {expert && effectiveView === EventType.DECODED && (
+        <RawTopicsAndData topics={eventLog.topics as HexString[]} data={eventLog.data} />
+      )}
+    </Box>
   )
 }
 
-const RawEventCard = ({ event }: { event: RawEvent }) => {
-  const firstColumnWidth = '100px'
+const DecodedEventBody = ({ event, isMobile }: { event: DecodedEvent | undefined; isMobile: boolean }) => {
   const { t } = useTranslation()
-  const isMobile = useBreakpointValue({ base: true, md: false })
 
-  // Mobile: Stack layout with cards
-  if (isMobile) {
+  if (!event) {
     return (
-      <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
-        {event.topics.map((topic, index) => (
-          <Box key={index} p="3" borderBottomWidth="1px" borderColor="border-primary" _last={{ borderBottom: 'none' }}>
-            <Text fontWeight="semibold" fontSize="sm" color="text-alt" mb="1">
-              {t('Topic')} [{index}]
-            </Text>
-            <Text wordBreak="break-all" fontSize="sm">
-              {topic}
-            </Text>
-          </Box>
-        ))}
-        <Box p="3" borderTopWidth="1px" borderColor="border-primary">
-          <Text fontWeight="semibold" fontSize="sm" color="text-alt" mb="1">
-            {t('Data')}
-          </Text>
-          <Text wordBreak="break-all" fontSize="sm">
-            {event.data}
-          </Text>
-        </Box>
+      <Box borderWidth="1px" borderColor="border-primary" rounded="md" px="3" py="3">
+        <Text textStyle="bodyS" color="text-secondary">
+          {t('No ABI found')}
+        </Text>
       </Box>
     )
   }
 
-  // Desktop: Grid layout with horizontal scroll
-  return (
-    <ScrollArea.Root size="sm" variant="hover">
-      <ScrollArea.Viewport borderWidth="1px" borderColor="border-primary" borderRadius="md">
-        <ScrollArea.Content>
-          <Grid
-            templateColumns={`${firstColumnWidth} 30px 1fr`}
-            p="4"
-            minW="400px"
-            borderBottomWidth="1px"
-            borderColor="border-primary"
-          >
-            {event.topics.map((topic, index) => (
-              <Fragment key={index}>
-                {index === 0 ? <Text>{t('Topic')}</Text> : <br />}
-                <Text>[{index}]</Text>
-                <Text wordBreak="break-all">{topic}</Text>
-              </Fragment>
-            ))}
-          </Grid>
+  if (event.inputs.length === 0) {
+    return (
+      <Text textStyle="bodyS" color="text-secondary">
+        {t('No parameters.')}
+      </Text>
+    )
+  }
 
-          <Grid templateColumns={`${firstColumnWidth} 1fr`} p="4" minW="400px">
-            <Text>{t('Data')}</Text>
-            <Text wordBreak="break-all">{event.data}</Text>
-          </Grid>
-        </ScrollArea.Content>
-      </ScrollArea.Viewport>
-      <ScrollArea.Scrollbar orientation="horizontal" />
-    </ScrollArea.Root>
+  return (
+    <ParamRows
+      isMobile={isMobile}
+      rows={event.inputs.map((input, index) => ({
+        name: input.name ?? String(index),
+        type: input.type,
+        indexed: input.indexed ?? false,
+        value: formatArgForDisplay(event.args[input.name || String(index)]) || 'N/A',
+      }))}
+    />
   )
 }
 
-const DecodedEventCard = ({ event }: { event: DecodedEvent | undefined }) => {
+const RawEventBody = ({ event }: { event: RawEvent }) => {
+  return (
+    <Stack gap="2">
+      <RawTopicsAndData topics={event.topics as HexString[]} data={event.data} />
+    </Stack>
+  )
+}
+
+const RawTopicsAndData = ({ topics, data }: { topics: HexString[]; data: HexString }) => {
   const { t } = useTranslation()
-  const isMobile = useBreakpointValue({ base: true, md: false })
-
-  if (!event) {
-    return (
-      <Card variant="outline">
-        <Text>{t('No ABI found')}</Text>
-      </Card>
-    )
-  }
-
-  // Mobile: Stack layout with cards
-  if (isMobile) {
-    return (
-      <VStack alignItems="stretch" gap="2">
-        <Text textStyle="bodyL" mb="3" fontWeight="medium">
-          {event.signature.split('(')[0]}
+  return (
+    <Stack gap="2">
+      <Box>
+        <Text textStyle="bodyXs" textTransform="uppercase" letterSpacing="wider" color="text-secondary" mb="1">
+          {t('Topics')}
         </Text>
-        <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
-          {event.inputs.map((input, index) => (
+        <Stack gap="1">
+          {topics.map((topic, index) => (
             <Box
-              key={`${index}-${input.name}`}
-              p="3"
-              borderBottomWidth={index < event.inputs.length - 1 ? '1px' : '0'}
+              key={index}
+              borderWidth="1px"
               borderColor="border-primary"
+              bg="bg-primary"
+              rounded="md"
+              px="3"
+              py="2"
+              fontFamily="mono"
+              fontSize="xs"
+              color="text-secondary"
             >
-              <Flex justifyContent="space-between" alignItems="center" mb="2">
-                <Text fontWeight="semibold" fontSize="sm">
-                  #{index} {input.name}
-                </Text>
-                <Flex gap="1" alignItems="center">
-                  <Text fontSize="xs" color="text-alt">
-                    {input.type}
-                  </Text>
-                  {input.indexed && (
-                    <Text fontSize="xs" color="accent-primary">
-                      {t('indexed')}
-                    </Text>
-                  )}
-                </Flex>
-              </Flex>
-              <Text wordBreak="break-all" fontSize="sm">
-                {formatArgForDisplay(event.args[input.name || String(index)]) || 'N/A'}
+              <Text wordBreak="break-all">
+                [{index}] {topic}
               </Text>
             </Box>
           ))}
+        </Stack>
+      </Box>
+      <Box>
+        <Text textStyle="bodyXs" textTransform="uppercase" letterSpacing="wider" color="text-secondary" mb="1">
+          {t('Data')}
+        </Text>
+        <Box
+          borderWidth="1px"
+          borderColor="border-primary"
+          bg="bg-primary"
+          rounded="md"
+          px="3"
+          py="2"
+          fontFamily="mono"
+          fontSize="xs"
+          color="text-secondary"
+        >
+          <Text wordBreak="break-all">{data}</Text>
         </Box>
-      </VStack>
-    )
-  }
-
-  // Desktop: Grid layout with horizontal scroll
-  return (
-    <VStack alignItems="stretch" gap="2">
-      <Text textStyle="bodyL" fontWeight="medium">
-        {event.signature.split('(')[0]}
-      </Text>
-      <ScrollArea.Root size="sm" variant="hover">
-        <ScrollArea.Viewport>
-          <ScrollArea.Content>
-            <Box textAlign="center" minW="fit-content">
-              <Grid templateColumns="60px 160px 160px 1fr" p="4" minW="500px">
-                <Text>#</Text>
-                <Text>{t('Name')}</Text>
-                <Text>{t('Type')}</Text>
-                <Text textAlign="left" pl="4">
-                  {t('Data')}
-                </Text>
-              </Grid>
-
-              <Box borderWidth="1px" borderColor="border-primary" borderRadius="md" overflow="hidden">
-                {event.inputs.map((input, index) => (
-                  <Grid
-                    key={`${index}-${input.name}`}
-                    templateColumns="60px 160px 160px 1fr"
-                    p="4"
-                    minW="500px"
-                    borderBottomWidth={index < event.inputs.length - 1 ? '1px' : '0'}
-                    borderColor="border-primary"
-                  >
-                    <Text>{index}</Text>
-                    <Text>{input.name}</Text>
-                    <Flex gap="1">
-                      <Text>{input.type}</Text>
-                      {input.indexed && <Text fontSize="xs">{t('indexed')}</Text>}
-                    </Flex>
-
-                    <Text textAlign="left" pl="4" minW="0">
-                      {formatArgForDisplay(event.args[input.name || String(index)]) || 'N/A'}
-                    </Text>
-                  </Grid>
-                ))}
-              </Box>
-            </Box>
-          </ScrollArea.Content>
-        </ScrollArea.Viewport>
-        <ScrollArea.Scrollbar orientation="horizontal" />
-      </ScrollArea.Root>
-    </VStack>
+      </Box>
+    </Stack>
   )
 }
