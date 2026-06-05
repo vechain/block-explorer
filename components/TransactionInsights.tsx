@@ -16,10 +16,15 @@ export const TransactionInsight = ({
   transaction,
   receipt,
   networkName,
+  expert = true,
 }: {
   transaction: Transaction
   receipt: TransactionReceipt | null
   networkName?: NetworkName
+  // When false, only the revert / mismatch alerts render. The
+  // technical-details grid and fees/gas breakdown stay hidden until
+  // the user opts into expert mode.
+  expert?: boolean
 }) => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
@@ -118,24 +123,28 @@ export const TransactionInsight = ({
           </Alert.Content>
         </Alert.Root>
       )}
-      <DataCardGroup
-        singleCard
-        variant="outline"
-        items={[
-          {
-            title: t('Type'),
-            children: <TxTypeBadge type={transaction.type} />,
-          },
-          ...additionalInsights,
-        ]}
-      />
-      {feeAndGasItems.length > 0 && (
-        <VStack alignItems="stretch" gap="3">
-          <Heading as="h3" textStyle="bodyL" color="text-primary">
-            {t('Fees, Gas and VTHO')}
-          </Heading>
-          <DataCardGroup singleCard variant="outline" items={feeAndGasItems} />
-        </VStack>
+      {expert && (
+        <>
+          <DataCardGroup
+            singleCard
+            variant="outline"
+            items={[
+              {
+                title: t('Type'),
+                children: <TxTypeBadge type={transaction.type} />,
+              },
+              ...additionalInsights,
+            ]}
+          />
+          {feeAndGasItems.length > 0 && (
+            <VStack alignItems="stretch" gap="3">
+              <Heading as="h3" textStyle="bodyL" color="text-primary">
+                {t('Fees, Gas and VTHO')}
+              </Heading>
+              <DataCardGroup singleCard variant="outline" items={feeAndGasItems} />
+            </VStack>
+          )}
+        </>
       )}
     </VStack>
   )

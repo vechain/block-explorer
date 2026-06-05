@@ -7,14 +7,16 @@ export function TransactionViews({
   transaction,
   receipt,
   view = TransactionDetailsView.CLAUSES,
+  expert = false,
 }: {
   view: TransactionDetailsView
   transaction: Transaction
   receipt: TransactionReceipt | null
+  expert?: boolean
 }) {
   if (view === TransactionDetailsView.EVENTS) {
-    return <TransactionEvents receipt={receipt} />
+    return <TransactionEvents receipt={receipt} expert={expert} />
   }
 
-  return <TransactionClauses transaction={transaction} receipt={receipt} />
+  return <TransactionClauses transaction={transaction} receipt={receipt} expert={expert} />
 }

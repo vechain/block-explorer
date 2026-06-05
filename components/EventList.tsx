@@ -10,7 +10,15 @@ import { CopyableAddressLink } from './ui/Links'
 import { Card } from './ui/Card'
 import { ToggleGroup, type ToggleOption } from './ui/ToggleGroup'
 
-export const EventsList = ({ clauseIndex, eventLogs }: { clauseIndex: number; eventLogs: RawEvent[] }) => {
+export const EventsList = ({
+  clauseIndex,
+  eventLogs,
+  expert = false,
+}: {
+  clauseIndex: number
+  eventLogs: RawEvent[]
+  expert?: boolean
+}) => {
   const { t } = useTranslation()
 
   if (eventLogs.length === 0) {
@@ -23,12 +31,22 @@ export const EventsList = ({ clauseIndex, eventLogs }: { clauseIndex: number; ev
 
   return eventLogs.map((eventLog, index) => (
     <ErrorBoundary key={`${index}-${eventLog.address}`}>
-      <EventCard layoutId={`event-${clauseIndex}-${index}`} index={index} eventLog={eventLog} />
+      <EventCard layoutId={`event-${clauseIndex}-${index}`} index={index} eventLog={eventLog} expert={expert} />
     </ErrorBoundary>
   ))
 }
 
-const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: number; eventLog: RawEvent }) => {
+const EventCard = ({
+  layoutId,
+  index,
+  eventLog,
+  expert,
+}: {
+  layoutId: string
+  index: number
+  eventLog: RawEvent
+  expert: boolean
+}) => {
   const { t } = useTranslation()
 
   const { event, isPending } = useDecodeEvent(eventLog)
@@ -54,6 +72,10 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
       </Card>
     )
   }
+
+  // Outside of expert mode we suppress the Raw view entirely and lean on
+  // the decoded pane's "No ABI found" placeholder.
+  const effectiveView = expert ? view : EventType.DECODED
 
   return (
     <Card variant="tertiary" overflow="hidden">
@@ -82,19 +104,21 @@ const EventCard = ({ layoutId, index, eventLog }: { layoutId: string; index: num
             <CopyableAddressLink address={event.raw.address} truncate={isMobile} />
           </HStack>
         </Card>
-        <Flex>
-          <ToggleGroup
-            layoutId={layoutId}
-            options={viewOptions}
-            value={view}
-            onChange={setView}
-            mt={{ base: '4', md: '0' }}
-            size="sm"
-          />
-        </Flex>
+        {expert && (
+          <Flex>
+            <ToggleGroup
+              layoutId={layoutId}
+              options={viewOptions}
+              value={view}
+              onChange={setView}
+              mt={{ base: '4', md: '0' }}
+              size="sm"
+            />
+          </Flex>
+        )}
       </Flex>
 
-      {view === EventType.DECODED ? (
+      {effectiveView === EventType.DECODED ? (
         <DecodedEventCard event={event.type === EventType.DECODED ? event.decoded : undefined} />
       ) : (
         <RawEventCard event={event.raw} />

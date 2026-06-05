@@ -19,10 +19,12 @@ export const InputData = ({
   clauseIndex,
   data,
   address,
+  expert = false,
 }: {
   clauseIndex: number
   data: HexString
   address?: AddressString | null
+  expert?: boolean
 }) => {
   const { t } = useTranslation()
   const { data: inputData, isPending } = useDecodeInputData(data, address)
@@ -38,23 +40,29 @@ export const InputData = ({
     [t],
   )
 
+  // Outside of expert mode there's no Raw view, so the toggle adds nothing.
+  // Force the decoded pane and rely on its "No ABI found" placeholder.
+  const effectiveView = expert ? activeView : InputDataView.DECODED
+
   return (
     <Card variant="tertiary">
-      <Flex>
-        <ToggleGroup
-          layoutId={`input-data-${clauseIndex}`}
-          options={viewOptions}
-          value={activeView}
-          onChange={setActiveView}
-          size="sm"
-        />
-      </Flex>
+      {expert && (
+        <Flex>
+          <ToggleGroup
+            layoutId={`input-data-${clauseIndex}`}
+            options={viewOptions}
+            value={activeView}
+            onChange={setActiveView}
+            size="sm"
+          />
+        </Flex>
+      )}
       {isPending ? (
         <Card variant="outline">
           <Skeleton height="320px" width="100%" />
         </Card>
       ) : (
-        <InputDataViews inputData={inputData} activeView={activeView} />
+        <InputDataViews inputData={inputData} activeView={effectiveView} />
       )}
     </Card>
   )

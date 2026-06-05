@@ -20,9 +20,11 @@ enum ClauseView {
 export function TransactionClauses({
   transaction,
   receipt,
+  expert = false,
 }: {
   transaction: Transaction
   receipt: TransactionReceipt | null
+  expert?: boolean
 }) {
   const isMobile = useBreakpointValue({ base: true, md: false })
 
@@ -60,7 +62,12 @@ export function TransactionClauses({
             </Accordion.ItemTrigger>
           </Flex>
 
-          <ClauseContent index={index} clause={clause} eventLogs={receipt?.outputs[index]?.events ?? []} />
+          <ClauseContent
+            index={index}
+            clause={clause}
+            eventLogs={receipt?.outputs[index]?.events ?? []}
+            expert={expert}
+          />
         </Accordion.Item>
       ))}
     </Accordion.Root>
@@ -81,7 +88,17 @@ const ClauseTarget = ({ clause, truncate }: { clause: Clause; truncate: boolean 
   )
 }
 
-const ClauseContent = ({ clause, eventLogs, index }: { clause: Clause; eventLogs: RawEvent[]; index: number }) => {
+const ClauseContent = ({
+  clause,
+  eventLogs,
+  index,
+  expert,
+}: {
+  clause: Clause
+  eventLogs: RawEvent[]
+  index: number
+  expert: boolean
+}) => {
   const { t } = useTranslation()
   const [view, setView] = useState<ClauseView>(ClauseView.INPUT_DATA)
 
@@ -100,9 +117,9 @@ const ClauseContent = ({ clause, eventLogs, index }: { clause: Clause; eventLogs
           <ToggleGroup layoutId={`clause-${index}`} options={viewOptions} value={view} onChange={setView} size="sm" />
         </Flex>
         {view === ClauseView.INPUT_DATA && (
-          <InputData clauseIndex={index} data={clause.data} address={clause.to ?? null} />
+          <InputData clauseIndex={index} data={clause.data} address={clause.to ?? null} expert={expert} />
         )}
-        {view === ClauseView.EVENTS && <EventsList clauseIndex={index} eventLogs={eventLogs} />}
+        {view === ClauseView.EVENTS && <EventsList clauseIndex={index} eventLogs={eventLogs} expert={expert} />}
       </Accordion.ItemBody>
     </Accordion.ItemContent>
   )
