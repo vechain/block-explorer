@@ -111,7 +111,7 @@ const ClauseTypeBadge = ({ type }: { type: ClauseType }) => {
   }[type]
   return (
     <Box bg={config.bg} px="3" py="1" rounded="full" flexShrink={0}>
-      <Text textStyle="bodyXs" fontWeight="semibold" color={config.color}>
+      <Text textStyle="bodyS" fontWeight="semibold" color={config.color}>
         {config.label}
       </Text>
     </Box>
@@ -160,7 +160,7 @@ const ClauseTarget = ({ clause }: { clause: Clause }) => {
       </Box>
       {methodName && (
         <Text
-          textStyle="bodyS"
+          textStyle="bodyM"
           fontFamily="mono"
           color="text-primary"
           whiteSpace="nowrap"

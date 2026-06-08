@@ -46,7 +46,7 @@ export const InputData = ({
   return (
     <Stack gap="4">
       <Flex alignItems="center" justifyContent="space-between" gap="3">
-        <Text textStyle="bodyM" color="text-secondary">
+        <Text textStyle="bodyM" fontWeight={'medium'} color="text-secondary">
           {t('Input data')}
         </Text>
         {expert && (
@@ -60,11 +60,70 @@ export const InputData = ({
         )}
       </Flex>
       {isPending ? (
-        <Skeleton height="120px" width="100%" rounded="md" />
+        <InputDataSkeleton expert={expert} />
       ) : (
         <InputDataViews inputData={inputData} activeView={effectiveView} expert={expert} />
       )}
     </Stack>
+  )
+}
+
+const InputDataSkeleton = ({ expert }: { expert: boolean }) => {
+  const isMobile = useBreakpointValue({ base: true, md: false })
+  const rowDivider = 'rgba(255, 255, 255, 0.08)'
+  const rowWidths = ['78%']
+
+  if (isMobile) {
+    return (
+      <Stack gap="0">
+        {rowWidths.map((width, index) => (
+          <Box key={width} py="4" borderTopWidth={index === 0 ? '0' : '1px'} borderColor={rowDivider}>
+            <Flex justifyContent="space-between" alignItems="center" mb="2" gap="2">
+              <Skeleton height="16px" width="96px" rounded="sm" />
+              {expert && <Skeleton height="14px" width="64px" rounded="sm" />}
+            </Flex>
+            <Skeleton height="14px" width={width} rounded="sm" />
+          </Box>
+        ))}
+      </Stack>
+    )
+  }
+
+  const templateColumns = expert ? '52px 180px 160px minmax(0,1fr)' : '52px 220px minmax(0,1fr)'
+
+  return (
+    <Box>
+      <Box
+        display="grid"
+        gridTemplateColumns={templateColumns}
+        gap="3"
+        pb="3"
+        borderBottomWidth="1px"
+        borderColor={rowDivider}
+      >
+        <Skeleton height="12px" width="16px" rounded="sm" />
+        <Skeleton height="12px" width="48px" rounded="sm" />
+        {expert && <Skeleton height="12px" width="48px" rounded="sm" />}
+        <Skeleton height="12px" width="48px" rounded="sm" />
+      </Box>
+      {rowWidths.map((width, index) => (
+        <Box
+          key={width}
+          display="grid"
+          gridTemplateColumns={templateColumns}
+          py="4"
+          gap="3"
+          borderTopWidth={index === 0 ? '0' : '1px'}
+          borderColor={rowDivider}
+          alignItems="center"
+        >
+          <Skeleton height="16px" width="20px" rounded="sm" />
+          <Skeleton height="16px" width="72%" rounded="sm" />
+          {expert && <Skeleton height="14px" width="80px" rounded="sm" />}
+          <Skeleton height="14px" width={width} rounded="sm" />
+        </Box>
+      ))}
+    </Box>
   )
 }
 
@@ -181,7 +240,7 @@ export const ParamRows = ({
                   </Text>
                 )}
                 {row.indexed && (
-                  <Text textStyle="bodyXs" color="accent-primary" fontWeight="medium">
+                  <Text textStyle="bodyS" color="accent-primary" fontWeight="medium">
                     {t('indexed')}
                   </Text>
                 )}
@@ -209,18 +268,18 @@ export const ParamRows = ({
         borderBottomWidth="1px"
         borderColor={rowDivider}
       >
-        <Text textStyle="bodyXs" textTransform="uppercase" letterSpacing="0.08em" color="text-secondary">
+        <Text fontSize={'xs'} fontWeight={'bold'} textTransform="uppercase" color="text-secondary">
           #
         </Text>
-        <Text textStyle="bodyXs" textTransform="uppercase" letterSpacing="0.08em" color="text-secondary">
+        <Text fontSize={'xs'} fontWeight={'bold'} textTransform="uppercase" color="text-secondary">
           {t('Name')}
         </Text>
         {showType && (
-          <Text textStyle="bodyXs" textTransform="uppercase" letterSpacing="0.08em" color="text-secondary">
+          <Text fontSize={'xs'} fontWeight={'bold'} textTransform="uppercase" color="text-secondary">
             {t('Type')}
           </Text>
         )}
-        <Text textStyle="bodyXs" textTransform="uppercase" letterSpacing="0.08em" color="text-secondary">
+        <Text fontSize={'xs'} fontWeight={'bold'} textTransform="uppercase" color="text-secondary">
           {t('Data')}
         </Text>
       </Box>
@@ -236,25 +295,25 @@ export const ParamRows = ({
           borderColor={rowDivider}
           alignItems="start"
         >
-          <Text textStyle="bodyM" color="text-secondary">
+          <Text fontSize={'md'} color="text-secondary">
             {index}
           </Text>
-          <Text textStyle="bodyM" color="text-primary">
+          <Text fontSize={'md'} color="text-primary">
             {row.name}
           </Text>
           {showType && (
             <Flex gap="2" alignItems="baseline">
-              <Text fontFamily="mono" textStyle="bodyS" color="accent-primary">
+              <Text fontFamily="mono" fontSize={'md'} color="accent-primary">
                 {row.type}
               </Text>
               {row.indexed && (
-                <Text textStyle="bodyXs" color="accent-primary" fontWeight="medium">
+                <Text fontSize={'md'} color="accent-primary" fontWeight="medium">
                   {t('indexed')}
                 </Text>
               )}
             </Flex>
           )}
-          <Text fontFamily="mono" textStyle="bodyS" color="text-primary" wordBreak="break-all">
+          <Text fontFamily="mono" fontSize={'md'} color="text-primary" wordBreak="break-all">
             {row.value}
           </Text>
         </Box>
