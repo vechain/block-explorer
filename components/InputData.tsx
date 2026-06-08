@@ -231,16 +231,16 @@ export const ParamRows = ({
           <Box key={`${index}-${row.name}`} py="4" borderTopWidth={index === 0 ? '0' : '1px'} borderColor={rowDivider}>
             <Flex justifyContent="space-between" alignItems="center" mb="2" gap="2">
               <Text textStyle="bodyM" color="text-primary">
-                #{index} {row.name}
+                {row.name}
               </Text>
               <Flex gap="2" alignItems="center" flexShrink={0}>
                 {showType && (
-                  <Text fontFamily="mono" textStyle="bodyS" color="accent-primary">
+                  <Text fontFamily="mono" textStyle="bodyM" color="text-primary">
                     {row.type}
                   </Text>
                 )}
                 {row.indexed && (
-                  <Text textStyle="bodyS" color="accent-primary" fontWeight="medium">
+                  <Text fontSize={'xs'} color="accent-primary" fontWeight="medium">
                     {t('indexed')}
                   </Text>
                 )}
@@ -303,11 +303,11 @@ export const ParamRows = ({
           </Text>
           {showType && (
             <Flex gap="2" alignItems="baseline">
-              <Text fontFamily="mono" fontSize={'md'} color="accent-primary">
+              <Text fontFamily="mono" fontSize={'md'} color="text-primary">
                 {row.type}
               </Text>
               {row.indexed && (
-                <Text fontSize={'md'} color="accent-primary" fontWeight="medium">
+                <Text fontSize={'xs'} color="accent-primary" fontWeight="medium">
                   {t('indexed')}
                 </Text>
               )}

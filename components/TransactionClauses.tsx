@@ -1,6 +1,6 @@
 'use client'
 
-import { Accordion, Box, Flex, Text } from '@chakra-ui/react'
+import { Accordion, Box, Flex, Text, useBreakpointValue } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { useContractName } from '@/hooks/useContractName'
 import { useDecodeInputData } from '@/hooks/useDecodeInputData'
@@ -120,6 +120,9 @@ const ClauseTypeBadge = ({ type }: { type: ClauseType }) => {
 
 const ClauseTarget = ({ clause }: { clause: Clause }) => {
   const { t } = useTranslation()
+
+  const isMobile = useBreakpointValue({ base: true, md: false })
+
   const { name } = useContractName(clause.to ?? null)
   // Re-uses the same decode the InputData panel triggers below — React
   // Query dedupes, so this is free. We just want the method name for the
@@ -142,7 +145,7 @@ const ClauseTarget = ({ clause }: { clause: Clause }) => {
   const stopPropagation = (e: React.SyntheticEvent) => e.stopPropagation()
 
   return (
-    <Flex alignItems="center" gap="2" minW="0" flex="1" overflow="hidden">
+    <Flex alignItems="center" gap="2" minW="0" flex="1" overflow="hidden" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
       {name && (
         <Text textStyle="bodyS" fontWeight="medium" color="accent-primary" whiteSpace="nowrap" flexShrink={0}>
           {name}
@@ -160,15 +163,17 @@ const ClauseTarget = ({ clause }: { clause: Clause }) => {
       </Box>
       {methodName && (
         <Text
-          textStyle="bodyM"
           fontFamily="mono"
-          color="text-primary"
-          whiteSpace="nowrap"
+          textStyle="bodyL"
+          color="accent-primary"
+          wordBreak="break-all"
+          whiteSpace={{ base: 'normal', md: 'nowrap' }}
           overflow="hidden"
           textOverflow="ellipsis"
           minW="0"
+          flexBasis={{ base: '100%', md: 'auto' }}
         >
-          · {methodName}
+          {isMobile ? methodName : `· ${methodName}`}
         </Text>
       )}
     </Flex>
