@@ -46,19 +46,56 @@ const ClauseRow = ({ clause, index, expert }: { clause: Clause; index: number; e
       bg="row-even-bg-primary"
       overflow="hidden"
     >
-      <Accordion.ItemTrigger px="4" py="3" cursor="pointer">
-        <Flex w="full" alignItems="center" gap="3" justifyContent="space-between">
-          <Flex alignItems="center" gap="3" minW="0" flex="1">
-            <ClauseIndex>{index + 1}</ClauseIndex>
-            {expert && <ClauseTypeBadge type={isContractCreation ? 'create' : isTransfer ? 'transfer' : 'call'} />}
-            <ClauseTarget clause={clause} />
-          </Flex>
-          <Flex alignItems="center" gap="3" flexShrink={0}>
-            <VETBalance balance={clause.value} textStyle="bodyM" />
-            <Accordion.ItemIndicator _icon={{ width: '16px', height: '16px', color: 'text-secondary' }} />
-          </Flex>
-        </Flex>
-      </Accordion.ItemTrigger>
+      {/*
+        Chakra's Accordion.ItemTrigger renders as a <button>, and
+        CopyableAddressLink internally renders its copy icon as a <button>
+        too. Nesting them produces a hydration error ("button cannot be a
+        descendant of button"). Split the header into two trigger zones
+        with the address link sitting between them as a plain inline
+        element — clicking the address opens the contract page or copies,
+        clicking anywhere else on the row toggles the panel.
+      */}
+      <Flex
+        alignItems="center"
+        gap="3"
+        px="4"
+        py="3"
+        justifyContent="space-between"
+        cursor="pointer"
+        _hover={{ bg: 'row-odd-bg-primary' }}
+      >
+        <Accordion.ItemTrigger
+          flex="0 0 auto"
+          background="transparent"
+          border="none"
+          padding="0"
+          cursor="pointer"
+          display="inline-flex"
+          alignItems="center"
+          gap="3"
+        >
+          <ClauseIndex>{index + 1}</ClauseIndex>
+          {expert && <ClauseTypeBadge type={isContractCreation ? 'create' : isTransfer ? 'transfer' : 'call'} />}
+        </Accordion.ItemTrigger>
+
+        <Box flex="1" minW="0">
+          <ClauseTarget clause={clause} />
+        </Box>
+
+        <Accordion.ItemTrigger
+          flex="0 0 auto"
+          background="transparent"
+          border="none"
+          padding="0"
+          cursor="pointer"
+          display="inline-flex"
+          alignItems="center"
+          gap="3"
+        >
+          <VETBalance balance={clause.value} textStyle="bodyM" />
+          <Accordion.ItemIndicator _icon={{ width: '16px', height: '16px', color: 'text-secondary' }} />
+        </Accordion.ItemTrigger>
+      </Flex>
       <Accordion.ItemContent>
         <Accordion.ItemBody
           px="4"
@@ -136,31 +173,15 @@ const ClauseTarget = ({ clause }: { clause: Clause }) => {
     )
   }
 
-  // The clause header sits inside an Accordion.ItemTrigger, so a click on
-  // the address link or its copy button would otherwise bubble up and
-  // toggle the panel. Wrap just the interactive address controls so the
-  // surrounding header area still toggles the accordion as expected.
-  const stopPropagation = (e: React.SyntheticEvent) => e.stopPropagation()
-
   return (
-    <Flex alignItems="center" gap="2" minW="0" flex="1" overflow="hidden" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+    <Flex alignItems="center" gap="2" minW="0" overflow="hidden" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
       {name && (
         <Text textStyle="bodyM" fontWeight="medium" color="accent-primary" whiteSpace="nowrap" flexShrink={0}>
           {name}
           {methodName && <Text as="span" fontStyle="italic">{`.${methodName}`}</Text>}
         </Text>
       )}
-
-      <Box
-        onClick={stopPropagation}
-        onMouseDown={stopPropagation}
-        onPointerDown={stopPropagation}
-        display="inline-flex"
-        alignItems="center"
-        minW="0"
-      >
-        <CopyableAddressLink truncate address={clause.to} fontSize="sm" />
-      </Box>
+      <CopyableAddressLink truncate address={clause.to} fontSize="sm" />
     </Flex>
   )
 }
