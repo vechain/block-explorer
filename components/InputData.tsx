@@ -169,8 +169,8 @@ const DecodedInputDataTable = ({
 
   if (!decodedInputData) {
     return (
-      <Box borderWidth="1px" borderColor="border-primary" rounded="md" px="3" py="3">
-        <Text textStyle="bodyS" color="text-secondary">
+      <Box rounded="md" py="3">
+        <Text textStyle="bodyM" fontStyle={'italic'} color="text-secondary">
           {t('No ABI found')}
         </Text>
       </Box>
@@ -230,23 +230,23 @@ export const ParamRows = ({
         {rows.map((row, index) => (
           <Box key={`${index}-${row.name}`} py="4" borderTopWidth={index === 0 ? '0' : '1px'} borderColor={rowDivider}>
             <Flex justifyContent="space-between" alignItems="center" mb="2" gap="2">
-              <Text textStyle="bodyM" color="text-primary">
+              <Text fontSize={'xs'} color="text-primary" fontFamily="mono">
                 {row.name}
               </Text>
               <Flex gap="2" alignItems="center" flexShrink={0}>
                 {showType && (
-                  <Text fontFamily="mono" textStyle="bodyM" color="text-primary">
+                  <Text fontFamily="mono" fontSize={'xs'} color="text-primary">
                     {row.type}
                   </Text>
                 )}
                 {row.indexed && (
-                  <Text fontSize={'xs'} color="accent-primary" fontWeight="medium">
+                  <Text fontSize={'2xs'} color="accent-primary" fontWeight="medium">
                     {t('indexed')}
                   </Text>
                 )}
               </Flex>
             </Flex>
-            <Text fontFamily="mono" textStyle="bodyS" color="text-primary" wordBreak="break-all">
+            <Text fontFamily="mono" fontSize={'xs'} color="text-primary" wordBreak="break-all">
               {row.value}
             </Text>
           </Box>
@@ -295,25 +295,25 @@ export const ParamRows = ({
           borderColor={rowDivider}
           alignItems="start"
         >
-          <Text fontSize={'md'} color="text-secondary">
+          <Text fontSize={'xs'} color="text-secondary" fontFamily="mono">
             {index}
           </Text>
-          <Text fontSize={'md'} color="text-primary">
+          <Text fontSize={'xs'} color="text-primary" fontFamily="mono">
             {row.name}
           </Text>
           {showType && (
             <Flex gap="2" alignItems="baseline">
-              <Text fontFamily="mono" fontSize={'md'} color="text-primary">
+              <Text fontFamily="mono" fontSize={'xs'} color="text-primary">
                 {row.type}
               </Text>
               {row.indexed && (
-                <Text fontSize={'xs'} color="accent-primary" fontWeight="medium">
+                <Text fontSize={'2xs'} color="accent-primary" fontWeight="medium">
                   {t('indexed')}
                 </Text>
               )}
             </Flex>
           )}
-          <Text fontFamily="mono" fontSize={'md'} color="text-primary" wordBreak="break-all">
+          <Text fontFamily="mono" fontSize={'xs'} color="text-primary" wordBreak="break-all">
             {row.value}
           </Text>
         </Box>

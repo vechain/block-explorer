@@ -7,7 +7,6 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TransactionInsight } from '@/components/TransactionInsights'
 import { TransactionOverview } from '@/components/TransactionOverview'
-import { TxStatusBadge } from '@/components/TxStatus'
 import { TransactionViews } from '@/components/TransactionViews'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
@@ -19,7 +18,7 @@ import { useRedirectOnNotFound } from '@/hooks/useRedirectOnNotFound'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
 import { type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { TransactionDetailsView, TransactionStatus } from '@/lib/types'
+import { TransactionDetailsView } from '@/lib/types'
 import { getNetworkNameFromSearchParams } from '@/lib/utils/network'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/transaction'
 
@@ -87,11 +86,6 @@ const TransactionDetails = ({
   // Raw/Decoded toggle on each clause's input data, and the topics + data hex
   // under every event. Default is the lean meaningful view.
   const [expert, setExpert] = useState(false)
-  const status = receipt
-    ? receipt.reverted
-      ? TransactionStatus.REVERTED
-      : TransactionStatus.SUCCESS
-    : TransactionStatus.PENDING
 
   const viewOptions: ToggleOption<TransactionDetailsView>[] = useMemo(
     () => [
@@ -105,12 +99,11 @@ const TransactionDetails = ({
     <Stack gap="8">
       <Card variant="primary">
         <Stack gap="3">
-          <Flex alignItems="flex-start" justifyContent="space-between" gap="4" flexWrap="wrap">
+          <Flex alignItems="center" justifyContent="space-between" gap="4" flexWrap="wrap">
             <Flex alignItems="center" gap="4" flexWrap="wrap">
               <Heading as="h2" textStyle="displayXs">
                 {t('Transaction')}
               </Heading>
-              {status.toLowerCase() !== TransactionStatus.REVERTED && <TxStatusBadge status={status} flexShrink={0} />}
             </Flex>
 
             <Flex alignItems="center" gap="4" flexWrap="wrap">

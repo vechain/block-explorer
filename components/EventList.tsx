@@ -181,8 +181,8 @@ const DecodedEventBody = ({
 
   if (!event) {
     return (
-      <Box borderWidth="1px" borderColor="border-primary" rounded="md" px="3" py="3">
-        <Text textStyle="bodyS" color="text-secondary">
+      <Box rounded="md" py="3">
+        <Text textStyle="bodyM" fontStyle={'italic'} color="text-secondary">
           {t('No ABI found')}
         </Text>
       </Box>
