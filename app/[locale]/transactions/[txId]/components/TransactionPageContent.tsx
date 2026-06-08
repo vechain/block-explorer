@@ -106,11 +106,14 @@ const TransactionDetails = ({
       <Card variant="primary">
         <Stack gap="3">
           <Flex alignItems="flex-start" justifyContent="space-between" gap="4" flexWrap="wrap">
-            <Heading as="h2" textStyle="displayXs">
-              {t('Transaction')}
-            </Heading>
             <Flex alignItems="center" gap="4" flexWrap="wrap">
-              <TxStatusBadge status={status} flexShrink={0} />
+              <Heading as="h2" textStyle="displayXs">
+                {t('Transaction')}
+              </Heading>
+              {status.toLowerCase() !== TransactionStatus.REVERTED && <TxStatusBadge status={status} flexShrink={0} />}
+            </Flex>
+
+            <Flex alignItems="center" gap="4" flexWrap="wrap">
               <Switch.Root
                 checked={expert}
                 onCheckedChange={e => setExpert(e.checked)}

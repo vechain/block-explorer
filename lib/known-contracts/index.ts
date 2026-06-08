@@ -41,6 +41,13 @@ import x2earnRewardsPoolAbi from './abis/x2earn-rewards-pool.json'
 import xAllocationPoolAbi from './abis/x-allocation-pool.json'
 import xAllocationVotingAbi from './abis/x-allocation-voting.json'
 
+// Community-curated name registry crawled from vechainstats.com/contracts/
+// (top 500 by clauses / VTHO burned / CO2e / new + verified). Mainnet only;
+// vechainstats doesn't ship a testnet equivalent. Names cover apps and
+// DEXes that aren't in vechain/token-registry or our curated list, but
+// the dataset is name-only — ABIs are still resolved via Sourcify.
+import vechainstatsNamesRaw from './vechainstats-names.json'
+
 interface KnownContract {
   name: string
   abi: Abi
@@ -151,6 +158,8 @@ const CURATED_ADDRESS_TO_NAME: Record<NetworkName, Record<AddressString, string>
 
 const normalize = (address: string): AddressString => address.toLowerCase() as AddressString
 
+const VECHAINSTATS_NAMES: Record<AddressString, string> = vechainstatsNamesRaw as Record<AddressString, string>
+
 function getKnownContract(networkName: NetworkName, address: AddressString | null | undefined): KnownContract | null {
   if (!address) return null
   const key = normalize(address)
@@ -162,6 +171,12 @@ function getKnownContract(networkName: NetworkName, address: AddressString | nul
     if (entry) return entry
     // Curated address with no bundled ABI — caller (resolver) will try Sourcify.
     return { name: curatedName, abi: [] }
+  }
+  // vechainstats community-curated names — mainnet-only, name without ABI.
+  // The resolver will fall through to Sourcify for the ABI itself.
+  if (networkName === NetworkName.MAINNET) {
+    const vcsName = VECHAINSTATS_NAMES[key]
+    if (vcsName) return { name: vcsName, abi: [] }
   }
   return null
 }
