@@ -51,7 +51,7 @@ const ClauseRow = ({ clause, index, expert }: { clause: Clause; index: number; e
           <Flex alignItems="center" gap="3" minW="0" flex="1">
             <ClauseIndex>{index + 1}</ClauseIndex>
             {expert && <ClauseTypeBadge type={isContractCreation ? 'create' : isTransfer ? 'transfer' : 'call'} />}
-            <ClauseTarget clause={clause} expert={expert} />
+            <ClauseTarget clause={clause} />
           </Flex>
           <Flex alignItems="center" gap="3" flexShrink={0}>
             <VETBalance balance={clause.value} textStyle="bodyM" />
@@ -118,7 +118,7 @@ const ClauseTypeBadge = ({ type }: { type: ClauseType }) => {
   )
 }
 
-const ClauseTarget = ({ clause, expert }: { clause: Clause; expert: boolean }) => {
+const ClauseTarget = ({ clause }: { clause: Clause }) => {
   const { t } = useTranslation()
   const { name } = useContractName(clause.to ?? null)
   // Re-uses the same decode the InputData panel triggers below — React
@@ -143,7 +143,7 @@ const ClauseTarget = ({ clause, expert }: { clause: Clause; expert: boolean }) =
         </Text>
       )}
       <CopyableAddressLink truncate address={clause.to} fontSize="sm" />
-      {expert && methodName && (
+      {methodName && (
         <Text
           textStyle="bodyS"
           fontFamily="mono"
