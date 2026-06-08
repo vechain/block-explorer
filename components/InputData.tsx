@@ -62,7 +62,7 @@ export const InputData = ({
       {isPending ? (
         <Skeleton height="120px" width="100%" rounded="md" />
       ) : (
-        <InputDataViews inputData={inputData} activeView={effectiveView} showSignature={expert} />
+        <InputDataViews inputData={inputData} activeView={effectiveView} expert={expert} />
       )}
     </Stack>
   )
@@ -71,14 +71,14 @@ export const InputData = ({
 const InputDataViews = ({
   inputData,
   activeView,
-  showSignature,
+  expert,
 }: {
   inputData: InputDataType
   activeView: InputDataView
-  showSignature: boolean
+  expert: boolean
 }) => {
   if (activeView === InputDataView.DECODED) {
-    return <DecodedInputDataTable decodedInputData={inputData.decoded} showSignature={showSignature} />
+    return <DecodedInputDataTable decodedInputData={inputData.decoded} expert={expert} />
   }
 
   return (
@@ -102,10 +102,10 @@ const InputDataViews = ({
 
 const DecodedInputDataTable = ({
   decodedInputData,
-  showSignature,
+  expert,
 }: {
   decodedInputData: DecodedInputData | undefined
-  showSignature: boolean
+  expert: boolean
 }) => {
   const { t } = useTranslation()
   const isMobile = useBreakpointValue({ base: true, md: false })
@@ -122,7 +122,7 @@ const DecodedInputDataTable = ({
 
   return (
     <Stack gap="3">
-      {showSignature && (
+      {expert && (
         <Text fontFamily="mono" textStyle="bodyS" color="text-primary" wordBreak="break-all">
           {decodedInputData.signature}
         </Text>
@@ -134,6 +134,7 @@ const DecodedInputDataTable = ({
           value: formatArgForDisplay(decodedInputData.args?.[index]) || '0x',
         }))}
         isMobile={!!isMobile}
+        showType={expert}
       />
     </Stack>
   )
@@ -146,7 +147,15 @@ interface ParamRow {
   indexed?: boolean
 }
 
-export const ParamRows = ({ rows, isMobile }: { rows: ParamRow[]; isMobile: boolean }) => {
+export const ParamRows = ({
+  rows,
+  isMobile,
+  showType = true,
+}: {
+  rows: ParamRow[]
+  isMobile: boolean
+  showType?: boolean
+}) => {
   const { t } = useTranslation()
 
   if (rows.length === 0) {
@@ -168,9 +177,11 @@ export const ParamRows = ({ rows, isMobile }: { rows: ParamRow[]; isMobile: bool
                 #{index} {row.name}
               </Text>
               <Flex gap="2" alignItems="center" flexShrink={0}>
-                <Text fontFamily="mono" textStyle="bodyXs" color="accent-primary">
-                  {row.type}
-                </Text>
+                {showType && (
+                  <Text fontFamily="mono" textStyle="bodyXs" color="accent-primary">
+                    {row.type}
+                  </Text>
+                )}
                 {row.indexed && (
                   <Text textStyle="bodyXs" color="accent-primary" fontWeight="medium">
                     {t('indexed')}
@@ -187,18 +198,22 @@ export const ParamRows = ({ rows, isMobile }: { rows: ParamRow[]; isMobile: bool
     )
   }
 
+  const templateColumns = showType ? '48px 160px 140px minmax(0,1fr)' : '48px 200px minmax(0,1fr)'
+
   return (
     <Box borderWidth="1px" borderColor="border-primary" rounded="md" overflow="hidden">
-      <Box display="grid" gridTemplateColumns="48px 160px 140px minmax(0,1fr)" px="3" py="2" bg="bg-primary">
+      <Box display="grid" gridTemplateColumns={templateColumns} px="3" py="2" bg="bg-primary">
         <Text textStyle="bodyXs" textTransform="uppercase" letterSpacing="wider" color="text-secondary">
           #
         </Text>
         <Text textStyle="bodyXs" textTransform="uppercase" letterSpacing="wider" color="text-secondary">
           {t('Name')}
         </Text>
-        <Text textStyle="bodyXs" textTransform="uppercase" letterSpacing="wider" color="text-secondary">
-          {t('Type')}
-        </Text>
+        {showType && (
+          <Text textStyle="bodyXs" textTransform="uppercase" letterSpacing="wider" color="text-secondary">
+            {t('Type')}
+          </Text>
+        )}
         <Text textStyle="bodyXs" textTransform="uppercase" letterSpacing="wider" color="text-secondary">
           {t('Data')}
         </Text>
@@ -207,7 +222,7 @@ export const ParamRows = ({ rows, isMobile }: { rows: ParamRow[]; isMobile: bool
         <Box
           key={`${index}-${row.name}`}
           display="grid"
-          gridTemplateColumns="48px 160px 140px minmax(0,1fr)"
+          gridTemplateColumns={templateColumns}
           px="3"
           py="3"
           gap="3"
@@ -221,16 +236,18 @@ export const ParamRows = ({ rows, isMobile }: { rows: ParamRow[]; isMobile: bool
           <Text textStyle="bodyS" color="text-primary">
             {row.name}
           </Text>
-          <Flex gap="2" alignItems="baseline">
-            <Text fontFamily="mono" textStyle="bodyXs" color="accent-primary">
-              {row.type}
-            </Text>
-            {row.indexed && (
-              <Text textStyle="bodyXs" color="accent-primary" fontWeight="medium">
-                {t('indexed')}
+          {showType && (
+            <Flex gap="2" alignItems="baseline">
+              <Text fontFamily="mono" textStyle="bodyXs" color="accent-primary">
+                {row.type}
               </Text>
-            )}
-          </Flex>
+              {row.indexed && (
+                <Text textStyle="bodyXs" color="accent-primary" fontWeight="medium">
+                  {t('indexed')}
+                </Text>
+              )}
+            </Flex>
+          )}
           <Text fontFamily="mono" textStyle="bodyS" color="text-secondary" wordBreak="break-all">
             {row.value}
           </Text>

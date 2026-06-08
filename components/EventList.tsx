@@ -100,7 +100,7 @@ const EventCard = ({ layoutId, eventLog, expert }: { layoutId: string; eventLog:
       </Flex>
 
       {effectiveView === EventType.DECODED ? (
-        <DecodedEventBody event={decoded} isMobile={!!isMobile} />
+        <DecodedEventBody event={decoded} isMobile={!!isMobile} expert={expert} />
       ) : (
         <RawEventBody event={eventLog} />
       )}
@@ -112,7 +112,15 @@ const EventCard = ({ layoutId, eventLog, expert }: { layoutId: string; eventLog:
   )
 }
 
-const DecodedEventBody = ({ event, isMobile }: { event: DecodedEvent | undefined; isMobile: boolean }) => {
+const DecodedEventBody = ({
+  event,
+  isMobile,
+  expert,
+}: {
+  event: DecodedEvent | undefined
+  isMobile: boolean
+  expert: boolean
+}) => {
   const { t } = useTranslation()
 
   if (!event) {
@@ -136,6 +144,7 @@ const DecodedEventBody = ({ event, isMobile }: { event: DecodedEvent | undefined
   return (
     <ParamRows
       isMobile={isMobile}
+      showType={expert}
       rows={event.inputs.map((input, index) => ({
         name: input.name ?? String(index),
         type: input.type,
