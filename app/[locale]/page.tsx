@@ -13,7 +13,8 @@ import { parseNetworkFromParams } from '@/lib/utils/network'
 import { logPrefetchFailures } from '@/lib/utils/prefetch'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { ActivitySection } from './components/ActivitySection'
-import { PriceCards } from './components/PriceCards'
+import { ClusterStrip } from './components/ClusterStrip'
+import { CompactPriceStrip } from './components/CompactPriceStrip'
 import { TransfersSection } from './components/TransfersSection'
 import { totalVetStakedQueryOptions } from '@/services/veworld-indexer/total-vet-staked'
 import { accountTotalQueryOptions } from '@/services/veworld-indexer/account-totals'
@@ -61,17 +62,20 @@ export default async function HomePage({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <VStack gap={8} alignItems="stretch">
+      <VStack gap={6} alignItems="stretch">
         <Suspense fallback={<TableSkeleton />}>
           <HomeStatsGroup />
         </Suspense>
-        <PriceCards />
+        <Suspense fallback={<TableSkeleton />}>
+          <ClusterStrip />
+        </Suspense>
         <Suspense fallback={<TableSkeleton />}>
           <ActivitySection />
         </Suspense>
         <Suspense fallback={<TableSkeleton />}>
           <TransfersSection />
         </Suspense>
+        <CompactPriceStrip />
       </VStack>
     </HydrationBoundary>
   )

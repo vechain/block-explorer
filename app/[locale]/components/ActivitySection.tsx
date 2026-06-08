@@ -1,8 +1,9 @@
 'use client'
 
-import { Box, Flex, Grid, Heading } from '@chakra-ui/react'
+import { Box, Flex, Grid, Heading, HStack } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
+import { LiveBadge } from '@/components/ui/LiveBadge'
 import { TableSkeleton } from '@/components/ui/Table'
 import { ViewAllLink } from '@/components/ui/Links'
 import { NoBlocks, NoTransactions } from '@/components/NoResults'
@@ -27,9 +28,12 @@ export const ActivitySection = () => {
     <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={{ base: 8, md: 4 }}>
       <Card>
         <Flex justify="space-between" align="center">
-          <Heading as="h3" textStyle="displayXs">
-            {t('Blocks')}
-          </Heading>
+          <HStack gap="3">
+            <Heading as="h3" textStyle="displayXs">
+              {t('Latest Blocks')}
+            </Heading>
+            <LiveBadge />
+          </HStack>
           <ViewAllLink href="/activity/blocks">{t('View all')}</ViewAllLink>
         </Flex>
         <Box minHeight="320px">
@@ -39,9 +43,12 @@ export const ActivitySection = () => {
 
       <Card>
         <Flex justify="space-between" align="center">
-          <Heading as="h3" textStyle="displayXs">
-            {t('Transactions')}
-          </Heading>
+          <HStack gap="3">
+            <Heading as="h3" textStyle="displayXs">
+              {t('Latest Transactions')}
+            </Heading>
+            <LiveBadge />
+          </HStack>
           <ViewAllLink href="/activity/transactions">{t('View all')}</ViewAllLink>
         </Flex>
         <Box minHeight="320px">
