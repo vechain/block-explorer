@@ -135,6 +135,12 @@ const ClauseTarget = ({ clause }: { clause: Clause }) => {
     )
   }
 
+  // The clause header sits inside an Accordion.ItemTrigger, so a click on
+  // the address link or its copy button would otherwise bubble up and
+  // toggle the panel. Wrap just the interactive address controls so the
+  // surrounding header area still toggles the accordion as expected.
+  const stopPropagation = (e: React.SyntheticEvent) => e.stopPropagation()
+
   return (
     <Flex alignItems="center" gap="2" minW="0" flex="1" overflow="hidden">
       {name && (
@@ -142,7 +148,16 @@ const ClauseTarget = ({ clause }: { clause: Clause }) => {
           {name}
         </Text>
       )}
-      <CopyableAddressLink truncate address={clause.to} fontSize="sm" />
+      <Box
+        onClick={stopPropagation}
+        onMouseDown={stopPropagation}
+        onPointerDown={stopPropagation}
+        display="inline-flex"
+        alignItems="center"
+        minW="0"
+      >
+        <CopyableAddressLink truncate address={clause.to} fontSize="sm" />
+      </Box>
       {methodName && (
         <Text
           textStyle="bodyS"
