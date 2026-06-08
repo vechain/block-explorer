@@ -41,12 +41,11 @@ import x2earnRewardsPoolAbi from './abis/x2earn-rewards-pool.json'
 import xAllocationPoolAbi from './abis/x-allocation-pool.json'
 import xAllocationVotingAbi from './abis/x-allocation-voting.json'
 
-// Community-curated name registry crawled from vechainstats.com/contracts/
-// (top 500 by clauses / VTHO burned / CO2e / new + verified). Mainnet only;
-// vechainstats doesn't ship a testnet equivalent. Names cover apps and
-// DEXes that aren't in vechain/token-registry or our curated list, but
-// the dataset is name-only — ABIs are still resolved via Sourcify.
-import vechainstatsNamesRaw from './vechainstats-names.json'
+// Address → display name lookup for contracts that aren't in our curated
+// bundle nor in vechain/token-registry. Mainnet only. Name-only — ABIs
+// are still resolved via Sourcify. Sourced from community-curated naming
+// data and can be regrown over time.
+import addressNamesRaw from './address-names.json'
 
 interface KnownContract {
   name: string
@@ -158,7 +157,7 @@ const CURATED_ADDRESS_TO_NAME: Record<NetworkName, Record<AddressString, string>
 
 const normalize = (address: string): AddressString => address.toLowerCase() as AddressString
 
-const VECHAINSTATS_NAMES: Record<AddressString, string> = vechainstatsNamesRaw as Record<AddressString, string>
+const ADDRESS_NAMES: Record<AddressString, string> = addressNamesRaw as Record<AddressString, string>
 
 function getKnownContract(networkName: NetworkName, address: AddressString | null | undefined): KnownContract | null {
   if (!address) return null
@@ -172,11 +171,11 @@ function getKnownContract(networkName: NetworkName, address: AddressString | nul
     // Curated address with no bundled ABI — caller (resolver) will try Sourcify.
     return { name: curatedName, abi: [] }
   }
-  // vechainstats community-curated names — mainnet-only, name without ABI.
-  // The resolver will fall through to Sourcify for the ABI itself.
+  // Community-curated names — mainnet-only, name without ABI. The
+  // resolver will fall through to Sourcify for the ABI itself.
   if (networkName === NetworkName.MAINNET) {
-    const vcsName = VECHAINSTATS_NAMES[key]
-    if (vcsName) return { name: vcsName, abi: [] }
+    const extraName = ADDRESS_NAMES[key]
+    if (extraName) return { name: extraName, abi: [] }
   }
   return null
 }
