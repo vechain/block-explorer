@@ -1,6 +1,6 @@
 'use client'
 
-import { Accordion, Box, Flex, Text } from '@chakra-ui/react'
+import { Accordion, Box, chakra, Flex, Text } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { useContractName } from '@/hooks/useContractName'
 import { useDecodeInputData } from '@/hooks/useDecodeInputData'
@@ -47,53 +47,70 @@ const ClauseRow = ({ clause, index, expert }: { clause: Clause; index: number; e
       overflow="hidden"
     >
       {/*
-        Chakra's Accordion.ItemTrigger renders as a <button>, and
-        CopyableAddressLink internally renders its copy icon as a <button>
-        too. Nesting them produces a hydration error ("button cannot be a
-        descendant of button"). Split the header into two trigger zones
-        with the address link sitting between them as a plain inline
-        element — clicking the address opens the contract page or copies,
-        clicking anywhere else on the row toggles the panel.
+        Two Accordion.ItemTriggers — both render as <button>. The
+        CopyableAddressLink sits between them as a plain sibling so its
+        inner copy <button> isn't nested inside a trigger button. The first
+        trigger holds the index + (in expert mode) the type badge + the
+        resolved contract.method label (all read-only text, safe inside a
+        button). The second trigger holds the VET value + chevron. Clicking
+        either toggles the panel; clicking the address copies / opens the
+        contract page.
       */}
-      <Flex
-        alignItems="center"
-        gap="3"
-        px="4"
-        py="3"
-        justifyContent="space-between"
-        cursor="pointer"
-        _hover={{ bg: 'row-odd-bg-primary' }}
-      >
-        <Accordion.ItemTrigger
-          flex="0 0 auto"
-          background="transparent"
-          border="none"
-          padding="0"
-          cursor="pointer"
-          display="inline-flex"
-          alignItems="center"
-          gap="3"
-        >
-          <ClauseIndex>{index + 1}</ClauseIndex>
-          {expert && <ClauseTypeBadge type={isContractCreation ? 'create' : isTransfer ? 'transfer' : 'call'} />}
+      <Flex alignItems="center" gap="3" px="4" py="3" width="100%">
+        <Accordion.ItemTrigger asChild>
+          <chakra.button
+            type="button"
+            flex="0 0 auto"
+            width="auto"
+            background="transparent"
+            border="none"
+            padding="0"
+            margin="0"
+            cursor="pointer"
+            display="inline-flex"
+            alignItems="center"
+            gap="3"
+            color="inherit"
+            font="inherit"
+            minW="0"
+          >
+            <ClauseIndex>{index + 1}</ClauseIndex>
+            {expert && <ClauseTypeBadge type={isContractCreation ? 'create' : isTransfer ? 'transfer' : 'call'} />}
+            <ClauseLabel clause={clause} />
+          </chakra.button>
         </Accordion.ItemTrigger>
 
-        <Box flex="1" minW="0">
-          <ClauseTarget clause={clause} />
-        </Box>
+        {clause.to ? (
+          <Box flex="1" minW="0" display="flex" justifyContent="flex-start" overflow="hidden">
+            <CopyableAddressLink truncate address={clause.to} fontSize="sm" />
+          </Box>
+        ) : (
+          <Box flex="1" minW="0">
+            <Text textStyle="bodyS" color="text-secondary" fontStyle="italic">
+              {t('contract creation')}
+            </Text>
+          </Box>
+        )}
 
-        <Accordion.ItemTrigger
-          flex="0 0 auto"
-          background="transparent"
-          border="none"
-          padding="0"
-          cursor="pointer"
-          display="inline-flex"
-          alignItems="center"
-          gap="3"
-        >
-          <VETBalance balance={clause.value} textStyle="bodyM" />
-          <Accordion.ItemIndicator _icon={{ width: '16px', height: '16px', color: 'text-secondary' }} />
+        <Accordion.ItemTrigger asChild>
+          <chakra.button
+            type="button"
+            flex="0 0 auto"
+            width="auto"
+            background="transparent"
+            border="none"
+            padding="0"
+            margin="0"
+            cursor="pointer"
+            display="inline-flex"
+            alignItems="center"
+            gap="3"
+            color="inherit"
+            font="inherit"
+          >
+            <VETBalance balance={clause.value} textStyle="bodyM" />
+            <Accordion.ItemIndicator _icon={{ width: '16px', height: '16px', color: 'text-secondary' }} />
+          </chakra.button>
         </Accordion.ItemTrigger>
       </Flex>
       <Accordion.ItemContent>
@@ -155,33 +172,34 @@ const ClauseTypeBadge = ({ type }: { type: ClauseType }) => {
   )
 }
 
-const ClauseTarget = ({ clause }: { clause: Clause }) => {
-  const { t } = useTranslation()
-
+/**
+ * Contract name + (optional) decoded method name. Rendered as inline text
+ * inside the first Accordion.ItemTrigger button — no nested-button risk
+ * since neither value is interactive.
+ */
+const ClauseLabel = ({ clause }: { clause: Clause }) => {
   const { name } = useContractName(clause.to ?? null)
-  // Re-uses the same decode the InputData panel triggers below — React
-  // Query dedupes, so this is free. We just want the method name for the
-  // header.
   const { data: decoded } = useDecodeInputData(clause.data, clause.to ?? null)
   const methodName = decoded?.decoded?.name
 
-  if (!clause.to) {
-    return (
-      <Text textStyle="bodyS" color="text-secondary" fontStyle="italic">
-        {t('contract creation')}
-      </Text>
-    )
-  }
+  if (!name && !methodName) return null
 
   return (
-    <Flex alignItems="center" gap="2" minW="0" overflow="hidden" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
-      {name && (
-        <Text textStyle="bodyM" fontWeight="medium" color="accent-primary" whiteSpace="nowrap" flexShrink={0}>
-          {name}
-          {methodName && <Text as="span" fontStyle="italic">{`.${methodName}`}</Text>}
+    <Text
+      textStyle="bodyM"
+      fontWeight="medium"
+      color="accent-primary"
+      whiteSpace="nowrap"
+      overflow="hidden"
+      textOverflow="ellipsis"
+      minW="0"
+    >
+      {name}
+      {methodName && (
+        <Text as="span" fontStyle="italic" fontWeight="normal">
+          {name ? `.${methodName}` : methodName}
         </Text>
       )}
-      <CopyableAddressLink truncate address={clause.to} fontSize="sm" />
-    </Flex>
+    </Text>
   )
 }
