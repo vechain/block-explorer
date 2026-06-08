@@ -1,5 +1,5 @@
 import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
-import { Revision } from '@vechain/sdk-core'
+import { BlockId, Revision } from '@vechain/sdk-core'
 import z from 'zod'
 import {
   decodeCustomError,
@@ -254,6 +254,73 @@ const transactionFailureInsightQueryOptions = (
     staleTime: Infinity,
   })
 
+// Shape returned by /debug/tracers with the 'call' tracer.
+// (Re-declared loosely because the SDK's TraceReturnType is a heavy
+// generic union; we only care about a small subset of fields.)
+type CallTraceFrame = {
+  type?: string
+  from?: string
+  to?: string
+  input?: string
+  output?: string
+  error?: string
+  calls?: CallTraceFrame[]
+}
+
+/** Deepest frame in the call tree that carries an error string. */
+const findDeepestErrorFrame = (frame: CallTraceFrame): CallTraceFrame | null => {
+  if (!frame.error) return null
+  let deepest: CallTraceFrame = frame
+  for (const sub of frame.calls ?? []) {
+    const subDeepest = findDeepestErrorFrame(sub)
+    if (subDeepest) deepest = subDeepest
+  }
+  return deepest
+}
+
+/**
+ * Replay the failing clause via /debug/tracers and pull the most specific
+ * revert info we can — preferred over simulating because the node executes
+ * against the actual on-chain state at the failing block. Returns null if
+ * the tracer endpoint isn't available (e.g. some solo nodes) or the tx
+ * didn't actually revert in the trace.
+ */
+const decodeRevertViaTracer = async (
+  networkName: NetworkName,
+  transaction: Transaction,
+): Promise<{
+  revertedClauseIndex: number
+  revertData: HexString | null
+  vmError: string | null
+} | null> => {
+  const thorClient = getThorClient(networkName)
+  for (let clauseIndex = 0; clauseIndex < transaction.clauses.length; clauseIndex++) {
+    let frame: CallTraceFrame
+    try {
+      frame = (await thorClient.debug.traceTransactionClause(
+        {
+          target: {
+            blockId: BlockId.of(transaction.meta.blockID),
+            transaction: BlockId.of(transaction.id),
+            clauseIndex,
+          },
+        },
+        'call',
+      )) as CallTraceFrame
+    } catch {
+      return null
+    }
+    if (!frame?.error) continue
+    const deepest = findDeepestErrorFrame(frame) ?? frame
+    const output = (deepest.output && deepest.output !== '0x' ? deepest.output : null) as HexString | null
+    // "execution reverted" alone is too generic — only surface vmError when
+    // the EVM raised something specific (out of gas, invalid opcode, …).
+    const vmError = deepest.error && deepest.error !== 'execution reverted' ? deepest.error : null
+    return { revertedClauseIndex: clauseIndex, revertData: output, vmError }
+  }
+  return null
+}
+
 const getTransactionFailureInsight = async ({
   networkName,
   transaction,
@@ -279,6 +346,34 @@ const getTransactionFailureInsight = async ({
     simulations,
   })
 
+  // 1. Prefer /debug/tracers — it replays the actual on-chain execution at
+  // the failing block, so it captures reverts that a fresh simulation
+  // can't reproduce (timestamp-gated `distribute()`, randomness,
+  // out-of-gas inside an internal call, …).
+  const traced = await decodeRevertViaTracer(networkName, transaction)
+  if (traced) {
+    if (traced.revertData) {
+      const target = transaction.clauses[traced.revertedClauseIndex]?.to ?? null
+      const decoded = await decodeRevertPayload(
+        networkName,
+        target ? (target.toLowerCase() as AddressString) : null,
+        traced.revertData,
+      )
+      if (decoded) {
+        return { ...decoded, possibleSelectorMismatch }
+      }
+      const sdkDecoded = thorClient.transactions.decodeRevertReason(traced.revertData)
+      if (sdkDecoded) {
+        return { revertReason: sdkDecoded, revertKind: 'string', possibleSelectorMismatch }
+      }
+    }
+    if (traced.vmError) {
+      return { revertReason: traced.vmError, revertKind: 'vm-error', possibleSelectorMismatch }
+    }
+  }
+
+  // 2. Fall back to the post-block simulation. This works for reverts that
+  // are deterministic w.r.t. state (typical Error / Panic / custom error).
   for (let i = 0; i < simulations.length; i++) {
     const simulation = simulations[i]
     if (!simulation.reverted) continue
@@ -299,7 +394,6 @@ const getTransactionFailureInsight = async ({
         }
       }
 
-      // Last-resort: the SDK's own helper (handles plain Error(string)).
       const sdkDecoded = thorClient.transactions.decodeRevertReason(data)
       if (sdkDecoded) {
         return {
@@ -325,9 +419,12 @@ const getTransactionFailureInsight = async ({
     }
   }
 
+  // 3. Tracer + simulation both came up empty but the receipt says it
+  // reverted (caller-promised). Surface a generic message so the alert
+  // doesn't disappear silently.
   return {
-    revertReason: null,
-    revertKind: 'none',
+    revertReason: 'execution reverted',
+    revertKind: 'vm-error',
     possibleSelectorMismatch,
   }
 }

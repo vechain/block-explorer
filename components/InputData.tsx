@@ -177,6 +177,24 @@ const DecodedInputDataTable = ({
     )
   }
 
+  // Zero-arg functions (e.g. `distribute()`, `claim()`) decode fine but
+  // have nothing to render under the header — emit a placeholder so the
+  // section doesn't look empty/broken.
+  if (decodedInputData.inputs.length === 0) {
+    return (
+      <Stack gap="3">
+        {expert && (
+          <Text fontFamily="mono" textStyle="bodyS" color="text-primary" wordBreak="break-all">
+            {decodedInputData.signature}
+          </Text>
+        )}
+        <Text textStyle="bodyS" color="text-secondary" fontStyle="italic">
+          {t('No parameters.')}
+        </Text>
+      </Stack>
+    )
+  }
+
   return (
     <Stack gap="3">
       {expert && (
