@@ -67,10 +67,15 @@ interface DefinedCache {
 }
 
 export async function decodeSelector(kind: Kind, hash: string): Promise<Lookup<DecodedSelector>> {
-  const key = `${kind}:${hash.toLowerCase()}`
+  // Normalize once at the entry: b32's URL path is case-sensitive and
+  // OpenChain echoes lowercase keys in its response, so an uppercase hash
+  // would miss upstream even though we'd cache the (wrong) miss under the
+  // lowercased key.
+  const normalized = hash.toLowerCase()
+  const key = `${kind}:${normalized}`
   if (miss.has(key)) return { kind: 'not-found' }
   try {
-    const data = await (hits as unknown as DefinedCache).selector({ kind, hash })
+    const data = await (hits as unknown as DefinedCache).selector({ kind, hash: normalized })
     return { kind: 'ok', data }
   } catch (err) {
     if (err instanceof NotFoundError) {
