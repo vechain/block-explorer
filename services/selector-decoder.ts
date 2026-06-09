@@ -4,14 +4,12 @@ import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
 import type { AbiItem } from 'viem'
 import type { HexString } from '@/lib/schemas'
 
-export type SelectorKind = 'function' | 'event'
+type SelectorKind = 'function' | 'event'
 
 // Mirror of DecodedSelector in lib/selector-decoder. Discriminated so the
 // caller knows whether it received a ready-to-use ABI fragment (b32) or a
 // bare signature it has to interpret (OpenChain).
-export type DecodedSelector =
-  | { source: 'b32'; abi: AbiItem }
-  | { source: 'openchain'; signature: string }
+type DecodedSelector = { source: 'b32'; abi: AbiItem } | { source: 'openchain'; signature: string }
 
 const SELECTOR_QUERY_KEY = 'getDecodedSelector'
 

@@ -140,14 +140,14 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
     return { validatorPercent, delegatedPercent }
   }, [validator])
 
-  // NFT tier APYs
+  // NFT tier APYs — omit tiers the validator has no value for, matching Stargate's behavior
   const nftTierApys = useMemo(() => {
     if (!validator) return []
 
-    return NFT_TIER_ORDER.map(tier => ({
-      tier,
-      apy: `${abbreviateAmount(validator.nftYieldsNextCycle[tier] ?? 0)}%`,
-    }))
+    return NFT_TIER_ORDER.flatMap(tier => {
+      const value = validator.nftYieldsNextCycle[tier]
+      return value === undefined ? [] : [{ tier, apy: `${abbreviateAmount(value)}%` }]
+    })
   }, [validator])
 
   const statusBadge = getStatusBadgeProps(validator.status)

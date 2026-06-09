@@ -9,17 +9,13 @@ const DAY = 86_400
 const WEEK = 604_800
 const FIVE_MIN_MS = 5 * 60 * 1000
 
-export type { Kind }
-
 // b32 returns a fully-formed ABI fragment with indexed annotations intact.
 // OpenChain returns a bare canonical signature — the client decides how to
 // interpret it (function vs. event, and for events which params are
 // indexed) since the right answer depends on the caller's topic count.
-export type DecodedSelector =
-  | { source: 'b32'; abi: AbiItem }
-  | { source: 'openchain'; signature: string }
+type DecodedSelector = { source: 'b32'; abi: AbiItem } | { source: 'openchain'; signature: string }
 
-export type Lookup<T> = { kind: 'ok'; data: T } | { kind: 'not-found' }
+type Lookup<T> = { kind: 'ok'; data: T } | { kind: 'not-found' }
 
 const hits = createCache({ storage: { type: 'memory', options: { size: 50_000 } } })
 const miss = new LRUCache<string, true>({ max: 50_000, ttl: FIVE_MIN_MS })

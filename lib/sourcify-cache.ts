@@ -13,7 +13,7 @@ export interface SourcifyHit {
   contractName?: string
 }
 
-export type Lookup<T> = { kind: 'ok'; data: T } | { kind: 'not-found' }
+type Lookup<T> = { kind: 'ok'; data: T } | { kind: 'not-found' }
 
 // Sourcify v2 returns the ABI as a top-level field when requested via
 // `?fields=abi,compilation` — no metadata.json parsing required. v1
@@ -51,10 +51,9 @@ hits.define(
     serialize: ({ chainId, address }: SourcifyKey) => `${chainId}:${address.toLowerCase()}`,
   },
   async ({ chainId, address }: SourcifyKey): Promise<SourcifyHit> => {
-    const res = await fetch(
-      `${SOURCIFY_URL}/v2/contract/${chainId}/${address.toLowerCase()}?fields=abi,compilation`,
-      { signal: AbortSignal.timeout(10_000) },
-    )
+    const res = await fetch(`${SOURCIFY_URL}/v2/contract/${chainId}/${address.toLowerCase()}?fields=abi,compilation`, {
+      signal: AbortSignal.timeout(10_000),
+    })
     if (res.status === 404) throw new NotFoundError()
     if (!res.ok) throw new UpstreamError('sourcify', res.status)
 
