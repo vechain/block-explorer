@@ -2,13 +2,15 @@
 
 import { useMemo } from 'react'
 import z from 'zod'
-import { decodeEventLog as decodeEventLogFromAbi, signatureToEventItem } from '@/lib/abi-registry'
+import {
+  decodeEventLog as decodeEventLogFromAbi,
+  signatureToEventItem,
+} from '@/lib/abi-registry'
 import type { HexString, RawEvent } from '@/lib/schemas'
 import { addressStringSchema, EventType, rawEventSchema } from '@/lib/schemas'
 import * as abi from '@/lib/schemas/abi'
 import { zodParse } from '@/lib/utils/zod'
-import { useAbi } from '@/services/b32'
-import { useOpenChainSignature } from '@/services/openchain'
+import { useDecodedSelector } from '@/services/selector-decoder'
 import { useResolvedAbi } from '@/services/sourcify'
 
 export const useDecodeEvent = (rawEvent: RawEvent) => {
@@ -21,30 +23,31 @@ export const useDecodeEvent = (rawEvent: RawEvent) => {
     return decodeEventLogFromAbi(resolved.abi, { topics: rawEvent.topics as HexString[], data: rawEvent.data })
   }, [resolved, rawEvent, topic0])
 
-  // 2. b32 by topic0.
-  const skipB32 = resolvedDecoded !== null || resolvedFetching
-  const { data: b32Abi, isFetching: b32Fetching } = useAbi((skipB32 ? '' : topic0) ?? '')
-
-  const b32Decoded = useMemo(() => {
-    if (resolvedDecoded || !b32Abi || !topic0) return null
-    return decodeEventLogFromAbi(b32Abi, { topics: rawEvent.topics as HexString[], data: rawEvent.data })
-  }, [resolvedDecoded, b32Abi, rawEvent, topic0])
-
-  // 3. OpenChain cross-chain signature fallback. We try the canonical
-  // OZ "indexed first" layout first; if decoding throws we retry with
-  // indexed pushed to the end.
-  const wantOpenChain = !resolvedDecoded && !b32Decoded && !b32Fetching && !resolvedFetching
-  const { data: openChainSig, isFetching: openChainFetching } = useOpenChainSignature(
+  // 2. Selector decoder: server-side b32 → OpenChain fallback in one call.
+  const skipSelectorLookup = resolvedDecoded !== null || resolvedFetching
+  const { data: selectorResult, isFetching: selectorFetching } = useDecodedSelector(
     'event',
-    wantOpenChain ? (topic0 ?? null) : null,
+    skipSelectorLookup ? null : (topic0 ?? null),
   )
 
-  const openChainDecoded = useMemo(() => {
-    if (!wantOpenChain || !openChainSig || !topic0) return null
+  const selectorDecoded = useMemo(() => {
+    if (resolvedDecoded || !selectorResult || !topic0) return null
+
+    // b32 fragments come with indexed annotations intact — decode directly.
+    if (selectorResult.source === 'b32') {
+      return decodeEventLogFromAbi([selectorResult.abi], {
+        topics: rawEvent.topics as HexString[],
+        data: rawEvent.data,
+      })
+    }
+
+    // OpenChain returns a bare signature. Try the canonical OZ "indexed
+    // first" layout, then fall back to "indexed at the end" — the API
+    // doesn't tell us which params are indexed.
     const numIndexed = rawEvent.topics.length - 1
     const candidates = [
-      signatureToEventItem(openChainSig, numIndexed, false),
-      signatureToEventItem(openChainSig, numIndexed, true),
+      signatureToEventItem(selectorResult.signature, numIndexed, false),
+      signatureToEventItem(selectorResult.signature, numIndexed, true),
     ]
     for (const item of candidates) {
       if (!item) continue
@@ -52,9 +55,9 @@ export const useDecodeEvent = (rawEvent: RawEvent) => {
       if (decoded) return decoded
     }
     return null
-  }, [wantOpenChain, openChainSig, rawEvent, topic0])
+  }, [resolvedDecoded, selectorResult, rawEvent, topic0])
 
-  const decoded = resolvedDecoded ?? b32Decoded ?? openChainDecoded
+  const decoded = resolvedDecoded ?? selectorDecoded
 
   const event: ParsedEvent = useMemo(() => {
     const parsedRaw = parsedRawEventSchema.parse({ type: EventType.RAW, raw: rawEvent })
@@ -79,7 +82,7 @@ export const useDecodeEvent = (rawEvent: RawEvent) => {
   // `isPending` aggregation never went false once any branch was skipped.
   return {
     event,
-    isPending: resolvedFetching || b32Fetching || openChainFetching,
+    isPending: resolvedFetching || selectorFetching,
   }
 }
 

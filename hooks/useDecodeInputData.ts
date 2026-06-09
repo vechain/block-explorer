@@ -3,12 +3,15 @@
 import { useMemo } from 'react'
 import type { AbiParameter } from 'viem'
 import z from 'zod'
-import { decodeCalldata as decodeCalldataFromAbi, getSelector, signatureToFunctionItem } from '@/lib/abi-registry'
+import {
+  decodeCalldata as decodeCalldataFromAbi,
+  getSelector,
+  signatureToFunctionItem,
+} from '@/lib/abi-registry'
 import { type AddressString, hexStringSchema, type HexString } from '@/lib/schemas'
 import * as abi from '@/lib/schemas/abi'
 import { zodParse } from '@/lib/utils/zod'
-import { useAbi } from '@/services/b32'
-import { useOpenChainSignature } from '@/services/openchain'
+import { useDecodedSelector } from '@/services/selector-decoder'
 import { useResolvedAbi } from '@/services/sourcify'
 
 export type InputData = {
@@ -25,31 +28,25 @@ export const useDecodeInputData = (hexData: HexString, address?: AddressString |
   }, [resolved, hexData])
 
   const selector = getSelector(hexData)
-  const skipB32 = resolvedDecoded !== null || resolvedFetching
+  const skipSelectorLookup = resolvedDecoded !== null || resolvedFetching
 
-  // 2. b32 keccak DB by 4-byte selector.
-  const { data: b32Abi, isFetching: b32Fetching } = useAbi((skipB32 ? '' : selector) ?? '')
-
-  const b32Decoded = useMemo(() => {
-    if (resolvedDecoded || !b32Abi || !selector) return null
-    return decodeCalldataFromAbi(b32Abi, hexData)
-  }, [resolvedDecoded, b32Abi, selector, hexData])
-
-  // 3. OpenChain canonical-signature fallback.
-  const wantOpenChain = !resolvedDecoded && !b32Decoded && !b32Fetching && !resolvedFetching
-  const { data: openChainSig, isFetching: openChainFetching } = useOpenChainSignature(
+  // 2. Selector decoder: server-side b32 → OpenChain fallback in one call.
+  const { data: selectorResult, isFetching: selectorFetching } = useDecodedSelector(
     'function',
-    wantOpenChain ? selector : null,
+    skipSelectorLookup ? null : selector,
   )
 
-  const openChainDecoded = useMemo(() => {
-    if (!wantOpenChain || !openChainSig) return null
-    const item = signatureToFunctionItem(openChainSig)
+  const selectorDecoded = useMemo(() => {
+    if (resolvedDecoded || !selectorResult || !selector) return null
+    if (selectorResult.source === 'b32') {
+      return decodeCalldataFromAbi([selectorResult.abi], hexData)
+    }
+    const item = signatureToFunctionItem(selectorResult.signature)
     if (!item) return null
     return decodeCalldataFromAbi([item], hexData)
-  }, [wantOpenChain, openChainSig, hexData])
+  }, [resolvedDecoded, selectorResult, selector, hexData])
 
-  const decoded = resolvedDecoded ?? b32Decoded ?? openChainDecoded
+  const decoded = resolvedDecoded ?? selectorDecoded
 
   const data: InputData = useMemo(() => {
     if (!decoded) return { raw: hexStringSchema.parse(hexData) }
@@ -72,7 +69,7 @@ export const useDecodeInputData = (hexData: HexString, address?: AddressString |
   // `isPending` aggregation never went false once any branch was skipped.
   return {
     data,
-    isPending: resolvedFetching || b32Fetching || openChainFetching,
+    isPending: resolvedFetching || selectorFetching,
   }
 }
 

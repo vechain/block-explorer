@@ -23,7 +23,7 @@ import {
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getPossibleSelectorMismatch, type PossibleSelectorMismatch } from '@/lib/transaction-failure-insights'
 import { zodParse } from '@/lib/utils/zod'
-import { getOpenChainSignature } from '@/services/openchain'
+import { getDecodedSelector } from '@/services/selector-decoder'
 import { getResolvedAbi } from '@/services/sourcify'
 import { getThorClient } from './client'
 
@@ -205,12 +205,15 @@ const decodeRevertPayload = async (
     }
   }
 
-  // OpenChain fallback. Custom errors share the function-selector
-  // encoding scheme, so we can re-use the function-signature lookup.
-  const openChainSig = await getOpenChainSignature('function', selector)
-  if (openChainSig) {
-    const synthetic = signatureToFunctionItem(openChainSig)
-    if (synthetic) {
+  // Selector decoder fallback. Custom errors share the function-selector
+  // encoding scheme, so we can re-use the function-signature lookup. The
+  // service falls through b32 → OpenChain server-side; here we just take
+  // whichever ABI fragment it returns.
+  const selectorResult = await getDecodedSelector('function', selector)
+  if (selectorResult) {
+    const synthetic =
+      selectorResult.source === 'b32' ? selectorResult.abi : signatureToFunctionItem(selectorResult.signature)
+    if (synthetic && synthetic.type === 'function' && synthetic.name) {
       const decoded = decodeCustomError(
         [
           {
