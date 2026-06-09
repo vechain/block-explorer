@@ -5,7 +5,7 @@ import type { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
-import { indexerGet, resolveUrl } from '.'
+import { IndexerVersion, indexerGet, resolveUrl } from '.'
 import { indexerResponseSchema } from './schemas'
 import { validatorMetadataQueryOptions } from './validator-metadata'
 
@@ -62,11 +62,11 @@ const validatorIndexerDataSchema = z.object({
   delegatorVetStaked: z.number().default(0),
   endorser: z.string().optional(),
   exitingVetStaked: z.number().default(0),
+  missedSlotsPercentage: z.number().default(0),
   nextCycleAvgDelegatorYield: z.number().default(0),
   nextCycleValidatorYield: z.number().default(0),
-  nftYieldsNextCycle: nftYieldsSchema,
-  online: z.boolean().optional(),
-  percentageOffline: z.number().default(0),
+  nftYields: nftYieldsSchema,
+  nftYieldsIfDelegatedNextCycle: nftYieldsSchema,
   queuedVetStaked: z.number().default(0),
   startBlock: z.number().default(0),
   status: z.nativeEnum(ValidatorStatus),
@@ -94,17 +94,12 @@ const delegationsCountResponseSchema = z.object({
   data: z.array(delegationsCountSchema),
 })
 
-// Missed blocks schema
-const missedBlocksSchema = z.object({
+// Validator slot stats schema (v2: /validators/{id}/slots)
+const validatorSlotStatsSchema = z.object({
   validator: z.string(),
-  missedPercentage: z.number(),
-})
-
-const missedBlocksResponseSchema = z.object({
-  timeframe: z.string(),
-  startBlock: z.number(),
-  endBlock: z.number(),
-  validators: z.array(missedBlocksSchema),
+  proposedBlocks: z.number(),
+  missedSlots: z.number(),
+  missedSlotRatio: z.number(),
 })
 
 // Delegation schema for fetching individual delegations
@@ -129,7 +124,6 @@ export interface ValidatorDetails {
   endorser?: string
   address: string
   status: ValidatorStatus
-  online: boolean
 
   // Stake amounts
   vetStaked: number // Total active VET staked
@@ -179,7 +173,7 @@ const getValidatorDetails = async ({
   validatorAddress: string
 }): Promise<ValidatorIndexerData | null> => {
   const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName),
+    baseUrl: resolveUrl(networkName, IndexerVersion.V2),
     endPoint: `/validators/${validatorAddress}`,
   })
 
@@ -218,8 +212,10 @@ const getValidatorDelegationsCount = async ({
 }
 
 /**
- * Fetch missed blocks percentage for a validator
+ * Fetch missed blocks percentage for a validator over the last 7 days
  */
+const WEEK_IN_SECONDS = 7 * 24 * 60 * 60
+
 const getValidatorMissedBlocks = async ({
   networkName,
   validatorAddress,
@@ -227,21 +223,22 @@ const getValidatorMissedBlocks = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<number> => {
+  const endTimestamp = Math.floor(Date.now() / 1000)
+  const startTimestamp = endTimestamp - WEEK_IN_SECONDS
+
   const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName),
-    endPoint: '/validators/blocks/missed',
-    params: { timeframe: 'WEEK', validator: validatorAddress },
+    baseUrl: resolveUrl(networkName, IndexerVersion.V2),
+    endPoint: `/validators/${validatorAddress}/slots`,
+    params: { startTimestamp: String(startTimestamp), endTimestamp: String(endTimestamp) },
   })
 
   const parsed = zodParse({
     data,
-    schema: missedBlocksResponseSchema,
-    errorMessage: 'Invalid missed blocks response from VeWorld Indexer',
+    schema: validatorSlotStatsSchema,
+    errorMessage: 'Invalid validator slots response from VeWorld Indexer',
   })
 
-  const validatorData = parsed.validators.find(v => v.validator.toLowerCase() === validatorAddress.toLowerCase())
-
-  return validatorData?.missedPercentage ?? 0
+  return Number.isFinite(parsed.missedSlotRatio) ? parsed.missedSlotRatio * 100 : 0
 }
 
 /**
@@ -329,8 +326,6 @@ export const validatorDelegationsQueryOptions = (networkName: NetworkName, addre
   placeholderData: keepPreviousData,
 })
 
-const EMPTY_NFT_YIELDS = Object.fromEntries(Object.values(LevelName).map(level => [level, 0]))
-
 export const useValidatorDetails = (address: string | undefined) => {
   const { activeNetwork } = useSettingsStore()
 
@@ -354,7 +349,7 @@ export const useValidatorDetails = (address: string | undefined) => {
     if (!validatorData) return null
 
     const delegationsCount = delegationsCountQuery.data as ValidatorDelegationsCount | null | undefined
-    const missedPercentage = (missedBlocksQuery.data as number | undefined) ?? validatorData.percentageOffline ?? 0
+    const missedPercentage = (missedBlocksQuery.data as number | undefined) ?? validatorData.missedSlotsPercentage ?? 0
     const metadata = metadataQuery.data
     const delegationsData = delegationsQuery.data as { uniqueWallets: number; totalNfts: number } | undefined
 
@@ -367,7 +362,6 @@ export const useValidatorDetails = (address: string | undefined) => {
       endorser: validatorData.endorser,
       address: validatorData.id,
       status: validatorData.status,
-      online: validatorData.online ?? false,
 
       vetStaked: validatorData.vetStaked ?? 0,
       validatorVetStaked: validatorData.validatorVetStaked ?? 0,
@@ -386,7 +380,7 @@ export const useValidatorDetails = (address: string | undefined) => {
       nextCycleDelegatorApy: validatorData.nextCycleAvgDelegatorYield ?? 0,
       validatorApy: validatorData.validatorYield ?? 0,
       nextCycleValidatorApy: validatorData.nextCycleValidatorYield ?? 0,
-      nftYieldsNextCycle: validatorData.nftYieldsNextCycle ?? EMPTY_NFT_YIELDS,
+      nftYieldsNextCycle: { ...validatorData.nftYields, ...validatorData.nftYieldsIfDelegatedNextCycle },
 
       reliability: 100 - missedPercentage,
       percentageOffline: missedPercentage,
