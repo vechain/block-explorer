@@ -15,30 +15,18 @@ export interface SourcifyHit {
 
 export type Lookup<T> = { kind: 'ok'; data: T } | { kind: 'not-found' }
 
-interface SourcifyFile {
-  name: string
-  path?: string
-  content?: string
-}
-
-interface ContractMetadata {
-  output?: { abi?: unknown }
-  settings?: { compilationTarget?: Record<string, string> }
-}
-
-const extractAbi = (files: SourcifyFile[] | undefined): SourcifyHit | null => {
-  if (!files) return null
-  const metadataFile = files.find(f => f.name === 'metadata.json' || (f.path && f.path.endsWith('/metadata.json')))
-  if (!metadataFile?.content) return null
-  try {
-    const meta = JSON.parse(metadataFile.content) as ContractMetadata
-    if (!meta?.output?.abi || !Array.isArray(meta.output.abi)) return null
-    const target = meta.settings?.compilationTarget
-    const contractName = target ? Object.values(target)[0] : undefined
-    return { abi: meta.output.abi as Abi, contractName }
-  } catch {
-    return null
+// Sourcify v2 returns the ABI as a top-level field when requested via
+// `?fields=abi,compilation` — no metadata.json parsing required. v1
+// (the `/files/any/...` endpoint) is being deprecated via scheduled
+// brownouts that return 503 across multi-hour windows, so we use v2
+// directly.
+interface SourcifyV2Response {
+  abi?: Abi
+  compilation?: {
+    name?: string
+    fullyQualifiedName?: string
   }
+  match?: string | null
 }
 
 // Hits: long TTL + SWR + in-flight dedup. Rejections aren't stored, but
@@ -63,16 +51,18 @@ hits.define(
     serialize: ({ chainId, address }: SourcifyKey) => `${chainId}:${address.toLowerCase()}`,
   },
   async ({ chainId, address }: SourcifyKey): Promise<SourcifyHit> => {
-    const res = await fetch(`${SOURCIFY_URL}/files/any/${chainId}/${address.toLowerCase()}`, {
-      signal: AbortSignal.timeout(10_000),
-    })
+    const res = await fetch(
+      `${SOURCIFY_URL}/v2/contract/${chainId}/${address.toLowerCase()}?fields=abi,compilation`,
+      { signal: AbortSignal.timeout(10_000) },
+    )
     if (res.status === 404) throw new NotFoundError()
     if (!res.ok) throw new UpstreamError('sourcify', res.status)
 
-    const body = (await res.json()) as { files?: SourcifyFile[] }
-    const extracted = extractAbi(body.files)
-    if (!extracted) throw new NotFoundError()
-    return extracted
+    const body = (await res.json()) as SourcifyV2Response
+    if (!body.abi || !Array.isArray(body.abi) || body.abi.length === 0) {
+      throw new NotFoundError()
+    }
+    return { abi: body.abi, contractName: body.compilation?.name }
   },
 )
 
