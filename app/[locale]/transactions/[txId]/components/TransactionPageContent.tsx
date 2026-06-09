@@ -1,12 +1,12 @@
 'use client'
 
-import { Flex, Heading, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Flex, Heading, Skeleton, Stack, Switch, Text } from '@chakra-ui/react'
 import Image from 'next/image'
 import { usePathname, useRouter, useSearchParams, type ReadonlyURLSearchParams } from 'next/navigation'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TransactionInsight } from '@/components/TransactionInsights'
-import { TxStatusBadge } from '@/components/TxStatus'
+import { TransactionOverview } from '@/components/TransactionOverview'
 import { TransactionViews } from '@/components/TransactionViews'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
@@ -18,7 +18,7 @@ import { useRedirectOnNotFound } from '@/hooks/useRedirectOnNotFound'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
 import { type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { TransactionDetailsView, TransactionStatus } from '@/lib/types'
+import { TransactionDetailsView } from '@/lib/types'
 import { getNetworkNameFromSearchParams } from '@/lib/utils/network'
 import { useTransaction, useTransactionReceipt } from '@/services/thor/transaction'
 
@@ -82,29 +82,51 @@ const TransactionDetails = ({
   const { t } = useTranslation()
   const formatDate = useFormatDate()
   const formatNumber = useFormatNumber()
-  const status = receipt
-    ? receipt.reverted
-      ? TransactionStatus.REVERTED
-      : TransactionStatus.SUCCESS
-    : TransactionStatus.PENDING
+  // Expert mode reveals the technical-details grid, fees/gas breakdown, the
+  // Raw/Decoded toggle on each clause's input data, and the topics + data hex
+  // under every event. Default is the lean meaningful view.
+  const [expert, setExpert] = useState(false)
 
   const viewOptions: ToggleOption<TransactionDetailsView>[] = useMemo(
     () => [
-      { value: TransactionDetailsView.CLAUSES, label: t('Clauses') },
-      { value: TransactionDetailsView.EVENTS, label: t('Events') },
+      { value: TransactionDetailsView.CLAUSES, label: `${t('Clauses')} (${transaction.clauses.length})` },
+      { value: TransactionDetailsView.EVENTS, label: `${t('Events')} (${countEvents(receipt)})` },
     ],
-    [t],
+    [t, transaction.clauses.length, receipt],
   )
 
   return (
     <Stack gap="8">
       <Card variant="primary">
         <Stack gap="3">
-          <Flex alignItems="flex-start" justifyContent="space-between" gap="4">
-            <Heading as="h2" textStyle="displayXs">
-              {t('Transaction')}
-            </Heading>
-            <TxStatusBadge status={status} flexShrink={0} />
+          <Flex alignItems="center" justifyContent="space-between" gap="4" flexWrap="wrap">
+            <Flex alignItems="center" gap="4" flexWrap="wrap">
+              <Heading as="h2" textStyle="displayXs">
+                {t('Transaction')}
+              </Heading>
+            </Flex>
+
+            <Flex alignItems="center" gap="4" flexWrap="wrap">
+              <Switch.Root
+                checked={expert}
+                onCheckedChange={e => setExpert(e.checked)}
+                size="sm"
+                aria-label={t('Expert mode')}
+              >
+                <Switch.HiddenInput />
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+                <Switch.Label>
+                  <Text textStyle="bodyS" color="text-secondary">
+                    <Text as="span" fontWeight="medium" color="text-primary">
+                      {t('Expert')}
+                    </Text>{' '}
+                    {t('mode')}
+                  </Text>
+                </Switch.Label>
+              </Switch.Root>
+            </Flex>
           </Flex>
           <IDChip value={transaction.id} />
         </Stack>
@@ -140,13 +162,15 @@ const TransactionDetails = ({
           }
         />
 
-        <TransactionInsight transaction={transaction} receipt={receipt} networkName={networkName} />
+        <TransactionOverview transaction={transaction} receipt={receipt} networkName={networkName} />
+
+        <TransactionInsight transaction={transaction} receipt={receipt} networkName={networkName} expert={expert} />
       </Card>
 
       <Card variant="primary" id={DETAILS_CARD_ID}>
         <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gap="4">
           <Heading as="h2" textStyle="displayXs">
-            {view === TransactionDetailsView.EVENTS ? t('Events') : `${t('Clauses')} (${transaction.clauses.length})`}
+            {t('Activity')}
           </Heading>
 
           <ToggleGroup
@@ -158,10 +182,15 @@ const TransactionDetails = ({
           />
         </Flex>
 
-        <TransactionViews transaction={transaction} receipt={receipt} view={view} />
+        <TransactionViews transaction={transaction} receipt={receipt} view={view} expert={expert} />
       </Card>
     </Stack>
   )
+}
+
+const countEvents = (receipt: TransactionReceipt | null): number => {
+  if (!receipt) return 0
+  return receipt.outputs.reduce((sum, o) => sum + o.events.length, 0)
 }
 
 const DETAILS_CARD_ID = 'transaction-details'

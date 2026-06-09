@@ -1,73 +1,89 @@
 'use client'
 
-import { ABIEvent, Hex } from '@vechain/sdk-core'
-import type { Abi } from 'viem'
+import { useMemo } from 'react'
 import z from 'zod'
-import type { RawEvent } from '@/lib/schemas'
+import {
+  decodeEventLog as decodeEventLogFromAbi,
+  signatureToEventItem,
+} from '@/lib/abi-registry'
+import type { HexString, RawEvent } from '@/lib/schemas'
 import { addressStringSchema, EventType, rawEventSchema } from '@/lib/schemas'
 import * as abi from '@/lib/schemas/abi'
 import { zodParse } from '@/lib/utils/zod'
-import { useAbi } from '@/services/b32'
+import { useDecodedSelector } from '@/services/selector-decoder'
+import { useResolvedAbi } from '@/services/sourcify'
 
 export const useDecodeEvent = (rawEvent: RawEvent) => {
-  const [signature] = rawEvent.topics
+  const topic0 = rawEvent.topics[0] as HexString | undefined
 
-  const { data: abi, ...rest } = useAbi(signature)
+  // 1. Address-aware: emitter's known/Sourcify ABI.
+  const { data: resolved, isFetching: resolvedFetching } = useResolvedAbi(rawEvent.address)
+  const resolvedDecoded = useMemo(() => {
+    if (!resolved?.abi || !topic0) return null
+    return decodeEventLogFromAbi(resolved.abi, { topics: rawEvent.topics as HexString[], data: rawEvent.data })
+  }, [resolved, rawEvent, topic0])
 
-  return { event: parseEvent(abi, rawEvent), ...rest }
-}
+  // 2. Selector decoder: server-side b32 → OpenChain fallback in one call.
+  const skipSelectorLookup = resolvedDecoded !== null || resolvedFetching
+  const { data: selectorResult, isFetching: selectorFetching } = useDecodedSelector(
+    'event',
+    skipSelectorLookup ? null : (topic0 ?? null),
+  )
 
-const parseEvent = (abi: Abi | undefined, rawEvent: RawEvent): ParsedEvent => {
-  const parsedRawEvent = parsedRawEventSchema.parse({
-    type: EventType.RAW,
-    raw: rawEvent,
-  })
+  const selectorDecoded = useMemo(() => {
+    if (resolvedDecoded || !selectorResult || !topic0) return null
 
-  if (!abi) {
-    return parsedRawEvent
-  }
-
-  const [signature] = rawEvent.topics
-
-  for (const abiItem of abi) {
-    if (abiItem.type === 'event') {
-      try {
-        const eventAbi = new ABIEvent(abiItem)
-
-        if (eventAbi.signatureHash === signature) {
-          const { args } = eventAbi.decodeEventLog({
-            data: Hex.of(rawEvent.data),
-            topics: rawEvent.topics.map(topic => Hex.of(topic)),
-          })
-
-          const data = {
-            address: rawEvent.address,
-            signature: eventAbi.format(),
-            signatureHash: eventAbi.signatureHash,
-            name: eventAbi.signature.name,
-            inputs: eventAbi.signature.inputs,
-            args,
-          }
-
-          const decoded = zodParse({
-            data,
-            schema: decodedEventSchema,
-            errorMessage: 'Failed to parse decoded event',
-          })
-
-          return {
-            type: EventType.DECODED,
-            raw: parsedRawEvent.raw,
-            decoded,
-          }
-        }
-      } catch {
-        return parsedRawEvent
-      }
+    // b32 fragments come with indexed annotations intact — decode directly.
+    if (selectorResult.source === 'b32') {
+      return decodeEventLogFromAbi([selectorResult.abi], {
+        topics: rawEvent.topics as HexString[],
+        data: rawEvent.data,
+      })
     }
-  }
 
-  return parsedRawEvent
+    // OpenChain returns a bare signature. Try the canonical OZ "indexed
+    // first" layout, then fall back to "indexed at the end" — the API
+    // doesn't tell us which params are indexed.
+    const numIndexed = rawEvent.topics.length - 1
+    const candidates = [
+      signatureToEventItem(selectorResult.signature, numIndexed, false),
+      signatureToEventItem(selectorResult.signature, numIndexed, true),
+    ]
+    for (const item of candidates) {
+      if (!item) continue
+      const decoded = decodeEventLogFromAbi([item], { topics: rawEvent.topics as HexString[], data: rawEvent.data })
+      if (decoded) return decoded
+    }
+    return null
+  }, [resolvedDecoded, selectorResult, rawEvent, topic0])
+
+  const decoded = resolvedDecoded ?? selectorDecoded
+
+  const event: ParsedEvent = useMemo(() => {
+    const parsedRaw = parsedRawEventSchema.parse({ type: EventType.RAW, raw: rawEvent })
+    if (!decoded) return parsedRaw
+    const decodedPayload = zodParse({
+      data: {
+        address: rawEvent.address,
+        signature: decoded.signature,
+        signatureHash: decoded.signatureHash,
+        name: decoded.name,
+        inputs: decoded.inputs,
+        args: decoded.args,
+      },
+      schema: decodedEventSchema,
+      errorMessage: 'Failed to parse decoded event',
+    })
+    return { type: EventType.DECODED, raw: parsedRaw.raw, decoded: decodedPayload }
+  }, [decoded, rawEvent])
+
+  // Only treat the hook as "pending" when a request is genuinely in flight.
+  // skipToken keeps a query in status='pending' indefinitely, so the older
+  // `isPending` aggregation never went false once any branch was skipped.
+  return {
+    event,
+    isPending: resolvedFetching || selectorFetching,
+  }
 }
 
 const decodedEventSchema = z.object({
