@@ -28,10 +28,9 @@ export interface SourcifyAbiResponse {
   contractName?: string
 }
 
-// Verified ABIs are immutable per (chainId, address); cache aggressively.
-const SUCCESS_CACHE_CONTROL = 'public, s-maxage=604800, stale-while-revalidate=2592000, max-age=86400'
-// 30-min server window with a 1-day SWR — a freshly-verified contract surfaces
-// in under an hour while we still absorb the load when it's not yet verified.
+// 1-day TTL on success, 30-min on 404. Aligns Sourcify with the other two
+// proxies so cache behaviour is uniform and easy to reason about.
+const SUCCESS_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=604800, max-age=3600'
 const NOT_FOUND_CACHE_CONTROL = 'public, s-maxage=1800, stale-while-revalidate=86400, max-age=300'
 
 const extractAbi = (files: SourcifyFile[]): SourcifyAbiResponse | null => {
@@ -73,7 +72,7 @@ export async function GET(request: NextRequest) {
     // call `revalidateTag('sourcify')` if we ever need to purge.
     const response = await fetch(`${SOURCIFY_URL}/files/any/${chainId}/${address.toLowerCase()}`, {
       signal: AbortSignal.timeout(10_000),
-      next: { revalidate: 604_800, tags: ['sourcify'] },
+      next: { revalidate: 86_400, tags: ['sourcify'] },
     })
 
     if (response.status === 404) {

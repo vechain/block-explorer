@@ -12,12 +12,9 @@ interface OpenChainResponse {
   }
 }
 
-// hash → canonical signature is a cryptographic fact; once OpenChain knows
-// a hash, it always returns the same answer. Long TTL on successes is safe.
-const ALL_HITS_CACHE_CONTROL = 'public, s-maxage=604800, stale-while-revalidate=2592000, max-age=86400'
-// When at least one hash returned null, use the short TTL so newly indexed
-// selectors / topics surface within ~30 min instead of being stuck as "no
-// match" for a week.
+// 1-day TTL when every hash resolved, 30-min when any came back null so
+// newly indexed selectors / topics still surface inside an hour.
+const ALL_HITS_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=604800, max-age=3600'
 const PARTIAL_OR_MISS_CACHE_CONTROL = 'public, s-maxage=1800, stale-while-revalidate=86400, max-age=300'
 
 // OpenChain returns multiple matches per hash (selector collisions). Drop
@@ -83,7 +80,7 @@ export async function GET(request: NextRequest) {
         // chunk granularity; identical query strings hit the cache.
         const response = await fetch(url, {
           signal: AbortSignal.timeout(10_000),
-          next: { revalidate: 604_800, tags: ['openchain'] },
+          next: { revalidate: 86_400, tags: ['openchain'] },
         })
         if (!response.ok) return
         const body = (await response.json()) as OpenChainResponse

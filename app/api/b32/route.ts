@@ -4,8 +4,9 @@ import { B32_URL } from '@/env.api'
 import { createErrorResponse } from '@/lib/api/index'
 
 // b32 is community-curated and entries can be added / corrected over time —
-// 1 day balances staleness against rate-limit pressure on the upstream.
-const SUCCESS_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=604800, max-age=3600'
+// a 1-hour success TTL lets corrections propagate quickly while still
+// absorbing the bulk of repeat lookups.
+const SUCCESS_CACHE_CONTROL = 'public, s-maxage=3600, stale-while-revalidate=86400, max-age=600'
 const NOT_FOUND_CACHE_CONTROL = 'public, s-maxage=1800, stale-while-revalidate=86400, max-age=300'
 
 const withCacheControl = (response: NextResponse, value: string): NextResponse => {
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     // from Next's data cache on repeats within the TTL.
     const response = await fetch(`${B32_URL}/q/${signature}.json`, {
       signal: AbortSignal.timeout(10_000),
-      next: { revalidate: 86_400, tags: ['b32'] },
+      next: { revalidate: 3_600, tags: ['b32'] },
     })
 
     if (response.status === 404) {
