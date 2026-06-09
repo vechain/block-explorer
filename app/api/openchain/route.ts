@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { type NextRequest, NextResponse } from 'next/server'
 import { OPENCHAIN_URL } from '@/env.api'
 import { createErrorResponse } from '@/lib/api/index'
@@ -12,10 +13,11 @@ interface OpenChainResponse {
   }
 }
 
-// 1-day TTL when every hash resolved, 30-min when any came back null so
-// newly indexed selectors / topics still surface inside an hour.
+// 1-day TTL when every hash resolved, 5-min when any came back null so
+// newly-indexed selectors / topics surface quickly. Per-chunk 429s are
+// evicted from Next's data cache below so they don't poison the store.
 const ALL_HITS_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=604800, max-age=3600'
-const PARTIAL_OR_MISS_CACHE_CONTROL = 'public, s-maxage=1800, stale-while-revalidate=86400, max-age=300'
+const PARTIAL_OR_MISS_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=86400, max-age=300'
 
 // OpenChain returns multiple matches per hash (selector collisions). Drop
 // auto-generated `filtered` entries; take the first remaining hit — the API
@@ -77,11 +79,18 @@ export async function GET(request: NextRequest) {
         const url = `${OPENCHAIN_URL}?${params.toString()}`
         // Same chunk URL → same Next data cache entry. Different callers
         // querying overlapping hash sets get partial cache reuse via the
-        // chunk granularity; identical query strings hit the cache.
+        // chunk granularity; identical query strings hit the cache. The
+        // per-chunk tag lets us evict just this chunk on 429.
+        const entryTag = `openchain:${url}`
         const response = await fetch(url, {
           signal: AbortSignal.timeout(10_000),
-          next: { revalidate: 86_400, tags: ['openchain'] },
+          next: { revalidate: 86_400, tags: ['openchain', entryTag] },
         })
+        if (response.status === 429) {
+          // Don't let this chunk's 429 sit in Next's data cache for a day.
+          revalidateTag(entryTag)
+          return
+        }
         if (!response.ok) return
         const body = (await response.json()) as OpenChainResponse
         if (!body?.ok || !body.result) return

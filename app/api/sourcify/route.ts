@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache'
 import { type NextRequest, NextResponse } from 'next/server'
 import type { Abi } from 'viem'
 import { SOURCIFY_URL } from '@/env.api'
@@ -28,10 +29,11 @@ export interface SourcifyAbiResponse {
   contractName?: string
 }
 
-// 1-day TTL on success, 30-min on 404. Aligns Sourcify with the other two
-// proxies so cache behaviour is uniform and easy to reason about.
+// 1-day TTL on success, 5-min on 404 so freshly-verified contracts surface
+// quickly. 429s are evicted from Next's data cache (see below) and returned
+// with `no-store` so they never sit in any cache layer.
 const SUCCESS_CACHE_CONTROL = 'public, s-maxage=86400, stale-while-revalidate=604800, max-age=3600'
-const NOT_FOUND_CACHE_CONTROL = 'public, s-maxage=1800, stale-while-revalidate=86400, max-age=300'
+const NOT_FOUND_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=86400, max-age=300'
 
 const extractAbi = (files: SourcifyFile[]): SourcifyAbiResponse | null => {
   const metadataFile = files.find(f => f.name === 'metadata.json' || (f.path && f.path.endsWith('/metadata.json')))
@@ -68,13 +70,21 @@ export async function GET(request: NextRequest) {
     // `next: { revalidate, tags }` puts the upstream response in Next's data
     // cache (.next/cache/fetch-cache under output: 'standalone'). Repeat
     // requests for the same (chainId, address) inside the TTL are served
-    // without touching Sourcify. The tag lets a future maintenance route
-    // call `revalidateTag('sourcify')` if we ever need to purge.
+    // without touching Sourcify. The per-entry tag lets us evict just this
+    // address on 429 below; the route-wide tag is left in for future
+    // maintenance purges via `revalidateTag('sourcify')`.
+    const entryTag = `sourcify:${chainId}:${address.toLowerCase()}`
     const response = await fetch(`${SOURCIFY_URL}/files/any/${chainId}/${address.toLowerCase()}`, {
       signal: AbortSignal.timeout(10_000),
-      next: { revalidate: 86_400, tags: ['sourcify'] },
+      next: { revalidate: 86_400, tags: ['sourcify', entryTag] },
     })
 
+    if (response.status === 429) {
+      // Evict the just-cached 429 so the next request retries upstream
+      // rather than serving a stale rate-limit for 24h.
+      revalidateTag(entryTag)
+      return withCacheControl(createErrorResponse({ status: 502, message: 'Sourcify rate-limited' }), 'no-store')
+    }
     if (response.status === 404) {
       return withCacheControl(
         createErrorResponse({ status: 404, message: 'Contract not verified on Sourcify' }),
