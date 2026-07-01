@@ -5,8 +5,10 @@ import { useTranslation } from 'react-i18next'
 import { NotFound } from '@/components/error/NotFound'
 import { Card } from '@/components/ui/Card'
 import type { AddressString } from '@/lib/schemas'
+import { useAgentRegistration } from '@/services/agent-nft/hooks'
 import { parseNftMetadataUri, useNftMetadata } from '@/services/nft-metadata'
 import { useErc721Contract, useErc721Token } from '@/services/thor/tokens/erc721'
+import { AgentNftView } from './agent/AgentNftView'
 import { NftDetailHeader } from './NftDetailHeader'
 import { NftStatsCards } from './NftStatsCards'
 import { NftDetailsSection } from './NftDetailsSection'
@@ -27,8 +29,11 @@ export const NftDetailPageContent = ({
     tokenId,
   })
   const { data: metadata, isPending: isMetadataPending } = useNftMetadata(token?.tokenUri ?? '')
+  const { data: agentRegistration, isPending: isAgentRegistrationPending } = useAgentRegistration({
+    tokenUri: token?.tokenUri,
+  })
 
-  const isPending = isCollectionPending || isTokenPending
+  const isPending = isCollectionPending || isTokenPending || (!!token?.tokenUri && isAgentRegistrationPending)
 
   if (isPending) {
     return (
@@ -44,6 +49,21 @@ export const NftDetailPageContent = ({
 
   const nftImage = metadata?.image ? parseNftMetadataUri(metadata.image) : '/no-image.png'
   const nftName = metadata?.name || `#${tokenId.toString()}`
+
+  // Agent NFTs (ERC-8004 registration file at tokenURI) get a dedicated tabbed view.
+  if (agentRegistration) {
+    const agentImage = agentRegistration.image ? parseNftMetadataUri(agentRegistration.image) : nftImage
+    return (
+      <AgentNftView
+        contractAddress={contractAddress}
+        tokenId={tokenId}
+        collection={collection}
+        registration={agentRegistration}
+        nftImage={agentImage}
+        tokenUri={token?.tokenUri}
+      />
+    )
+  }
 
   return (
     <Card variant="primary">
