@@ -186,6 +186,54 @@ export const useErc721CollectionStats = ({ contractAddress }: { contractAddress:
   })
 }
 
+const ERC165_ABI = [
+  {
+    inputs: [{ internalType: 'bytes4', name: 'interfaceId', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const
+
+// ERC-165 interface id for ERC-721 (see EIP-721).
+const ERC721_INTERFACE_ID = '0x80ac58cd'
+const IS_ERC721_QUERY_KEY = 'getIsErc721'
+
+/**
+ * Detects whether a contract is an ERC-721 by calling ERC-165 `supportsInterface`.
+ * Unlike bytecode sniffing, this works through proxies (the call is executed by the
+ * implementation), which is how most modern NFT collections are deployed.
+ */
+const getIsErc721 = async (networkName: NetworkName, contractAddress: AddressString): Promise<boolean> => {
+  if (contractAddress === ZERO_ADDRESS) return false
+
+  try {
+    const thorClient = getThorClient(networkName)
+    const contract = thorClient.contracts.load(contractAddress, ERC165_ABI)
+    const [supported] = await contract.read.supportsInterface(ERC721_INTERFACE_ID)
+    return Boolean(supported)
+  } catch {
+    return false
+  }
+}
+
+export const useIsErc721 = ({
+  contractAddress,
+  enabled = true,
+}: {
+  contractAddress: AddressString
+  enabled?: boolean
+}) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery({
+    queryKey: [IS_ERC721_QUERY_KEY, activeNetwork.name, contractAddress],
+    queryFn: () => getIsErc721(activeNetwork.name, contractAddress),
+    staleTime: Infinity,
+    enabled,
+  })
+}
+
 type Erc721Mint = {
   tokenId: bigint
   to: AddressString
