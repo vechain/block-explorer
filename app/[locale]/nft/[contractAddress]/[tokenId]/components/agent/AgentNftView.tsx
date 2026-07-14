@@ -4,12 +4,15 @@ import { Badge, Flex, Grid, Heading, Stack, Tabs } from '@chakra-ui/react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import type { AddressString } from '@/lib/schemas'
+import type { NftMetadata } from '@/services/nft-metadata'
 import { useAgentCard } from '@/services/agent-nft/hooks'
 import { type AgentRegistration, getAgentCardEndpoint } from '@/services/agent-nft/schemas'
 import type { Erc721 } from '@/services/thor/tokens/erc721'
 import { useAgentInfo } from '@/services/thor/tokens/agent-registry'
 import { useAgentReputation } from '@/services/thor/tokens/reputation-registry'
 import { NftDetailHeader } from '../NftDetailHeader'
+import { NftDetailsSection } from '../NftDetailsSection'
+import { NftStatsCards } from '../NftStatsCards'
 import { NftTransfersSection } from '../NftTransfersSection'
 import { OverviewTab } from './tabs/OverviewTab'
 import { ServicesTab } from './tabs/ServicesTab'
@@ -25,6 +28,7 @@ interface AgentNftViewProps {
   registration: AgentRegistration
   nftImage: string
   tokenUri: string | undefined
+  metadata: NftMetadata | null | undefined
 }
 
 export const AgentNftView = ({
@@ -34,6 +38,7 @@ export const AgentNftView = ({
   registration,
   nftImage,
   tokenUri,
+  metadata,
 }: AgentNftViewProps) => {
   const { t } = useTranslation()
 
@@ -71,6 +76,8 @@ export const AgentNftView = ({
         />
 
         <Stack gap={4} flex={1} minWidth={0}>
+          <NftStatsCards contractAddress={contractAddress} tokenId={tokenId} />
+
           <Tabs.Root defaultValue="overview" variant="line" lazyMount unmountOnExit>
             <Tabs.List overflowX="auto" flexWrap="nowrap">
               <Tabs.Trigger value="overview">{t('Overview')}</Tabs.Trigger>
@@ -78,6 +85,7 @@ export const AgentNftView = ({
               <Tabs.Trigger value="statistics">{t('Statistics')}</Tabs.Trigger>
               <Tabs.Trigger value="quality">{t('Quality')}</Tabs.Trigger>
               <Tabs.Trigger value="feedback">{t('Feedback')}</Tabs.Trigger>
+              <Tabs.Trigger value="nft">{t('NFT')}</Tabs.Trigger>
               <Tabs.Trigger value="metadata">{t('Metadata')}</Tabs.Trigger>
             </Tabs.List>
 
@@ -106,6 +114,14 @@ export const AgentNftView = ({
                 reputation={reputation}
                 isPending={isReputationPending}
                 hasReputationRegistry={hasReputationRegistry}
+              />
+            </Tabs.Content>
+            <Tabs.Content value="nft">
+              <NftDetailsSection
+                collection={collection}
+                contractAddress={contractAddress}
+                tokenId={tokenId}
+                metadata={metadata}
               />
             </Tabs.Content>
             <Tabs.Content value="metadata">

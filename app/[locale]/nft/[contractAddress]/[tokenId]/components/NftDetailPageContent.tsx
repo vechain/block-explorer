@@ -61,6 +61,7 @@ export const NftDetailPageContent = ({
         registration={agentRegistration}
         nftImage={agentImage}
         tokenUri={token?.tokenUri}
+        metadata={metadata}
       />
     )
   }
