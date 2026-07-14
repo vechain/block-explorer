@@ -1,6 +1,7 @@
 'use client'
 
-import { Box, Flex, Skeleton, Stack, Text, useBreakpointValue } from '@chakra-ui/react'
+import { Box, Flex, Link as ChakraLink, Skeleton, Stack, Text, useBreakpointValue } from '@chakra-ui/react'
+import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { InputData as InputDataType } from '@/hooks/useDecodeInputData'
@@ -220,6 +221,30 @@ interface ParamRow {
   type: string
   value: string
   indexed?: boolean
+  /** When set, the value renders as a link to this href (e.g. an NFT token page). */
+  href?: string
+}
+
+const ParamValue = ({ value, href }: { value: string; href?: string }) => {
+  if (href) {
+    return (
+      <ChakraLink
+        asChild
+        fontFamily="mono"
+        fontSize="xs"
+        color="text-link"
+        wordBreak="break-all"
+        _hover={{ textDecoration: 'underline' }}
+      >
+        <Link href={href}>{value}</Link>
+      </ChakraLink>
+    )
+  }
+  return (
+    <Text fontFamily="mono" fontSize="xs" color="text-primary" wordBreak="break-all">
+      {value}
+    </Text>
+  )
 }
 
 export const ParamRows = ({
@@ -264,9 +289,7 @@ export const ParamRows = ({
                 )}
               </Flex>
             </Flex>
-            <Text fontFamily="mono" fontSize={'xs'} color="text-primary" wordBreak="break-all">
-              {row.value}
-            </Text>
+            <ParamValue value={row.value} href={row.href} />
           </Box>
         ))}
       </Stack>
@@ -331,9 +354,7 @@ export const ParamRows = ({
               )}
             </Flex>
           )}
-          <Text fontFamily="mono" fontSize={'xs'} color="text-primary" wordBreak="break-all">
-            {row.value}
-          </Text>
+          <ParamValue value={row.value} href={row.href} />
         </Box>
       ))}
     </Box>

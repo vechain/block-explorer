@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ErrorBoundary } from '@/components/ui-legacy/ErrorBoundary'
 import { useContractName } from '@/hooks/useContractName'
 import { type DecodedEvent, useDecodeEvent } from '@/hooks/useDecodeEvent'
+import { useNetworkAwareHref } from '@/hooks/useNetworkAwareHref'
 import { formatArgForDisplay } from '@/lib/abi-registry'
 import { EventType, type HexString, type RawEvent } from '@/lib/schemas'
 import { CopyableAddressLink } from './ui/Links'
@@ -168,6 +169,25 @@ const EventCardSkeleton = () => {
   )
 }
 
+// ERC-721 `Transfer(from, to, tokenId)` has the tokenId param *indexed*, whereas
+// an ERC-20 `Transfer(from, to, value)` does not — that flag lets us tell them
+// apart from the decoded ABI alone, without an extra chain call.
+export const detectErc721Transfer = (event: DecodedEvent): { key: string; tokenId: string } | null => {
+  if (event.name !== 'Transfer') return null
+  const indexedCount = event.inputs.filter(input => input.indexed).length
+  if (indexedCount < 3) return null
+
+  const index = event.inputs.findIndex(input => input.indexed && /^uint\d*$/.test(input.type))
+  if (index === -1) return null
+
+  const key = event.inputs[index].name || String(index)
+  const raw = event.args[key]
+  const tokenId = typeof raw === 'bigint' ? raw.toString() : String(raw ?? '')
+  if (!/^\d+$/.test(tokenId)) return null
+
+  return { key, tokenId }
+}
+
 const DecodedEventBody = ({
   event,
   isMobile,
@@ -178,6 +198,9 @@ const DecodedEventBody = ({
   expert: boolean
 }) => {
   const { t } = useTranslation()
+
+  const nftTransfer = useMemo(() => (event ? detectErc721Transfer(event) : null), [event])
+  const tokenHref = useNetworkAwareHref(nftTransfer && event ? `/nft/${event.address}/${nftTransfer.tokenId}` : '')
 
   if (!event) {
     return (
@@ -201,12 +224,16 @@ const DecodedEventBody = ({
     <ParamRows
       isMobile={isMobile}
       showType={expert}
-      rows={event.inputs.map((input, index) => ({
-        name: input.name ?? String(index),
-        type: input.type,
-        indexed: input.indexed ?? false,
-        value: formatArgForDisplay(event.args[input.name || String(index)]) || 'N/A',
-      }))}
+      rows={event.inputs.map((input, index) => {
+        const key = input.name || String(index)
+        return {
+          name: input.name ?? String(index),
+          type: input.type,
+          indexed: input.indexed ?? false,
+          value: formatArgForDisplay(event.args[key]) || 'N/A',
+          href: nftTransfer?.key === key ? tokenHref : undefined,
+        }
+      })}
     />
   )
 }
