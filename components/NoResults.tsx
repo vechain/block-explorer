@@ -52,6 +52,13 @@ export const NoTokenTransfers = () => {
   )
 }
 
+export const NoMints = () => {
+  const { t } = useTranslation()
+  return (
+    <EmptyStateContainer icon={<LuCoins />} title={t('No tokens')} description={t('No tokens have been minted yet')} />
+  )
+}
+
 export const NoBlocks = () => {
   const { t } = useTranslation()
   return (

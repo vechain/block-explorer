@@ -185,3 +185,68 @@ export const useErc721CollectionStats = ({ contractAddress }: { contractAddress:
     staleTime: 5 * 60_000,
   })
 }
+
+type Erc721Mint = {
+  tokenId: bigint
+  to: AddressString
+  txId: string
+  blockNumber: number
+  blockTimestamp: number
+}
+
+const ERC721_RECENT_MINTS_QUERY_KEY = 'getErc721RecentMints'
+
+/**
+ * Fetches the most recently minted tokens of an ERC-721 collection directly from the node by
+ * reading `Transfer` event logs where `from` is the zero address (i.e. mints), newest first.
+ * Sourced on-chain rather than via the indexer because the indexer has no per-collection endpoint.
+ */
+const getErc721RecentMints = async (
+  networkName: NetworkName,
+  contractAddress: AddressString,
+  limit: number,
+): Promise<Erc721Mint[]> => {
+  if (contractAddress === ZERO_ADDRESS) return []
+
+  const thorClient = getThorClient(networkName)
+  const contract = thorClient.contracts.load(contractAddress, ERC721_ABI)
+  const mintCriteria = contract.criteria.Transfer({ from: ZERO_ADDRESS })
+
+  const logs = await thorClient.logs.filterEventLogs({
+    criteriaSet: [mintCriteria],
+    order: 'desc',
+    options: { offset: 0, limit },
+  })
+
+  return logs.reduce<Erc721Mint[]>((acc, log) => {
+    const [, to, tokenId] = (log.decodedData ?? []) as [unknown, string, bigint]
+    if (to === undefined || tokenId === undefined) return acc
+
+    acc.push({
+      tokenId: BigInt(tokenId),
+      to: to as AddressString,
+      txId: log.meta.txID,
+      blockNumber: log.meta.blockNumber,
+      blockTimestamp: log.meta.blockTimestamp,
+    })
+    return acc
+  }, [])
+}
+
+export const useErc721RecentMints = ({
+  contractAddress,
+  limit = 10,
+  enabled = true,
+}: {
+  contractAddress: AddressString
+  limit?: number
+  enabled?: boolean
+}) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery({
+    queryKey: [ERC721_RECENT_MINTS_QUERY_KEY, activeNetwork.name, contractAddress, limit],
+    queryFn: () => getErc721RecentMints(activeNetwork.name, contractAddress, limit),
+    enabled,
+    staleTime: 30_000,
+  })
+}
