@@ -18,22 +18,20 @@ import { TransfersTable } from '@/components/TransfersTable'
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
 
 type EventType = 'FUNGIBLE_TOKEN' | 'NFT' | TokenSymbol.VET
-type TransfersFilterKey = TokenFilterKey | 'NFT'
 
 export const AccountTokenTransfersSection = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
-  const [selectedToken, setSelectedToken] = useState<TransfersFilterKey>('ALL')
+  const [selectedToken, setSelectedToken] = useState<TokenFilterKey>('ALL')
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[0])
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
 
-  const tokenFilterOptions: ToggleOption<TransfersFilterKey>[] = [
+  const tokenFilterOptions: ToggleOption<TokenFilterKey>[] = [
     { value: 'ALL', label: t('All') },
     { value: TokenSymbol.VET, label: t('VET') },
     { value: TokenSymbol.VTHO, label: t('VTHO') },
     { value: TokenSymbol.B3TR, label: t('B3TR') },
     { value: TokenSymbol.VOT3, label: t('VOT3') },
-    { value: 'NFT', label: t('NFT') },
   ]
 
   const { tokenAddress, eventType } = useMemo((): {
@@ -43,8 +41,6 @@ export const AccountTokenTransfersSection = ({ address }: { address: AddressStri
     switch (selectedToken) {
       case TokenSymbol.VET:
         return { tokenAddress: undefined, eventType: TokenSymbol.VET }
-      case 'NFT':
-        return { tokenAddress: undefined, eventType: 'NFT' }
       case TokenSymbol.VTHO:
       case TokenSymbol.B3TR:
       case TokenSymbol.VOT3:
@@ -67,7 +63,7 @@ export const AccountTokenTransfersSection = ({ address }: { address: AddressStri
     },
   })
 
-  const handleTokenChange = (token: TransfersFilterKey) => {
+  const handleTokenChange = (token: TokenFilterKey) => {
     setSelectedToken(token)
     setPage(0)
   }
