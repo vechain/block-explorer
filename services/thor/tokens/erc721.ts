@@ -289,7 +289,10 @@ const getErc721RecentMints = async (
       to: to as AddressString,
       txId: log.meta.txID,
       blockNumber: log.meta.blockNumber,
-      blockTimestamp: log.meta.blockTimestamp,
+      // The node returns block timestamps in seconds; the rest of the app works in
+      // milliseconds (indexer responses are normalised via timestampSchema), so
+      // convert here to match what AgeText / date formatters expect.
+      blockTimestamp: log.meta.blockTimestamp * 1000,
     })
     return acc
   }, [])
