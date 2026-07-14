@@ -1,7 +1,10 @@
 'use client'
 
-import { Badge, Box, Flex, Image, Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Badge, Box, Flex, Image, Link as ChakraLink, Skeleton, Stack, Text } from '@chakra-ui/react'
+import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
+import { useNetworkAwareHref } from '@/hooks/useNetworkAwareHref'
+import type { AddressString } from '@/lib/schemas'
 import type { Erc721 } from '@/services/thor/tokens/erc721'
 import { truncateString } from '@/lib/utils/truncateString'
 
@@ -10,6 +13,7 @@ interface NftDetailHeaderProps {
   nftName: string
   tokenId: bigint
   collection: Erc721
+  contractAddress: AddressString
   description?: string
   isMetadataPending?: boolean
 }
@@ -19,9 +23,11 @@ export const NftDetailHeader = ({
   nftName,
   tokenId,
   collection,
+  contractAddress,
   description,
   isMetadataPending,
 }: NftDetailHeaderProps) => {
+  const collectionHref = useNetworkAwareHref(`/address/${contractAddress}`)
   return (
     <Stack gap={6}>
       <Card variant="tertiary" p={4} position="relative">
@@ -68,9 +74,15 @@ export const NftDetailHeader = ({
       </Card>
 
       <Stack gap={4}>
-        <Text textStyle="bodyL" fontWeight="semibold" color="text-primary">
-          {collection.name}
-        </Text>
+        <ChakraLink
+          asChild
+          color="text-link"
+          textStyle="bodyL"
+          fontWeight="semibold"
+          _hover={{ textDecoration: 'underline' }}
+        >
+          <Link href={collectionHref}>{collection.name}</Link>
+        </ChakraLink>
         {description && (
           <Text textStyle="bodyS" color="text-primary" lineHeight="1.6">
             {description}

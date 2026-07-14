@@ -80,6 +80,7 @@ export const NftDetailPageContent = ({
           nftName={nftName}
           tokenId={tokenId}
           collection={collection}
+          contractAddress={contractAddress}
           description={metadata?.description}
           isMetadataPending={isMetadataPending}
         />

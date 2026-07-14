@@ -9,7 +9,7 @@ import type { AddressString } from '@/lib/schemas'
 import { useAccountTokens } from '@/hooks/useAccountTokens'
 import { useContractName } from '@/hooks/useContractName'
 import { useContractSniff } from '@/hooks/useContractSniff'
-import { useIsErc721 } from '@/services/thor/tokens/erc721'
+import { useIsErc721Contract } from '@/hooks/useIsErc721Contract'
 import { useVnsName } from '@/services/thor/vns'
 import { TokensSection } from './sections/TokensSection'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -23,8 +23,7 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
   const { tokenBalanceRows, tokenValueRows, totalValue, isPendingAll: isPendingAllTokens } = useAccountTokens(address)
   const { name: contractName } = useContractName(address)
   const { data: sniffed } = useContractSniff(address)
-  const { data: isErc721ByInterface } = useIsErc721({ contractAddress: address })
-  const isErc721 = isErc721ByInterface === true || sniffed === 'erc721'
+  const isErc721 = useIsErc721Contract(address)
 
   // Check if this contract is a known token from the registry
   const tokenRegistryEntry = useMemo(

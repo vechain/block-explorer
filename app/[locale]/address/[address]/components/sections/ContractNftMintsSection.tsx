@@ -8,10 +8,10 @@ import { Card } from '@/components/ui/Card'
 import { AgeText } from '@/components/ui/AgeText'
 import { CopyableAddressLink, CopyableTransactionIdLink } from '@/components/ui/Links'
 import { type Column, DataTable, type TableRow, TableSkeleton } from '@/components/ui/Table'
-import { useContractSniff } from '@/hooks/useContractSniff'
+import { useIsErc721Contract } from '@/hooks/useIsErc721Contract'
 import { useNetworkAwareHref } from '@/hooks/useNetworkAwareHref'
 import type { AddressString } from '@/lib/schemas'
-import { useErc721RecentMints, useIsErc721 } from '@/services/thor/tokens/erc721'
+import { useErc721RecentMints } from '@/services/thor/tokens/erc721'
 
 const RECENT_MINTS_LIMIT = 10
 
@@ -37,11 +37,7 @@ interface MintRow extends TableRow {
  */
 export const ContractNftMintsSection = ({ address }: { address: AddressString }) => {
   const { t } = useTranslation()
-  // Detect via ERC-165 (works through proxies) with bytecode sniffing as a fallback
-  // for older collections that predate ERC-165.
-  const { data: isErc721ByInterface } = useIsErc721({ contractAddress: address })
-  const { data: sniffed } = useContractSniff(address)
-  const isErc721 = isErc721ByInterface === true || sniffed === 'erc721'
+  const isErc721 = useIsErc721Contract(address)
 
   const { data: mints, isLoading } = useErc721RecentMints({
     contractAddress: address,

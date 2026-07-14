@@ -66,6 +66,7 @@ export const AgentNftView = ({
           nftName={nftName}
           tokenId={tokenId}
           collection={collection}
+          contractAddress={contractAddress}
           description={registration.description ?? undefined}
         />
 

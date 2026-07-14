@@ -111,11 +111,18 @@ export const useErc721Owner = ({ contractAddress, tokenId }: { contractAddress: 
   return useQuery(erc721OwnerQueryOptions(activeNetwork.name, contractAddress, tokenId))
 }
 
-export const useErc721Contract = ({ contractAddress }: { contractAddress: AddressString }) => {
+export const useErc721Contract = ({
+  contractAddress,
+  enabled = true,
+}: {
+  contractAddress: AddressString
+  enabled?: boolean
+}) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery({
     queryKey: [ERC721_CONTRACT_QUERY_KEY, activeNetwork.name, contractAddress],
     queryFn: () => getErc721Contract(activeNetwork.name, contractAddress),
+    enabled,
   })
 }
 
@@ -177,12 +184,19 @@ const getErc721CollectionStats = async (
   }
 }
 
-export const useErc721CollectionStats = ({ contractAddress }: { contractAddress: AddressString }) => {
+export const useErc721CollectionStats = ({
+  contractAddress,
+  enabled = true,
+}: {
+  contractAddress: AddressString
+  enabled?: boolean
+}) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery({
     queryKey: [ERC721_COLLECTION_STATS_QUERY_KEY, activeNetwork.name, contractAddress],
     queryFn: () => getErc721CollectionStats(activeNetwork.name, contractAddress),
     staleTime: 5 * 60_000,
+    enabled,
   })
 }
 
