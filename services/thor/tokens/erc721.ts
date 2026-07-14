@@ -111,11 +111,18 @@ export const useErc721Owner = ({ contractAddress, tokenId }: { contractAddress: 
   return useQuery(erc721OwnerQueryOptions(activeNetwork.name, contractAddress, tokenId))
 }
 
-export const useErc721Contract = ({ contractAddress }: { contractAddress: AddressString }) => {
+export const useErc721Contract = ({
+  contractAddress,
+  enabled = true,
+}: {
+  contractAddress: AddressString
+  enabled?: boolean
+}) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery({
     queryKey: [ERC721_CONTRACT_QUERY_KEY, activeNetwork.name, contractAddress],
     queryFn: () => getErc721Contract(activeNetwork.name, contractAddress),
+    enabled,
   })
 }
 
@@ -177,11 +184,134 @@ const getErc721CollectionStats = async (
   }
 }
 
-export const useErc721CollectionStats = ({ contractAddress }: { contractAddress: AddressString }) => {
+export const useErc721CollectionStats = ({
+  contractAddress,
+  enabled = true,
+}: {
+  contractAddress: AddressString
+  enabled?: boolean
+}) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery({
     queryKey: [ERC721_COLLECTION_STATS_QUERY_KEY, activeNetwork.name, contractAddress],
     queryFn: () => getErc721CollectionStats(activeNetwork.name, contractAddress),
     staleTime: 5 * 60_000,
+    enabled,
+  })
+}
+
+const ERC165_ABI = [
+  {
+    inputs: [{ internalType: 'bytes4', name: 'interfaceId', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const
+
+// ERC-165 interface id for ERC-721 (see EIP-721).
+const ERC721_INTERFACE_ID = '0x80ac58cd'
+const IS_ERC721_QUERY_KEY = 'getIsErc721'
+
+/**
+ * Detects whether a contract is an ERC-721 by calling ERC-165 `supportsInterface`.
+ * Unlike bytecode sniffing, this works through proxies (the call is executed by the
+ * implementation), which is how most modern NFT collections are deployed.
+ */
+const getIsErc721 = async (networkName: NetworkName, contractAddress: AddressString): Promise<boolean> => {
+  if (contractAddress === ZERO_ADDRESS) return false
+
+  try {
+    const thorClient = getThorClient(networkName)
+    const contract = thorClient.contracts.load(contractAddress, ERC165_ABI)
+    const [supported] = await contract.read.supportsInterface(ERC721_INTERFACE_ID)
+    return Boolean(supported)
+  } catch {
+    return false
+  }
+}
+
+export const useIsErc721 = ({
+  contractAddress,
+  enabled = true,
+}: {
+  contractAddress: AddressString
+  enabled?: boolean
+}) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery({
+    queryKey: [IS_ERC721_QUERY_KEY, activeNetwork.name, contractAddress],
+    queryFn: () => getIsErc721(activeNetwork.name, contractAddress),
+    staleTime: Infinity,
+    enabled,
+  })
+}
+
+type Erc721Mint = {
+  tokenId: bigint
+  to: AddressString
+  txId: string
+  blockNumber: number
+  blockTimestamp: number
+}
+
+const ERC721_RECENT_MINTS_QUERY_KEY = 'getErc721RecentMints'
+
+/**
+ * Fetches the most recently minted tokens of an ERC-721 collection directly from the node by
+ * reading `Transfer` event logs where `from` is the zero address (i.e. mints), newest first.
+ * Sourced on-chain rather than via the indexer because the indexer has no per-collection endpoint.
+ */
+const getErc721RecentMints = async (
+  networkName: NetworkName,
+  contractAddress: AddressString,
+  limit: number,
+): Promise<Erc721Mint[]> => {
+  if (contractAddress === ZERO_ADDRESS) return []
+
+  const thorClient = getThorClient(networkName)
+  const contract = thorClient.contracts.load(contractAddress, ERC721_ABI)
+  const mintCriteria = contract.criteria.Transfer({ from: ZERO_ADDRESS })
+
+  const logs = await thorClient.logs.filterEventLogs({
+    criteriaSet: [mintCriteria],
+    order: 'desc',
+    options: { offset: 0, limit },
+  })
+
+  return logs.reduce<Erc721Mint[]>((acc, log) => {
+    const [, to, tokenId] = (log.decodedData ?? []) as [unknown, string, bigint]
+    if (to === undefined || tokenId === undefined) return acc
+
+    acc.push({
+      tokenId: BigInt(tokenId),
+      to: to as AddressString,
+      txId: log.meta.txID,
+      blockNumber: log.meta.blockNumber,
+      // The node returns block timestamps in seconds; the rest of the app works in
+      // milliseconds (indexer responses are normalised via timestampSchema), so
+      // convert here to match what AgeText / date formatters expect.
+      blockTimestamp: log.meta.blockTimestamp * 1000,
+    })
+    return acc
+  }, [])
+}
+
+export const useErc721RecentMints = ({
+  contractAddress,
+  limit = 10,
+  enabled = true,
+}: {
+  contractAddress: AddressString
+  limit?: number
+  enabled?: boolean
+}) => {
+  const { activeNetwork } = useSettingsStore()
+  return useQuery({
+    queryKey: [ERC721_RECENT_MINTS_QUERY_KEY, activeNetwork.name, contractAddress, limit],
+    queryFn: () => getErc721RecentMints(activeNetwork.name, contractAddress, limit),
+    enabled,
+    staleTime: 30_000,
   })
 }

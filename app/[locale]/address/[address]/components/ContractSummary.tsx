@@ -9,6 +9,7 @@ import type { AddressString } from '@/lib/schemas'
 import { useAccountTokens } from '@/hooks/useAccountTokens'
 import { useContractName } from '@/hooks/useContractName'
 import { useContractSniff } from '@/hooks/useContractSniff'
+import { useIsErc721Contract } from '@/hooks/useIsErc721Contract'
 import { useVnsName } from '@/services/thor/vns'
 import { TokensSection } from './sections/TokensSection'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -22,6 +23,7 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
   const { tokenBalanceRows, tokenValueRows, totalValue, isPendingAll: isPendingAllTokens } = useAccountTokens(address)
   const { name: contractName } = useContractName(address)
   const { data: sniffed } = useContractSniff(address)
+  const isErc721 = useIsErc721Contract(address)
 
   // Check if this contract is a known token from the registry
   const tokenRegistryEntry = useMemo(
@@ -42,12 +44,12 @@ export const ContractSummary = ({ address }: { address: AddressString }) => {
                 {contractName}
               </Text>
             )}
-            {sniffed === 'erc20' && (
+            {sniffed === 'erc20' && !isErc721 && (
               <Badge variant="outline" colorPalette="blue">
                 {t('ERC-20')}
               </Badge>
             )}
-            {sniffed === 'erc721' && (
+            {isErc721 && (
               <Badge variant="outline" colorPalette="purple">
                 {t('ERC-721')}
               </Badge>

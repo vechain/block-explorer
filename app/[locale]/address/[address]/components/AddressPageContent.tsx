@@ -10,6 +10,7 @@ import { AccountTransactionsSection } from './sections/AccountTransactionsSectio
 import { AccountActivitySection } from './sections/AccountActivitySection'
 import { EndorsedValidatorsSection } from './sections/EndorsedValidatorsSection'
 import { AccountNftsSection } from './sections/AccountNftsSection'
+import { ContractNftMintsSection } from './sections/ContractNftMintsSection'
 import { DeployedContractsSection } from './sections/DeployedContractsSection'
 import { AccountTokenTransfersSection } from './sections/AccountTokenTransfersSection'
 import { ContractSummary } from './ContractSummary'
@@ -55,6 +56,7 @@ export const AddressPageContent = ({ address }: { address: AddressString }) => {
         <ContractSummary address={resolvedAddress} />
         <AccountActivitySection address={resolvedAddress} isContract />
         <AccountTransactionsSection address={resolvedAddress} hasCode={true} />
+        <ContractNftMintsSection address={resolvedAddress} />
         <AccountTokenTransfersSection address={resolvedAddress} />
       </Stack>
     )
