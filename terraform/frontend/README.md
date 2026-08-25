@@ -127,15 +127,24 @@ mid-run, re-authenticate and re-export - terraform will otherwise fail at `init`
 App Runner resolves `runtime_environment_secrets` using the instance role, which lives in
 `terraform/account-level`. No workflow applies that directory; it is manual.
 
+Run this from a checkout **that has the change on it** - the branch adding the secret, or
+`main` once it has merged. Run it from a checkout still on an older `main` and the plan
+reports "No changes", because the policy is simply not in the config it read. That looks
+like success and is not.
+
 ```bash
-cd terraform/account-level
+cd <checkout-with-the-change>/terraform/account-level
 terraform init
 terraform workspace select prod   # NOT default - see below
 terraform plan
 ```
 
-The plan must read `Plan: 1 to add, 0 to change, 0 to destroy` - the inline policy and
-nothing else. **If it proposes creating the ECR repository, IAM roles or Route53 zones,
+`.terraform/` is per-directory, so `init` and `workspace select` are needed again in a
+checkout you have not run terraform in before.
+
+The plan must read `Plan: 1 to add, 0 to change, 0 to destroy` - adding
+`aws_iam_role_policy.app_runner_instance_secrets` and nothing else. **`No changes` means
+you are on a checkout without the change, not that the work is done.** **If it proposes creating the ECR repository, IAM roles or Route53 zones,
 you are in the wrong workspace or the wrong account. Stop.** Those already exist, and
 applying would either fail on name conflicts or build a parallel set that App Runner does
 not use.
