@@ -144,7 +144,21 @@ describe('GET /api/indexer/[...path]', () => {
       const response = await call(latestUrl('network=mainnet&size=5'), LATEST_PATH)
 
       expect(response.status).toBe(200)
-      expect(response.headers.get('Cache-Control')).toBe('public, max-age=0, s-maxage=5, stale-while-revalidate=15')
+      expect(response.headers.get('Cache-Control')).toBe('public, max-age=0, s-maxage=5, stale-while-revalidate=5')
+    })
+
+    it('never serves chain state older than one block', async () => {
+      const { INDEXER_ENDPOINTS } = await import('@/lib/indexer-cache')
+      const { BLOCK_TIME_SECONDS } = await import('@/lib/constants/network')
+
+      // async-cache-dedupe stores an entry for ttl + stale and serves it for that whole
+      // window, so that sum is the real staleness bound.
+      for (const [path, endpoint] of Object.entries(INDEXER_ENDPOINTS)) {
+        expect({ path, maxAge: endpoint.cache.ttl + endpoint.cache.stale }).toEqual({
+          path,
+          maxAge: BLOCK_TIME_SECONDS,
+        })
+      }
     })
   })
 

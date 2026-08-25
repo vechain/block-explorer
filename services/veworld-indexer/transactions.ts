@@ -1,5 +1,5 @@
 import { queryOptions, keepPreviousData, useQuery } from '@tanstack/react-query'
-import type { NetworkName } from '@/lib/constants/network'
+import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
@@ -19,6 +19,7 @@ const accountTransactionsQueryOptions = (
     queryKey: [TRANSACTIONS_QUERY_KEY, networkName, params] as const,
     queryFn: () => getTransactions({ networkName, params }),
     placeholderData: keepPreviousData,
+    staleTime: BLOCK_TIME_MS,
     enabled: options?.enabled ?? true,
   })
 

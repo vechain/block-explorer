@@ -1,5 +1,5 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
-import type { NetworkName } from '@/lib/constants/network'
+import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
@@ -16,6 +16,7 @@ const contractTransactionsQueryOptions = (
   queryOptions({
     queryKey: [CONTRACT_TRANSACTIONS_QUERY_KEY, networkName, params] as const,
     queryFn: () => getContractTransactions({ networkName, params }),
+    staleTime: BLOCK_TIME_MS,
     enabled: options?.enabled ?? true,
   })
 

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { VEWORLD_INDEXER_MAINNET_URL, VEWORLD_INDEXER_TESTNET_URL } from '@/env.public'
 import { type CacheProfile, defineEndpoint } from '@/lib/cached-proxy'
-import { NetworkName } from '@/lib/constants/network'
+import { BLOCK_TIME_SECONDS, NetworkName } from '@/lib/constants/network'
 import { type CachedIndexerEndpoint, type ProxiedNetwork, proxiedNetworkSchema } from '@/lib/indexer-proxy'
 import { fetchUpstream, UpstreamError } from '@/lib/upstream-error'
 import { INDEXER_HEADERS } from '@/services/veworld-indexer'
@@ -72,11 +72,13 @@ const fetchIndexer = async ({
   return response.json() as Promise<unknown>
 }
 
-// Polled every 10s per viewer, identical for everyone on a network.
-const LIVE_CACHE: CacheProfile = { ttl: 5, stale: 15, size: 500 }
-
-// Per-subject rather than per-viewer, so hits come from reloads and popular contracts.
-const SCOPED_CACHE: CacheProfile = { ttl: 10, stale: 60, size: 2_000 }
+// An entry is served for up to ttl + stale, so anything reflecting chain state is
+// capped at one block. Longer-lived resources warrant their own profile.
+const liveCache = (size: number): CacheProfile => ({
+  ttl: BLOCK_TIME_SECONDS / 2,
+  stale: BLOCK_TIME_SECONDS / 2,
+  size,
+})
 
 // `network` is required on every endpoint, so it is part of every cache key. It selects
 // the upstream host and is not forwarded to the indexer.
@@ -88,7 +90,7 @@ export const INDEXER_ENDPOINTS = {
       expanded: booleanParam,
       cursor: cursorParam,
     }),
-    cache: LIVE_CACHE,
+    cache: liveCache(500),
     fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'transactions/latest', params }),
   }),
 
@@ -102,7 +104,7 @@ export const INDEXER_ENDPOINTS = {
       direction: directionParam,
       includeDelegated: includeDelegatedParam,
     }),
-    cache: SCOPED_CACHE,
+    cache: liveCache(2_000),
     fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'transactions', params }),
   }),
 
@@ -115,7 +117,7 @@ export const INDEXER_ENDPOINTS = {
       expanded: booleanParam,
       direction: directionParam,
     }),
-    cache: SCOPED_CACHE,
+    cache: liveCache(2_000),
     fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'transactions/contract', params }),
   }),
 } satisfies Record<CachedIndexerEndpoint, ReturnType<typeof defineEndpoint>>
