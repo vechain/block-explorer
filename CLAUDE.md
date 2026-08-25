@@ -135,6 +135,10 @@ Required (see `.env`):
 - `NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL`: Default solo indexer URL when dev mode is on
 - `NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL`: IPFS gateway for NFT metadata
 
+Optional server-only (read by `env.api.ts`):
+
+- `INDEXER_RATE_LIMIT_BYPASS`: `x-rate-limit-bypass` token, sent only on the server-side indexer calls made by `/api/indexer`. Prod only, from Secrets Manager via `terraform/frontend/secrets.tf`; blank or unset sends no header.
+
 Runtime-injected (read by `lib/runtime-config/get.ts`):
 
 - `ALLOW_DEV_MODE`: `'true'` to expose the dev-mode toggle (and the solo network) in the UI; auto-enabled when `NODE_ENV=development`

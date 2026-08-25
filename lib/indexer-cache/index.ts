@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { INDEXER_RATE_LIMIT_BYPASS } from '@/env.api'
 import { VEWORLD_INDEXER_MAINNET_URL, VEWORLD_INDEXER_TESTNET_URL } from '@/env.public'
 import { type CacheProfile, defineEndpoint } from '@/lib/cached-proxy'
 import { BLOCK_TIME_SECONDS, NetworkName } from '@/lib/constants/network'
@@ -14,6 +15,12 @@ const INDEXER_BASE_URLS: Record<ProxiedNetwork, string> = {
 }
 
 const UPSTREAM_TIMEOUT_MS = 10_000
+
+// Server-side only: the browser's own indexer calls are already spread across user IPs,
+// and the token must never reach a client bundle.
+const RATE_LIMIT_BYPASS_HEADER: Record<string, string> = INDEXER_RATE_LIMIT_BYPASS
+  ? { 'x-rate-limit-bypass': INDEXER_RATE_LIMIT_BYPASS }
+  : {}
 
 // Mirrors the VeWorld Indexer OpenAPI contract (v6.39.0).
 const MAX_PAGE_SIZE = 150
@@ -74,7 +81,7 @@ const fetchIndexer = async ({
   }
 
   const response = await fetchUpstream('veworld-indexer', url, {
-    headers: { 'Content-Type': 'application/json', ...INDEXER_HEADERS },
+    headers: { 'Content-Type': 'application/json', ...INDEXER_HEADERS, ...RATE_LIMIT_BYPASS_HEADER },
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     cache: 'no-store',
   })
