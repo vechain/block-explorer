@@ -1,8 +1,11 @@
-import { QueryClient, QueryClientProvider, keepPreviousData } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import * as React from 'react'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { DEFAULT_NETWORK, NetworkName } from '@/lib/constants/network'
+import { makeQueryClient } from '@/lib/query-client/query-client'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { useRecentBlocksCompressed, useRecentBlocksExpanded } from './recent-activity'
 ;(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -30,14 +33,14 @@ const block = (number: number) => ({
   totalScore: number,
 })
 
-let requested: { best: number; revisions: number[] }
+let requested: { best: number; revisions: number[]; headNetworks: string[] }
 let headResolvers: Array<(value: unknown) => void>
 let holdHead: boolean
 
 // Serves the `/api/thor` proxy the block service now calls, so the whole client path is
 // exercised — including which revisions it decides to ask for.
 const installFetch = () => {
-  requested = { best: 0, revisions: [] }
+  requested = { best: 0, revisions: [], headNetworks: [] }
   headResolvers = []
   holdHead = false
 
@@ -49,6 +52,7 @@ const installFetch = () => {
 
       if (url.pathname === '/api/thor/blocks/best') {
         requested.best++
+        requested.headNetworks.push(String(url.searchParams.get('network')))
         if (holdHead) return new Promise(resolve => headResolvers.push(() => resolve(json(block(HEAD)))))
         return Promise.resolve(json(block(HEAD)))
       }
@@ -59,10 +63,13 @@ const installFetch = () => {
   )
 }
 
-const makeClient = () =>
-  new QueryClient({
-    defaultOptions: { queries: { staleTime: 60_000, retry: 0, placeholderData: keepPreviousData } },
-  })
+// Derived from the app's client so the placeholder policy under test cannot drift from
+// production. Retries are off to keep request counts deterministic under fake timers.
+const makeClient = () => {
+  const client = makeQueryClient()
+  client.setDefaultOptions({ queries: { ...client.getDefaultOptions().queries, retry: 0 } })
+  return client
+}
 
 const settle = async () => {
   for (let i = 0; i < 40; i++) await act(async () => await vi.advanceTimersByTimeAsync(1))
@@ -91,6 +98,7 @@ describe('recent block windows', () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
+    useSettingsStore.setState({ activeNetwork: DEFAULT_NETWORK })
   })
 
   it('fetches nothing until the head is known, rather than counting up from genesis', async () => {
@@ -110,6 +118,57 @@ describe('recent block windows', () => {
 
     expect(requested.revisions.sort((a, b) => a - b)).toEqual([999_996, 999_997, 999_998, 999_999, 1_000_000])
     expect(result().isPending).toBe(false)
+  })
+
+  it('waits for the new head after a network switch rather than reusing the previous one', async () => {
+    const result = renderHook(() => useRecentBlocksCompressed({ count: 5 }))
+    await settle()
+    expect(requested.revisions).toHaveLength(5)
+
+    requested.revisions = []
+    holdHead = true
+    await act(async () => {
+      useSettingsStore.getState().setActiveNetwork(NetworkName.TESTNET)
+    })
+    await settle()
+
+    expect(requested.revisions).toEqual([])
+    expect(requested.headNetworks).toContain(NetworkName.TESTNET)
+    expect(result().isPending).toBe(true)
+
+    holdHead = false
+    await act(async () => {
+      headResolvers.forEach(resolve => resolve(undefined))
+    })
+    await settle()
+
+    expect(new Set(requested.revisions)).toEqual(new Set([999_996, 999_997, 999_998, 999_999, 1_000_000]))
+    expect(result().isPending).toBe(false)
+  })
+
+  it('does not widen the expanded window against a network whose head is unknown', async () => {
+    const result = renderHook(() => useRecentBlocksExpanded({ count: 20 }))
+    await settle()
+    expect(requested.revisions).toHaveLength(20)
+
+    requested.revisions = []
+    holdHead = true
+    await act(async () => {
+      useSettingsStore.getState().setActiveNetwork(NetworkName.TESTNET)
+    })
+    await settle()
+
+    expect(requested.revisions).toEqual([])
+    expect(result().isPending).toBe(true)
+
+    holdHead = false
+    await act(async () => {
+      headResolvers.forEach(resolve => resolve(undefined))
+    })
+    await settle()
+
+    // Exactly the window, so the widening effect never ran on a head-less range.
+    expect(new Set(requested.revisions).size).toBe(20)
   })
 
   it('asks only for blocks inside the window it renders', async () => {

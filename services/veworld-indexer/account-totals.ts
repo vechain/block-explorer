@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import type { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -22,7 +22,6 @@ export const accountTotalQueryOptions = (networkName: NetworkName) => ({
   queryKey: [ACCOUNT_TOTAL_QUERY_KEY, networkName],
   queryFn: () => getAccountTotal(networkName),
   refetchInterval: 10 * 1000,
-  placeholderData: keepPreviousData,
 })
 
 const getRefetchInterval = (rangeSeconds: number) => {
@@ -55,7 +54,6 @@ const accountTotalsQueryOptions = (
     queryFn: () => getAccountTotals({ networkName, startTimestamp, endTimestamp }),
     staleTime: isLiveMode ? getRefetchInterval(rangeSeconds) : Infinity,
     refetchInterval,
-    placeholderData: keepPreviousData,
   }
 }
 

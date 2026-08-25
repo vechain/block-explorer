@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import type { NetworkName } from '@/lib/constants/network'
 import { addressStringSchema } from '@/lib/schemas'
@@ -31,7 +31,6 @@ export const accountOverviewQueryOptions = (networkName: NetworkName, address: s
   queryFn: () => getAccountOverview({ networkName, address }),
   staleTime: 3 * 1000, // Consider data fresh for 3 seconds
   refetchInterval: 60 * 1000, // Refetch every minute
-  placeholderData: keepPreviousData, // Prevent UI flickering during refetches
 })
 
 export const useAccountOverview = (address: string) => {

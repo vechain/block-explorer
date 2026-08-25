@@ -1,4 +1,4 @@
-import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { useMemo } from 'react'
 import type { NetworkName } from '@/lib/constants/network'
@@ -296,7 +296,6 @@ export const validatorDetailsQueryOptions = (networkName: NetworkName, address: 
   queryFn: () => getValidatorDetails({ networkName, validatorAddress: address! }),
   enabled: !!address,
   refetchInterval: 60000,
-  placeholderData: keepPreviousData,
 })
 
 // Query options for delegations count
@@ -305,7 +304,6 @@ export const validatorDelegationsCountQueryOptions = (networkName: NetworkName, 
   queryFn: () => getValidatorDelegationsCount({ networkName, validatorAddress: address! }),
   enabled: !!address,
   refetchInterval: 60000,
-  placeholderData: keepPreviousData,
 })
 
 // Query options for missed blocks
@@ -314,7 +312,6 @@ export const validatorMissedBlocksQueryOptions = (networkName: NetworkName, addr
   queryFn: () => getValidatorMissedBlocks({ networkName, validatorAddress: address! }),
   enabled: !!address,
   refetchInterval: 60000,
-  placeholderData: keepPreviousData,
 })
 
 // Query options for delegations (unique wallets and total NFTs)
@@ -323,7 +320,6 @@ export const validatorDelegationsQueryOptions = (networkName: NetworkName, addre
   queryFn: () => getValidatorDelegations({ networkName, validatorAddress: address! }),
   enabled: !!address,
   refetchInterval: 60000,
-  placeholderData: keepPreviousData,
 })
 
 export const useValidatorDetails = (address: string | undefined) => {
