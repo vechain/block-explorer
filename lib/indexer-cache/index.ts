@@ -3,7 +3,7 @@ import { VEWORLD_INDEXER_MAINNET_URL, VEWORLD_INDEXER_TESTNET_URL } from '@/env.
 import { type CacheProfile, defineEndpoint } from '@/lib/cached-proxy'
 import { NetworkName } from '@/lib/constants/network'
 import { type CachedIndexerEndpoint, type ProxiedNetwork, proxiedNetworkSchema } from '@/lib/indexer-proxy'
-import { UpstreamError } from '@/lib/upstream-error'
+import { fetchUpstream, UpstreamError } from '@/lib/upstream-error'
 import { INDEXER_HEADERS } from '@/services/veworld-indexer'
 
 // Resolved server-side so the client can never steer the proxy at another host.
@@ -14,9 +14,9 @@ const INDEXER_BASE_URLS: Record<ProxiedNetwork, string> = {
 
 const UPSTREAM_TIMEOUT_MS = 10_000
 
-// Bounded so a caller cannot mint unlimited cache keys and evict live entries.
-const MAX_PAGE_SIZE = 100
-const MAX_PAGE = 10_000
+// Mirrors the VeWorld Indexer OpenAPI contract (v6.39.0).
+const MAX_PAGE_SIZE = 150
+const MAX_PAGE = 2_147_483_647
 const MAX_CURSOR_LENGTH = 512
 
 const addressParam = z
@@ -31,6 +31,15 @@ const booleanParam = z
 
 const pageSizeParam = z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(10)
 const pageParam = z.coerce.number().int().min(0).max(MAX_PAGE).default(0)
+
+// Defaulted to the upstream default so an explicit DESC and an omitted value share a key.
+const directionParam = z.enum(['ASC', 'DESC']).default('DESC')
+
+// Left undefaulted: the upstream default is unspecified, so absence must stay absent.
+const includeDelegatedParam = z
+  .enum(['true', 'false'])
+  .transform(value => value === 'true')
+  .optional()
 
 const cursorParam = z
   .string()
@@ -52,7 +61,7 @@ const fetchIndexer = async ({
     if (value !== undefined) url.searchParams.set(key, String(value))
   }
 
-  const response = await fetch(url, {
+  const response = await fetchUpstream('veworld-indexer', url, {
     headers: { 'Content-Type': 'application/json', ...INDEXER_HEADERS },
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     cache: 'no-store',
@@ -90,6 +99,8 @@ export const INDEXER_ENDPOINTS = {
       page: pageParam,
       size: pageSizeParam,
       expanded: booleanParam,
+      direction: directionParam,
+      includeDelegated: includeDelegatedParam,
     }),
     cache: SCOPED_CACHE,
     fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'transactions', params }),
@@ -102,6 +113,7 @@ export const INDEXER_ENDPOINTS = {
       page: pageParam,
       size: pageSizeParam,
       expanded: booleanParam,
+      direction: directionParam,
     }),
     cache: SCOPED_CACHE,
     fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'transactions/contract', params }),

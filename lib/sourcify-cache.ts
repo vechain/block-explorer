@@ -2,7 +2,7 @@ import type { Abi } from 'viem'
 import { z } from 'zod'
 import { SOURCIFY_URL } from '@/env.api'
 import { defineEndpoint } from '@/lib/cached-proxy'
-import { NotFoundError, UpstreamError } from './upstream-error'
+import { fetchUpstream, NotFoundError, UpstreamError } from './upstream-error'
 
 const DAY = 86_400
 const WEEK = 604_800
@@ -46,9 +46,13 @@ export const sourcifyEndpoint = defineEndpoint({
   },
 
   fetch: async ({ chainId, address }): Promise<SourcifyHit> => {
-    const res = await fetch(`${SOURCIFY_URL}/v2/contract/${chainId}/${address}?fields=abi,compilation`, {
-      signal: AbortSignal.timeout(10_000),
-    })
+    const res = await fetchUpstream(
+      'sourcify',
+      `${SOURCIFY_URL}/v2/contract/${chainId}/${address}?fields=abi,compilation`,
+      {
+        signal: AbortSignal.timeout(10_000),
+      },
+    )
     if (res.status === 404) throw new NotFoundError()
     if (!res.ok) throw new UpstreamError('sourcify', res.status)
 

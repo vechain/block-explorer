@@ -115,6 +115,11 @@ describe('GET /api/indexer/[...path]', () => {
         GET(request(latestUrl('network=mainnet&size=5')), { params: Promise.resolve({ path: LATEST_PATH }) }),
       )
 
+      // Hold upstream open until every request is past the cache lookup, so a pass here
+      // cannot come from later requests hitting an already-warm entry.
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+
       release(jsonResponse({ data: [] }))
       const responses = await Promise.all(inFlight)
 
@@ -156,7 +161,7 @@ describe('GET /api/indexer/[...path]', () => {
 
     it('400s an undeclared query parameter instead of silently dropping it', async () => {
       const response = await call(
-        'http://localhost/api/indexer/transactions?network=mainnet&origin=0x0000000000000000000000000000000000000001&direction=ASC',
+        'http://localhost/api/indexer/transactions?network=mainnet&origin=0x0000000000000000000000000000000000000001&sortBy=gas',
         ['transactions'],
       )
 
@@ -170,6 +175,23 @@ describe('GET /api/indexer/[...path]', () => {
       expect(response.status).toBe(400)
       expect(fetchMock).not.toHaveBeenCalled()
     })
+
+    it('accepts and forwards direction and includeDelegated', async () => {
+      await call(
+        'http://localhost/api/indexer/transactions?network=mainnet&origin=0x0000000000000000000000000000000000000001&direction=ASC&includeDelegated=true',
+        ['transactions'],
+      )
+
+      const forwarded = new URL(requestedUrls(fetchMock)[0]).searchParams
+      expect(forwarded.get('direction')).toBe('ASC')
+      expect(forwarded.get('includeDelegated')).toBe('true')
+    })
+
+    it('accepts the upstream maximum page size of 150', async () => {
+      const response = await call(latestUrl('network=mainnet&size=150'), LATEST_PATH)
+
+      expect(response.status).toBe(200)
+    })
   })
 
   it('returns 502 without caching when the indexer fails', async () => {
@@ -179,5 +201,22 @@ describe('GET /api/indexer/[...path]', () => {
 
     expect(response.status).toBe(502)
     expect(response.headers.get('Cache-Control')).toBe('no-store')
+  })
+
+  it('reports an indexer timeout as a gateway error, not an application error', async () => {
+    fetchMock.mockRejectedValue(Object.assign(new Error('The operation was aborted'), { name: 'TimeoutError' }))
+
+    const response = await call(latestUrl('network=mainnet&size=5'), LATEST_PATH)
+
+    expect(response.status).toBe(504)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+  })
+
+  it('reports a transport failure as a gateway error', async () => {
+    fetchMock.mockRejectedValue(new TypeError('fetch failed'))
+
+    const response = await call(latestUrl('network=mainnet&size=5'), LATEST_PATH)
+
+    expect(response.status).toBe(502)
   })
 })

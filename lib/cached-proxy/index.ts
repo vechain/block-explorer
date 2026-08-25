@@ -157,7 +157,8 @@ export const createCachedProxy = ({
 
       // Never cached — a cached outage outlives the outage.
       if (error instanceof UpstreamError) {
-        return withCacheControl(createErrorResponse({ status: 502, message: error.message }), NO_CACHE_CONTROL)
+        const status = error.status === 504 ? 504 : 502
+        return withCacheControl(createErrorResponse({ status, message: error.message }), NO_CACHE_CONTROL)
       }
 
       console.error(`Unexpected error in ${name} proxy route:`, {
