@@ -1,14 +1,14 @@
 'use client'
 
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import type { NetworkName } from '@/lib/constants/network'
+import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerGet, resolveUrl } from './index'
+import { indexerCachedGet } from './index'
 import { indexerResponseSchema, indexerTransferSchema, type TransferEventType } from './schemas'
 
 const LATEST_TRANSFERS_QUERY_KEY = 'getLatestTransfers'
-const LIVE_REFETCH_INTERVAL_MS = 10 * 1000
+const LIVE_REFETCH_INTERVAL_MS = BLOCK_TIME_MS
 
 const getLatestTransfers = async ({
   networkName,
@@ -21,8 +21,8 @@ const getLatestTransfers = async ({
   eventType?: TransferEventType[]
   cursor?: string
 }) => {
-  const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName),
+  const { data } = await indexerCachedGet({
+    networkName,
     endPoint: '/transfers/latest',
     params: {
       size: String(size),
@@ -61,6 +61,7 @@ export const useLatestTransfers = ({
       }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: lastPage => (lastPage.pagination.hasNext ? lastPage.pagination.cursor : undefined),
+    staleTime: BLOCK_TIME_MS,
     enabled,
   })
 }
@@ -83,6 +84,7 @@ export const useLatestTransfersLive = ({
   return useQuery({
     queryKey: [LATEST_TRANSFERS_QUERY_KEY, 'live', activeNetwork.name, size, eventTypeKey] as const,
     queryFn: () => getLatestTransfers({ networkName: activeNetwork.name, size, eventType }),
+    staleTime: BLOCK_TIME_MS,
     refetchInterval: LIVE_REFETCH_INTERVAL_MS,
     enabled,
   })

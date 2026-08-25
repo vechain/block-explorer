@@ -17,6 +17,11 @@ const request = (url: string) => new NextRequest(new URL(url))
 const latestUrl = (query: string) => `http://localhost/api/indexer/transactions/latest?${query}`
 const LATEST_PATH = ['transactions', 'latest']
 
+const latestTransfersUrl = (query: string) => `http://localhost/api/indexer/transfers/latest?${query}`
+const LATEST_TRANSFERS_PATH = ['transfers', 'latest']
+
+const ADDRESS = '0x0000000000000000000000000000000000000001'
+
 const jsonResponse = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response
 
 const requestedUrls = (fetchMock: ReturnType<typeof vi.fn>) =>
@@ -205,6 +210,83 @@ describe('GET /api/indexer/[...path]', () => {
       const response = await call(latestUrl('network=mainnet&size=150'), LATEST_PATH)
 
       expect(response.status).toBe(200)
+    })
+  })
+
+  describe('transfers', () => {
+    const sendLatestTransfers = async (query: string) => {
+      const GET = await importRoute()
+      return GET(request(latestTransfersUrl(query)), { params: Promise.resolve({ path: LATEST_TRANSFERS_PATH }) })
+    }
+
+    it('forwards a repeated eventType as repeated keys, not one comma-joined value', async () => {
+      await call(latestTransfersUrl('network=mainnet&size=10&eventType=VET&eventType=NFT'), LATEST_TRANSFERS_PATH)
+
+      const forwarded = new URL(requestedUrls(fetchMock)[0]).searchParams
+      expect(forwarded.getAll('eventType')).toEqual(['VET', 'NFT'])
+    })
+
+    it('keys distinct eventType filters separately', async () => {
+      const GET = await importRoute()
+      const send = (query: string) =>
+        GET(request(latestTransfersUrl(query)), { params: Promise.resolve({ path: LATEST_TRANSFERS_PATH }) })
+
+      await send('network=mainnet&size=10&eventType=VET&eventType=FUNGIBLE_TOKEN')
+      await send('network=mainnet&size=10&eventType=NFT')
+      await send('network=mainnet&size=10')
+
+      expect(fetchMock).toHaveBeenCalledTimes(3)
+    })
+
+    it('is insensitive to the order of a repeated eventType', async () => {
+      const GET = await importRoute()
+      const send = (query: string) =>
+        GET(request(latestTransfersUrl(query)), { params: Promise.resolve({ path: LATEST_TRANSFERS_PATH }) })
+
+      await send('network=mainnet&size=10&eventType=VET&eventType=FUNGIBLE_TOKEN')
+      await send('network=mainnet&size=10&eventType=FUNGIBLE_TOKEN&eventType=VET')
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('400s an unrecognised eventType', async () => {
+      const response = await sendLatestTransfers('network=mainnet&size=10&eventType=VET&eventType=SOMETHING')
+
+      expect(response.status).toBe(400)
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('400s expanded, which /transfers/latest does not accept', async () => {
+      const response = await sendLatestTransfers('network=mainnet&size=10&expanded=true')
+
+      expect(response.status).toBe(400)
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('serves the address-scoped endpoint and forwards its filters', async () => {
+      await call(
+        `http://localhost/api/indexer/transfers?network=testnet&address=${ADDRESS}&tokenAddress=${ADDRESS}&eventType=VET&page=2&size=25`,
+        ['transfers'],
+      )
+
+      const url = new URL(requestedUrls(fetchMock)[0])
+      expect(url.toString().startsWith(`${TESTNET_HOST}/api/v1/transfers`)).toBe(true)
+      expect(Object.fromEntries(url.searchParams)).toMatchObject({
+        address: ADDRESS,
+        tokenAddress: ADDRESS,
+        eventType: 'VET',
+        page: '2',
+        size: '25',
+        direction: 'DESC',
+      })
+      expect(url.searchParams.get('network')).toBeNull()
+    })
+
+    it('400s the address-scoped endpoint without an address', async () => {
+      const response = await call('http://localhost/api/indexer/transfers?network=mainnet&eventType=VET', ['transfers'])
+
+      expect(response.status).toBe(400)
+      expect(fetchMock).not.toHaveBeenCalled()
     })
   })
 

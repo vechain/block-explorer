@@ -15,7 +15,13 @@ export const isProxiedNetwork = (networkName: NetworkName): networkName is Proxi
   proxiedNetworkSchema.safeParse(networkName).success
 
 /** Relative to `/api/v1`. The server registry must define exactly these. */
-const CACHED_INDEXER_ENDPOINTS = ['transactions/latest', 'transactions', 'transactions/contract'] as const
+const CACHED_INDEXER_ENDPOINTS = [
+  'transactions/latest',
+  'transactions',
+  'transactions/contract',
+  'transfers/latest',
+  'transfers',
+] as const
 
 export type CachedIndexerEndpoint = (typeof CACHED_INDEXER_ENDPOINTS)[number]
 

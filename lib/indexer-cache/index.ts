@@ -47,6 +47,14 @@ const cursorParam = z
   .regex(/^[A-Za-z0-9._~:+/=-]+$/)
   .optional()
 
+// Repeated query param (`?eventType=VET&eventType=NFT`). Deduped so a filter repeating a
+// value shares one entry with the plain filter; the factory sorts the values in the key.
+const eventTypeParam = z
+  .array(z.enum(['VET', 'FUNGIBLE_TOKEN', 'NFT', 'SEMI_FUNGIBLE_TOKEN']))
+  .nonempty()
+  .transform(eventTypes => [...new Set(eventTypes)])
+  .optional()
+
 const fetchIndexer = async ({
   network,
   endPoint,
@@ -58,7 +66,10 @@ const fetchIndexer = async ({
 }) => {
   const url = new URL(`${INDEXER_BASE_URLS[network]}/api/v1/${endPoint}`)
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined) url.searchParams.set(key, String(value))
+    if (value === undefined) continue
+    // Array params are repeated keys upstream, not one comma-joined value.
+    if (Array.isArray(value)) value.forEach(item => url.searchParams.append(key, String(item)))
+    else url.searchParams.set(key, String(value))
   }
 
   const response = await fetchUpstream('veworld-indexer', url, {
@@ -119,5 +130,33 @@ export const INDEXER_ENDPOINTS = {
     }),
     cache: liveCache(2_000),
     fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'transactions/contract', params }),
+  }),
+
+  'transfers/latest': defineEndpoint({
+    params: z.object({
+      network: proxiedNetworkSchema,
+      size: pageSizeParam,
+      eventType: eventTypeParam,
+      cursor: cursorParam,
+    }),
+    arrayParams: ['eventType'],
+    cache: liveCache(500),
+    fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'transfers/latest', params }),
+  }),
+
+  transfers: defineEndpoint({
+    params: z.object({
+      network: proxiedNetworkSchema,
+      // Upstream also accepts tokenAddress on its own; every proxied caller sends an address.
+      address: addressParam,
+      tokenAddress: addressParam.optional(),
+      eventType: eventTypeParam,
+      page: pageParam,
+      size: pageSizeParam,
+      direction: directionParam,
+    }),
+    arrayParams: ['eventType'],
+    cache: liveCache(2_000),
+    fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'transfers', params }),
   }),
 } satisfies Record<CachedIndexerEndpoint, ReturnType<typeof defineEndpoint>>
