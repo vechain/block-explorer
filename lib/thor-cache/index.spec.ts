@@ -4,6 +4,7 @@ import { createCachedProxy } from '@/lib/cached-proxy'
 import { THOR_ENDPOINTS } from './index'
 
 const BLOCK = { number: 123, id: '0x'.padEnd(66, 'a'), isFinalized: false }
+const FINALIZED_BLOCK = { ...BLOCK, isFinalized: true }
 
 const jsonResponse = (body: unknown) => new Response(JSON.stringify(body), { status: 200 })
 
@@ -37,13 +38,22 @@ describe('THOR_ENDPOINTS', () => {
     expect(requestedUrl(0)).toBe('https://mainnet.vechain.org/blocks/123')
   })
 
-  it('gives an immutable block a lifetime far longer than a block time', async () => {
+  it('gives a finalized block a lifetime far longer than a block time', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse(FINALIZED_BLOCK)))
+
     const response = await send(buildProxy(), 'blocks', 'network=mainnet&revision=123')
 
-    expect(response.headers.get('Cache-Control')).toBe('public, max-age=600, s-maxage=600, stale-while-revalidate=600')
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=600, s-maxage=600, stale-while-revalidate=10')
   })
 
-  it('keeps the head on a half-block lifetime, not the immutable one', async () => {
+  // A fork can still reassign an unfinalized height to a different block.
+  it('holds an unfinalized block for one block only, browser included', async () => {
+    const response = await send(buildProxy(), 'blocks', 'network=mainnet&revision=123')
+
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=10, s-maxage=10, stale-while-revalidate=10')
+  })
+
+  it('keeps the head on a half-block lifetime, not the finalized one', async () => {
     const response = await send(buildProxy(), 'blocks/best', 'network=mainnet')
 
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=0, s-maxage=5, stale-while-revalidate=5')
@@ -125,6 +135,18 @@ describe('revision parsing', () => {
     await send(buildProxy(), 'blocks', `network=mainnet&revision=${blockId}`)
 
     expect(requestedUrl(0)).toBe(`https://mainnet.vechain.org/blocks/${blockId}`)
+  })
+
+  it('shares one entry across the casings of one block ID', async () => {
+    const proxy = buildProxy()
+    const lower = `0x${'ab'.repeat(32)}`
+    const upper = `0x${'AB'.repeat(32)}`
+
+    await send(proxy, 'blocks', `network=mainnet&revision=${lower}`)
+    await send(proxy, 'blocks', `network=mainnet&revision=${upper}`)
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(requestedUrl(0)).toBe(`https://mainnet.vechain.org/blocks/${lower}`)
   })
 
   it('rejects a hex-spelled block number so it cannot fork the cache', async () => {

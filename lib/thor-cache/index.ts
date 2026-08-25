@@ -45,15 +45,24 @@ const fetchBlock = async ({
   return block
 }
 
-// A mined block's payload never changes apart from `isFinalized`/`isTrunk`, and finality
-// trails the head by roughly an hour, so a lifetime well inside that window cannot
-// contradict the node. This is the first resource here that can outlive a block.
-const IMMUTABLE_BLOCK_TTL_SECONDS = 10 * 60
+// Only a finalized block is settled: BFT rejects any branch that does not descend from
+// the finalized checkpoint, so until then a fork can still reassign a height to another
+// block. Finalized responses are therefore the only ones allowed to outlive a block.
+const FINALIZED_BLOCK_TTL_SECONDS = 10 * 60
 
-const immutableBlockCache: CacheProfile = {
-  ttl: IMMUTABLE_BLOCK_TTL_SECONDS,
-  stale: IMMUTABLE_BLOCK_TTL_SECONDS,
-  browserMaxAge: IMMUTABLE_BLOCK_TTL_SECONDS,
+const finalizedBlockSchema = z.object({ isFinalized: z.boolean() })
+
+const blockTtl = (block: unknown) => {
+  const parsed = finalizedBlockSchema.safeParse(block)
+  return parsed.success && parsed.data.isFinalized ? FINALIZED_BLOCK_TTL_SECONDS : BLOCK_TIME_SECONDS
+}
+
+const blockCache: CacheProfile = {
+  ttl: blockTtl,
+  // Added to the resolved ttl, so it stays at one block: an unsettled block may be served
+  // for at most two, a finalized one for the full lifetime.
+  stale: BLOCK_TIME_SECONDS,
+  browserMaxAge: FINALIZED_BLOCK_TTL_SECONDS,
   size: 500,
 }
 
@@ -79,7 +88,7 @@ export const THOR_ENDPOINTS = {
       revision: concreteBlockRevisionSchema,
       expanded: expandedParam,
     }),
-    cache: immutableBlockCache,
+    cache: blockCache,
     notFound: blockNotFound,
     fetch: fetchBlock,
   }),

@@ -149,6 +149,43 @@ describe('createCachedProxy', () => {
     expect(upstream).not.toHaveBeenCalled()
   })
 
+  describe('response-derived ttl', () => {
+    const buildTtlProxy = (fetchImpl: (params: { id: string }) => Promise<unknown>) =>
+      createCachedProxy({
+        name: 'test',
+        endpoints: {
+          '': defineEndpoint({
+            params: z.object({ id: z.string() }),
+            cache: {
+              ttl: result => ((result as { settled: boolean }).settled ? 600 : 10),
+              stale: 10,
+              browserMaxAge: 600,
+              size: 10,
+            },
+            fetch: fetchImpl,
+          }),
+        },
+      })
+
+    it('lets the response choose its own lifetime', async () => {
+      const proxy = buildTtlProxy(async ({ id }) => ({ settled: id === 'settled' }))
+
+      const settled = await send(proxy, 'id=settled')
+      const unsettled = await send(proxy, 'id=unsettled')
+
+      expect(settled.headers.get('Cache-Control')).toBe('public, max-age=600, s-maxage=600, stale-while-revalidate=10')
+      expect(unsettled.headers.get('Cache-Control')).toBe('public, max-age=10, s-maxage=10, stale-while-revalidate=10')
+    })
+
+    it('never lets a browser hold a response longer than the server entry', async () => {
+      const proxy = buildTtlProxy(async () => ({ settled: false }))
+
+      const response = await send(proxy, 'id=unsettled')
+
+      expect(response.headers.get('Cache-Control')).toContain('max-age=10,')
+    })
+  })
+
   describe('array params', () => {
     const buildArrayProxy = (fetchImpl: (params: { tag?: string[] }) => Promise<unknown>) =>
       createCachedProxy({
