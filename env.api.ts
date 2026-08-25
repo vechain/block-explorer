@@ -10,7 +10,5 @@ export const SOURCIFY_URL = process.env.SOURCIFY_URL ?? 'https://sourcify.dev/se
 
 export const OPENCHAIN_URL = process.env.OPENCHAIN_URL ?? 'https://api.openchain.xyz/signature-database/v1/lookup'
 
-// Lifts the indexer's per-IP rate limit, which the proxy would otherwise hit as a whole:
-// every user's cached indexer call leaves from one App Runner IP. Blank outside prod,
-// where direct traffic stays under the limit — see terraform/frontend/secrets.tf.
+// Blank when unset: Terraform seeds the secret with a placeholder.
 export const INDEXER_RATE_LIMIT_BYPASS = process.env.INDEXER_RATE_LIMIT_BYPASS?.trim()

@@ -53,8 +53,7 @@ resource "aws_iam_role_policy_attachment" "app_runner_ecr_access" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess"
 }
 
-# App Runner resolves runtime_environment_secrets with the instance role. Scoped by name
-# prefix so the frontend workspace can add secrets without a change here.
+# Read access for runtime_environment_secrets, by name prefix.
 resource "aws_iam_role_policy" "app_runner_instance_secrets" {
   name = "block-explorer-secrets-read"
   role = aws_iam_role.app_runner_instance_role.id

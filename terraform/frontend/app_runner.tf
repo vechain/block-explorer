@@ -39,8 +39,6 @@ resource "aws_apprunner_service" "frontend" {
           lookup(local.env, "environment_variables", {})
         )
 
-        # Resolved by the instance role at instance start, so a value changed by hand in
-        # Secrets Manager only takes effect on the next App Runner deployment.
         runtime_environment_secrets = local.is_prod ? {
           INDEXER_RATE_LIMIT_BYPASS = aws_secretsmanager_secret.indexer_rate_limit_bypass[0].arn
         } : {}
@@ -72,8 +70,7 @@ resource "aws_apprunner_service" "frontend" {
     Environment = local.env.environment
   }
 
-  # The ARN reference alone does not order the service after the secret's first version,
-  # which App Runner must resolve before an instance can start.
+  # App Runner must resolve the secret's first version before an instance can start.
   depends_on = [aws_secretsmanager_secret_version.indexer_rate_limit_bypass]
 }
 

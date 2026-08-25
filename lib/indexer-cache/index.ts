@@ -16,8 +16,6 @@ const INDEXER_BASE_URLS: Record<ProxiedNetwork, string> = {
 
 const UPSTREAM_TIMEOUT_MS = 10_000
 
-// Server-side only: the browser's own indexer calls are already spread across user IPs,
-// and the token must never reach a client bundle.
 const RATE_LIMIT_BYPASS_HEADER: Record<string, string> = INDEXER_RATE_LIMIT_BYPASS
   ? { 'x-rate-limit-bypass': INDEXER_RATE_LIMIT_BYPASS }
   : {}
