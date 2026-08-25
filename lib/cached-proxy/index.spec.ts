@@ -138,4 +138,59 @@ describe('createCachedProxy', () => {
 
     expect(upstream).toHaveBeenCalledTimes(2)
   })
+
+  it('rejects a repeated scalar rather than keying by one of its values', async () => {
+    const upstream = vi.fn().mockResolvedValue({ ok: true })
+    const proxy = buildProxy(upstream)
+
+    const response = await send(proxy, 'id=abc&id=def')
+
+    expect(response.status).toBe(400)
+    expect(upstream).not.toHaveBeenCalled()
+  })
+
+  describe('array params', () => {
+    const buildArrayProxy = (fetchImpl: (params: { tag?: string[] }) => Promise<unknown>) =>
+      createCachedProxy({
+        name: 'test',
+        endpoints: {
+          '': defineEndpoint({
+            params: z.object({ tag: z.array(z.enum(['a', 'b', 'c'])).optional() }),
+            arrayParams: ['tag'],
+            cache: CACHE,
+            fetch: fetchImpl,
+          }),
+        },
+      })
+
+    it('collects every value of a repeated key instead of keeping only the last', async () => {
+      const upstream = vi.fn().mockResolvedValue({ ok: true })
+      const proxy = buildArrayProxy(upstream)
+
+      await send(proxy, 'tag=a&tag=c')
+
+      expect(upstream).toHaveBeenCalledWith({ tag: ['a', 'c'] })
+    })
+
+    it('shares one cache entry across orderings of the same values', async () => {
+      const upstream = vi.fn().mockResolvedValue({ ok: true })
+      const proxy = buildArrayProxy(upstream)
+
+      await send(proxy, 'tag=a&tag=c')
+      await send(proxy, 'tag=c&tag=a')
+
+      expect(upstream).toHaveBeenCalledTimes(1)
+    })
+
+    it('keys distinct value sets separately rather than joining them into one value', async () => {
+      const upstream = vi.fn().mockResolvedValue({ ok: true })
+      const proxy = buildArrayProxy(upstream)
+
+      await send(proxy, 'tag=a&tag=b')
+      await send(proxy, 'tag=a')
+      await send(proxy, 'tag=b')
+
+      expect(upstream).toHaveBeenCalledTimes(3)
+    })
+  })
 })

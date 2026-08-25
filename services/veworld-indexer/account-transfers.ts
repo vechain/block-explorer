@@ -1,9 +1,9 @@
 import { queryOptions, keepPreviousData, useQuery } from '@tanstack/react-query'
-import type { NetworkName } from '@/lib/constants/network'
+import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerGet, resolveUrl } from './index'
+import { indexerCachedGet } from './index'
 import { type IndexerGetTransfersParams, indexerResponseSchema, indexerTransferSchema } from './schemas'
 
 const ACCOUNT_TRANSFERS_QUERY_KEY = 'getAccountTransfers'
@@ -17,6 +17,7 @@ const accountTransfersQueryOptions = (
     queryKey: [ACCOUNT_TRANSFERS_QUERY_KEY, networkName, params] as const,
     queryFn: () => getAccountTransfers({ networkName, params }),
     placeholderData: keepPreviousData,
+    staleTime: BLOCK_TIME_MS,
     enabled: options?.enabled ?? true,
   })
 
@@ -38,8 +39,8 @@ const getAccountTransfers = async ({
   networkName: NetworkName
   params: IndexerGetTransfersParams
 }) => {
-  const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName),
+  const { data } = await indexerCachedGet({
+    networkName,
     endPoint: '/transfers',
     params: serializeZodParams(params),
   })
