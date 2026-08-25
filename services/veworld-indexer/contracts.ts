@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import type { NetworkName } from '@/lib/constants/network'
 import { type AddressString } from '@/lib/schemas/common'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -12,7 +12,6 @@ const contractQueryOptions = (networkName: NetworkName, address: AddressString) 
   queryKey: [CONTRACT_QUERY_KEY, networkName, address],
   queryFn: () => getContract({ networkName, address }),
   staleTime: Infinity,
-  placeholderData: keepPreviousData,
 })
 
 export const useContract = ({ address, enabled = true }: { address: AddressString; enabled?: boolean }) => {

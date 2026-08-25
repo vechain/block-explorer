@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -17,7 +17,6 @@ interface DeployedContractsParams {
 const deployedContractsQueryOptions = (networkName: NetworkName, params: DeployedContractsParams) => ({
   queryKey: [DEPLOYED_CONTRACTS_QUERY_KEY, networkName, params],
   queryFn: () => getContractsByMaster({ networkName, params }),
-  placeholderData: keepPreviousData,
 })
 
 export const useDeployedContracts = ({

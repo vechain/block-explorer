@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -18,7 +18,6 @@ const accountErc721TokensQueryOptions = (networkName: NetworkName, params: Index
   queryKey: [ERC721_TOKENS_QUERY_KEY, networkName, params],
   queryFn: () => getErc721Tokens({ networkName, params }),
 
-  placeholderData: keepPreviousData,
   staleTime: 30_000,
   gcTime: 10 * 60_000,
   refetchInterval: 2 * 60_000,
