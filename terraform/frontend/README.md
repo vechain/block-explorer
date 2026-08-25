@@ -164,15 +164,27 @@ secret with its blank placeholder and wires it into App Runner. Nothing changes
 behaviourally yet - the app still sends no bypass header. This step runs in CI under its
 own OIDC role, so your local profile is not involved.
 
-**3. Set the real token.**
+**3. Set the real token.** The secret does not exist until step 2 has run - an empty
+Secrets Manager list before then is expected.
+
+Console (eu-west-1) -> Secrets Manager -> `block-explorer/prod/indexer-rate-limit-bypass`
+-> Retrieve secret value -> Edit -> **Plaintext** tab -> replace with the token -> Save.
+
+Use Plaintext, not Key/value: the app sends the stored string verbatim as the header, so
+a key/value pair would send JSON as the token.
+
+From a shell without the token entering history:
 
 ```bash
+read -rs TOKEN
 aws secretsmanager put-secret-value \
   --secret-id block-explorer/prod/indexer-rate-limit-bypass \
-  --secret-string '<token>' \
-  --region eu-west-1 \
-  --profile explorer-dev-admin
+  --secret-string "$TOKEN" \
+  --region eu-west-1 --profile explorer-dev-admin
+unset TOKEN
 ```
+
+Only `"$TOKEN"` reaches history, though the expanded value is briefly visible in `ps`.
 
 Terraform ignores changes to the value, so later applies will not revert it.
 
