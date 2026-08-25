@@ -1,42 +1,43 @@
-import { createCache } from 'async-cache-dedupe'
-import { LRUCache } from 'lru-cache'
 import type { AbiItem } from 'viem'
+import { z } from 'zod'
+import { defineEndpoint } from '@/lib/cached-proxy'
 import { NotFoundError, UpstreamError } from '@/lib/upstream-error'
 import { fetchB32 } from './sources/b32'
-import { fetchOpenchain, type Kind } from './sources/openchain'
+import { fetchOpenchain } from './sources/openchain'
 
 const DAY = 86_400
 const WEEK = 604_800
-const FIVE_MIN_MS = 5 * 60 * 1000
+const FIVE_MINUTES = 300
 
-// b32 returns a fully-formed ABI fragment with indexed annotations intact.
-// OpenChain returns a bare canonical signature — the client decides how to
-// interpret it (function vs. event, and for events which params are
-// indexed) since the right answer depends on the caller's topic count.
+// b32 gives a full ABI fragment; OpenChain gives a bare signature the client must
+// interpret, since indexed params depend on the caller's topic count.
 type DecodedSelector = { source: 'b32'; abi: AbiItem } | { source: 'openchain'; signature: string }
-
-type Lookup<T> = { kind: 'ok'; data: T } | { kind: 'not-found' }
-
-const hits = createCache({ storage: { type: 'memory', options: { size: 50_000 } } })
-const miss = new LRUCache<string, true>({ max: 50_000, ttl: FIVE_MIN_MS })
-
-interface SelectorKey {
-  kind: Kind
-  hash: string
-}
 
 const isAbi = (value: unknown): value is AbiItem[] => Array.isArray(value) && value.length > 0
 
-hits.define(
-  'selector',
-  {
-    ttl: DAY,
-    stale: WEEK,
-    serialize: ({ kind, hash }: SelectorKey) => `${kind}:${hash.toLowerCase()}`,
+const FUNCTION_HASH = /^0x[a-f0-9]{8}$/
+const EVENT_HASH = /^0x[a-f0-9]{64}$/
+
+export const selectorEndpoint = defineEndpoint({
+  params: z
+    .object({
+      kind: z.enum(['function', 'event']),
+      // b32's path is case-sensitive and OpenChain echoes lowercase keys.
+      hash: z.string().transform(hash => hash.toLowerCase()),
+    })
+    .refine(({ kind, hash }) => (kind === 'function' ? FUNCTION_HASH : EVENT_HASH).test(hash)),
+  invalidParamsMessage: "kind must be 'function' or 'event', and hash length must match kind",
+
+  cache: { ttl: DAY, stale: WEEK, browserMaxAge: 3600, size: 50_000 },
+  notFound: {
+    ttl: FIVE_MINUTES,
+    stale: DAY,
+    browserMaxAge: FIVE_MINUTES,
+    size: 50_000,
+    message: 'Selector not found in b32 or OpenChain',
   },
-  async ({ kind, hash }: SelectorKey): Promise<DecodedSelector> => {
-    // Fire both sources in parallel. Prefer b32 (full ABI fragment with
-    // parameter names) over OpenChain (signature string we have to parse).
+
+  fetch: async ({ kind, hash }): Promise<DecodedSelector> => {
     const [b32Result, openchainResult] = await Promise.allSettled([fetchB32(hash), fetchOpenchain(kind, hash)])
 
     if (b32Result.status === 'fulfilled' && isAbi(b32Result.value)) {
@@ -48,36 +49,11 @@ hits.define(
       return { source: 'openchain', signature: openchainResult.value }
     }
 
-    // Both sources came back empty. If BOTH actually errored (vs. returned
-    // null), surface the error so the route returns 502 and we don't write
-    // a miss entry that hides an outage.
+    // Only a genuine miss if at least one source answered — otherwise surface the
+    // outage rather than caching it as not-found.
     if (b32Result.status === 'rejected' && openchainResult.status === 'rejected') {
       throw b32Result.reason instanceof UpstreamError ? b32Result.reason : openchainResult.reason
     }
     throw new NotFoundError()
   },
-)
-
-interface DefinedCache {
-  selector(key: SelectorKey): Promise<DecodedSelector>
-}
-
-export async function decodeSelector(kind: Kind, hash: string): Promise<Lookup<DecodedSelector>> {
-  // Normalize once at the entry: b32's URL path is case-sensitive and
-  // OpenChain echoes lowercase keys in its response, so an uppercase hash
-  // would miss upstream even though we'd cache the (wrong) miss under the
-  // lowercased key.
-  const normalized = hash.toLowerCase()
-  const key = `${kind}:${normalized}`
-  if (miss.has(key)) return { kind: 'not-found' }
-  try {
-    const data = await (hits as unknown as DefinedCache).selector({ kind, hash: normalized })
-    return { kind: 'ok', data }
-  } catch (err) {
-    if (err instanceof NotFoundError) {
-      miss.set(key, true)
-      return { kind: 'not-found' }
-    }
-    throw err
-  }
-}
+})

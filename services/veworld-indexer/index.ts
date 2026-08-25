@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api'
 import { NetworkName } from '@/lib/constants/network'
+import { INDEXER_PROXY_BASE, isCachedIndexerEndpoint, isProxiedNetwork } from '@/lib/indexer-proxy'
 import { getRuntimeIndexerBaseUrl } from '@/lib/utils/runtime-network'
 
 export enum IndexerVersion {
@@ -20,4 +21,27 @@ export const resolveUrl = (networkName: NetworkName, version: IndexerVersion = I
     return `${getRuntimeIndexerBaseUrl(networkName)}/api/${version}`
   }
   throw new Error(`Invalid indexer version: ${version}`)
+}
+
+// Proxied endpoints are cached server-side; anything else (and always solo, whose
+// indexer URL is browser-local) goes direct. `network` is appended last so a caller
+// cannot shadow it.
+export const indexerCachedGet = <T>({
+  networkName,
+  endPoint,
+  params,
+}: {
+  networkName: NetworkName
+  endPoint: string
+  params?: Record<string, string | string[] | undefined>
+}) => {
+  if (isProxiedNetwork(networkName) && isCachedIndexerEndpoint(endPoint)) {
+    return apiClient.get<T>({
+      baseUrl: INDEXER_PROXY_BASE,
+      endPoint,
+      params: { ...params, network: networkName },
+    })
+  }
+
+  return indexerGet<T>({ baseUrl: resolveUrl(networkName), endPoint, params })
 }
