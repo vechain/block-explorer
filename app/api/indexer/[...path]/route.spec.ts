@@ -37,6 +37,7 @@ describe('GET /api/indexer/[...path]', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
   const call = async (url: string, path: string[]) => {
@@ -288,6 +289,32 @@ describe('GET /api/indexer/[...path]', () => {
 
       expect(response.status).toBe(400)
       expect(fetchMock).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('rate limit bypass', () => {
+    const headersOfFirstCall = () => (fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>
+
+    const send = async (token?: string) => {
+      if (token !== undefined) vi.stubEnv('INDEXER_RATE_LIMIT_BYPASS', token)
+      await call(latestUrl('network=mainnet&size=5'), LATEST_PATH)
+      return headersOfFirstCall()
+    }
+
+    it('sends the token so the indexer does not rate limit every user against one proxy IP', async () => {
+      expect(await send('s3cret')).toMatchObject({ 'x-rate-limit-bypass': 's3cret' })
+    })
+
+    it('keeps the project header alongside it', async () => {
+      expect(await send('s3cret')).toMatchObject({ 'X-Project-Id': 'block-explorer' })
+    })
+
+    it('omits the header when no token is configured', async () => {
+      expect(await send()).not.toHaveProperty('x-rate-limit-bypass')
+    })
+
+    it('treats the blank Terraform placeholder as no token, rather than sending a bogus one', async () => {
+      expect(await send(' ')).not.toHaveProperty('x-rate-limit-bypass')
     })
   })
 

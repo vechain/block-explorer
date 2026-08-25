@@ -84,6 +84,136 @@ Per environment:
 - **Custom Domain Association** - Links custom domain to service
 - **Route53 Records** - DNS records (A record + validation CNAMEs)
 
+Production only:
+
+- **Secrets Manager Secret** - `block-explorer/prod/indexer-rate-limit-bypass`
+
+## Secrets
+
+### Indexer rate limit bypass
+
+`/api/indexer` caches indexer responses server-side, so every user's request leaves from
+the same App Runner IP and the indexer's per-IP rate limit applies to the whole app.
+Sending `x-rate-limit-bypass` lifts it.
+
+Terraform creates the secret (prod only) and seeds it with a blank placeholder. The app
+trims the value and treats blank as unset, so it sends no header until someone sets a
+real token - a bogus token the indexer would reject is never sent.
+
+#### Releasing it the first time
+
+The four steps must happen in this order. Step 1 is easy to forget and fails the
+production deploy if skipped.
+
+All commands below target the AWS account that hosts block-explorer. Terraform has no
+`--profile` flag, so it is selected with `AWS_PROFILE`; the CLI commands pass `--profile`
+explicitly so they stay copy-pasteable on their own. Substitute your own profile name if
+it differs from the example.
+
+**0. Select the profile and confirm which account you are pointed at.**
+
+```bash
+export AWS_PROFILE=explorer-dev-admin
+aws sts get-caller-identity --profile explorer-dev-admin
+```
+
+Note the account ID. Steps 1 and 3 modify **production** infrastructure, so confirm this
+is the account that owns the `block-explorer-terraform-state-prod` state bucket and the
+`prod-block-explorer` App Runner service before continuing. If your credentials expire
+mid-run, re-authenticate and re-export - terraform will otherwise fail at `init`.
+
+**1. Grant the instance role read access - before the release.**
+
+App Runner resolves `runtime_environment_secrets` using the instance role, which lives in
+`terraform/account-level`. No workflow applies that directory; it is manual.
+
+Run this from a checkout **that has the change on it** - the branch adding the secret, or
+`main` once it has merged. Run it from a checkout still on an older `main` and the plan
+reports "No changes", because the policy is simply not in the config it read. That looks
+like success and is not.
+
+```bash
+cd <checkout-with-the-change>/terraform/account-level
+terraform init
+terraform workspace select prod   # NOT default - see below
+terraform plan
+```
+
+`.terraform/` is per-directory, so `init` and `workspace select` are needed again in a
+checkout you have not run terraform in before.
+
+The plan must read `Plan: 1 to add, 0 to change, 0 to destroy` - adding
+`aws_iam_role_policy.app_runner_instance_secrets` and nothing else. **`No changes` means
+you are on a checkout without the change, not that the work is done.** **If it proposes creating the ECR repository, IAM roles or Route53 zones,
+you are in the wrong workspace or the wrong account. Stop.** Those already exist, and
+applying would either fail on name conflicts or build a parallel set that App Runner does
+not use.
+
+```bash
+terraform apply
+```
+
+Skipping this step does not fail the plan. It fails partway through the production
+apply: the secret gets created, then the App Runner service update fails because the
+instance role cannot call `GetSecretValue`. Recover by applying this step and re-running
+the failed workflow.
+
+**2. Release as usual.** Label the PR (`increment:patch` / `minor` / `major`), merge to
+`main`, and let the release trigger `deploy-production.yml`. That apply creates the
+secret with its blank placeholder and wires it into App Runner. Nothing changes
+behaviourally yet - the app still sends no bypass header. This step runs in CI under its
+own OIDC role, so your local profile is not involved.
+
+**3. Set the real token.** The secret does not exist until step 2 has run - an empty
+Secrets Manager list before then is expected.
+
+Console (eu-west-1) -> Secrets Manager -> `block-explorer/prod/indexer-rate-limit-bypass`
+-> Retrieve secret value -> Edit -> **Plaintext** tab -> replace with the token -> Save.
+
+Use Plaintext, not Key/value: the app sends the stored string verbatim as the header, so
+a key/value pair would send JSON as the token.
+
+From a shell without the token entering history:
+
+```bash
+read -rs TOKEN
+aws secretsmanager put-secret-value \
+  --secret-id block-explorer/prod/indexer-rate-limit-bypass \
+  --secret-string "$TOKEN" \
+  --region eu-west-1 --profile explorer-dev-admin
+unset TOKEN
+```
+
+Only `"$TOKEN"` reaches history, though the expanded value is briefly visible in `ps`.
+
+Terraform ignores changes to the value, so later applies will not revert it.
+
+**4. Redeploy so App Runner picks it up.** Secrets are injected when an instance starts,
+so step 3 alone changes nothing. Either wait for the next release, or trigger one now:
+
+```bash
+aws apprunner start-deployment --region eu-west-1 --profile explorer-dev-admin \
+  --service-arn "$(
+    aws apprunner list-services --region eu-west-1 --profile explorer-dev-admin \
+      --query "ServiceSummaryList[?ServiceName=='prod-block-explorer'].ServiceArn" \
+      --output text
+  )"
+```
+
+A deployment that reaches `RUNNING` confirms the IAM grant from step 1 worked - App
+Runner cannot start an instance whose secrets it fails to resolve. Watch it with:
+
+```bash
+aws apprunner list-operations --region eu-west-1 --profile explorer-dev-admin \
+  --service-arn "<arn from above>" --max-results 1
+```
+
+#### Rotating or disabling later
+
+Rotating is steps 3 and 4 only. To turn the bypass off without a code change, set the
+value back to a single space and redeploy: the app reads blank as unset and stops
+sending the header.
+
 ## Manual Deployment
 
 ### Prerequisites

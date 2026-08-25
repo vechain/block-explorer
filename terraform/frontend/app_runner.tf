@@ -38,6 +38,10 @@ resource "aws_apprunner_service" "frontend" {
           },
           lookup(local.env, "environment_variables", {})
         )
+
+        runtime_environment_secrets = local.is_prod ? {
+          INDEXER_RATE_LIMIT_BYPASS = aws_secretsmanager_secret.indexer_rate_limit_bypass[0].arn
+        } : {}
       }
     }
 
@@ -65,6 +69,9 @@ resource "aws_apprunner_service" "frontend" {
     Name        = "${local.env.environment}-block-explorer"
     Environment = local.env.environment
   }
+
+  # App Runner must resolve the secret's first version before an instance can start.
+  depends_on = [aws_secretsmanager_secret_version.indexer_rate_limit_bypass]
 }
 
 ################################################################################
