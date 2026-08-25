@@ -2,7 +2,7 @@ import DataLoader from 'dataloader'
 import { OPENCHAIN_URL } from '@/env.api'
 import { UpstreamError } from '@/lib/upstream-error'
 
-export type Kind = 'function' | 'event'
+type Kind = 'function' | 'event'
 
 const CHUNK = 50
 

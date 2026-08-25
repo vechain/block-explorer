@@ -1,10 +1,10 @@
 import { queryOptions, keepPreviousData, useQuery } from '@tanstack/react-query'
-import type { NetworkName } from '@/lib/constants/network'
+import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerGet, resolveUrl } from './index'
+import { indexerCachedGet } from './index'
 import { type IndexerGetTransactionsParams, indexerResponseSchema, indexerTransactionSchema } from './schemas'
 import { useContractTransactions } from './transactions-contract'
 
@@ -19,6 +19,7 @@ const accountTransactionsQueryOptions = (
     queryKey: [TRANSACTIONS_QUERY_KEY, networkName, params] as const,
     queryFn: () => getTransactions({ networkName, params }),
     placeholderData: keepPreviousData,
+    staleTime: BLOCK_TIME_MS,
     enabled: options?.enabled ?? true,
   })
 
@@ -64,8 +65,8 @@ const getTransactions = async ({
   networkName: NetworkName
   params: IndexerGetTransactionsParams
 }) => {
-  const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName),
+  const { data } = await indexerCachedGet({
+    networkName,
     endPoint: '/transactions',
     params: serializeZodParams(params),
   })

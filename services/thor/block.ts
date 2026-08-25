@@ -1,5 +1,5 @@
 import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
-import type { NetworkName } from '@/lib/constants/network'
+import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { type BlockId, type BlockRevision, blockCompressedSchema, blockExpandedSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
@@ -9,13 +9,11 @@ const BEST_BLOCK_COMPRESSED_QUERY_KEY = 'getBestBlockCompressed'
 const BLOCK_EXPANDED_QUERY_KEY = 'getBlockExpanded'
 const BLOCK_COMPRESSED_QUERY_KEY = 'getBlockCompressed'
 
-const BLOCK_TIME = 10 * 1000 // 10 seconds
-
 export const bestBlockCompressedQueryOptions = (networkName: NetworkName) =>
   queryOptions({
     queryKey: [BEST_BLOCK_COMPRESSED_QUERY_KEY, networkName],
     queryFn: () => getBestBlockCompressed({ networkName }),
-    refetchInterval: BLOCK_TIME,
+    refetchInterval: BLOCK_TIME_MS,
   })
 
 const getBestBlockCompressed = async ({ networkName }: { networkName: NetworkName }) => {

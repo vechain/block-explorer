@@ -15,6 +15,10 @@ export type Network = {
   contracts: NetworkContracts
 }
 
+/** VeChainThor produces a block every 10s; cache lifetimes are derived from it. */
+export const BLOCK_TIME_SECONDS = 10
+export const BLOCK_TIME_MS = BLOCK_TIME_SECONDS * 1000
+
 export enum NetworkName {
   MAINNET = 'mainnet',
   TESTNET = 'testnet',

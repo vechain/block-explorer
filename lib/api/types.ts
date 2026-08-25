@@ -24,6 +24,8 @@ export class ApiError extends Error {
     response?: Response
   }) {
     super(message)
+    // `Error.message` is non-enumerable, so JSON.stringify would drop it.
+    Object.defineProperty(this, 'message', { value: message, enumerable: true, writable: true, configurable: true })
     this.name = 'ApiError'
     this.status = status
     this.response = response
