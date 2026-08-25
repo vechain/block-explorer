@@ -113,18 +113,37 @@ describe('fetchNftJson', () => {
 
       await expect(fetchNftJson('https://example.com/huge.json')).rejects.toThrow(/size limit/)
 
-      // Never took a reader, so the body was not read at all.
-      expect(response.bodyUsed).toBe(false)
-      expect(response.body?.locked).toBe(false)
+      // Cancelled rather than merely abandoned — that is what ends the transfer.
+      expect(source.cancelled()).toBe(true)
       // A ReadableStream prefills one chunk to its high-water mark on its own.
       expect(source.produced()).toBeLessThanOrEqual(CHUNK_BYTES)
     })
 
     it('accepts a body just inside the cap', async () => {
-      const padding = 'x'.repeat(MAX_RESPONSE_BYTES - 64)
-      fetchMock.mockResolvedValue(jsonBody({ name: padding.slice(0, 1000) }))
+      // `{"name":"…"}` adds 11 bytes around the padding.
+      const body = JSON.stringify({ name: 'x'.repeat(MAX_RESPONSE_BYTES - 11) })
+      expect(body.length).toBe(MAX_RESPONSE_BYTES)
+
+      fetchMock.mockResolvedValue(new Response(body, { status: 200 }))
 
       await expect(fetchNftJson('https://example.com/1.json')).resolves.toHaveProperty('name')
+    })
+
+    it('rejects a body one byte over the cap', async () => {
+      const oversize = new Uint8Array(MAX_RESPONSE_BYTES + 1)
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          // Split so the cap is crossed mid-stream rather than on the first chunk.
+          controller.enqueue(oversize.subarray(0, MAX_RESPONSE_BYTES))
+          controller.enqueue(oversize.subarray(MAX_RESPONSE_BYTES))
+          controller.close()
+        },
+      })
+
+      // No content-length, so the running total is the only thing enforcing the cap.
+      fetchMock.mockResolvedValue(new Response(stream, { status: 200 }))
+
+      await expect(fetchNftJson('https://example.com/1.json')).rejects.toThrow(/size limit/)
     })
   })
 

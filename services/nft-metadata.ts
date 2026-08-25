@@ -28,12 +28,16 @@ const nftMetadataUriSchema = z
 
 // ****************************** Fetching ******************************
 
+const TOO_LARGE = 'NFT metadata exceeds the size limit'
+
 // Streamed rather than buffered, so an oversize body is abandoned mid-download instead
 // of being read in full. The declared length is only a shortcut — hosts may omit it.
+// Either way the body is cancelled, which is what actually ends the transfer.
 const readCapped = async (response: Response) => {
   const declared = Number(response.headers.get('content-length'))
   if (Number.isFinite(declared) && declared > MAX_RESPONSE_BYTES) {
-    throw new Error('NFT metadata exceeds the size limit')
+    await response.body?.cancel().catch(() => {})
+    throw new Error(TOO_LARGE)
   }
 
   const reader = response.body?.getReader()
@@ -48,8 +52,9 @@ const readCapped = async (response: Response) => {
 
     size += value.byteLength
     if (size > MAX_RESPONSE_BYTES) {
+      // Cancelled through the reader: the stream is locked, so `body.cancel()` would throw.
       await reader.cancel().catch(() => {})
-      throw new Error('NFT metadata exceeds the size limit')
+      throw new Error(TOO_LARGE)
     }
     chunks.push(value)
   }
