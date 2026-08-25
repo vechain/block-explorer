@@ -8,13 +8,16 @@ import { NotFoundError, UpstreamError } from '@/lib/upstream-error'
 /** Builds a route handler that proxies an upstream API through a TTL cache. */
 
 export interface CacheProfile {
-  ttl: number
+  /** A function when the response itself decides how long it may be reused. */
+  ttl: number | ((result: unknown) => number)
   stale: number
+  /** Capped at the resolved ttl — a browser must not outlive the server's own entry. */
   browserMaxAge?: number
   size: number
 }
 
-interface NotFoundProfile extends CacheProfile {
+interface NotFoundProfile extends Omit<CacheProfile, 'ttl'> {
+  ttl: number
   message: string
 }
 
@@ -78,8 +81,8 @@ export const defineEndpoint = <TSchema extends z.ZodObject<z.ZodRawShape>>(
 
 const NO_CACHE_CONTROL = 'no-store'
 
-const cacheControl = ({ ttl, stale, browserMaxAge = 0 }: CacheProfile) =>
-  `public, max-age=${browserMaxAge}, s-maxage=${ttl}, stale-while-revalidate=${stale}`
+const cacheControl = ({ ttl, stale, browserMaxAge = 0 }: { ttl: number; stale: number; browserMaxAge?: number }) =>
+  `public, max-age=${Math.min(browserMaxAge, ttl)}, s-maxage=${ttl}, stale-while-revalidate=${stale}`
 
 const withCacheControl = (response: NextResponse, value: string): NextResponse => {
   response.headers.set('Cache-Control', value)
@@ -170,7 +173,11 @@ export const createCachedProxy = ({
 
     try {
       const data = await hits.get(path)?.(parsed.params)
-      return withCacheControl(NextResponse.json(data), cacheControl(endpoint.cache))
+      const { ttl } = endpoint.cache
+      return withCacheControl(
+        NextResponse.json(data),
+        cacheControl({ ...endpoint.cache, ttl: typeof ttl === 'function' ? ttl(data) : ttl }),
+      )
     } catch (error) {
       if (error instanceof NotFoundError) {
         missCache?.set(missKey, true)

@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api'
 import { NetworkName } from '@/lib/constants/network'
-import { INDEXER_PROXY_BASE, isCachedIndexerEndpoint, isProxiedNetwork } from '@/lib/indexer-proxy'
+import { INDEXER_PROXY_BASE, isCachedIndexerEndpoint } from '@/lib/indexer-proxy'
+import { isProxiedNetwork } from '@/lib/proxied-network'
 import { getRuntimeIndexerBaseUrl } from '@/lib/utils/runtime-network'
 
 export enum IndexerVersion {

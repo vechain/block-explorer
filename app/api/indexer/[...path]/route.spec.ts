@@ -157,12 +157,13 @@ describe('GET /api/indexer/[...path]', () => {
       const { BLOCK_TIME_SECONDS } = await import('@/lib/constants/network')
 
       // async-cache-dedupe stores an entry for ttl + stale and serves it for that whole
-      // window, so that sum is the real staleness bound.
+      // window, so that sum is the real staleness bound. Every indexer profile is fixed;
+      // none defers its lifetime to the response the way a block does.
       for (const [path, endpoint] of Object.entries(INDEXER_ENDPOINTS)) {
-        expect({ path, maxAge: endpoint.cache.ttl + endpoint.cache.stale }).toEqual({
-          path,
-          maxAge: BLOCK_TIME_SECONDS,
-        })
+        const { ttl, stale } = endpoint.cache
+        if (typeof ttl !== 'number') throw new Error(`${path} defers its lifetime to the response`)
+
+        expect({ path, maxAge: ttl + stale }).toEqual({ path, maxAge: BLOCK_TIME_SECONDS })
       }
     })
   })
