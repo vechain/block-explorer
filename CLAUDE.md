@@ -170,6 +170,18 @@ ESLint configuration (`.eslintrc.json`):
 - No explicit `any` types
 - Console statements restricted (warn/error only)
 
+## Commits & PRs
+
+**Prose bloat is a merge blocker.** [.github/workflows/pr-bloat.yml](.github/workflows/pr-bloat.yml) fails a PR on a description over 240 words (or under 10), a tool-attribution trailer, or a comment block that outweighs the code it documents (>1:1 against attached added-code lines; 10 lines absolute; a top-of-file header measures against the whole file). Density and long `docs/` paragraphs are advisory; `docs/**` never blocks. `pnpm check:pr-bloat` runs it locally. Bypass is the `verbose-ok` label, which anyone including the author may apply. Thresholds are env-overridable in [scripts/check-pr-bloat.mjs](scripts/check-pr-bloat.mjs).
+
+**Write reviewer-facing prose at final length — don't draft long and trim.** The budget is the target, not a limit to approach.
+
+- **PR descriptions:** what changed and why, in two or three sentences. Skip `## Summary` / `## Test plan` scaffolding unless there is genuinely something new to test. No tool-attribution trailers — that includes the "Generated with Claude Code" footer.
+- **Comments:** a comment must not outweigh the code it documents — on a one-line field addition, that means no comment.
+- Don't restate what the code does, what a technical term already implies, or what a linked design doc already says.
+- Don't explain what something does _not_ do. State what is; the reader can see the absence.
+- **But keep visual/semantic bridges.** Mapping something observable to what it means ("dashed orange line = the alert threshold") is real information, not padding.
+
 ## Important Patterns
 
 1. **No Cross-Route Component Imports**: Never import from another route's `components/` subfolder (e.g., do not import from `app/[locale]/block/components/` inside `app/[locale]/address/`). Each route's `components/` directory is private to that route's directory tree. If a component is needed by multiple routes, move it to a shared location such as `components/` (top-level) or `app/[locale]/components/` (shared across locale routes). Importing from a parent route's `components/` is allowed (e.g., `app/[locale]/block/[blockId]/` can import from `app/[locale]/block/components/`).
