@@ -146,27 +146,27 @@ jobs:
           cat prod.yaml
 
       - name: Terraform Init
-        working-directory: terraform/frontend
+        working-directory: terraform/app-runner
         run: |
           terraform init -backend-config=../environments/prod/backend.config
 
       - name: Terraform Workspace
-        working-directory: terraform/frontend
+        working-directory: terraform/app-runner
         run: |
           terraform workspace select prod
 
       - name: Terraform Plan
-        working-directory: terraform/frontend
+        working-directory: terraform/app-runner
         run: |
           terraform plan -out=tfplan
 
       - name: Terraform Apply
-        working-directory: terraform/frontend
+        working-directory: terraform/app-runner
         run: |
           terraform apply -auto-approve tfplan
 
       - name: Get deployment URL
-        working-directory: terraform/frontend
+        working-directory: terraform/app-runner
         id: outputs
         run: |
           CUSTOM_URL=$(terraform output -raw custom_domain_url || echo "")

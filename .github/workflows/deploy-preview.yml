@@ -21,7 +21,7 @@ env:
   PREVIEW_DOMAIN_SUFFIX: block-explorer-preview.vechain.org
 
   # Terraform Paths
-  TERRAFORM_DIR: terraform/frontend
+  TERRAFORM_DIR: terraform/app-runner
   TERRAFORM_ENV_DIR: terraform/environments
   TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
 

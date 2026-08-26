@@ -1,0 +1,24 @@
+# Dev environment — ECS Fargate on the dev ALB.
+environment: dev
+domain: dev.block-explorer.vechain.org
+
+# Network
+vpc_cidr: 10.30.0.0/16
+az_count: 2
+# An AZ outage takes dev egress with it, which is worth ~$65/month. Prod: false.
+single_nat_gateway: true
+
+# ECS task
+image_tag: latest
+task_cpu: 512
+task_memory: 1024
+desired_count: 1
+container_port: 3000
+
+log_retention_days: 30
+
+# WAF. The rate-based IP rule always blocks; the AWS managed groups stay in
+# Count until they have soaked against real traffic.
+waf_enabled: true
+waf_managed_rules_blocking: false
+waf_rate_limit: 2000
