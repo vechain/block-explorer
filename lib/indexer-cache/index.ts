@@ -47,10 +47,11 @@ const includeDelegatedParam = z
   .transform(value => value === 'true')
   .optional()
 
+// Upstream cursors are `blockNumber|index`, so the pipe belongs in the allowlist.
 const cursorParam = z
   .string()
   .max(MAX_CURSOR_LENGTH)
-  .regex(/^[A-Za-z0-9._~:+/=-]+$/)
+  .regex(/^[A-Za-z0-9._~:+/=|-]+$/)
   .optional()
 
 // Repeated query param (`?eventType=VET&eventType=NFT`). Deduped so a filter repeating a
