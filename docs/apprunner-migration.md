@@ -47,7 +47,7 @@ All infrastructure in Terraform, with **zero downtime on prod**.
 | ----------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Compute           | Classic ECS Fargate + our own ALB                                            | ECS Express Mode's `aws_ecs_express_gateway_service` takes a single `primary_container` — no ADOT sidecar — and owns a shared ALB, which fights requirements 5, 7 and 8. |
 | DNS               | Zones stay in `explorer-dev`; the prod pipeline writes records cross-account | Weighted shifting needs both records in one zone. Removes any dependency on the `vechain.org` zone owner during cutover.                                                 |
-| Redis             | ElastiCache Serverless (Valkey), one per account                             | dev's is shared by dev + all previews; prod gets its own.                                                                                                                |
+| Redis             | ElastiCache Serverless (Valkey), one per account, in phase 7                 | dev's is shared by dev + all previews; prod gets its own. Deferred until the ECS migration is done — see [Delivery](#delivery).                                          |
 | Redis integration | Swap `async-cache-dedupe` storage to Redis in `lib/cached-proxy`             | Single swap point; also buys cross-pod request coalescing.                                                                                                               |
 | ALB layout        | Two in `explorer-dev` — one for dev, one shared by previews                  | dev gets its own ALB, WAF and alarms, so it is a real rehearsal for prod. Preview ALB cost is flat regardless of open PR count.                                          |
 | Metrics           | Infra **and** app metrics                                                    | Cache hit rate is the number that proves the Redis work paid off, and it is invisible today.                                                                             |
@@ -67,19 +67,26 @@ comments cite the specific incidents behind each non-obvious line.
 
 ## Delivery
 
-| Phase                 | Ends when                                                                                                               |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| 0 — doc + app changes | `/api/health`, `/api/metrics`, Redis-capable `cached-proxy` and the `node_env` fix are merged and running on App Runner |
-| 1 — dev foundations   | dev serves traffic on ECS at `dev.block-explorer.vechain.org`                                                           |
-| 2 — dev observability | Grafana shows app + infra metrics; a test alarm reaches Slack                                                           |
-| 3 — previews          | a labelled PR gets a working preview; teardown and reconcile both verified                                              |
-| 4 — shared pipeline   | merge to `main` deploys dev and leaves exactly one draft release                                                        |
-| 5 — prod stack        | prod ECS serving on its ALB DNS name, still at DNS weight 0                                                             |
-| 6 — cutover           | weight at 100, App Runner deleted, dead Terraform removed                                                               |
+| Phase                 | Ends when                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| 0 — app changes       | `/api/health`, `/api/metrics`, the `node_env` fix and the preview label gate are on App Runner |
+| 1 — dev foundations   | dev serves traffic on ECS at `dev.block-explorer.vechain.org`                                  |
+| 2 — dev observability | Grafana shows app + infra metrics; a test alarm reaches Slack                                  |
+| 3 — previews          | a labelled PR gets a working preview; teardown and reconcile both verified                     |
+| 4 — shared pipeline   | merge to `main` deploys dev and leaves exactly one draft release                               |
+| 5 — prod stack        | prod ECS serving on its ALB DNS name, still at DNS weight 0                                    |
+| 6 — cutover           | weight at 100, App Runner deleted, dead Terraform removed                                      |
+| 7 — shared cache      | dev and prod tasks share one Valkey; the hit-rate panel climbs on a task that did not fetch    |
 
-Phase 0 splits into four independent PRs (health, metrics, Redis, `node_env`); the Redis one is
-the only one needing real review attention. Phase 6 is a runbook executed against live prod
-traffic, not a coding task — keep it separate from phase 5.
+Phase 0 splits into four independent PRs (health, metrics, `node_env`, preview label gate), none
+of them interesting. Phase 6 is a runbook executed against live prod traffic, not a coding task —
+keep it separate from phase 5.
+
+**Redis lands last, after the cutover.** It is the one change that alters how the app serves
+requests rather than where it runs, and folding it into the migration would mean debugging a
+cache-coherency question and a platform question at the same time. Phases 1 and 5 therefore
+provision no ElastiCache; phase 7 adds it to both accounts and does the app swap. Requirement 8
+still holds, it is just the last thing delivered rather than the first.
 
 ## Target architecture
 
@@ -94,7 +101,7 @@ ALB "dev"     ─► ECS svc dev      + ADOT       ALB "prod" ─► ECS svc pro
 ALB "preview" ─► ECS svc pr-N, pr-M, …
   host-header listener rules, no WAF
 
-ElastiCache Serverless (Valkey) — dev + previews    ElastiCache Serverless (Valkey)
+ElastiCache (Valkey) — dev + previews, phase 7      ElastiCache (Valkey) — phase 7
 AMP + AMG + SNS ─► Slack, alerts OFF                AMP + AMG + SNS ─► Slack, alerts ON
 observability-collector (YACE + ADOT) ─► AMP        observability-collector ─► AMP
 ```
@@ -112,7 +119,8 @@ than adopting agent-marketplace's `locals.tf` ternaries — less churn, and grep
 
 ```
 terraform/
-  network/  ecr/  ecs/  data/  acm/        foundations
+  network/  ecr/  ecs/  acm/               foundations
+  data/                                    ElastiCache                          (phase 7)
   edge/                                    dev|prod ALB, listeners, WAF, SGs, target group
   preview-edge/                            shared preview ALB + listener        (dev only)
   frontend/                                ECS service + task def + ADOT sidecar
@@ -151,7 +159,7 @@ already served prod traffic on App Runner for weeks.
 - `middleware.ts`'s matcher is `/((?!api|static|.*\..*|_next).*)`, so `/api/*` bypasses the i18n
   redirect entirely. `/api/health` is the only shape that returns a bare 200.
 
-Keep the 200 independent of Redis — a cache outage must not cycle tasks.
+Keep the 200 independent of every cache and upstream — an outage must not cycle tasks.
 
 ### 0.2 Prometheus metrics
 
@@ -176,56 +184,58 @@ a priority _below_ any future auth gate so it applies to authenticated users too
 `aws_lb_listener_rule.backend_block_metrics` at priority 70 in agent-marketplace's `edge/main.tf`.
 `/api/health` stays reachable; the ALB health check needs it and it leaks nothing.
 
-### 0.3 Redis behind `lib/cached-proxy`
+Until that ALB rule exists the endpoint has nothing in front of it, so it is gated on a
+`METRICS_ENABLED` env var that defaults off (on in development). Turn it on in the ECS task
+definition, not on App Runner.
 
-All server-side caching today is process-local: `async-cache-dedupe` for positive results,
-`lru-cache` for negative ones, instantiated at module scope per route. With prod at up to 10
-instances that is up to 10 divergent caches, cold on every deploy.
+Two deviations found while building it. `async-cache-dedupe` fires `onHit` for a stale serve
+exactly as for a fresh one and exposes no separate event, so `result` is `hit` / `miss` /
+`dedupe`; the stale-refresh rate is `upstream_requests_total - cache_requests_total{result="miss"}`
+instead. And the registry hangs off `globalThis`, because Next builds each route as its own entry
+and a module-scope registry would leave the scrape seeing only its own copy.
 
-One swap point — `lib/cached-proxy/index.ts:124`, `storage: { type: 'memory', … }` →
-`type: 'redis'` with an injected `ioredis` client, gated on `REDIS_URL` so it stays in-memory
-locally and in tests.
-
-**Serverless Valkey runs in cluster mode**, so the client is `new Redis.Cluster(...)` over
-`rediss://`. Mirror agent-marketplace's `REDIS_URL` + `REDIS_CLUSTER_MODE` pair.
-
-Cluster mode is safe here, and it is worth recording why. `async-cache-dedupe`'s Redis storage
-_does_ issue cross-key `pipeline()` batches, which would fail with `CROSSSLOT` — but every one of
-them sits inside an `if (this.invalidation)` branch. `invalidation` defaults to `false`, and
-`cached-proxy` is a pure TTL cache that never calls `invalidate()`, so `get` / `set` / `exists` /
-`pttl` are all single-key. Add a `{be}` hash-tag prefix anyway, plus a comment: turning
-invalidation on without one is precisely what bit agent-marketplace's Langfuse keys.
-
-Two more things the swap needs:
-
-- **Negative caches are separate `LRUCache` instances** (`index.ts:139`) with no Redis path in the
-  library. Hand-port to `SET k 1 EX ttl` / `EXISTS` — single-key, cluster-safe. Mind the unit
-  mismatch: `async-cache-dedupe` TTLs are seconds, `LRUCache` takes milliseconds.
-- **Prefix keys with the build ID.** The namespaces (`indexer_transactions_latest`,
-  `thor_blocks_best`, …) are stable across releases, so without a prefix a schema change would
-  serve stale-shaped payloads to a new build out of a now-shared cache.
-
-The response-dependent TTL in `lib/thor-cache/index.ts` (10s, or 600s once `isFinalized`) is a
-function TTL — confirm the Redis backend honours it during implementation.
-
-### 0.4 Fix `node_env`
+### 0.3 Fix `node_env`
 
 `terraform/environments/prod/prod.yaml` sets `node_env: prod`. The Dockerfile sets `production`,
 and App Runner's `runtime_environment_variables` _replaces_ image `ENV` rather than merging — so
 prod has been running with a `NODE_ENV` neither React nor Next recognises.
 `preview.yaml.example` has it right.
 
-Related footgun when adding `REDIS_URL`: `env.api.ts` carries a comment recording a prior outage
-where a module-load `throw` on a missing var 500'd every route that imported it. **Every new
-server env var needs a safe default.**
+Related footgun for every server env var this migration adds — `METRICS_ENABLED` now, `REDIS_URL`
+in phase 7: `env.api.ts` carries a comment recording a prior outage where a module-load `throw` on
+a missing var 500'd every route that imported it. **Every new server env var needs a safe
+default.**
+
+### 0.4 Gate previews on a label
+
+Requirement 2, pulled forward: today every PR spins up an App Runner preview, so the waste is
+happening now rather than after the migration. Gating the existing workflow costs nothing that
+phase 3 then has to undo — the label logic ports to ECS unchanged, and landing it early means the
+convention is established before previews move.
+
+`deploy-preview.yml` gains `labeled` to its trigger types and a single `gate` job requiring
+`create-preview`, replacing the `classify` → `gate-auto` / `gate-approval` → `gate` chain. The
+label _is_ the human approval — applying one takes write access, the same bar the bot
+classification enforced — which is what makes dropping that chain safe. Keep the fork exclusion.
+
+- A `labeled` event fires for **any** label, so the guard needs
+  `(github.event.action != 'labeled' || github.event.label.name == 'create-preview')` on top of
+  the `contains(…labels.*.name, 'create-preview')` check, or every unrelated label redeploys.
+- **`Deploy Preview Environment` has to come off `main`'s required status checks first.** A gated
+  workflow never reports, so every unlabelled PR would sit unmergeable on a check that cannot
+  arrive.
+- `destroy-preview.yml` has no concurrency group at all today, so a teardown can run against the
+  state an in-flight deploy holds. Give it deploy's group, `cancel-in-progress: false`.
+
+The `preview-auto` and `preview-approval` GitHub Environments are left in place, unreferenced;
+delete them whenever convenient. `preview-reconcile.yml` stays in phase 3 — it reaps orphaned
+Terraform workspaces, which only exist once previews are on ECS.
 
 ## Phase 1 — Foundations in explorer-dev
 
 Network (verify whether the account has a usable Control Tower VPC before building one), ECS
-cluster, ElastiCache Serverless Valkey with an RBAC user group (agent-marketplace's
-`infra/terraform/data/main.tf` is the template — a disabled `default` user plus a scoped app
-user), ACM cert for the dev domain, the dev ALB + WAF, and the dev ECS service with the ADOT
-sidecar.
+cluster, ACM cert for the dev domain, the dev ALB + WAF, and the dev ECS service with the ADOT
+sidecar. No ElastiCache — that is phase 7.
 
 **Enable Container Insights on the cluster.** Without it, the ECS task-count metrics, the
 tasks-below-desired alarms and YACE's discovery all have nothing to read. (generic-delegator
@@ -252,9 +262,7 @@ Two collectors, not one. The split is the part that is easy to get wrong:
   receiver. It is what gets ALB, WAF and ElastiCache metrics into the same Prometheus store as the
   app metrics.
 
-  **Specific trap:** YACE v0.65 discovery _silently NaNs_ ElastiCache `:serverlesscache:` ARNs.
-  Our Valkey has to go in a `static[]` block, and static jobs use the legacy `GetMetricStatistics`
-  API, which skips the metric entirely on a nil result — so set `length: 300`, not 60.
+  ALB and WAF metrics only at this point; the ElastiCache job arrives with the cache in phase 7.
 
 Then AMP, AMG (Grafana 12.4, `CUSTOMER_MANAGED`, Okta SAML), the SNS topic and the SNS→Slack
 Lambda. Dashboards go in a **separate stack**, because the Grafana provider cannot initialise
@@ -334,20 +342,10 @@ raise.** Rules per ALB is also 100 but _is_ adjustable, so target groups binds f
 
 ### Workflow changes
 
-Rewrite `deploy-preview.yml` to gate on `create-preview`, and delete the whole `classify` →
-`gate-auto` / `gate-approval` → `gate` chain along with the `preview-auto` and `preview-approval`
-GitHub Environments. The label _is_ the human approval now, which is what makes dropping the bot
-gate safe. Keep the existing fork exclusion.
-
-Two subtleties:
-
-- A `labeled` event fires for **any** label, so the guard needs
-  `(github.event.action != 'labeled' || github.event.label.name == 'create-preview')` on top of
-  the `contains(…labels.*.name, 'create-preview')` check, or every unrelated label triggers a
-  redeploy.
-- Share one concurrency group between deploy and teardown with `cancel-in-progress: false`.
-  GitHub evaluates that on the _incoming_ run, so `true` would let a new deploy cancel a teardown
-  mid-`terraform destroy` and strand the state lock.
+The label gate and the shared concurrency group both landed in [0.4](#04-gate-previews-on-a-label),
+so what is left here is repointing `deploy-preview.yml` and `destroy-preview.yml` from the App
+Runner service at the `frontend-preview` stack and its `pr-N` workspace. The gate job itself
+carries over unchanged.
 
 **Add `preview-reconcile.yml`** (cron every 6 hours). This is not optional once there is a label
 gate. Event-driven teardown genuinely misses cleanups: a queued teardown can be silently evicted
@@ -406,7 +404,7 @@ than a name per matrix shard.
 ## Phase 5 — Prod in explorer-prod
 
 Bootstrap the account: state bucket, GitHub OIDC provider, a scoped deploy role, ECR, network,
-cluster, Valkey, ALB, WAF, ECS service, and observability with `alerts_enabled: true`. Plus the
+cluster, ALB, WAF, ECS service, and observability with `alerts_enabled: true`. Plus the
 cross-account role in `explorer-dev` that lets the prod pipeline UPSERT Route53 records.
 
 Scope the OIDC role properly rather than reaching for the shared `github-actions-role`. The
@@ -453,6 +451,54 @@ Then delete the App Runner service and its custom-domain association, and remove
 `aws_apprunner_auto_scaling_configuration_version` resources, and the App Runner instance and
 access IAM roles from `terraform/account-level/`.
 
+## Phase 7 — Shared cache
+
+Only now, with both environments settled on ECS and the cache hit rate already on a dashboard from
+phase 0's metrics. All server-side caching today is process-local: `async-cache-dedupe` for
+positive results, `lru-cache` for negative ones, instantiated at module scope per route. With prod
+at up to 10 instances that is up to 10 divergent caches, cold on every deploy.
+
+### Infrastructure
+
+A `data/` stack per account holding ElastiCache Serverless Valkey with an RBAC user group
+(agent-marketplace's `infra/terraform/data/main.tf` is the template — a disabled `default` user
+plus a scoped app user). dev's instance is shared by dev and every preview; prod gets its own.
+
+Add the ElastiCache job to `observability-collector` at the same time. **Specific trap:** YACE
+v0.65 discovery _silently NaNs_ `:serverlesscache:` ARNs. Our Valkey has to go in a `static[]`
+block, and static jobs use the legacy `GetMetricStatistics` API, which skips the metric entirely
+on a nil result — so set `length: 300`, not 60.
+
+### The app swap
+
+One swap point — `lib/cached-proxy/index.ts`, `storage: { type: 'memory', … }` → `type: 'redis'`
+with an injected `ioredis` client, gated on `REDIS_URL` so it stays in-memory locally and in tests.
+
+**Serverless Valkey runs in cluster mode**, so the client is `new Redis.Cluster(...)` over
+`rediss://`. Mirror agent-marketplace's `REDIS_URL` + `REDIS_CLUSTER_MODE` pair.
+
+Cluster mode is safe here, and it is worth recording why. `async-cache-dedupe`'s Redis storage
+_does_ issue cross-key `pipeline()` batches, which would fail with `CROSSSLOT` — but every one of
+them sits inside an `if (this.invalidation)` branch. `invalidation` defaults to `false`, and
+`cached-proxy` is a pure TTL cache that never calls `invalidate()`, so `get` / `set` / `exists` /
+`pttl` are all single-key. Add a `{be}` hash-tag prefix anyway, plus a comment: turning
+invalidation on without one is precisely what bit agent-marketplace's Langfuse keys.
+
+Two more things the swap needs:
+
+- **Negative caches are separate `LRUCache` instances** with no Redis path in the library.
+  Hand-port to `SET k 1 EX ttl` / `EXISTS` — single-key, cluster-safe. Mind the unit mismatch:
+  `async-cache-dedupe` TTLs are seconds, `LRUCache` takes milliseconds.
+- **Prefix keys with the build ID.** The namespaces (`indexer_transactions_latest`,
+  `thor_blocks_best`, …) are stable across releases, so without a prefix a schema change would
+  serve stale-shaped payloads to a new build out of a now-shared cache.
+
+The response-dependent TTL in `lib/thor-cache/index.ts` (10s, or 600s once `isFinalized`) is a
+function TTL — confirm the Redis backend honours it during implementation.
+
+Roll it out to dev first and leave it there for a week. Because the swap is gated on `REDIS_URL`,
+rollback is unsetting one variable, not a redeploy of old code.
+
 ## Risks
 
 | Risk                                   | Detail                                                                                                                                                                                                                                                                                                                                                                          |
@@ -474,9 +520,9 @@ access IAM roles from `terraform/account-level/`.
   group reports healthy within the deployment window.
 - **Metrics are private** — `curl https://<env>/api/metrics` returns 403 from the ALB, while the
   sidecar's scrape succeeds (series present in AMP).
-- **Cache is genuinely shared** — scale dev to two tasks, hit `/api/indexer/transactions/latest`
-  repeatedly, and confirm the hit counter climbs on the task that did _not_ do the upstream fetch.
-  That is the proof Redis replaced per-pod caching.
+- **Cache is genuinely shared** (phase 7) — scale dev to two tasks, hit
+  `/api/indexer/transactions/latest` repeatedly, and confirm the hit counter climbs on the task
+  that did _not_ do the upstream fetch. That is the proof Redis replaced per-pod caching.
 - **Rendering** — walk `/`, a block, a transaction, an address and an NFT page in two locales
   through the ALB; confirm the i18n redirect and the legacy `/account/0x…` 308 both work.
 - **WAF** — exceed the per-IP limit and confirm a 429, the entry in the WAF log group, and the
