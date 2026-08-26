@@ -6,6 +6,13 @@ on:
     branches:
       - main
 
+# Shared with deploy-preview so a teardown cannot run against the Terraform state an
+# in-flight deploy is holding. GitHub evaluates cancel-in-progress on the incoming run, so
+# `true` would let a deploy cancel a teardown mid-destroy and strand the lock.
+concurrency:
+  group: preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 env:
   AWS_REGION: eu-west-1
   TERRAFORM_VERSION: 1.10.0
@@ -26,13 +33,7 @@ jobs:
       id-token: write
       contents: read
       pull-requests: write
-    # Skip the two categories that deploy-preview never deploys for:
-    # Dependabot PRs (cannot access AWS secrets) and fork PRs (security
-    # boundary). Everything else — including Renovate PRs and in-repo PRs
-    # whose preview gate was never approved — runs through and relies on
-    # the `terraform workspace select` step below (with continue-on-error)
-    # to detect that no preview exists and exit cleanly via the
-    # `workspace.exists` output.
+    # Dependabot, forks and unlabelled PRs have no preview; the select step below exits.
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]'
