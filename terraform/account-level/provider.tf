@@ -8,10 +8,10 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "block-explorer-terraform-state-prod"
-    key            = "account-level/terraform.tfstate"
-    region         = "eu-west-1"
-    encrypt        = true
+    bucket  = "block-explorer-terraform-state-prod"
+    key     = "account-level/terraform.tfstate"
+    region  = "eu-west-1"
+    encrypt = true
   }
 }
 

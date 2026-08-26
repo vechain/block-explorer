@@ -10,9 +10,9 @@ terraform {
   # Backend configuration is partially configured here
   # The bucket is provided via backend config file during init
   backend "s3" {
-    key            = "frontend/terraform.tfstate"
-    region         = "eu-west-1"
-    encrypt        = true
+    key     = "frontend/terraform.tfstate"
+    region  = "eu-west-1"
+    encrypt = true
     # bucket and dynamodb_table are provided via -backend-config flag
   }
 }
