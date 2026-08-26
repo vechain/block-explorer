@@ -2,7 +2,7 @@
 # Hosted Zone & DNS Record creation
 ################################################################################
 resource "aws_route53_zone" "block_explorer_public_zone_prod" {
-  name  = "block-explorer.vechain.org"
+  name = "block-explorer.vechain.org"
 
   tags = {
     Name        = "block-explorer.vechain.org"
@@ -13,7 +13,7 @@ resource "aws_route53_zone" "block_explorer_public_zone_prod" {
 }
 
 resource "aws_route53_zone" "block_explorer_public_zone_preview" {
-  name  = "block-explorer-preview.vechain.org"
+  name = "block-explorer-preview.vechain.org"
 
   tags = {
     Name        = "block-explorer-preview.vechain.org"
