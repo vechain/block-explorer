@@ -27,4 +27,6 @@ node_env: production
 # Optional: Additional environment variables for the application
 environment_variables:
   NEXT_PUBLIC_NETWORK: mainnet
+  # Temporary: drop once the indexer's CloudFront WAF honours x-rate-limit-bypass.
+  BYPASS_INDEXER_PROXY: 'true'
   # Add more env vars as needed
