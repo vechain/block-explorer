@@ -215,6 +215,51 @@ describe('GET /api/indexer/[...path]', () => {
     })
   })
 
+  // Every page past the first is reached by replaying the cursor the previous page
+  // returned, so a format the proxy rejects makes only page 1 reachable.
+  describe('cursor pagination', () => {
+    const CURSOR = '25724813|2'
+
+    it('forwards the blockNumber|index cursor the indexer hands back', async () => {
+      const response = await call(
+        latestUrl(`network=mainnet&size=10&cursor=${encodeURIComponent(CURSOR)}`),
+        LATEST_PATH,
+      )
+
+      expect(response.status).toBe(200)
+      expect(new URL(requestedUrls(fetchMock)[0]).searchParams.get('cursor')).toBe(CURSOR)
+    })
+
+    it('forwards the cursor on transfers too', async () => {
+      const response = await call(
+        latestTransfersUrl(`network=mainnet&size=10&cursor=${encodeURIComponent(CURSOR)}`),
+        LATEST_TRANSFERS_PATH,
+      )
+
+      expect(response.status).toBe(200)
+      expect(new URL(requestedUrls(fetchMock)[0]).searchParams.get('cursor')).toBe(CURSOR)
+    })
+
+    it('keys each cursor separately so page 2 is not served page 1', async () => {
+      fetchMock.mockImplementation((url: URL) =>
+        Promise.resolve(jsonResponse({ cursor: url.searchParams.get('cursor') })),
+      )
+
+      const first = await call(latestUrl('network=mainnet&size=10'), LATEST_PATH)
+      const second = await call(latestUrl(`network=mainnet&size=10&cursor=${encodeURIComponent(CURSOR)}`), LATEST_PATH)
+
+      expect(await first.json()).toEqual({ cursor: null })
+      expect(await second.json()).toEqual({ cursor: CURSOR })
+    })
+
+    it('400s a cursor carrying characters the upstream format never produces', async () => {
+      const response = await call(latestUrl('network=mainnet&size=10&cursor=25724813%7C2%3Cscript%3E'), LATEST_PATH)
+
+      expect(response.status).toBe(400)
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+  })
+
   describe('transfers', () => {
     const sendLatestTransfers = async (query: string) => {
       const GET = await importRoute()
