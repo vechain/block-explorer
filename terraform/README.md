@@ -40,31 +40,33 @@ TF_WORKSPACE=dev terraform validate
 
 ## Applying
 
-Nothing here is wired to a workflow yet, so apply by hand. Order matters where a stack reads
-another's state: `network` → `ecs` → `acm` → `edge` → `frontend`.
+`deploy-dev.yml` owns dev. Every merge to `main` gets a `v.X.Y.Z` tag, which builds the release
+image; the deploy chains off that build, pins `image_tag`, applies the stacks in order and rolls the
+ECS service. Nothing about dev needs applying by hand.
+
+Order matters where a stack reads another's state, and the workflow applies them serially in it:
+`network` → `ecs` → `acm` → `edge` → `frontend`. To run one locally against dev:
 
 ```bash
 cd terraform/network
 terraform init -backend-config=../environments/dev/backend.config
 terraform workspace select -or-create dev
 terraform plan
-terraform apply
 ```
 
 `.terraform/` is per-directory, so `init` and the workspace selection are needed in each stack.
+`terraform validate` needs a workspace too, but no backend — use `TF_WORKSPACE=dev terraform validate`.
 
 State locking is via S3 conditional writes (`use_lockfile = true`), not DynamoDB — no lock table
 exists for these stacks, and none is needed.
 
-The ALB answers 503 until the first task passes its health check. Two things are then left as
-deliberate manual steps:
+Two things the pipeline deliberately does not do:
 
-- **The indexer bypass token**, seeded blank because the app treats blank as unset and sends no
-  header — so a wrong token is never sent. Put the real value into the secret named in the
-  `indexer_rate_limit_bypass_secret_arn` output, then force a new deployment, since secrets are
-  injected only when a task starts. Skipping this does not break health checks; it means every
-  server-side indexer call leaves from the one NAT IP and takes the indexer's per-IP rate limit for
-  the whole environment.
-- **The image tag**, `image_tag` in the env YAML. Nothing publishes a dev image yet, so it points at
-  whatever is already in ECR. Those images are amd64, which is why tasks are `X86_64`; the move to
-  cheaper arm64 waits on a multi-arch push.
+- **Setting the indexer bypass token.** It is seeded blank, because the app treats blank as unset and
+  sends no header — so a wrong token is never sent. Put the real value into the secret named in the
+  `indexer_rate_limit_bypass_secret_arn` output, then re-run the deploy, since secrets are injected
+  only when a task starts. Skipping this does not break health checks; it means every server-side
+  indexer call leaves from the one NAT IP and takes the indexer's per-IP rate limit for the whole
+  environment.
+- **Deploying prod.** Prod is still App Runner, on `deploy-production.yml`, until the prod account
+  exists.
