@@ -177,8 +177,8 @@ jobs:
           context: ./
           provenance: false
           sbom: false
-          cache-from: type=gha,scope=buildkit-pr-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=buildkit-pr-${{ matrix.arch }}
+          # Reads the release cache, writes none: `mode=max` filled the 10GB repo quota.
+          cache-from: type=gha,scope=buildkit-${{ matrix.arch }}
           outputs: type=image,name=${{ env.registry }}/${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
