@@ -12,3 +12,6 @@ export const OPENCHAIN_URL = process.env.OPENCHAIN_URL ?? 'https://api.openchain
 
 // Blank when unset: Terraform seeds the secret with a placeholder.
 export const INDEXER_RATE_LIMIT_BYPASS = process.env.INDEXER_RATE_LIMIT_BYPASS?.trim()
+
+// Off by default: nothing keeps /api/metrics private until an ALB rule fronts it.
+export const METRICS_ENABLED = process.env.METRICS_ENABLED === 'true' || process.env.NODE_ENV === 'development'

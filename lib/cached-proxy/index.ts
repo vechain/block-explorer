@@ -3,6 +3,7 @@ import { LRUCache } from 'lru-cache'
 import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createErrorResponse } from '@/lib/api/index'
+import { metrics } from '@/lib/metrics'
 import { NotFoundError, UpstreamError } from '@/lib/upstream-error'
 
 /** Builds a route handler that proxies an upstream API through a TTL cache. */
@@ -108,6 +109,30 @@ const serializeParams = (params: Record<string, unknown>) => {
 
 type CacheMethod = (params: Record<string, unknown>) => Promise<unknown>
 
+type EndpointLabels = { name: string; path: string }
+
+const upstreamOutcome = (error: unknown) => {
+  if (error instanceof NotFoundError) return 'not_found'
+  if (error instanceof UpstreamError) return 'upstream_error'
+  return 'error'
+}
+
+const withUpstreamMetrics =
+  (labels: EndpointLabels, fetch: CacheMethod): CacheMethod =>
+  async params => {
+    const stopTimer = metrics.upstreamDuration.startTimer(labels)
+    try {
+      const result = await fetch(params)
+      stopTimer()
+      metrics.upstreamRequests.inc({ ...labels, outcome: 'ok' })
+      return result
+    } catch (error) {
+      stopTimer()
+      metrics.upstreamRequests.inc({ ...labels, outcome: upstreamOutcome(error) })
+      throw error
+    }
+  }
+
 export const createCachedProxy = ({
   name,
   endpoints,
@@ -121,6 +146,7 @@ export const createCachedProxy = ({
 
   for (const [path, endpoint] of Object.entries(endpoints)) {
     const defineName = `${name}_${path}`.replace(/\W/g, '_')
+    const labels: EndpointLabels = { name, path }
     const cache = createCache({ storage: { type: 'memory', options: { size: endpoint.cache.size } } })
 
     cache.define(
@@ -129,8 +155,12 @@ export const createCachedProxy = ({
         ttl: endpoint.cache.ttl,
         stale: endpoint.cache.stale,
         serialize: (params: Record<string, unknown>) => serializeParams(params),
+        // A stale serve fires `onHit` like any other; the library exposes no separate event.
+        onHit: () => metrics.cacheRequests.inc({ ...labels, result: 'hit' }),
+        onMiss: () => metrics.cacheRequests.inc({ ...labels, result: 'miss' }),
+        onDedupe: () => metrics.cacheRequests.inc({ ...labels, result: 'dedupe' }),
       },
-      endpoint.fetch,
+      withUpstreamMetrics(labels, endpoint.fetch),
     )
 
     hits.set(path, (cache as unknown as Record<string, CacheMethod>)[defineName])
@@ -140,9 +170,11 @@ export const createCachedProxy = ({
     }
   }
 
-  const handle = async (request: NextRequest, pathParams?: Promise<{ path: string[] }>): Promise<NextResponse> => {
-    const path = pathParams ? (await pathParams).path.join('/') : ''
+  // Labelled by the matched template, so a prober hitting unlisted paths adds no series.
+  const routeTemplate = (path: string) =>
+    Object.hasOwn(endpoints, path) ? `/api/${name}${path ? `/${path}` : ''}` : `/api/${name}/*`
 
+  const respond = async (request: NextRequest, path: string): Promise<NextResponse> => {
     // The registry is the allowlist — an unlisted path is never forwarded.
     if (!Object.hasOwn(endpoints, path)) {
       return createErrorResponse({ status: 404, message: `Unknown ${name} endpoint` })
@@ -200,6 +232,15 @@ export const createCachedProxy = ({
         NO_CACHE_CONTROL,
       )
     }
+  }
+
+  const handle = async (request: NextRequest, pathParams?: Promise<{ path: string[] }>): Promise<NextResponse> => {
+    const path = pathParams ? (await pathParams).path.join('/') : ''
+    const response = await respond(request, path)
+
+    metrics.httpResponses.inc({ route: routeTemplate(path), status: String(response.status) })
+
+    return response
   }
 
   return { handle }
