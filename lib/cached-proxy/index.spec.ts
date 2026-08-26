@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { createCachedProxy, defineEndpoint } from './index'
+import { metrics } from '@/lib/metrics'
 import { NotFoundError, UpstreamError } from '@/lib/upstream-error'
 
 const CACHE = { ttl: 60, stale: 300, size: 10 }
@@ -228,6 +229,63 @@ describe('createCachedProxy', () => {
       await send(proxy, 'tag=b')
 
       expect(upstream).toHaveBeenCalledTimes(3)
+    })
+  })
+
+  describe('metrics', () => {
+    type Labels = Record<string, string | number>
+
+    const read = async (metric: { get: () => Promise<{ values: { labels: Labels; value: number }[] }> }) =>
+      (await metric.get()).values
+
+    const valueOf = (values: { labels: Labels; value: number }[], labels: Labels) =>
+      values.find(entry => Object.entries(labels).every(([key, value]) => entry.labels[key] === value))?.value
+
+    beforeEach(() => {
+      metrics.cacheRequests.reset()
+      metrics.upstreamRequests.reset()
+      metrics.upstreamDuration.reset()
+      metrics.httpResponses.reset()
+    })
+
+    it('counts a miss then a hit for the same key', async () => {
+      const proxy = buildProxy(vi.fn().mockResolvedValue({ ok: true }))
+
+      await send(proxy)
+      await send(proxy)
+
+      const values = await read(metrics.cacheRequests)
+      expect(valueOf(values, { name: 'test', path: '', result: 'miss' })).toBe(1)
+      expect(valueOf(values, { name: 'test', path: '', result: 'hit' })).toBe(1)
+    })
+
+    it('records the upstream outcome and its duration', async () => {
+      const proxy = buildProxy(vi.fn().mockRejectedValue(new UpstreamError('test-upstream', 503)))
+
+      await send(proxy)
+
+      expect(valueOf(await read(metrics.upstreamRequests), { name: 'test', outcome: 'upstream_error' })).toBe(1)
+      expect(valueOf(await read(metrics.upstreamDuration), { name: 'test', path: '' })).toBeGreaterThanOrEqual(0)
+    })
+
+    it('distinguishes a definitive miss from an upstream failure', async () => {
+      const proxy = buildProxy(vi.fn().mockRejectedValue(new NotFoundError()))
+
+      await send(proxy)
+
+      expect(valueOf(await read(metrics.upstreamRequests), { name: 'test', outcome: 'not_found' })).toBe(1)
+    })
+
+    it('labels responses by route template, collapsing unlisted paths into one series', async () => {
+      const proxy = buildProxy(vi.fn().mockResolvedValue({ ok: true }))
+
+      await send(proxy)
+      await proxy.handle(new NextRequest(new URL('http://localhost/api/test/a')), Promise.resolve({ path: ['a'] }))
+      await proxy.handle(new NextRequest(new URL('http://localhost/api/test/b')), Promise.resolve({ path: ['b'] }))
+
+      const values = await read(metrics.httpResponses)
+      expect(valueOf(values, { route: '/api/test', status: '200' })).toBe(1)
+      expect(valueOf(values, { route: '/api/test/*', status: '404' })).toBe(2)
     })
   })
 })
