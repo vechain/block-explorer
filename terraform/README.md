@@ -10,6 +10,7 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 | `network/`       | VPC, three subnet tiers, NAT, S3 gateway endpoint              |
 | `ecs/`           | ECS cluster (Container Insights on)                            |
 | `acm/`           | Public certificate for the environment's domain, DNS-validated |
+| `edge/`          | ALB, listeners, target group, security groups, WAF, DNS record |
 | `account-level/` | Legacy: ECR, Route53 zones, App Runner IAM and autoscaling     |
 | `app-runner/`    | Legacy: the App Runner service still serving prod              |
 
@@ -33,8 +34,8 @@ TF_WORKSPACE=dev terraform validate
 
 ## Applying
 
-Nothing here is wired to a workflow yet, so apply by hand. Order matters only where a stack reads
-another's state: `network` → `ecs` → `acm`.
+Nothing here is wired to a workflow yet, so apply by hand. Order matters where a stack reads
+another's state: `network` → `ecs` → `acm` → `edge`.
 
 ```bash
 cd terraform/network
