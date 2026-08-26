@@ -67,20 +67,20 @@ comments cite the specific incidents behind each non-obvious line.
 
 ## Delivery
 
-| Phase                 | Ends when                                                                                   |
-| --------------------- | ------------------------------------------------------------------------------------------- |
-| 0 — app changes       | `/api/health`, `/api/metrics` and the `node_env` fix are merged and running on App Runner   |
-| 1 — dev foundations   | dev serves traffic on ECS at `dev.block-explorer.vechain.org`                               |
-| 2 — dev observability | Grafana shows app + infra metrics; a test alarm reaches Slack                               |
-| 3 — previews          | a labelled PR gets a working preview; teardown and reconcile both verified                  |
-| 4 — shared pipeline   | merge to `main` deploys dev and leaves exactly one draft release                            |
-| 5 — prod stack        | prod ECS serving on its ALB DNS name, still at DNS weight 0                                 |
-| 6 — cutover           | weight at 100, App Runner deleted, dead Terraform removed                                   |
-| 7 — shared cache      | dev and prod tasks share one Valkey; the hit-rate panel climbs on a task that did not fetch |
+| Phase                 | Ends when                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| 0 — app changes       | `/api/health`, `/api/metrics`, the `node_env` fix and the preview label gate are on App Runner |
+| 1 — dev foundations   | dev serves traffic on ECS at `dev.block-explorer.vechain.org`                                  |
+| 2 — dev observability | Grafana shows app + infra metrics; a test alarm reaches Slack                                  |
+| 3 — previews          | a labelled PR gets a working preview; teardown and reconcile both verified                     |
+| 4 — shared pipeline   | merge to `main` deploys dev and leaves exactly one draft release                               |
+| 5 — prod stack        | prod ECS serving on its ALB DNS name, still at DNS weight 0                                    |
+| 6 — cutover           | weight at 100, App Runner deleted, dead Terraform removed                                      |
+| 7 — shared cache      | dev and prod tasks share one Valkey; the hit-rate panel climbs on a task that did not fetch    |
 
-Phase 0 splits into three independent PRs (health, metrics, `node_env`), none of them
-interesting. Phase 6 is a runbook executed against live prod traffic, not a coding task — keep it
-separate from phase 5.
+Phase 0 splits into four independent PRs (health, metrics, `node_env`, preview label gate), none
+of them interesting. Phase 6 is a runbook executed against live prod traffic, not a coding task —
+keep it separate from phase 5.
 
 **Redis lands last, after the cutover.** It is the one change that alters how the app serves
 requests rather than where it runs, and folding it into the migration would mean debugging a
@@ -206,6 +206,31 @@ in phase 7: `env.api.ts` carries a comment recording a prior outage where a modu
 a missing var 500'd every route that imported it. **Every new server env var needs a safe
 default.**
 
+### 0.4 Gate previews on a label
+
+Requirement 2, pulled forward: today every PR spins up an App Runner preview, so the waste is
+happening now rather than after the migration. Gating the existing workflow costs nothing that
+phase 3 then has to undo — the label logic ports to ECS unchanged, and landing it early means the
+convention is established before previews move.
+
+`deploy-preview.yml` gains `labeled` to its trigger types and a single `gate` job requiring
+`create-preview`, replacing the `classify` → `gate-auto` / `gate-approval` → `gate` chain. The
+label _is_ the human approval — applying one takes write access, the same bar the bot
+classification enforced — which is what makes dropping that chain safe. Keep the fork exclusion.
+
+- A `labeled` event fires for **any** label, so the guard needs
+  `(github.event.action != 'labeled' || github.event.label.name == 'create-preview')` on top of
+  the `contains(…labels.*.name, 'create-preview')` check, or every unrelated label redeploys.
+- **`Deploy Preview Environment` has to come off `main`'s required status checks first.** A gated
+  workflow never reports, so every unlabelled PR would sit unmergeable on a check that cannot
+  arrive.
+- `destroy-preview.yml` has no concurrency group at all today, so a teardown can run against the
+  state an in-flight deploy holds. Give it deploy's group, `cancel-in-progress: false`.
+
+The `preview-auto` and `preview-approval` GitHub Environments are left in place, unreferenced;
+delete them whenever convenient. `preview-reconcile.yml` stays in phase 3 — it reaps orphaned
+Terraform workspaces, which only exist once previews are on ECS.
+
 ## Phase 1 — Foundations in explorer-dev
 
 Network (verify whether the account has a usable Control Tower VPC before building one), ECS
@@ -317,20 +342,10 @@ raise.** Rules per ALB is also 100 but _is_ adjustable, so target groups binds f
 
 ### Workflow changes
 
-Rewrite `deploy-preview.yml` to gate on `create-preview`, and delete the whole `classify` →
-`gate-auto` / `gate-approval` → `gate` chain along with the `preview-auto` and `preview-approval`
-GitHub Environments. The label _is_ the human approval now, which is what makes dropping the bot
-gate safe. Keep the existing fork exclusion.
-
-Two subtleties:
-
-- A `labeled` event fires for **any** label, so the guard needs
-  `(github.event.action != 'labeled' || github.event.label.name == 'create-preview')` on top of
-  the `contains(…labels.*.name, 'create-preview')` check, or every unrelated label triggers a
-  redeploy.
-- Share one concurrency group between deploy and teardown with `cancel-in-progress: false`.
-  GitHub evaluates that on the _incoming_ run, so `true` would let a new deploy cancel a teardown
-  mid-`terraform destroy` and strand the state lock.
+The label gate and the shared concurrency group both landed in [0.4](#04-gate-previews-on-a-label),
+so what is left here is repointing `deploy-preview.yml` and `destroy-preview.yml` from the App
+Runner service at the `frontend-preview` stack and its `pr-N` workspace. The gate job itself
+carries over unchanged.
 
 **Add `preview-reconcile.yml`** (cron every 6 hours). This is not optional once there is a label
 gate. Event-driven teardown genuinely misses cleanups: a queued teardown can be silently evicted
