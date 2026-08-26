@@ -225,7 +225,7 @@ sending the header.
 ### Deploy Production
 
 ```bash
-cd terraform/frontend
+cd terraform/app-runner
 terraform init -backend-config=../environments/production/backend.config
 terraform workspace select production
 terraform plan
@@ -235,7 +235,7 @@ terraform apply
 ### Deploy Preview
 
 ```bash
-cd terraform/frontend
+cd terraform/app-runner
 terraform init -backend-config=../environments/preview/backend.config
 
 # Create workspace and config

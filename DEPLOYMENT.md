@@ -179,7 +179,7 @@ sed -i "s/{PR_NUMBER}/${PR_NUMBER}/g" \
   terraform/environments/preview-pr-${PR_NUMBER}/preview-pr-${PR_NUMBER}.yaml
 
 # 3. Deploy
-cd terraform/frontend
+cd terraform/app-runner
 terraform init -backend-config=../environments/preview/backend.config
 terraform workspace new preview-pr-${PR_NUMBER}
 terraform apply
@@ -202,7 +202,7 @@ Preview environments are automatically destroyed when:
 ```bash
 PR_NUMBER=123
 
-cd terraform/frontend
+cd terraform/app-runner
 terraform init -backend-config=../environments/preview/backend.config
 terraform workspace select preview-pr-${PR_NUMBER}
 terraform destroy -auto-approve
@@ -383,7 +383,7 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 ### Remove All Preview Environments
 
 ```bash
-cd terraform/frontend
+cd terraform/app-runner
 terraform init -backend-config=../environments/preview/backend.config
 
 # List all preview workspaces
@@ -401,7 +401,7 @@ done
 ### Delete Production
 
 ```bash
-cd terraform/frontend
+cd terraform/app-runner
 terraform init -backend-config=../environments/prod/backend.config
 terraform workspace select prod
 terraform destroy
@@ -411,7 +411,7 @@ terraform destroy
 
 ```bash
 # 1. Delete all environments (production + previews)
-cd terraform/frontend
+cd terraform/app-runner
 # ... destroy each workspace ...
 
 # 2. Delete account-level resources
