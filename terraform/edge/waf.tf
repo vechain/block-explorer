@@ -21,8 +21,9 @@ locals {
 resource "aws_wafv2_web_acl" "main" {
   count = local.waf_enabled ? 1 : 0
 
-  name        = "${local.name}-waf-alb"
-  description = "Edge WAF for the public ALB. Rate-based per-IP rule enforced; AWS managed groups gated by waf_managed_rules_blocking."
+  name = "${local.name}-waf-alb"
+  # WAFv2 allows only word characters and + = : # @ / - , . here, so no semicolons.
+  description = "Edge WAF for the public ALB. The rate-based per-IP rule always blocks. AWS managed group actions are gated by waf_managed_rules_blocking."
   scope       = "REGIONAL"
 
   default_action {
