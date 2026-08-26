@@ -102,8 +102,8 @@ variable "deployment_minimum_healthy_percent" {
 
 variable "cpu_architecture" {
   type        = string
-  description = "X86_64 or ARM64, and it must match the image: a mismatch fails the task at start with no useful error on the target group. Images in ECR are amd64-only today, so arm64 waits on the multi-arch push in phase 4."
-  default     = "X86_64"
+  description = "X86_64 or ARM64, and it must match the image: a mismatch fails the task at start with no useful error on the target group. Safe on ARM64 only because deploy-dev.yml copies the GHCR manifest list into ECR instead of flattening it to one platform."
+  default     = "ARM64"
 
   validation {
     condition     = contains(["X86_64", "ARM64"], var.cpu_architecture)
