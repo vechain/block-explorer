@@ -10,6 +10,7 @@ const parseAddress = (value: string | undefined): AddressString | undefined => {
 
 const readFromEnv = (): RuntimeConfig => ({
   allowDevMode: process.env.ALLOW_DEV_MODE === 'true' || process.env.NODE_ENV === 'development',
+  bypassIndexerProxy: process.env.BYPASS_INDEXER_PROXY === 'true',
   soloContracts: {
     b3tr: parseAddress(process.env.SOLO_B3TR_ADDRESS),
     vot3: parseAddress(process.env.SOLO_VOT3_ADDRESS),
