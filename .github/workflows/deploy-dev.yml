@@ -80,9 +80,7 @@ jobs:
           echo "${TAG} -> ${SHA}, reachable from main."
 
   # Copies the manifest list rather than a single platform, so ECR keeps both
-  # arches and the task definition can ask for arm64. Under a dev- prefix
-  # because deploy-production.yml re-pushes v.X.Y.Z flattened to amd64, which
-  # strands an arm64 task on `exec format error`.
+  # arches for arm64 tasks, under a dev- prefix deploy-production.yml never writes.
   promote:
     name: Promote Image to ECR
     runs-on: ubuntu-latest
