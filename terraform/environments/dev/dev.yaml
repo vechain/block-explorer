@@ -13,9 +13,17 @@ image_tag: latest
 task_cpu: 512
 task_memory: 1024
 desired_count: 1
+# Scaling has nothing to react to here; it is on so prod does not run it first.
+autoscaling_max: 2
 container_port: 3000
 
+# The dev name is ours to create. Prod's already answers on App Runner.
+dns_record_enabled: true
+
 log_retention_days: 30
+
+# Dev calls the indexer through /api/indexer, so it needs no runtime overrides.
+runtime_environment: {}
 
 # Shared Valkey. Ceilings against a runaway bill, not a capacity plan — 1000 ECPU/s
 # is the AWS floor, and the working set is tens of MB of decoded selectors and ABIs.

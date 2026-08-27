@@ -132,8 +132,8 @@ cd terraform/environments/prod
 sed -i "s/^image_tag:.*/image_tag: ${VERSION_TAG}/" prod.yaml
 
 # 4. Deploy
-cd ../../frontend
-terraform init -backend-config=../environments/prod/backend.config
+cd ../../app-runner
+terraform init
 terraform workspace select prod
 terraform plan
 terraform apply
@@ -342,7 +342,7 @@ whose PR is closed or unlabelled.
 
 ```bash
 cd terraform/app-runner
-terraform init -backend-config=../environments/prod/backend.config
+terraform init
 terraform workspace select prod
 terraform destroy
 ```

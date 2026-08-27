@@ -1,12 +1,12 @@
-name: Deploy to Dev
+name: Deploy to Prod
 
-# Every merge to main gets a v.X.Y.Z tag from codebase-versioning.yml, which
-# triggers the release image build. This chains off that build rather than the
-# tag itself, so the image is guaranteed to exist instead of being waited on.
+# Publishing the draft release deploy-dev.yml left is what promotes to prod. The
+# App Runner service still serving the domain has its own workflow on the same
+# trigger; until the phase 7 cutover, publishing a release deploys both, and this
+# one takes no traffic — its ALB is not in DNS yet.
 on:
-  workflow_run:
-    workflows: ["Build & Publish Release Image"]
-    types: [completed]
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       version:
@@ -15,7 +15,7 @@ on:
         type: string
 
 concurrency:
-  group: deploy-dev
+  group: deploy-prod
   cancel-in-progress: false
 
 env:
@@ -25,22 +25,18 @@ env:
   GHCR_REGISTRY: ghcr.io
 
 jobs:
-  # Resolves which tag to deploy and refuses anything not reachable from main.
-  # The release image is built from whatever commit the tag points at, so
-  # without this a v.* tag pushed to any branch would put unreviewed code in
-  # front of dev traffic.
+  # A release can be published on a tag pointing anywhere. Refusing anything not
+  # reachable from main is what keeps unreviewed code out of prod — and no job
+  # below takes a `ref:` from event data, so the credentialed jobs never check out
+  # a tree this has not vouched for.
   guard:
     name: Resolve and Verify Tag
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     outputs:
       tag: ${{ steps.resolve.outputs.tag }}
       ghcr_tag: ${{ steps.resolve.outputs.ghcr_tag }}
-      ecr_tag: ${{ steps.resolve.outputs.ecr_tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -50,8 +46,7 @@ jobs:
       - name: Resolve tag
         id: resolve
         env:
-          # On a tag push, workflow_run.head_branch carries the tag name.
-          RAW_TAG: ${{ inputs.version || github.event.workflow_run.head_branch }}
+          RAW_TAG: ${{ inputs.version || github.ref_name }}
         run: |
           set -euo pipefail
 
@@ -60,10 +55,10 @@ jobs:
             exit 1
           fi
 
-          # GHCR strips the v. prefix; ECR gets a dev- prefix, see promote.
+          # GHCR strips the v. prefix. This account's registry holds nothing but
+          # releases, so ECR keeps the tag as it is.
           echo "tag=${RAW_TAG}" >> "$GITHUB_OUTPUT"
           echo "ghcr_tag=${RAW_TAG#v.}" >> "$GITHUB_OUTPUT"
-          echo "ecr_tag=dev-${RAW_TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Verify the tag is reachable from main
         env:
@@ -80,8 +75,7 @@ jobs:
           fi
           echo "${TAG} -> ${SHA}, reachable from main."
 
-  # Copies the manifest list rather than a single platform, so ECR keeps both
-  # arches for arm64 tasks, under a dev- prefix deploy-production.yml never writes.
+  # The manifest list, not one platform: the tasks are arm64.
   promote:
     name: Promote Image to ECR
     runs-on: ubuntu-latest
@@ -91,7 +85,7 @@ jobs:
       contents: read
       packages: read
     environment:
-      name: dev
+      name: prod
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
@@ -110,19 +104,36 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # The repository is tag-immutable, so a re-run of a release that already
+      # promoted must not try to overwrite the tag it wrote.
       - name: Copy manifest list from GHCR to ECR
         env:
           GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ needs.guard.outputs.ghcr_tag }}
-          ECR_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ needs.guard.outputs.ecr_tag }}
+          ECR_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ needs.guard.outputs.tag }}
+          TAG: ${{ needs.guard.outputs.tag }}
         run: |
           set -euo pipefail
-          docker buildx imagetools create -t "$ECR_IMAGE" "$GHCR_IMAGE"
-          docker buildx imagetools inspect "$ECR_IMAGE"
 
-  # Applied serially in dependency order, each stack planned immediately before
-  # its own apply. The design doc's parallel plan matrix is deliberately not
-  # used: on a first deploy the downstream stacks cannot plan at all until the
-  # upstream state they read actually exists.
+          if aws ecr describe-images --repository-name "$ECR_REPOSITORY" \
+               --image-ids "imageTag=${TAG}" --no-cli-pager >/dev/null 2>&1; then
+            echo "${TAG} is already in ECR."
+            exit 0
+          fi
+
+          for attempt in $(seq 1 6); do
+            if docker buildx imagetools inspect "$GHCR_IMAGE" >/dev/null 2>&1; then
+              docker buildx imagetools create -t "$ECR_IMAGE" "$GHCR_IMAGE"
+              docker buildx imagetools inspect "$ECR_IMAGE"
+              exit 0
+            fi
+            echo "Attempt ${attempt}/6: ${GHCR_IMAGE} not published yet, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::${GHCR_IMAGE} never appeared."
+          exit 1
+
+  # Same stacks and the same serial order as dev, less the two that only exist
+  # there: previews live in the dev account, and so does the zone role dns/ owns.
   terraform:
     name: Apply Terraform
     runs-on: ubuntu-latest
@@ -131,17 +142,15 @@ jobs:
       id-token: write
       contents: read
     environment:
-      name: dev
-      url: https://dev.block-explorer.vechain.org
+      name: prod
     outputs:
       cluster: ${{ steps.outputs.outputs.cluster }}
       service: ${{ steps.outputs.outputs.service }}
       family: ${{ steps.outputs.outputs.family }}
-      url: ${{ steps.outputs.outputs.url }}
+      domain: ${{ steps.outputs.outputs.domain }}
+      alb: ${{ steps.outputs.outputs.alb }}
       grafana_url: ${{ steps.outputs.outputs.grafana_url }}
     steps:
-      # No `ref:` on purpose: this job holds AWS credentials, so checking out a
-      # tag named by event data would be an untrusted checkout Terraform then runs.
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -159,27 +168,28 @@ jobs:
 
       - name: Pin the image tag
         env:
-          TAG: ${{ needs.guard.outputs.ecr_tag }}
+          TAG: ${{ needs.guard.outputs.tag }}
         run: |
           set -euo pipefail
-          cd terraform/environments/dev
-          sed -i "s|^image_tag:.*|image_tag: ${TAG}|" dev.yaml
-          grep '^image_tag:' dev.yaml
+          cd terraform/environments/prod
+          sed -i "s|^image_tag:.*|image_tag: ${TAG}|" prod.yaml
+          grep '^image_tag:' prod.yaml
 
       - name: Plan and apply each stack
         env:
           TF_VAR_slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          # Empty until bootstrap/ is applied in prod, which leaves dns/ inert.
-          TF_VAR_prod_deploy_role_arn: ${{ vars.PROD_DEPLOY_ROLE_ARN }}
+          # The public zones are in the dev account, so acm/ and edge/ reach
+          # Route53 by assuming the role dns/ owns there.
+          TF_VAR_dns_role_arn: ${{ vars.DNS_WRITER_ROLE_ARN }}
         run: |
           set -euo pipefail
 
-          for stack in dns network ecs acm edge preview-edge data observability-aws frontend observability-grafana; do
+          for stack in network ecs acm edge data observability-aws frontend observability-grafana; do
             echo "::group::${stack}"
             pushd "terraform/${stack}" >/dev/null
 
-            terraform init -input=false -backend-config=../environments/dev/backend.config
-            terraform workspace select -or-create dev
+            terraform init -input=false -backend-config=../environments/prod/backend.config
+            terraform workspace select -or-create prod
 
             # Plan file never leaves this job: a binary plan can carry state.
             terraform plan -input=false -out=tfplan
@@ -199,19 +209,24 @@ jobs:
             echo "cluster=$(terraform output -raw cluster_name)"
             echo "service=$(terraform output -raw service_name)"
             echo "family=$(terraform output -raw task_definition_family)"
-            echo "url=$(terraform output -raw url)"
           } >> "$GITHUB_OUTPUT"
           popd >/dev/null
 
-          # Null until the AMP workspace exists, and `-raw` refuses a null.
+          pushd terraform/edge >/dev/null
+          {
+            echo "domain=$(terraform output -raw url)"
+            echo "alb=$(terraform output -raw alb_dns_name)"
+          } >> "$GITHUB_OUTPUT"
+          popd >/dev/null
+
           pushd terraform/observability-grafana >/dev/null
           echo "grafana_url=$(terraform output -raw amg_workspace_url 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
           popd >/dev/null
 
-  # Terraform registered a new task definition revision but the service pins
-  # its own, because the frontend stack ignores task_definition changes.
-  # Passing the family is what moves the pointer to the new revision - without
-  # it, --force-new-deployment just redeploys the frozen one.
+  # Terraform registered a new task definition revision but the service pins its
+  # own, because the frontend stack ignores task_definition changes. Passing the
+  # family is what moves the pointer - without it, --force-new-deployment just
+  # redeploys the frozen one.
   roll:
     name: Roll ECS Service
     runs-on: ubuntu-latest
@@ -220,8 +235,7 @@ jobs:
       id-token: write
       contents: read
     environment:
-      name: dev
-      url: https://dev.block-explorer.vechain.org
+      name: prod
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
@@ -247,35 +261,37 @@ jobs:
 
           aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
 
-      # services-stable already means tasks are healthy in the target group, so
-      # this is really checking the ALB and DNS in front of them. Generous
-      # window because a first-ever deploy also waits on DNS propagation.
-      - name: Confirm the environment is serving
+      # Against the ALB by name rather than by DNS: the domain still resolves to
+      # App Runner, which would answer 200 whatever this stack is doing.
+      # --connect-to keeps the Host header and the SNI, so the prod certificate
+      # and the listener rules are exercised too.
+      - name: Confirm the new stack is serving
         env:
-          URL: ${{ needs.terraform.outputs.url }}
+          DOMAIN: ${{ needs.terraform.outputs.domain }}
+          ALB: ${{ needs.terraform.outputs.alb }}
         run: |
           set -euo pipefail
+
+          host="${DOMAIN#https://}"
+          via=("--connect-to" "${host}:443:${ALB}:443")
+
           for attempt in $(seq 1 20); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "${URL}/api/health" || true)
+            code=$(curl "${via[@]}" -s -o /dev/null -w '%{http_code}' "https://${host}/api/health" || true)
             if [ "$code" = "200" ]; then
-              echo "${URL}/api/health returned 200."
-              exit 0
+              echo "${ALB} answers /api/health with 200 for ${host}."
+              break
+            fi
+            if [ "$attempt" = "20" ]; then
+              echo "::error::${ALB} never returned 200 for https://${host}/api/health."
+              exit 1
             fi
             echo "Attempt ${attempt}/20: got '${code}', retrying in 15s..."
             sleep 15
           done
-          echo "::error::${URL}/api/health never returned 200."
-          exit 1
 
-      # The ALB must refuse this even though the sidecar scrapes it in-task.
-      - name: Confirm /api/metrics is not public
-        env:
-          URL: ${{ needs.terraform.outputs.url }}
-        run: |
-          set -euo pipefail
-          code=$(curl -s -o /dev/null -w '%{http_code}' "${URL}/api/metrics" || true)
+          code=$(curl "${via[@]}" -s -o /dev/null -w '%{http_code}' "https://${host}/api/metrics" || true)
           if [ "$code" != "403" ]; then
-            echo "::error::${URL}/api/metrics returned '${code}', expected 403."
+            echo "::error::/api/metrics returned '${code}' on the ALB, expected 403."
             exit 1
           fi
           echo "/api/metrics is closed at the ALB."
@@ -283,28 +299,16 @@ jobs:
       - name: Summary
         env:
           SERVICE: ${{ needs.terraform.outputs.service }}
-          URL: ${{ needs.terraform.outputs.url }}
+          DOMAIN: ${{ needs.terraform.outputs.domain }}
+          ALB: ${{ needs.terraform.outputs.alb }}
           GRAFANA_URL: ${{ needs.terraform.outputs.grafana_url }}
         run: |
           {
-            echo "### Dev deployed"
+            echo "### Prod deployed on ECS"
             echo
             echo "- Service: \`${SERVICE}\`"
-            echo "- ${URL}"
+            echo "- Serving on \`${ALB}\`, which ${DOMAIN} does not point at yet."
             if [ -n "$GRAFANA_URL" ]; then
               echo "- Grafana: ${GRAFANA_URL}/d/be-overview"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
-
-  # Not on workflow_dispatch: a break-glass run may be redeploying an older tag,
-  # and drafting a release for it would offer prod that rollback as the next cut.
-  draft-release:
-    name: Prepare Release Draft
-    needs: [guard, roll]
-    if: github.event_name == 'workflow_run'
-    # Caps the called workflow rather than leaning on the repository default.
-    permissions:
-      contents: write
-    uses: ./.github/workflows/prepare-release.yml
-    with:
-      tag: ${{ needs.guard.outputs.tag }}

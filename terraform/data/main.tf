@@ -12,7 +12,7 @@ data "terraform_remote_state" "network" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "network/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
@@ -24,7 +24,7 @@ data "terraform_remote_state" "edge" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "edge/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
@@ -36,7 +36,7 @@ data "terraform_remote_state" "preview_edge" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "preview-edge/terraform.tfstate"
     region  = var.aws_region
     encrypt = true

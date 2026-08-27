@@ -7,13 +7,12 @@ terraform {
     }
   }
 
-  # Backend configuration is partially configured here
-  # The bucket is provided via backend config file during init
+  # Pinned, not passed: environments/prod/backend.config now names the new account.
   backend "s3" {
+    bucket  = "block-explorer-terraform-state-prod"
     key     = "frontend/terraform.tfstate"
     region  = "eu-west-1"
     encrypt = true
-    # bucket and dynamodb_table are provided via -backend-config flag
   }
 }
 

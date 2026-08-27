@@ -1,6 +1,8 @@
 locals {
-  env  = yamldecode(file("../environments/${terraform.workspace}/${terraform.workspace}.yaml"))
-  name = "${var.project}-${terraform.workspace}-frontend"
+  # The bucket the backend itself points at, so a prod apply cannot fall back to dev's.
+  state_bucket = coalesce(var.state_bucket, regex("bucket\\s*=\\s*\"([^\"]+)\"", file("../environments/${terraform.workspace}/backend.config"))[0])
+  env          = yamldecode(file("../environments/${terraform.workspace}/${terraform.workspace}.yaml"))
+  name         = "${var.project}-${terraform.workspace}-frontend"
 
   # Mirrors ecs-webservice's naming: reading its output here would be a cycle.
   log_group_name = "/ecs/${local.name}"

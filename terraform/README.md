@@ -7,6 +7,8 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 
 | Stack                    | Owns                                                                 |
 | ------------------------ | -------------------------------------------------------------------- |
+| `bootstrap/`             | Prod only, by hand: the deploy role, ECR (see below)                 |
+| `dns/`                   | Dev only: the role the prod pipeline assumes to write records        |
 | `network/`               | VPC, three subnet tiers, NAT, S3 gateway endpoint                    |
 | `ecs/`                   | ECS cluster (Container Insights on)                                  |
 | `acm/`                   | Public certificate for the environment's domain, DNS-validated       |
@@ -24,8 +26,11 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 parameters, not structure. It holds two copies of the service resource because `ignore_changes` takes
 only a literal: dev and prod need it on `task_definition` (their deploy workflow moves the pointer out
 of band), previews need it off (the apply itself is what rolls them). `terraform_owns_task_definition`
-picks one. `modules/observability-sidecar` renders the ADOT container that scrapes `/api/metrics` over
-the task's loopback; previews do not carry it.
+picks one. It also owns the CPU target-tracking policy, which is off unless `autoscaling_max` is set in
+the env YAML — previews stay at one task.
+
+`modules/observability-sidecar` renders the ADOT container that scrapes `/api/metrics` over the task's
+loopback; previews do not carry it.
 
 The two legacy stacks are removed once prod has moved to ECS. `app-runner/` was named `frontend/`
 until the ECS work started; its state key is declared in `provider.tf` and is still
@@ -76,7 +81,11 @@ Sourcify ABIs, and they are rebuilt per release rather than carried across.
 
 Per-environment values live in `environments/<env>/<env>.yaml` and are read with `yamldecode`, so
 stacks carry no `workspace == "prod" ? … : …` ternaries. The state bucket for each environment is in
-`environments/<env>/backend.config`.
+`environments/<env>/backend.config`, and the stacks that read another stack's state read that file
+back rather than defaulting to a bucket name — the two environments are in different accounts, so a
+prod apply that fell through to dev's bucket would quietly read dev's network and skip dev's cache.
+`app-runner/` is the exception: it pins the old bucket in its own `provider.tf`, because
+`environments/prod/backend.config` now names the new account's.
 
 Because the YAML path is derived from `terraform.workspace`, anything outside `dev` / `prod` fails at
 parse time — and every stack additionally carries a `workspace_guard` precondition.
@@ -101,8 +110,8 @@ only change from merged code — a preview deploy runs the PR's own branch, so a
 let any labelled PR reshape the ingress every other preview is served through.
 
 Order matters where a stack reads another's state, and the workflow applies them serially in it:
-`network` → `ecs` → `acm` → `edge` → `preview-edge` → `data` → `observability-aws` → `frontend` →
-`observability-grafana`. `frontend` sits after the AMP workspace because its sidecar remote-writes to
+`dns` → `network` → `ecs` → `acm` → `edge` → `preview-edge` → `data` → `observability-aws` →
+`frontend` → `observability-grafana`. `frontend` sits after the AMP workspace because its sidecar remote-writes to
 it; `observability-aws`'s alarms name the ECS service by convention rather than reading it back, which
 is what keeps that from being a cycle. To run one stack locally against dev:
 
@@ -125,13 +134,45 @@ Concurrent previews cap at 100, the target-group-per-ALB quota AWS does not rais
 State locking is via S3 conditional writes (`use_lockfile = true`), not DynamoDB — no lock table
 exists for these stacks, and none is needed.
 
-Two things the pipeline deliberately does not do:
+One thing the pipeline deliberately does not do: **set the indexer bypass token.** It is seeded blank,
+because the app treats blank as unset and sends no header — so a wrong token is never sent. Put the
+real value into the secret named in the `indexer_rate_limit_bypass_secret_arn` output, then re-run the
+deploy, since secrets are injected only when a task starts. Skipping this does not break health
+checks; it means every server-side indexer call leaves from the one NAT IP and takes the indexer's
+per-IP rate limit for the whole environment.
 
-- **Setting the indexer bypass token.** It is seeded blank, because the app treats blank as unset and
-  sends no header — so a wrong token is never sent. Put the real value into the secret named in the
-  `indexer_rate_limit_bypass_secret_arn` output, then re-run the deploy, since secrets are injected
-  only when a task starts. Skipping this does not break health checks; it means every server-side
-  indexer call leaves from the one NAT IP and takes the indexer's per-IP rate limit for the whole
-  environment.
-- **Deploying prod.** Prod is still App Runner, on `deploy-production.yml`, until the prod account
-  exists.
+## Prod
+
+Same stacks, a second account, and a separate state bucket — `deploy-prod.yml` applies them on
+`release: published`, less `preview-edge` and `dns`, which exist only in the dev account. Prod's
+ElastiCache is built with the account rather than retrofitted, so the image that eventually takes
+prod traffic is one that has been running against Valkey in dev for weeks.
+
+**The domain is not part of this.** `dns_record_enabled` is false in `prod.yaml`, so nothing here
+touches `block-explorer.vechain.org` — it resolves to App Runner, and the new stack is reachable only
+by its ALB name, which is what the deploy verifies against with `curl --connect-to`. Turning it into a
+weighted pair is the cutover, and it happens in a single Route53 change batch rather than by an apply:
+adding `set_identifier` forces replacement, and destroy-then-create would leave a window with no
+record at all.
+
+Both public zones stay in the dev account, which is what lets that weighted pair live in one zone. So
+`acm/` and `edge/` write records through a second provider that assumes the role `dns/` owns there,
+and `bootstrap/` grants the deploy role nothing on Route53 in its own account.
+
+Standing up the account, in order:
+
+1. Create the state bucket and apply `bootstrap/` by hand — see [bootstrap/README.md](bootstrap/README.md).
+2. Set `AWS_OIDC_ROLE_ARN` on the `prod` Environment to that stack's `gha_role_arn`, and
+   `PROD_DEPLOY_ROLE_ARN` on `dev` to the same value. Neither is committed: they carry account ids,
+   and this repo is public.
+3. Merge, so the next dev deploy applies `dns/` and creates the cross-account role. Set its
+   `dns_writer_role_arn` output as `DNS_WRITER_ROLE_ARN` on the `prod` Environment.
+4. Publish a release. Expect the first apply to surface a missing IAM action or two; that is what the
+   scoped role costs.
+5. Put the real indexer token into `block-explorer/prod/indexer-rate-limit-bypass` in the new account.
+   `BYPASS_INDEXER_PROXY` is on in prod, so nothing needs it yet — it is what lets that flag be
+   dropped later.
+
+Prod Grafana has no SAML until an Okta app exists for its workspace: an AMG workspace is its own SAML
+audience, so dev's app cannot serve both. Alerts still reach Slack, and dashboards still provision,
+since the Terraform provider uses a service-account token.

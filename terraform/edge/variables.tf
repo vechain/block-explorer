@@ -12,6 +12,12 @@ variable "project" {
 
 variable "state_bucket" {
   type        = string
-  description = "Bucket holding the other stacks' state. Same value as environments/<env>/backend.config, passed separately because a backend block cannot be read from within the configuration."
-  default     = "block-explorer-terraform-state-nonprod"
+  description = "Override for the bucket holding the other stacks' state. Defaults to the one environments/<env>/backend.config declares, which is where this stack's own state goes."
+  default     = null
+}
+
+variable "dns_role_arn" {
+  type        = string
+  description = "Role to assume for Route53, from the dns/ stack's dns_writer_role_arn output. Needed in prod, where the zone is in another account; empty in dev, where it is not. Passed as TF_VAR_dns_role_arn from a GitHub Environment variable rather than committed, because it carries an account id."
+  default     = ""
 }

@@ -16,6 +16,12 @@ variable "public_zone_name" {
   default     = "block-explorer.vechain.org"
 }
 
+variable "dns_role_arn" {
+  type        = string
+  description = "Role to assume for Route53, from the dns/ stack's dns_writer_role_arn output. Required in prod, where the zone is in another account; empty in dev, where it is not. Passed as TF_VAR_dns_role_arn from a GitHub Environment variable rather than committed, because it carries an account id."
+  default     = ""
+}
+
 variable "validation_timeout" {
   type        = string
   description = "How long to wait for ACM to mark the cert ISSUED. In-account DNS, so this is normally a couple of minutes."
