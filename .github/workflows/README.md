@@ -71,6 +71,10 @@ flag in the same change. actionlint hard-fails.
 No `paths:` filter, deliberately. A filtered workflow never reports on a PR that misses the filter,
 which would leave that PR waiting forever on a required status.
 
+`.github/actionlint-matcher.json` is vendored from actionlint v1.7.8 because the reusable workflow
+registers it with `::add-matcher::` unconditionally, and the runner fails the step when the file is
+absent. It only annotates findings onto the diff.
+
 ---
 
 ### Production Deployment (`deploy-production.yml`)
