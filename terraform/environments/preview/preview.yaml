@@ -1,0 +1,5 @@
+# Previews — shared across every pr-N workspace, so nothing here is per-PR.
+environment: preview
+domain_suffix: block-explorer-preview.vechain.org
+
+container_port: 3000
