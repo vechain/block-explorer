@@ -54,6 +54,19 @@ resource "aws_ecr_lifecycle_policy" "block_explorer" {
       },
       {
         rulePriority = 3
+        description  = "Keep last 10 dev images"
+        selection = {
+          tagStatus     = "tagged"
+          tagPrefixList = ["dev-"]
+          countType     = "imageCountMoreThan"
+          countNumber   = 10
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 4
         description  = "Remove untagged images after 1 day"
         selection = {
           tagStatus   = "untagged"

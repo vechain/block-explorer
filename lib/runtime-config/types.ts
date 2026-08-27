@@ -2,6 +2,7 @@ import type { AddressString } from '@/lib/schemas'
 
 export type RuntimeConfig = {
   allowDevMode: boolean
+  bypassIndexerProxy: boolean
   soloContracts: {
     b3tr?: AddressString
     vot3?: AddressString
@@ -12,6 +13,7 @@ export type RuntimeConfig = {
 
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   allowDevMode: false,
+  bypassIndexerProxy: false,
   soloContracts: {},
 }
 

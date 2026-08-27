@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/api'
 import { NetworkName } from '@/lib/constants/network'
 import { INDEXER_PROXY_BASE, isCachedIndexerEndpoint } from '@/lib/indexer-proxy'
 import { isProxiedNetwork } from '@/lib/proxied-network'
+import { getRuntimeConfig } from '@/lib/runtime-config/get'
 import { getRuntimeIndexerBaseUrl } from '@/lib/utils/runtime-network'
 
 export enum IndexerVersion {
@@ -36,7 +37,8 @@ export const indexerCachedGet = <T>({
   endPoint: string
   params?: Record<string, string | string[] | undefined>
 }) => {
-  if (isProxiedNetwork(networkName) && isCachedIndexerEndpoint(endPoint)) {
+  // Bypassing puts each call back on the viewer's own IP, which the indexer's WAF limits.
+  if (!getRuntimeConfig().bypassIndexerProxy && isProxiedNetwork(networkName) && isCachedIndexerEndpoint(endPoint)) {
     return apiClient.get<T>({
       baseUrl: INDEXER_PROXY_BASE,
       endPoint,
