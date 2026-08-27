@@ -64,8 +64,13 @@ resource "aws_vpc_security_group_ingress_rule" "cache" {
   description                  = "Valkey from the ${each.key} tasks. 6380 is the reader endpoint, which cluster discovery can hand back."
 }
 
-# Alphanumeric, so the value needs no escaping inside the rediss:// URL below.
+# Alphanumeric, so the values need no escaping inside the rediss:// URLs below.
 resource "random_password" "cache_app" {
+  length  = 64
+  special = false
+}
+
+resource "random_password" "cache_preview" {
   length  = 64
   special = false
 }
@@ -106,6 +111,21 @@ resource "aws_elasticache_user" "app" {
   }
 }
 
+# Previews run unmerged code against the instance dev uses, so the key namespace
+# cannot be the only fence — it is app-level, and preview code is what would have
+# to honour it. `~pr-*` matches every preview's image tag and nothing dev writes.
+resource "aws_elasticache_user" "preview" {
+  user_id       = "${local.name}-preview"
+  user_name     = "${local.name}-preview"
+  engine        = "valkey"
+  access_string = "on ~pr-* +@all -@dangerous"
+
+  authentication_mode {
+    type      = "password"
+    passwords = [random_password.cache_preview.result]
+  }
+}
+
 resource "aws_elasticache_user_group" "this" {
   user_group_id = "${local.name}-cache-users"
   engine        = "valkey"
@@ -113,6 +133,7 @@ resource "aws_elasticache_user_group" "this" {
   user_ids = [
     aws_elasticache_user.default.user_id,
     aws_elasticache_user.app.user_id,
+    aws_elasticache_user.preview.user_id,
   ]
 }
 
@@ -151,6 +172,16 @@ resource "aws_secretsmanager_secret" "redis_url" {
 resource "aws_secretsmanager_secret_version" "redis_url" {
   secret_id     = aws_secretsmanager_secret.redis_url.id
   secret_string = "rediss://${aws_elasticache_user.app.user_name}:${random_password.cache_app.result}@${local.cache_endpoint.address}:${local.cache_endpoint.port}"
+}
+
+resource "aws_secretsmanager_secret" "preview_redis_url" {
+  name        = "${local.name}-redis-url-preview"
+  description = "rediss:// URL for the Valkey preview user, which can only reach pr-* keys. Injected into the preview tasks as REDIS_URL."
+}
+
+resource "aws_secretsmanager_secret_version" "preview_redis_url" {
+  secret_id     = aws_secretsmanager_secret.preview_redis_url.id
+  secret_string = "rediss://${aws_elasticache_user.preview.user_name}:${random_password.cache_preview.result}@${local.cache_endpoint.address}:${local.cache_endpoint.port}"
 }
 
 resource "terraform_data" "workspace_guard" {

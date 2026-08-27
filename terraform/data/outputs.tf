@@ -3,6 +3,11 @@ output "redis_url_secret_arn" {
   value       = aws_secretsmanager_secret.redis_url.arn
 }
 
+output "preview_redis_url_secret_arn" {
+  description = "The same cache under a user fenced to pr-* keys. Previews take this rather than the app secret, so unmerged code cannot read or overwrite what dev cached."
+  value       = aws_secretsmanager_secret.preview_redis_url.arn
+}
+
 output "cache_name" {
   description = "Serverless cache name, which is also its CloudWatch clusterId dimension. Consumed by the ECPU and storage alarms in observability-aws/."
   value       = aws_elasticache_serverless_cache.valkey.name
