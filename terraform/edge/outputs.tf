@@ -9,7 +9,7 @@ output "alb_arn_suffix" {
 }
 
 output "alb_dns_name" {
-  description = "ALB DNS name. Phase 6 points the weighted prod record at this."
+  description = "ALB DNS name. Phase 7 points the weighted prod record at this."
   value       = aws_lb.main.dns_name
 }
 
@@ -34,7 +34,7 @@ output "waf_web_acl_name" {
 }
 
 output "app_security_group_id" {
-  description = "Security group for the ECS tasks. Consumed by frontend/, and by phase 7's ElastiCache ingress rule."
+  description = "Security group for the ECS tasks. Consumed by frontend/, and by phase 4's ElastiCache ingress rule."
   value       = aws_security_group.app.id
 }
 

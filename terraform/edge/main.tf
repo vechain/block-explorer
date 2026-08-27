@@ -90,7 +90,7 @@ resource "aws_security_group" "app" {
   }
 
   egress {
-    description = "VPC-internal (phase 7 Valkey)."
+    description = "VPC-internal (phase 4 Valkey)."
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -199,7 +199,7 @@ resource "aws_lb_listener_rule" "block_metrics" {
   }
 }
 
-# Phase 6 makes the prod name a weighted pair in one Route53 change batch, not
+# Phase 7 makes the prod name a weighted pair in one Route53 change batch, not
 # here: adding set_identifier forces replacement, and Terraform's
 # destroy-then-create would leave a window with no record at all.
 resource "aws_route53_record" "app" {

@@ -19,7 +19,7 @@ output "application_subnet_ids" {
 }
 
 output "database_subnet_ids" {
-  description = "Private subnet IDs with no internet egress (Tier=Database). For phase 7's ElastiCache subnet group."
+  description = "Private subnet IDs with no internet egress (Tier=Database). For phase 4's ElastiCache subnet group."
   value       = module.vpc.database_subnets
 }
 
