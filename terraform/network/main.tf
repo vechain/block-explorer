@@ -30,6 +30,9 @@ module "vpc" {
   # No 0.0.0.0/0 route here at all: the Valkey in data/ reaches nothing outside.
   create_database_subnet_route_table = true
 
+  # Nothing here uses RDS, and the Valkey takes subnet ids directly.
+  create_database_subnet_group = false
+
   enable_nat_gateway      = true
   single_nat_gateway      = local.env.single_nat_gateway
   enable_dns_hostnames    = true
