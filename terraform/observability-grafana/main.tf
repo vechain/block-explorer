@@ -79,8 +79,7 @@ resource "grafana_data_source" "amp_alertmanager" {
   })
 }
 
-# AWS metrics are read here rather than through AMP, so the ALB, ECS and WAF
-# panels keep working when the collector is the thing that has broken.
+# AWS resource metrics stay in CloudWatch; AMP carries only the sidecar's.
 resource "grafana_data_source" "cloudwatch" {
   count = local.observability_ready ? 1 : 0
 
@@ -117,7 +116,6 @@ resource "grafana_dashboard" "overview" {
     region                    = var.aws_region
     cluster_name              = local.ecs_cluster_name
     frontend_service_name     = local.frontend_service_name
-    collector_service_name    = local.collector_service_name
     alb_suffix                = local.alb_arn_suffix
     tg_suffix                 = local.target_group_arn_suffix
     waf_web_acl_name          = local.waf_web_acl_name

@@ -1,7 +1,6 @@
-# CloudWatch alarms for the outages the AMP rules cannot report. Every
-# Prometheus threshold needs something inside the VPC still publishing, and the
-# collector that publishes it is a single task — so a total outage silences the
-# rules and these alarms are what fires instead.
+# Everything AWS publishes about itself is alarmed here, natively. AMP carries
+# only what the app sidecar collects, so an outage that stops the tasks
+# reporting is reported from out here instead.
 #
 # Descriptions must read "Title — summary." The bridge Lambda splits on the em
 # dash to render the Slack message the same shape as an Alertmanager one.
@@ -23,12 +22,12 @@ locals {
   ecs_cluster_name = "${local.name}-cluster"
 
   monitored_services = {
-    frontend                = "Explorer"
-    observability-collector = "Observability collector"
+    frontend = "Explorer"
   }
 
   alb_arn_suffix          = try(data.terraform_remote_state.edge.outputs.alb_arn_suffix, null)
   target_group_arn_suffix = try(data.terraform_remote_state.edge.outputs.target_group_arn_suffix, null)
+  waf_web_acl_name        = try(data.terraform_remote_state.edge.outputs.waf_web_acl_name, null)
 
   alerts_topic_arns = [aws_sns_topic.alerts.arn]
 }
@@ -136,7 +135,7 @@ resource "aws_cloudwatch_metric_alarm" "alert_delivery_failing" {
 }
 
 # The load balancer's own 5xx, not the target's: 502/503 with nothing healthy to
-# route to, 504 on the idle timeout. Target 5xx are covered by the AMP rules.
+# route to, 504 on the idle timeout.
 resource "aws_cloudwatch_metric_alarm" "alb_elb_5xx" {
   count = local.alb_arn_suffix == null ? 0 : 1
 
@@ -151,6 +150,62 @@ resource "aws_cloudwatch_metric_alarm" "alb_elb_5xx" {
   evaluation_periods  = 1
   comparison_operator = "GreaterThanThreshold"
   threshold           = 5
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = local.alerts_topic_arns
+  ok_actions    = local.alerts_topic_arns
+}
+
+# What the app actually returned, counted at the load balancer. The app's own
+# 5xx rule in AMP is the inside view of the same failure and stays alongside it.
+resource "aws_cloudwatch_metric_alarm" "alb_target_5xx" {
+  count = local.alb_arn_suffix == null || local.target_group_arn_suffix == null ? 0 : 1
+
+  alarm_name        = "${local.name}-target-5xx"
+  alarm_description = "High target 5xx rate — the explorer has been returning more than 1 server error per second for over 5 minutes."
+
+  namespace   = "AWS/ApplicationELB"
+  metric_name = "HTTPCode_Target_5XX_Count"
+  dimensions = {
+    LoadBalancer = local.alb_arn_suffix
+    TargetGroup  = local.target_group_arn_suffix
+  }
+  statistic           = "Sum"
+  period              = 60
+  evaluation_periods  = 5
+  datapoints_to_alarm = 5
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = 60
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = local.alerts_topic_arns
+  ok_actions    = local.alerts_topic_arns
+}
+
+# Reads either way round: a real flood, or a managed rule group false-positiving
+# on legitimate traffic once it is flipped from Count to Block.
+resource "aws_cloudwatch_metric_alarm" "waf_blocked_requests" {
+  count = local.waf_web_acl_name == null ? 0 : 1
+
+  alarm_name        = "${local.name}-waf-blocking-heavily"
+  alarm_description = "WAF is blocking heavily — more than 5 requests per second have been blocked for over 10 minutes. Check the WAF log group for whether the source is hostile or a false positive."
+
+  namespace   = "AWS/WAFV2"
+  metric_name = "BlockedRequests"
+
+  # Rule = ALL is the across-rules total WAF publishes next to the per-rule series.
+  dimensions = {
+    WebACL = local.waf_web_acl_name
+    Rule   = "ALL"
+    Region = var.aws_region
+  }
+
+  statistic           = "Sum"
+  period              = 60
+  evaluation_periods  = 10
+  datapoints_to_alarm = 10
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = 300
   treat_missing_data  = "notBreaching"
 
   alarm_actions = local.alerts_topic_arns

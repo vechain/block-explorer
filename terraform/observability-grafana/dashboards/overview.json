@@ -247,21 +247,6 @@
           "period": "60",
           "matchExact": true,
           "label": "explorer desired"
-        },
-        {
-          "refId": "C",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "ECS/ContainerInsights",
-          "metricName": "RunningTaskCount",
-          "dimensions": { "ClusterName": "${cluster_name}", "ServiceName": "${collector_service_name}" },
-          "statistic": "Average",
-          "period": "60",
-          "matchExact": true,
-          "label": "collector running"
         }
       ]
     },

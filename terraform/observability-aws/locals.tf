@@ -15,23 +15,11 @@ locals {
   # Absolute: Slack renders a bare path as plain text rather than a link.
   dashboard_url = "https://${aws_grafana_workspace.this.endpoint}/d/be-overview"
 
-  # YACE exports Sum-stat metrics as an instantaneous gauge of the last 60s
-  # window, so rate() is invalid and per-second is `value / 60`. CloudWatch
-  # publishes several dimension rollups per metric and YACE exports each as its
-  # own series, hence the dimension filters.
   recording_rules_yaml = <<-YAML
     groups:
       - name: ${local.name}-recording
         interval: 60s
         rules:
-          - record: amp:alb_5xx:per_second
-            expr: aws_applicationelb_httpcode_target_5_xx_count_sum{dimension_TargetGroup!=""} / 60
-          - record: amp:alb_requests:per_second
-            expr: aws_applicationelb_request_count_sum{dimension_TargetGroup!=""} / 60
-          # Kept per-rule. WAF also publishes a Rule="ALL" aggregate, which is
-          # why the alert below takes max() rather than sum().
-          - record: amp:waf_blocked:per_second
-            expr: aws_wafv2_blocked_requests_sum{dimension_WebACL!=""} / 60
           - record: amp:app_5xx:per_second
             expr: sum(rate(block_explorer_http_responses_total{source="app-frontend", status=~"5.."}[5m]))
           # Everything that is neither a success nor a not_found, so a new
@@ -44,22 +32,11 @@ locals {
   YAML
 
   # env is stamped explicitly on every rule: recording-rule and alerting-rule
-  # output drops the collector's external_labels block.
+  # output drops the sidecar's external_labels block.
   alert_rules_yaml = <<-YAML
     groups:
       - name: ${local.name}-alerts
         rules:
-          - alert: HighALB5xxRate
-            expr: sum(amp:alb_5xx:per_second) > 1
-            for: 5m
-            labels:
-              severity: warning
-              env: ${terraform.workspace}
-            annotations:
-              title: "High ALB 5xx rate"
-              summary: "The target group has been returning more than 1 5xx per second for over 5 minutes."
-              dashboard_url: "${local.dashboard_url}?viewPanel=3"
-
           # Counted at the app, so it survives a target group that has stopped
           # publishing and separates app faults from load-balancer faults.
           - alert: HighAppErrorRate
@@ -86,20 +63,6 @@ locals {
               summary: "The cached proxy has been failing more than 1 upstream fetch per second for over 10 minutes — check the Thor nodes and the VeWorld indexer."
               dashboard_url: "${local.dashboard_url}?viewPanel=22"
 
-          # A rolling deploy drops running below desired for a minute or two,
-          # which the 10m window skips. Past that the deploy is stuck or Fargate
-          # cannot place the task.
-          - alert: EcsTaskDrift
-            expr: (aws_ecs_containerinsights_desired_task_count_average{dimension_ServiceName!=""} - on(dimension_ClusterName, dimension_ServiceName) aws_ecs_containerinsights_running_task_count_average{dimension_ServiceName!=""}) > 0
-            for: 10m
-            labels:
-              severity: warning
-              env: ${terraform.workspace}
-            annotations:
-              title: "ECS task drift"
-              summary: "An ECS service has been running fewer tasks than desired for over 10 minutes (stuck deploy or capacity shortfall)."
-              dashboard_url: "${local.dashboard_url}?viewPanel=12"
-
           # Per-task, not aggregated: one saturated task pages even while its
           # siblings idle.
           - alert: EcsTaskCpuHigh
@@ -125,33 +88,6 @@ locals {
               summary: "A task has been above ${format("%.0f", local.saturation_threshold * 100)}% of its reserved memory for over 10 minutes."
               dashboard_url: "${local.dashboard_url}?viewPanel=11"
               ecs_url: "https://${var.aws_region}.console.aws.amazon.com/ecs/v2/clusters/${local.name}-cluster/services/${local.name}-{{ $labels.service }}/tasks/{{ $labels.aws_ecs_task_id }}/configuration"
-
-          # Reads either way round: a real flood, or a managed rule group
-          # false-positiving on legitimate traffic after it is flipped to block.
-          - alert: WafBlockSpike
-            expr: max(amp:waf_blocked:per_second) > 5
-            for: 10m
-            labels:
-              severity: warning
-              env: ${terraform.workspace}
-            annotations:
-              title: "WAF is blocking heavily"
-              summary: "A WAF rule has been blocking more than 5 requests per second for over 10 minutes. Check the WAF log group for whether the source is hostile or a false positive."
-              dashboard_url: "${local.dashboard_url}?viewPanel=31"
-
-          # Pipeline liveness: a threshold rule goes quiet when its series stop
-          # arriving, so absent() is what notices the gap. ANDed across two
-          # namespaces so one throttled GetMetricData call cannot trip it.
-          - alert: CloudWatchMetricsAbsent
-            expr: absent(aws_applicationelb_request_count_sum) and absent(aws_ecs_containerinsights_running_task_count_average)
-            for: ${local.metrics_absent_for}
-            labels:
-              severity: critical
-              env: ${terraform.workspace}
-            annotations:
-              title: "No CloudWatch metrics reaching AMP"
-              summary: "Every YACE-sourced series has stopped arriving — the observability-collector task is down or cannot reach the CloudWatch API. The ALB, WAF and task-drift rules are blind until it returns."
-              dashboard_url: "${local.dashboard_url}"
 
           # A default metric, so it exists from process start rather than from
           # first traffic.
