@@ -103,10 +103,7 @@ resource "aws_grafana_workspace" "this" {
   grafana_version = "12.4"
 }
 
-# Skipped rather than half-applied when the SSO config is incomplete: the
-# dashboards do not need it, and UpdateWorkspaceAuthentication rejects an empty
-# role-value list ("must be between 1 and 20") instead of reading it as
-# nobody-mapped.
+# AMG rejects an empty role-value list ("must be between 1 and 20").
 resource "aws_grafana_workspace_saml_configuration" "okta" {
   count = local.okta_saml_ready ? 1 : 0
 
