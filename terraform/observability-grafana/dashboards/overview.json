@@ -1,0 +1,629 @@
+{
+  "uid": "be-overview",
+  "title": "Block explorer overview (${env})",
+  "description": "Infrastructure from CloudWatch, application metrics from AMP. Terraform owns this dashboard, so edits made here are replaced on the next apply.",
+  "tags": ["block-explorer", "${env}"],
+  "timezone": "utc",
+  "schemaVersion": 41,
+  "refresh": "1m",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 100,
+      "type": "row",
+      "title": "Traffic",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "panels": []
+    },
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Requests per minute",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/ApplicationELB",
+          "metricName": "RequestCount",
+          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": true,
+          "label": "Requests"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "5xx responses per minute",
+      "description": "ELB 5xx means the load balancer had nothing healthy to route to, or timed out. Target 5xx came from the explorer itself.",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/ApplicationELB",
+          "metricName": "HTTPCode_Target_5XX_Count",
+          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": true,
+          "label": "Target 5xx"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/ApplicationELB",
+          "metricName": "HTTPCode_ELB_5XX_Count",
+          "dimensions": { "LoadBalancer": "${alb_suffix}" },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": true,
+          "label": "ELB 5xx"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Response time",
+      "description": "Every page is server-rendered per request, so this tracks upstream latency rather than cache warmth.",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 1, "fillOpacity": 0, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/ApplicationELB",
+          "metricName": "TargetResponseTime",
+          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
+          "statistic": "Average",
+          "period": "60",
+          "matchExact": true,
+          "label": "Average"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/ApplicationELB",
+          "metricName": "TargetResponseTime",
+          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
+          "statistic": "p95",
+          "period": "60",
+          "matchExact": true,
+          "label": "p95"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Target health",
+      "description": "Published per availability zone, so this is the maximum across them — the same statistic the no-healthy-targets alarm uses.",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": { "lineWidth": 2, "fillOpacity": 0, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/ApplicationELB",
+          "metricName": "HealthyHostCount",
+          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
+          "statistic": "Maximum",
+          "period": "60",
+          "matchExact": true,
+          "label": "Healthy"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/ApplicationELB",
+          "metricName": "UnHealthyHostCount",
+          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
+          "statistic": "Maximum",
+          "period": "60",
+          "matchExact": true,
+          "label": "Unhealthy"
+        }
+      ]
+    },
+    {
+      "id": 101,
+      "type": "row",
+      "title": "Tasks",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "panels": []
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Tasks running against desired",
+      "description": "A gap that outlasts a rolling deploy is a stuck deploy or a placement failure.",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 18 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": { "lineWidth": 2, "fillOpacity": 0, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "ECS/ContainerInsights",
+          "metricName": "RunningTaskCount",
+          "dimensions": { "ClusterName": "${cluster_name}", "ServiceName": "${frontend_service_name}" },
+          "statistic": "Average",
+          "period": "60",
+          "matchExact": true,
+          "label": "explorer running"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "ECS/ContainerInsights",
+          "metricName": "DesiredTaskCount",
+          "dimensions": { "ClusterName": "${cluster_name}", "ServiceName": "${frontend_service_name}" },
+          "statistic": "Average",
+          "period": "60",
+          "matchExact": true,
+          "label": "explorer desired"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "ECS/ContainerInsights",
+          "metricName": "RunningTaskCount",
+          "dimensions": { "ClusterName": "${cluster_name}", "ServiceName": "${collector_service_name}" },
+          "statistic": "Average",
+          "period": "60",
+          "matchExact": true,
+          "label": "collector running"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Task CPU against reservation",
+      "description": "One series per task, from that task's own sidecar.",
+      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 18 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "showPoints": "never" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+          "editorMode": "code",
+          "range": true,
+          "expr": "100 * ecs_task_cpu_utilized_None{source=\"ecs-sidecar\"} / ecs_task_cpu_reserved_None{source=\"ecs-sidecar\"}",
+          "legendFormat": "{{service}} {{aws_ecs_task_id}}"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Task memory against reservation",
+      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 18 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "showPoints": "never" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+          "editorMode": "code",
+          "range": true,
+          "expr": "100 * ecs_task_memory_utilized_Megabytes{source=\"ecs-sidecar\"} / ecs_task_memory_reserved_Megabytes{source=\"ecs-sidecar\"}",
+          "legendFormat": "{{service}} {{aws_ecs_task_id}}"
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "type": "row",
+      "title": "Cache and upstreams",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "panels": []
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Cache hit rate",
+      "description": "Every cache is process-local until phase 7 puts Valkey behind them, so this is capped by how many tasks are running and resets on every deploy.",
+      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 27 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 40 },
+              { "color": "green", "value": 70 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+          "editorMode": "code",
+          "range": true,
+          "expr": "100 * amp:cache_hits:ratio5m",
+          "legendFormat": "hit rate"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Cache lookups by result",
+      "description": "A stale serve is counted as a hit — the library raises no separate event — so the background-refresh rate reads as upstream fetches minus misses.",
+      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+      "gridPos": { "h": 8, "w": 9, "x": 6, "y": 27 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+          "editorMode": "code",
+          "range": true,
+          "expr": "sum by (result) (rate(block_explorer_cache_requests_total{source=\"app-frontend\"}[$__rate_interval]))",
+          "legendFormat": "{{result}}"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Upstream fetches by outcome",
+      "description": "not_found is expected traffic. upstream_error means a Thor node or the indexer refused.",
+      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+      "gridPos": { "h": 8, "w": 9, "x": 15, "y": 27 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+          "editorMode": "code",
+          "range": true,
+          "expr": "sum by (outcome) (rate(block_explorer_upstream_requests_total{source=\"app-frontend\"}[$__rate_interval]))",
+          "legendFormat": "{{outcome}}"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "Upstream fetch duration",
+      "description": "The top histogram bucket is the upstream timeout, so p99 flattening there means requests are timing out rather than slowing down.",
+      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 35 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": { "lineWidth": 1, "fillOpacity": 0, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+          "editorMode": "code",
+          "range": true,
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(block_explorer_upstream_duration_seconds_bucket{source=\"app-frontend\"}[$__rate_interval])))",
+          "legendFormat": "p50"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+          "editorMode": "code",
+          "range": true,
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(block_explorer_upstream_duration_seconds_bucket{source=\"app-frontend\"}[$__rate_interval])))",
+          "legendFormat": "p95"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+          "editorMode": "code",
+          "range": true,
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(block_explorer_upstream_duration_seconds_bucket{source=\"app-frontend\"}[$__rate_interval])))",
+          "legendFormat": "p99"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "type": "timeseries",
+      "title": "API responses by status",
+      "description": "Counted at the app, labelled by matched route template rather than raw path.",
+      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 35 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+          "editorMode": "code",
+          "range": true,
+          "expr": "sum by (status) (rate(block_explorer_http_responses_total{source=\"app-frontend\"}[$__rate_interval]))",
+          "legendFormat": "{{status}}"
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "type": "row",
+      "title": "WAF",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
+      "panels": []
+    },
+    {
+      "id": 30,
+      "type": "timeseries",
+      "title": "WAF requests by action",
+      "description": "Counted means a managed rule matched while still soaking — it would have blocked had waf_managed_rules_blocking been on.",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/WAFV2",
+          "metricName": "AllowedRequests",
+          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL", "Region": "${region}" },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": true,
+          "label": "Allowed"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/WAFV2",
+          "metricName": "BlockedRequests",
+          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL", "Region": "${region}" },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": true,
+          "label": "Blocked"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/WAFV2",
+          "metricName": "CountedRequests",
+          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL", "Region": "${region}" },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": true,
+          "label": "Counted"
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "WAF blocks and counts by rule",
+      "description": "Which rule matched. The ALL series is the web ACL total, so it tracks the sum of the rest.",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/WAFV2",
+          "metricName": "BlockedRequests",
+          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "*", "Region": "${region}" },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": false,
+          "label": "blocked $${PROP('Dim.Rule')}"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/WAFV2",
+          "metricName": "CountedRequests",
+          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "*", "Region": "${region}" },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": false,
+          "label": "counted $${PROP('Dim.Rule')}"
+        }
+      ]
+    }
+  ]
+}

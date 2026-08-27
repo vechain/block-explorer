@@ -3,6 +3,11 @@ output "alb_arn" {
   value       = aws_lb.main.arn
 }
 
+output "alb_arn_suffix" {
+  description = "ALB ARN suffix. The form CloudWatch takes as its LoadBalancer dimension, so alarms and dashboard queries use this rather than the ARN."
+  value       = aws_lb.main.arn_suffix
+}
+
 output "alb_dns_name" {
   description = "ALB DNS name. Phase 6 points the weighted prod record at this."
   value       = aws_lb.main.dns_name
@@ -16,6 +21,16 @@ output "alb_zone_id" {
 output "target_group_arn" {
   description = "Target group the ECS service registers into. Consumed by frontend/."
   value       = aws_lb_target_group.app.arn
+}
+
+output "target_group_arn_suffix" {
+  description = "Target group ARN suffix, for the CloudWatch TargetGroup dimension."
+  value       = aws_lb_target_group.app.arn_suffix
+}
+
+output "waf_web_acl_name" {
+  description = "WAF ACL name, which is also its CloudWatch WebACL dimension. Null when waf_enabled is off, which drops the WAF panels rather than querying a dimension that publishes nothing."
+  value       = local.waf_enabled ? aws_wafv2_web_acl.main[0].name : null
 }
 
 output "app_security_group_id" {

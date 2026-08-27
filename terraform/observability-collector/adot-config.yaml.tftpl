@@ -1,0 +1,46 @@
+# ADOT collector config: scrape YACE, remote-write to AMP over SigV4.
+#
+# YACE runs as a second container in this same task, so awsvpc's shared network
+# namespace makes localhost:5000 reach it — no security group rule, no service
+# discovery. App metrics are deliberately not scraped from here: each app task's
+# own sidecar does that, which is what puts aws_ecs_task_id on those series.
+
+extensions:
+  sigv4auth:
+    region: ${aws_region}
+    service: aps
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: yace
+          scrape_interval: 60s
+          static_configs:
+            - targets: ['localhost:5000']
+
+processors:
+  batch:
+    timeout: 30s
+
+exporters:
+  prometheusremotewrite:
+    endpoint: ${amp_endpoint}api/v1/remote_write
+    auth:
+      authenticator: sigv4auth
+    external_labels:
+      env: ${env}
+      source: adot-collector
+
+service:
+  extensions: [sigv4auth, health_check]
+  pipelines:
+    metrics:
+      receivers: [prometheus]
+      processors: [batch]
+      exporters: [prometheusremotewrite]
+  telemetry:
+    logs:
+      level: info
