@@ -141,77 +141,32 @@ terraform apply
 
 ## Preview Environment Deployment
 
-### Automated (Recommended)
+Previews run on ECS behind the shared preview ALB, and are **never applied by hand** — the state
+lives in a per-PR Terraform workspace the reconcile sweep treats as the source of truth, so a
+workspace created outside the workflow is a preview nothing owns.
 
-Preview environments are automatically created when you:
+1. Add the `create-preview` label to a pull request against `main`.
+2. Every later push redeploys it. Removing the label does not tear it down; closing the PR does, and
+   `preview-reconcile.yml` reaps anything the teardown missed within six hours.
 
-1. Open a pull request to `main`
-2. Push new commits to an existing PR
+The URL is posted as a sticky comment on the PR.
 
-The preview URL will be posted as a comment on the PR.
-
-**Image Tag Format**: `pr-{number}-{short_sha}` (e.g., `pr-144-a1b2c3d`)
+**Image**: promoted from `ghcr.io/vechain/block-explorer:pr.{number}.{short_sha}`, which
+`publish-ghcr-pr-image.yml` builds once the unit tests pass, into ECR as `pr-{number}-{short_sha}`.
+Previews are not rebuilt — they run the same arm64 image dev and prod run.
 
 **Domain**: `https://pr-{number}.block-explorer-preview.vechain.org`
 
-### Manual Preview Deployment (Not Recommended)
-
-```bash
-PR_NUMBER=123
-SHORT_SHA=$(git rev-parse --short HEAD)
-
-# 1. Build and push image
-aws ecr get-login-password --region eu-west-1 | \
-  docker login --username AWS --password-stdin <ECR_URL>
-
-IMAGE_TAG="pr-${PR_NUMBER}-${SHORT_SHA}"
-docker build -t block-explorer --build-arg NEXT_PUBLIC_APP_VERSION=${IMAGE_TAG} .
-docker tag block-explorer:latest <ECR_URL>/block-explorer:${IMAGE_TAG}
-docker push <ECR_URL>/block-explorer:${IMAGE_TAG}
-
-# 2. Create config
-mkdir -p terraform/environments/preview-pr-${PR_NUMBER}
-cp terraform/environments/preview/preview.yaml.example \
-   terraform/environments/preview-pr-${PR_NUMBER}/preview-pr-${PR_NUMBER}.yaml
-
-# Edit the file and replace {PR_NUMBER} with actual number
-sed -i "s/{PR_NUMBER}/${PR_NUMBER}/g" \
-  terraform/environments/preview-pr-${PR_NUMBER}/preview-pr-${PR_NUMBER}.yaml
-
-# 3. Deploy
-cd terraform/app-runner
-terraform init -backend-config=../environments/preview/backend.config
-terraform workspace new preview-pr-${PR_NUMBER}
-terraform apply
-
-# 4. Get URL
-terraform output custom_domain_url
-```
+Concurrent previews cap at 100 — the target-group-per-ALB quota, which AWS does not raise.
 
 ## Destroying Preview Environments
 
-### Automated
+Closing or merging the PR destroys the preview. `preview-reconcile.yml` runs every six hours and
+reaps any `pr-*` workspace whose PR is closed or no longer labelled, which is what covers a teardown
+that was evicted from its concurrency group or failed on a lock.
 
-Preview environments are automatically destroyed when:
-
-- The pull request is closed
-- The pull request is merged
-
-### Manual Destruction
-
-```bash
-PR_NUMBER=123
-
-cd terraform/app-runner
-terraform init -backend-config=../environments/preview/backend.config
-terraform workspace select preview-pr-${PR_NUMBER}
-terraform destroy -auto-approve
-
-# Cleanup
-terraform workspace select default
-terraform workspace delete preview-pr-${PR_NUMBER}
-rm -rf ../environments/preview-pr-${PR_NUMBER}
-```
+To force one by hand, re-run `preview-reconcile.yml` from the Actions tab rather than running
+Terraform locally.
 
 ## Environment Configuration
 
@@ -227,13 +182,13 @@ Key settings:
 
 ### Preview Config
 
-File: `terraform/environments/preview/preview.yaml.example`
+File: `terraform/environments/preview/preview.yaml`, shared by every `pr-N` workspace.
 
 Key settings:
 
-- `cpu: 256` / `memory: 512` - 0.25 vCPU, 0.5 GB RAM (smaller than prod)
-- `port: 3000` - Application port
-- `health_check_path: /` - Health check endpoint
+- `task_cpu: 512` / `task_memory: 1024` - matches dev, so a preview cannot OOM where dev does not
+- `container_port: 3000` - Application port
+- `log_retention_days: 14`
 
 ### Auto Scaling Configuration
 
@@ -269,7 +224,7 @@ View logs for preview:
 
 ```bash
 PR_NUMBER=123
-aws logs tail /aws/apprunner/preview-pr-${PR_NUMBER}-block-explorer/*/application --follow
+aws logs tail /ecs/block-explorer-preview-pr-${PR_NUMBER} --follow
 ```
 
 ### Service Status
@@ -359,44 +314,29 @@ aws apprunner describe-service --service-arn <SERVICE_ARN>
 - Data Transfer: $0.09 per GB
 - **Total: ~$30-35/month**
 
-### Preview Environments (Monthly per PR)
+### Preview Environments (Monthly)
 
-- App Runner: ~$12-15 (0.5 vCPU, 1GB RAM, 1 instance minimum)
-- Costs are lower when idle (only memory provisioned, no CPU usage)
-- ECR Storage: Shared with production
-- **Total: ~$12-15/month per preview**
+- Preview ALB: ~$18, flat regardless of how many previews are open
+- Fargate per preview: ~$15 (0.5 vCPU, 1GB, arm64, 24/7)
+- ECR Storage: shared with production
 
 ### Example with 5 Active PRs
 
 - Production: $35
-- 5 Previews: $70
-- **Total: ~$105/month**
+- Preview ALB: $18
+- 5 Previews: $75
+- **Total: ~$128/month**
 
-**Cost Optimization Tips**:
-
-- Delete preview environments promptly after PR merge (automated)
-- Preview environments use smaller instance sizes (50% of production)
-- Monitor idle previews and manually delete if needed
+Previews bill until the PR closes, so the label is the cost control. Remove it from a PR that is
+parked and the reconcile sweep reaps it within six hours.
 
 ## Cleanup
 
 ### Remove All Preview Environments
 
-```bash
-cd terraform/app-runner
-terraform init -backend-config=../environments/preview/backend.config
-
-# List all preview workspaces
-terraform workspace list
-
-# Destroy each one
-for ws in $(terraform workspace list | grep preview-pr | tr -d '*'); do
-  terraform workspace select $ws
-  terraform destroy -auto-approve
-  terraform workspace select default
-  terraform workspace delete $ws
-done
-```
+Remove the `create-preview` label from every open PR that has one, then run
+`preview-reconcile.yml` from the Actions tab. It sweeps every `pr-*` workspace and reaps the ones
+whose PR is closed or unlabelled.
 
 ### Delete Production
 

@@ -41,12 +41,14 @@ resource "aws_ecr_lifecycle_policy" "block_explorer" {
       },
       {
         rulePriority = 2
-        description  = "Keep last 10 preview images"
+        # By age: a global count is spent by pushes on other PRs.
+        description = "Keep preview images for 30 days"
         selection = {
           tagStatus     = "tagged"
           tagPrefixList = ["pr-"]
-          countType     = "imageCountMoreThan"
-          countNumber   = 10
+          countType     = "sinceImagePushed"
+          countUnit     = "days"
+          countNumber   = 30
         }
         action = {
           type = "expire"

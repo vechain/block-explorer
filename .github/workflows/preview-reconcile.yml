@@ -58,10 +58,19 @@ jobs:
           # No `set -e`: one stuck workspace must not starve the rest.
           set -uo pipefail
 
-          terraform init -input=false -backend-config="${TERRAFORM_BACKEND_CONFIG}"
+          # Loud, unlike the per-workspace failures below: a backend the sweep
+          # cannot reach reads as an empty workspace list, which looks like a
+          # clean run while cleanup is silently off.
+          if ! terraform init -input=false -backend-config="${TERRAFORM_BACKEND_CONFIG}"; then
+            echo "::error::terraform init failed; the sweep cannot tell an empty backend from an unreachable one."
+            exit 1
+          fi
 
+          # Fails only when the listing itself fails; no matches is success.
           list_workspaces() {
-            terraform workspace list | tr -d '* ' | grep -E '^pr-[0-9]+$'
+            local all
+            all=$(terraform workspace list) || return 1
+            printf '%s\n' "$all" | tr -d '* ' | grep -E '^pr-[0-9]+$' || true
           }
 
           # Open and still carrying the label means keep. Anything else — closed,
@@ -77,7 +86,10 @@ jobs:
             return 0
           }
 
-          workspaces=$(list_workspaces)
+          if ! workspaces=$(list_workspaces); then
+            echo "::error::Could not list Terraform workspaces."
+            exit 1
+          fi
           if [ -z "$workspaces" ]; then
             echo "No preview workspaces."
             exit 0
