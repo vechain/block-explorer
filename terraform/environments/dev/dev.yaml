@@ -17,6 +17,9 @@ container_port: 3000
 
 log_retention_days: 30
 
+# Rules and alarms evaluate either way; this only gates Slack delivery.
+alerts_enabled: false
+
 # WAF. The rate-based IP rule always blocks; the AWS managed groups stay in
 # Count until they have soaked against real traffic.
 waf_enabled: true

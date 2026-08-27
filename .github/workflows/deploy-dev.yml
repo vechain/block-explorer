@@ -137,6 +137,8 @@ jobs:
       service: ${{ steps.outputs.outputs.service }}
       family: ${{ steps.outputs.outputs.family }}
       url: ${{ steps.outputs.outputs.url }}
+      collector: ${{ steps.outputs.outputs.collector }}
+      grafana_url: ${{ steps.outputs.outputs.grafana_url }}
     steps:
       # No `ref:` on purpose: this job holds AWS credentials, so checking out a
       # tag named by event data would be an untrusted checkout Terraform then runs.
@@ -165,10 +167,18 @@ jobs:
           grep '^image_tag:' dev.yaml
 
       - name: Plan and apply each stack
+        env:
+          # An unset GitHub var interpolates to "", which is set-to-empty rather
+          # than unset — so the list variables need an explicit JSON default or
+          # Terraform raises a type error instead of applying its own.
+          TF_VAR_slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          TF_VAR_okta_saml_metadata_url: ${{ vars.GRAFANA_OKTA_SAML_METADATA_URL }}
+          TF_VAR_grafana_admin_okta_groups: ${{ vars.GRAFANA_ADMIN_OKTA_GROUPS || '[]' }}
+          TF_VAR_grafana_editor_okta_groups: ${{ vars.GRAFANA_EDITOR_OKTA_GROUPS || '[]' }}
         run: |
           set -euo pipefail
 
-          for stack in network ecs acm edge frontend; do
+          for stack in network ecs acm edge observability-aws observability-collector frontend observability-grafana; do
             echo "::group::${stack}"
             pushd "terraform/${stack}" >/dev/null
 
@@ -185,15 +195,27 @@ jobs:
 
       - name: Read service outputs
         id: outputs
-        working-directory: terraform/frontend
         run: |
           set -euo pipefail
+
+          pushd terraform/frontend >/dev/null
           {
             echo "cluster=$(terraform output -raw cluster_name)"
             echo "service=$(terraform output -raw service_name)"
             echo "family=$(terraform output -raw task_definition_family)"
             echo "url=$(terraform output -raw url)"
           } >> "$GITHUB_OUTPUT"
+          popd >/dev/null
+
+          # Both outputs are null until the AMP workspace exists, and `-raw`
+          # refuses a null — so tolerate the failure and let the consumer skip.
+          pushd terraform/observability-collector >/dev/null
+          echo "collector=$(terraform output -raw service_name 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
+          popd >/dev/null
+
+          pushd terraform/observability-grafana >/dev/null
+          echo "grafana_url=$(terraform output -raw amg_workspace_url 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
+          popd >/dev/null
 
   # Terraform registered a new task definition revision but the service pins
   # its own, because the frontend stack ignores task_definition changes.
@@ -254,6 +276,22 @@ jobs:
           echo "::error::${URL}/api/health never returned 200."
           exit 1
 
+      # A bad YACE or ADOT config crash-loops the task rather than failing an
+      # apply, which would otherwise leave every CloudWatch-sourced rule blind
+      # with a green deploy.
+      - name: Confirm the observability collector is stable
+        env:
+          CLUSTER: ${{ needs.terraform.outputs.cluster }}
+          COLLECTOR: ${{ needs.terraform.outputs.collector }}
+        run: |
+          set -euo pipefail
+          if [ -z "$COLLECTOR" ] || [ "$COLLECTOR" = "null" ]; then
+            echo "Collector not deployed yet; skipping."
+            exit 0
+          fi
+          aws ecs wait services-stable --cluster "$CLUSTER" --services "$COLLECTOR"
+          echo "${COLLECTOR} is stable."
+
       # The ALB must refuse this even though the sidecar scrapes it in-task.
       - name: Confirm /api/metrics is not public
         env:
@@ -271,10 +309,14 @@ jobs:
         env:
           SERVICE: ${{ needs.terraform.outputs.service }}
           URL: ${{ needs.terraform.outputs.url }}
+          GRAFANA_URL: ${{ needs.terraform.outputs.grafana_url }}
         run: |
           {
             echo "### Dev deployed"
             echo
             echo "- Service: \`${SERVICE}\`"
             echo "- ${URL}"
+            if [ -n "$GRAFANA_URL" ]; then
+              echo "- Grafana: ${GRAFANA_URL}/d/be-overview"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"

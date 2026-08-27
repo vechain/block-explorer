@@ -105,8 +105,10 @@ resource "aws_wafv2_web_acl" "main" {
 
   visibility_config {
     cloudwatch_metrics_enabled = true
-    metric_name                = "${local.name}-waf"
-    sampled_requests_enabled   = true
+    # Must equal `name` above: CloudWatch publishes this as the WebACL dimension
+    # while YACE derives that label from the ARN, so a mismatch associates nothing.
+    metric_name              = "${local.name}-waf-alb"
+    sampled_requests_enabled = true
   }
 }
 
