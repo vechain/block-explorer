@@ -111,6 +111,12 @@ variable "cpu_architecture" {
   }
 }
 
+variable "terraform_owns_task_definition" {
+  type        = bool
+  description = "True for previews, where an apply with a new image tag is what rolls the service. False for dev and prod, where the deploy workflow moves the pointer with `aws ecs update-service` and Terraform must not roll it back."
+  default     = false
+}
+
 variable "health_check_grace_period_seconds" {
   type        = number
   description = "How long the ALB health check is ignored after a task starts. Must clear the container health check's 60s start period plus its three 30s retries."

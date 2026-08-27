@@ -123,7 +123,10 @@ resource "aws_ecs_task_definition" "this" {
   ], var.extra_container_definitions))
 }
 
+# dev and prod: the deploy workflow moves the pointer out of band. See the README.
 resource "aws_ecs_service" "this" {
+  count = var.terraform_owns_task_definition ? 0 : 1
+
   name            = var.name
   cluster         = var.cluster_arn
   task_definition = aws_ecs_task_definition.this.arn
@@ -147,10 +150,41 @@ resource "aws_ecs_service" "this" {
 
   health_check_grace_period_seconds = var.health_check_grace_period_seconds
 
-  # The deploy workflow moves the service pointer out of band; without this a
-  # later plan rolls it back to the tag in state. Previews need the inverse,
-  # which ignore_changes cannot express dynamically — so that lives in phase 3.
   lifecycle {
     ignore_changes = [task_definition, desired_count]
   }
+}
+
+# Previews: the apply itself is what rolls them onto the new image.
+resource "aws_ecs_service" "rolling" {
+  count = var.terraform_owns_task_definition ? 1 : 0
+
+  name            = var.name
+  cluster         = var.cluster_arn
+  task_definition = aws_ecs_task_definition.this.arn
+  desired_count   = var.desired_count
+  launch_type     = "FARGATE"
+
+  deployment_minimum_healthy_percent = var.deployment_minimum_healthy_percent
+  deployment_maximum_percent         = 200
+
+  network_configuration {
+    subnets          = var.subnet_ids
+    security_groups  = var.security_group_ids
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = var.target_group_arn
+    container_name   = var.container_name
+    container_port   = var.container_port
+  }
+
+  health_check_grace_period_seconds = var.health_check_grace_period_seconds
+}
+
+# The dev service predates the count, so without this Terraform recreates it.
+moved {
+  from = aws_ecs_service.this
+  to   = aws_ecs_service.this[0]
 }

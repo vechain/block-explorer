@@ -11,18 +11,11 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # AWS Configuration
   AWS_REGION: eu-west-1
   ECR_REPOSITORY: block-explorer
+  GHCR_REGISTRY: ghcr.io
   TERRAFORM_VERSION: 1.16.0
-
-  # Project Configuration
-  PROJECT_NAME: block-explorer
-  PREVIEW_DOMAIN_SUFFIX: block-explorer-preview.vechain.org
-
-  # Terraform Paths
-  TERRAFORM_DIR: terraform/app-runner
-  TERRAFORM_ENV_DIR: terraform/environments
+  TERRAFORM_DIR: terraform/frontend-preview
   TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
 
 jobs:
@@ -39,132 +32,107 @@ jobs:
       - name: Confirm gate
         run: echo "Preview deploy gate passed"
 
-  pr-comment:
+  announce:
     name: Post Initial PR Comment
     runs-on: ubuntu-latest
     needs: [gate]
-    # The status-function prefix stops a skipped `gate` cascading into a failure.
-    if: >-
-      !cancelled() && !failure() &&
-      needs.gate.result == 'success'
     permissions:
       pull-requests: write
-    outputs:
-      comment_id: ${{ steps.comment.outputs.comment_id }}
-
     steps:
-      - name: Post initial PR comment (Building)
-        id: comment
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      - uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
-          script: |
-            const prNumber = context.issue.number;
-            const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
-            const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
-            const projectName = process.env.PROJECT_NAME;
+          header: preview
+          message: |
+            ### Preview — deploying
 
-            const body = `## ${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview
+            Building `${{ github.event.pull_request.head.sha }}`. [Follow along →](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-            | Name | Status | Preview | Updated (UTC) |
-            |------|--------|---------|---------------|
-            | **${projectName}-preview** | 🔨 Building ([${commitSha}](${commitUrl})) | Building image... | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
-
-            ---
-            <sub>Building with commit ${commitSha} • Preview environments are automatically destroyed when PRs are closed</sub>`;
-
-            // Find existing comment
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-            });
-
-            const existingComment = comments.data.find(comment => 
-              comment.user.type === 'Bot' && 
-              comment.body.includes(`${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview`)
-            );
-
-            let commentId;
-            if (existingComment) {
-              // Update existing comment
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existingComment.id,
-                body: body
-              });
-              commentId = existingComment.id;
-            } else {
-              // Create new comment
-              const comment = await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body: body
-              });
-              commentId = comment.data.id;
-            }
-
-            console.log(`Comment ID: ${commentId}`);
-            core.setOutput('comment_id', commentId);
-
-  prepare-metadata:
-    name: Prepare Build Metadata
+  # Promoted, not rebuilt: previews run the arm64 image dev and prod run.
+  image:
+    name: Promote PR Image to ECR
     runs-on: ubuntu-latest
     needs: [gate]
-    if: >-
-      !cancelled() && !failure() &&
-      needs.gate.result == 'success'
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    environment:
+      name: preview
     outputs:
-      image_tag: ${{ steps.meta.outputs.image_tag }}
-      short_sha: ${{ steps.meta.outputs.short_sha }}
-
+      ecr_tag: ${{ steps.meta.outputs.ecr_tag }}
     steps:
-      - name: Generate metadata
+      - name: Resolve tags
         id: meta
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          SHORT_SHA=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
-          IMAGE_TAG="pr-${{ github.event.pull_request.number }}-${SHORT_SHA}"
-          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          SHORT_SHA="${HEAD_SHA:0:7}"
+          {
+            echo "ghcr_tag=pr.${PR_NUMBER}.${SHORT_SHA}"
+            echo "ecr_tag=pr-${PR_NUMBER}-${SHORT_SHA}"
+          } >> "$GITHUB_OUTPUT"
 
-  build-and-push:
-    needs: [gate, prepare-metadata]
-    if: >-
-      !cancelled() && !failure() &&
-      needs.gate.result == 'success' &&
-      needs.prepare-metadata.result == 'success'
-    uses: ./.github/workflows/build-push-ecr.yml
-    with:
-      ecr_repository: block-explorer
-      image_tag: ${{ needs.prepare-metadata.outputs.image_tag }}
-      aws_region: eu-west-1
-      environment_name: preview
-    secrets:
-      aws_role_arn: ${{ secrets.AWS_ACC_ROLE }}
+      - name: Login to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.GHCR_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Long window because a `labeled` event can arrive while the unit tests
+      # and the image build are still running on that commit.
+      - name: Wait for the PR image
+        env:
+          GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.ghcr_tag }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 40); do
+            if docker buildx imagetools inspect "$GHCR_IMAGE" >/dev/null 2>&1; then
+              echo "${GHCR_IMAGE} is published."
+              exit 0
+            fi
+            echo "Attempt ${attempt}/40: not published yet, retrying in 30s..."
+            sleep 30
+          done
+          echo "::error::${GHCR_IMAGE} never appeared. The unit tests for this commit have to pass before a preview can deploy."
+          exit 1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ACC_ROLE }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+
+      # Copies the manifest list rather than one platform, so the arm64 task can
+      # resolve its own architecture.
+      - name: Copy manifest list from GHCR to ECR
+        env:
+          GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.ghcr_tag }}
+          ECR_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.ecr_tag }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create -t "$ECR_IMAGE" "$GHCR_IMAGE"
+          docker buildx imagetools inspect "$ECR_IMAGE"
 
   deploy:
     name: Deploy Preview Environment
     runs-on: ubuntu-latest
-    needs: [gate, prepare-metadata, build-and-push]
-    if: >-
-      !cancelled() && !failure() &&
-      needs.gate.result == 'success' &&
-      needs.prepare-metadata.result == 'success' &&
-      needs.build-and-push.result == 'success'
+    needs: [gate, image]
     permissions:
       id-token: write
       contents: read
-    # Shared, never per-PR: nothing can delete an environment. See workflows/README.md.
+    # Shared, never per-PR: nothing in a workflow can delete an environment. See workflows/README.md.
     environment:
       name: preview
       url: https://pr-${{ github.event.pull_request.number }}.block-explorer-preview.vechain.org
-
     outputs:
-      custom_url: ${{ steps.outputs.outputs.custom_url }}
-      service_url: ${{ steps.outputs.outputs.service_url }}
-      custom_domain_status: ${{ steps.outputs.outputs.custom_domain_status }}
-
+      url: ${{ steps.outputs.outputs.url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -181,161 +149,90 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
-      - name: Create preview environment config
-        run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          SHORT_SHA=${{ needs.prepare-metadata.outputs.short_sha }}
-          WORKSPACE_NAME="preview-pr-${PR_NUMBER}"
-
-          # Create workspace directory if it doesn't exist
-          mkdir -p "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}"
-
-          # Copy and customize the preview config
-          cp "${{ env.TERRAFORM_ENV_DIR }}/preview/preview.yaml.example" "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
-
-          # Replace placeholders with actual values
-          sed -i "s/{PR_NUMBER}/${PR_NUMBER}/g" "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
-          sed -i "s/{COMMIT_SHA}/${SHORT_SHA}/g" "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
-
-          # Show the config for debugging
-          echo "Generated config:"
-          cat "${{ env.TERRAFORM_ENV_DIR }}/${WORKSPACE_NAME}/${WORKSPACE_NAME}.yaml"
-
-      - name: Terraform Init
+      # Terraform owns the task definition here, so the apply is what rolls the service.
+      - name: Terraform apply
         working-directory: ${{ env.TERRAFORM_DIR }}
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          IMAGE_TAG: ${{ needs.image.outputs.ecr_tag }}
         run: |
-          terraform init -backend-config=${{ env.TERRAFORM_BACKEND_CONFIG }}
+          set -euo pipefail
+          terraform init -input=false -backend-config="${TERRAFORM_BACKEND_CONFIG}"
+          terraform workspace select -or-create "pr-${PR_NUMBER}"
+          terraform plan -input=false -out=tfplan \
+            -var="pr_number=${PR_NUMBER}" -var="image_tag=${IMAGE_TAG}"
+          terraform apply -input=false -auto-approve tfplan
 
-      - name: Terraform Workspace
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        run: |
-          WORKSPACE_NAME="preview-pr-${{ github.event.pull_request.number }}"
-          terraform workspace select ${WORKSPACE_NAME} || terraform workspace new ${WORKSPACE_NAME}
-
-      - name: Terraform Plan
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        run: |
-          terraform plan -out=tfplan
-
-      - name: Terraform Apply
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        run: |
-          terraform apply -auto-approve tfplan
-
-      - name: Get deployment URL
-        working-directory: ${{ env.TERRAFORM_DIR }}
+      - name: Read outputs
         id: outputs
+        working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
-          CUSTOM_URL=$(terraform output -raw custom_domain_url || echo "")
-          SERVICE_URL=$(terraform output -raw service_url || echo "")
-          DOMAIN_STATUS=$(terraform output -raw custom_domain_status || echo "unknown")
-          echo "custom_url=${CUSTOM_URL}" >> $GITHUB_OUTPUT
-          echo "service_url=${SERVICE_URL}" >> $GITHUB_OUTPUT
-          echo "custom_domain_status=${DOMAIN_STATUS}" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          {
+            echo "url=$(terraform output -raw url)"
+            echo "cluster=$(terraform output -raw cluster_name)"
+            echo "service=$(terraform output -raw service_name)"
+          } >> "$GITHUB_OUTPUT"
 
-  update-comment:
+      - name: Wait for the service
+        env:
+          CLUSTER: ${{ steps.outputs.outputs.cluster }}
+          SERVICE: ${{ steps.outputs.outputs.service }}
+        run: aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
+
+      - name: Confirm the preview is serving
+        env:
+          URL: ${{ steps.outputs.outputs.url }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 10); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "${URL}/api/health" || true)
+            if [ "$code" = "200" ]; then
+              echo "${URL}/api/health returned 200."
+              exit 0
+            fi
+            echo "Attempt ${attempt}/10: got '${code}', retrying in 15s..."
+            sleep 15
+          done
+          echo "::error::${URL}/api/health never returned 200."
+          exit 1
+
+      # Without it every indexer call leaves from dev's one NAT IP and takes its rate limit.
+      - name: Warn if the indexer bypass token is missing
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: |
+          set -euo pipefail
+          if [ "$(terraform output -raw indexer_bypass_attached)" != "true" ]; then
+            echo "::warning::No indexer rate-limit bypass token is attached; expect 429s from the indexer."
+          fi
+
+  comment:
     name: Update PR Comment
     runs-on: ubuntu-latest
-    needs: [pr-comment, prepare-metadata, build-and-push, deploy]
-    if: always() && needs.pr-comment.result == 'success'
+    needs: [gate, image, deploy]
+    # `always()` disables the implicit skip, so the gate has to be re-checked here.
+    if: always() && needs.gate.result == 'success'
     permissions:
       pull-requests: write
-
     steps:
-      - name: Update PR comment with final status
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            const prNumber = context.issue.number;
-            const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
-            const commitUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha}`;
-            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const projectName = process.env.PROJECT_NAME;
-
-            const buildResult = '${{ needs.build-and-push.result }}';
-            const deployResult = '${{ needs.deploy.result }}';
-
-            let body;
-
-            if (buildResult === 'failure') {
-              // Build failed
-              body = `## ${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview
-
-              | Name | Status | Preview | Updated (UTC) |
-              |------|--------|---------|---------------|
-              | **${projectName}-preview** | ❌ Build Failed ([${commitSha}](${commitUrl})) | [View Logs →](${runUrl}) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
-
-              ---
-              <sub>Docker build failed for commit ${commitSha} • [Check logs](${runUrl}) for details</sub>`;
-            } else if (deployResult === 'failure') {
-              // Deploy failed
-              body = `## ${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview
-
-              | Name | Status | Preview | Updated (UTC) |
-              |------|--------|---------|---------------|
-              | **${projectName}-preview** | ❌ Deployment Failed ([${commitSha}](${commitUrl})) | [View Logs →](${runUrl}) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
-
-              ---
-              <sub>Deployment failed for commit ${commitSha} • [Check logs](${runUrl}) for details</sub>`;
-            } else if (deployResult === 'success') {
-              // Success - get deployment URLs from deploy job outputs
-              const customUrl = '${{ needs.deploy.outputs.custom_url }}';
-              const serviceUrl = '${{ needs.deploy.outputs.service_url }}';
-              
-              let previewLinks = `[Custom Domain →](${customUrl})  • [Default URL →](${serviceUrl})`;
-              let statusNote = '\n\n> ⏱️ **Note:** Custom domain may take 5-10 minutes to activate on first deployment. Use Default URL in the meantime.';
-              
-              body = `## ${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview
-
-              | Name | Status | Preview | Updated (UTC) |
-              |------|--------|---------|---------------|
-              | **${projectName}-preview** | ✅ Ready ([${commitSha}](${commitUrl})) | ${previewLinks} | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
-              ${statusNote}
-
-              ---
-              <sub>Built with commit ${commitSha} • Preview environments are automatically destroyed when PRs are closed</sub>`;
-            } else {
-              // Unexpected state
-              body = `## ${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview
-
-              | Name | Status | Preview | Updated (UTC) |
-              |------|--------|---------|---------------|
-              | **${projectName}-preview** | ⚠️ Unknown Status ([${commitSha}](${commitUrl})) | [View Logs →](${runUrl}) | ${new Date().toISOString().replace('T', ' ').substring(0, 19)} |
-
-              ---
-              <sub>Unexpected workflow state for commit ${commitSha} • [Check logs](${runUrl}) for details</sub>`;
-            }
-
-            // Find and update existing comment
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-            });
-
-            const existingComment = comments.data.find(comment => 
-              comment.user.type === 'Bot' && 
-              comment.body.includes(`${projectName.charAt(0).toUpperCase() + projectName.slice(1).replace(/-/g, ' ')} – Preview`)
-            );
-
-            if (existingComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existingComment.id,
-                body: body
-              });
-            }
-
-      - name: Deployment summary
+      - name: Report success
         if: needs.deploy.result == 'success'
-        run: |
-          echo "### Preview Environment Deployed! 🎉" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Image Tag:** \`${{ needs.build-and-push.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ needs.deploy.outputs.custom_url }}" ]; then
-            echo "**Custom Domain:** ${{ needs.deploy.outputs.custom_url }}" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "**Service URL:** ${{ needs.deploy.outputs.service_url }}" >> $GITHUB_STEP_SUMMARY
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          header: preview
+          message: |
+            ### Preview — ready
+
+            ${{ needs.deploy.outputs.url }}
+
+            <sub>Commit `${{ github.event.pull_request.head.sha }}`. Torn down when this PR closes.</sub>
+
+      - name: Report failure
+        if: needs.deploy.result != 'success'
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          header: preview
+          message: |
+            ### Preview — failed
+
+            Commit `${{ github.event.pull_request.head.sha }}` did not deploy. [View logs →](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})

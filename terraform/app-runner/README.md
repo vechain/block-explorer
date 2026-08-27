@@ -11,10 +11,12 @@ AWS App Runner deployment for Block Explorer using Terraform workspaces.
 
 ## Workspaces
 
-| Workspace             | Purpose                 | Domain                                           | State Location                                                                             |
-| --------------------- | ----------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| `production`          | Production environment  | `block-explorer.vechain.org`                     | `s3://vechain-terraform-state-prod/env:/production/frontend/terraform.tfstate`             |
-| `preview-pr-{number}` | PR preview environments | `pr-{number}.block-explorer-preview.vechain.org` | `s3://vechain-terraform-state-nonprod/env:/preview-pr-{number}/frontend/terraform.tfstate` |
+| Workspace    | Purpose                | Domain                       | State Location                                                                 |
+| ------------ | ---------------------- | ---------------------------- | ------------------------------------------------------------------------------ |
+| `production` | Production environment | `block-explorer.vechain.org` | `s3://vechain-terraform-state-prod/env:/production/frontend/terraform.tfstate` |
+
+Previews left this stack for ECS — see [`../frontend-preview`](../frontend-preview) and
+[`../preview-edge`](../preview-edge). Only production still runs here, until the cutover.
 
 ## Automated Deployment
 
@@ -27,20 +29,6 @@ AWS App Runner deployment for Block Explorer using Terraform workspaces.
   2. Push to ECR
   3. Update `prod.yaml` with new image tag
   4. Deploy via Terraform
-
-### Preview Environments
-
-- **Trigger**: PR opened/updated
-- **Workflow**: `.github/workflows/deploy-preview.yml`
-- **Process**:
-  1. Post "Building" comment on PR
-  2. Build Docker image with tag `pr-{number}-{short_sha}`
-  3. Push to ECR
-  4. Generate environment config from template
-  5. Deploy via Terraform
-  6. Update PR comment with deployment status and URLs
-- **Cleanup**: Automatically destroyed when PR is closed (`.github/workflows/destroy-preview.yml`)
-- **Concurrency**: Only latest commit per PR deploys (older builds are cancelled)
 
 ## Configuration
 
@@ -58,21 +46,6 @@ cpu: 1024 # 1 vCPU
 memory: 2048 # 2 GB
 min_size: 1 # Always 1 instance (no cold starts)
 max_size: 10
-```
-
-### Preview
-
-**Template**: `terraform/environments/preview/preview.yaml.example`
-**Generated**: `terraform/environments/preview-pr-{number}/preview-pr-{number}.yaml`
-
-```yaml
-environment: preview-pr-123
-domain: pr-123.block-explorer-preview.vechain.org
-image_tag: pr-123-abc1234 # Set by CI/CD
-cpu: 512 # 0.5 vCPU (smaller for previews)
-memory: 1024 # 1 GB
-min_size: 1 # App Runner requires ≥1
-max_size: 2
 ```
 
 ## Resources Created
@@ -230,31 +203,6 @@ terraform init -backend-config=../environments/production/backend.config
 terraform workspace select production
 terraform plan
 terraform apply
-```
-
-### Deploy Preview
-
-```bash
-cd terraform/app-runner
-terraform init -backend-config=../environments/preview/backend.config
-
-# Create workspace and config
-terraform workspace new preview-pr-123
-cp ../environments/preview/preview.yaml.example ../environments/preview-pr-123/preview-pr-123.yaml
-# Edit the config file with PR number and image tag
-
-terraform plan
-terraform apply
-```
-
-### Destroy Preview
-
-```bash
-terraform workspace select preview-pr-123
-terraform destroy
-terraform workspace select default
-terraform workspace delete preview-pr-123
-rm -rf ../environments/preview-pr-123
 ```
 
 ## Custom Domain Setup

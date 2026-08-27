@@ -1,6 +1,6 @@
 output "service_name" {
   description = "ECS service name. What `aws ecs update-service --service` takes."
-  value       = aws_ecs_service.this.name
+  value       = one(concat(aws_ecs_service.this[*].name, aws_ecs_service.rolling[*].name))
 }
 
 output "task_definition_family" {
