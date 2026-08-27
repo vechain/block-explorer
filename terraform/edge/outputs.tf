@@ -1,5 +1,5 @@
 output "alb_arn" {
-  description = "ALB ARN. Phase 2's CloudWatch alarms and YACE job scope to this."
+  description = "ALB ARN. CloudWatch alarms and dashboard queries want alb_arn_suffix instead."
   value       = aws_lb.main.arn
 }
 

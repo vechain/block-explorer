@@ -1,6 +1,4 @@
-# Container Insights is on because everything downstream reads it: the ECS
-# task-count metrics, phase 2's tasks-below-desired alarms, and YACE's
-# discovery all have nothing to scrape without it.
+# Container Insights on: the tasks-below-desired alarm reads its task counts.
 resource "aws_ecs_cluster" "this" {
   name = "${local.name}-cluster"
 

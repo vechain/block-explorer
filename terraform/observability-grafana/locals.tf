@@ -10,9 +10,8 @@ locals {
 
   # Dimension values the CloudWatch panels query. Named by the same convention
   # ecs/ and frontend/ use, rather than read back through remote state.
-  ecs_cluster_name       = "${local.name}-cluster"
-  frontend_service_name  = "${local.name}-frontend"
-  collector_service_name = "${local.name}-observability-collector"
+  ecs_cluster_name      = "${local.name}-cluster"
+  frontend_service_name = "${local.name}-frontend"
 
   amg_workspace_endpoint         = try(data.terraform_remote_state.observability_aws.outputs.amg_workspace_endpoint, null)
   amg_sa_token_secret_arn        = try(data.terraform_remote_state.observability_aws.outputs.amg_service_account_token_secret_arn, null)

@@ -4,7 +4,7 @@ output "amp_workspace_id" {
 }
 
 output "amp_workspace_arn" {
-  description = "AMP workspace ARN. The Resource on every collector's aps:RemoteWrite statement."
+  description = "AMP workspace ARN. The Resource on the sidecar's aps:RemoteWrite statement."
   value       = aws_prometheus_workspace.this.arn
 }
 

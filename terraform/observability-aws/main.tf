@@ -2,11 +2,9 @@
 # observability-grafana stack authenticates with.
 #
 # Apply order on a fresh environment:
-#   network -> ecs -> acm -> edge -> observability-aws ->
-#   observability-collector -> frontend -> observability-grafana
+#   network -> ecs -> acm -> edge -> observability-aws -> frontend -> observability-grafana
 #
-# frontend/ and observability-collector/ both read this stack's AMP outputs
-# through try(), so this has to apply before either can attach a collector.
+# frontend/ reads this stack's AMP outputs through try(), hence its place above.
 
 data "aws_caller_identity" "current" {}
 
@@ -88,8 +86,7 @@ resource "aws_iam_role_policy" "grafana_amp_alerts" {
 }
 
 # No VPC connection: every datasource here (AMP, CloudWatch) is a public AWS
-# endpoint. Phase 7 does not change that — the cache is scraped by YACE, not
-# queried from Grafana.
+# endpoint, and the shared cache will publish to CloudWatch too.
 resource "aws_grafana_workspace" "this" {
   name                     = local.name
   description              = "${var.project} ${terraform.workspace} observability"

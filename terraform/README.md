@@ -5,18 +5,17 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 
 ## Layout
 
-| Stack                      | Owns                                                                 |
-| -------------------------- | -------------------------------------------------------------------- |
-| `network/`                 | VPC, three subnet tiers, NAT, S3 gateway endpoint                    |
-| `ecs/`                     | ECS cluster (Container Insights on)                                  |
-| `acm/`                     | Public certificate for the environment's domain, DNS-validated       |
-| `edge/`                    | ALB, listeners, target group, security groups, WAF, DNS record       |
-| `observability-aws/`       | AMP, Grafana, SNS, the Slack bridge, AMP rules and CloudWatch alarms |
-| `observability-collector/` | YACE + ADOT service bridging CloudWatch metrics into AMP             |
-| `frontend/`                | The explorer's ECS service, task definition and secret               |
-| `observability-grafana/`   | Grafana datasources and dashboards                                   |
-| `account-level/`           | Legacy: ECR, Route53 zones, App Runner IAM and autoscaling           |
-| `app-runner/`              | Legacy: the App Runner service still serving prod                    |
+| Stack                    | Owns                                                                 |
+| ------------------------ | -------------------------------------------------------------------- |
+| `network/`               | VPC, three subnet tiers, NAT, S3 gateway endpoint                    |
+| `ecs/`                   | ECS cluster (Container Insights on)                                  |
+| `acm/`                   | Public certificate for the environment's domain, DNS-validated       |
+| `edge/`                  | ALB, listeners, target group, security groups, WAF, DNS record       |
+| `observability-aws/`     | AMP, Grafana, SNS, the Slack bridge, AMP rules and CloudWatch alarms |
+| `frontend/`              | The explorer's ECS service, task definition and secret               |
+| `observability-grafana/` | Grafana datasources and dashboards                                   |
+| `account-level/`         | Legacy: ECR, Route53 zones, App Runner IAM and autoscaling           |
+| `app-runner/`            | Legacy: the App Runner service still serving prod                    |
 
 `modules/ecs-webservice` is the shared Fargate service shape — dev, prod and phase 3's previews
 differ by parameters, not structure. `modules/observability-sidecar` renders the ADOT container that
@@ -28,16 +27,18 @@ until the ECS work started; its state key is declared in `provider.tf` and is st
 
 ## Observability
 
-Two collectors, and the split is the part that is easy to get wrong. The sidecar rides in each app
-task and reads that task: cgroup CPU, memory, network and disk, plus a loopback scrape of the app's
-own `/api/metrics`. `observability-collector/` is one standalone task reading the AWS control plane
-through YACE, which exists because the ADOT distribution ships no CloudWatch receiver. Neither can do
-the other's job, and both remote-write into the same AMP workspace.
+Metrics land in two stores, split by who publishes them. What the app knows about itself — cache
+hits, upstream outcomes, HTTP status, plus per-task cgroup CPU and memory — goes to AMP, collected
+by `modules/observability-sidecar` riding in each app task. What AWS knows about our resources —
+ALB, ECS, WAF, and the shared cache when it lands — stays in CloudWatch and is alarmed there.
+
+A standalone YACE task bridging CloudWatch into AMP was tried and removed: it put every AWS-side
+metric behind one Fargate task that could itself die, to buy a single query language nothing here
+needed. Keep the split when prod is stood up. The SNS → Lambda → Slack bridge renders a CloudWatch
+alarm into the same shape as an Alertmanager notification, so it is invisible to whoever is on call.
 
 Dashboards live in `observability-grafana/` as a separate stack because the Grafana provider cannot
-initialise against a workspace the same apply is creating. AWS resource metrics are read straight
-from CloudWatch rather than through AMP, so the ALB, ECS and WAF panels keep working when the
-collector is the thing that has broken. The alert rules deep-link to panel IDs in
+initialise against a workspace the same apply is creating. The alert rules deep-link to panel IDs in
 `dashboards/overview.json` — renumbering a panel breaks the link from Slack.
 
 Alerts evaluate in every environment but `alerts_enabled` in the env YAML controls whether they are
@@ -73,10 +74,10 @@ image; the deploy chains off that build, pins `image_tag`, applies the stacks in
 ECS service. Nothing about dev needs applying by hand.
 
 Order matters where a stack reads another's state, and the workflow applies them serially in it:
-`network` → `ecs` → `acm` → `edge` → `observability-aws` → `observability-collector` → `frontend` →
-`observability-grafana`. `frontend` sits after the AMP workspace because its sidecar remote-writes to
-it; `observability-aws`'s alarms name the ECS service by convention rather than reading it back,
-which is what keeps that from being a cycle. To run one stack locally against dev:
+`network` → `ecs` → `acm` → `edge` → `observability-aws` → `frontend` → `observability-grafana`.
+`frontend` sits after the AMP workspace because its sidecar remote-writes to it;
+`observability-aws`'s alarms name the ECS service by convention rather than reading it back, which
+is what keeps that from being a cycle. To run one stack locally against dev:
 
 ```bash
 cd terraform/network

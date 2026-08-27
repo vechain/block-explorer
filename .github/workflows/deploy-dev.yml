@@ -137,7 +137,6 @@ jobs:
       service: ${{ steps.outputs.outputs.service }}
       family: ${{ steps.outputs.outputs.family }}
       url: ${{ steps.outputs.outputs.url }}
-      collector: ${{ steps.outputs.outputs.collector }}
       grafana_url: ${{ steps.outputs.outputs.grafana_url }}
     steps:
       # No `ref:` on purpose: this job holds AWS credentials, so checking out a
@@ -172,7 +171,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          for stack in network ecs acm edge observability-aws observability-collector frontend observability-grafana; do
+          for stack in network ecs acm edge observability-aws frontend observability-grafana; do
             echo "::group::${stack}"
             pushd "terraform/${stack}" >/dev/null
 
@@ -201,12 +200,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           popd >/dev/null
 
-          # Both outputs are null until the AMP workspace exists, and `-raw`
-          # refuses a null — so tolerate the failure and let the consumer skip.
-          pushd terraform/observability-collector >/dev/null
-          echo "collector=$(terraform output -raw service_name 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
-          popd >/dev/null
-
+          # Null until the AMP workspace exists, and `-raw` refuses a null.
           pushd terraform/observability-grafana >/dev/null
           echo "grafana_url=$(terraform output -raw amg_workspace_url 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
           popd >/dev/null
@@ -269,22 +263,6 @@ jobs:
           done
           echo "::error::${URL}/api/health never returned 200."
           exit 1
-
-      # A bad YACE or ADOT config crash-loops the task rather than failing an
-      # apply, which would otherwise leave every CloudWatch-sourced rule blind
-      # with a green deploy.
-      - name: Confirm the observability collector is stable
-        env:
-          CLUSTER: ${{ needs.terraform.outputs.cluster }}
-          COLLECTOR: ${{ needs.terraform.outputs.collector }}
-        run: |
-          set -euo pipefail
-          if [ -z "$COLLECTOR" ] || [ "$COLLECTOR" = "null" ]; then
-            echo "Collector not deployed yet; skipping."
-            exit 0
-          fi
-          aws ecs wait services-stable --cluster "$CLUSTER" --services "$COLLECTOR"
-          echo "${COLLECTOR} is stable."
 
       # The ALB must refuse this even though the sidecar scrapes it in-task.
       - name: Confirm /api/metrics is not public
