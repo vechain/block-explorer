@@ -38,6 +38,7 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
       ghcr_tag: ${{ steps.resolve.outputs.ghcr_tag }}
       ecr_tag: ${{ steps.resolve.outputs.ecr_tag }}
     steps:
@@ -292,3 +293,16 @@ jobs:
               echo "- Grafana: ${GRAFANA_URL}/d/be-overview"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # Not on workflow_dispatch: a break-glass run may be redeploying an older tag,
+  # and drafting a release for it would offer prod that rollback as the next cut.
+  draft-release:
+    name: Prepare Release Draft
+    needs: [guard, roll]
+    if: github.event_name == 'workflow_run'
+    # Caps the called workflow rather than leaning on the repository default.
+    permissions:
+      contents: write
+    uses: ./.github/workflows/prepare-release.yml
+    with:
+      tag: ${{ needs.guard.outputs.tag }}

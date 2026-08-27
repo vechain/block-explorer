@@ -1,0 +1,49 @@
+name: Static Checks
+
+# No `paths:` filter on purpose. The aggregator below is a required status check,
+# and a filtered workflow never reports on a PR that misses the filter, which
+# leaves that PR waiting on a status that will never arrive.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: static-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checkov:
+    uses: vechain/github-actions-public/.github/workflows/checkov.yaml@c8645e5723b09ce657b865f78924b87a357df036 # v.2.3.1
+    with:
+      # skip_path narrows only the secrets half, which scans every file.
+      skip_path: '^node_modules/,^\.next/,^i18n/languages/,^public/'
+      # Informational until a .checkov.yaml records the accepted findings.
+      soft_fail: true
+
+  actionlint:
+    uses: vechain/github-actions-public/.github/workflows/action-lint.yaml@c8645e5723b09ce657b865f78924b87a357df036 # v.2.3.1
+
+  # One required-status target, so branch protection needs a single entry rather
+  # than a context per reusable workflow.
+  static-checks:
+    name: Static checks
+    if: always()
+    needs: [checkov, actionlint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Aggregate results
+        env:
+          CHECKOV: ${{ needs.checkov.result }}
+          ACTIONLINT: ${{ needs.actionlint.result }}
+        run: |
+          set -euo pipefail
+          echo "checkov=${CHECKOV} actionlint=${ACTIONLINT}"
+          if [ "$CHECKOV" != success ] || [ "$ACTIONLINT" != success ]; then
+            echo "::error::A static check did not pass."
+            exit 1
+          fi
