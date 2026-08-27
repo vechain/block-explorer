@@ -55,6 +55,14 @@ jobs:
         run: |
           set -euo pipefail
 
+          # workflow_run always starts on the default branch, but a dispatch can
+          # start anywhere, and the jobs below apply the Terraform they check out.
+          # Only the image travels as a tag; the tree is always main's.
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::Started on '${GITHUB_REF}'. Dispatch this from main — the deploy applies whatever Terraform it checks out."
+            exit 1
+          fi
+
           if [[ ! "$RAW_TAG" =~ ^v\.[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
             echo "::error::Not a version tag: '$RAW_TAG'. Expected v.X.Y.Z."
             exit 1
