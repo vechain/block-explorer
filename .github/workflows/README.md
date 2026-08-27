@@ -1,35 +1,93 @@
 # GitHub Actions Workflows
 
-Automated CI/CD for Block Explorer using GitHub Actions and AWS App Runner.
+Automated CI/CD for Block Explorer. Dev and previews run on ECS Fargate; production is still on
+App Runner until the cutover.
+
+## The release path
+
+```
+PR merged to main
+  → codebase-versioning.yml tags v.X.Y.Z (increment:* label picks the bump)
+  → publish-ghcr-image.yml builds the multi-arch image
+  → deploy-dev.yml promotes it to ECR and deploys dev
+  → prepare-release.yml leaves exactly one draft release
+
+Draft published
+  → deploy-production.yml deploys prod
+```
 
 ## Workflows
+
+### Dev Deployment (`deploy-dev.yml`)
+
+**Triggers:**
+- Completion of `publish-ghcr-image.yml`, so the image is guaranteed to exist rather than polled for
+- Manual dispatch with a version tag (break-glass, e.g. to roll back)
+
+**Jobs:**
+1. `guard` - Resolves the tag and refuses anything not reachable from `main`
+2. `promote` - Copies the GHCR manifest list into ECR under a `dev-` prefix, keeping both arches
+3. `terraform` - Applies each stack serially in dependency order, planning immediately before each apply
+4. `roll` - Moves the service to the new task definition revision, then checks `/api/health` and that `/api/metrics` is 403
+5. `draft-release` - Calls `prepare-release.yml` (not on dispatch)
+
+**Domain:** `https://dev.block-explorer.vechain.org`
+
+The `terraform` job takes the default checkout and passes the tag through as a string. It holds AWS
+credentials and Terraform executes whatever is in the tree, so checking out a `ref:` taken from event
+data would be an untrusted checkout with execution — CodeQL rates it critical and `main`'s
+`code_scanning` rule blocks the merge.
+
+---
+
+### Prepare Release Draft (`prepare-release.yml`)
+
+Called by `deploy-dev.yml` after a successful deploy. Deletes any stale `v.*` draft and cuts a fresh
+one for the just-deployed tag, so cutting prod is "open the single draft and click Publish".
+
+Notes start at the last *published* release, not GitHub's default baseline — every merge to `main`
+produces a tag, so the default picks the previous dev-only cut.
+
+It is a `workflow_call` rather than a `workflow_run` chained off the deploy, because "Deploy to Dev"
+is itself `workflow_run`-triggered: its own `head_branch` is `main`, so the deployed tag is not
+recoverable from the event payload. Passing it as an input is exact.
+
+Skipped on `workflow_dispatch` deploys — a break-glass run may be redeploying an older tag, and
+drafting a release for it would offer prod that rollback as the next cut.
+
+---
+
+### Static Checks (`static-checks.yml`)
+
+Runs the org's reusable `checkov.yaml` and `action-lint.yaml` on every PR and on `main`, behind a
+single `Static checks` aggregator job so branch protection needs one entry rather than a context per
+reusable workflow.
+
+Checkov is `soft_fail: true` for now: it reports 45 findings across the Terraform, most of them
+accepted design decisions (public ALB on :80 redirecting to :443, the wildcard preview cert, no
+DNSSEC, AWS-managed secret encryption). A follow-up records those in a `.checkov.yaml` and flips the
+flag in the same change. actionlint hard-fails.
+
+No `paths:` filter, deliberately. A filtered workflow never reports on a PR that misses the filter,
+which would leave that PR waiting forever on a required status.
+
+`.github/actionlint-matcher.json` is vendored from actionlint v1.7.8 because the reusable workflow
+registers it with `::add-matcher::` unconditionally, and the runner fails the step when the file is
+absent. It only annotates findings onto the diff.
+
+---
 
 ### Production Deployment (`deploy-production.yml`)
 
 **Triggers:**
-- Manual workflow dispatch only (no automatic deployments)
-
-**Required Inputs:**
-- `terraform_action`: Choose between `dry-run` (plan only) or `deploy` (apply)
-- Must be triggered from a version tag (format: `v.X.Y.Z`)
+- A GitHub Release being published
 
 **Jobs:**
-1. `validate-version-format` - Validates version tag format
-2. `check-existing-release` - Checks if release already exists
-3. `prepare-metadata` - Extracts version from tag
-4. `build-and-push` - Builds and pushes Docker image
-5. `deploy` - Deploys to App Runner via Terraform (if action is `deploy`)
-
-**Image Tag:** `v.X.Y.Z` (e.g., `v.1.2.3`) - uses the version tag directly
+1. `validate-version-format` - Validates the tag is `v.X.Y.Z`
+2. `promote-to-ecr` - Copies the GHCR image into ECR as `v.X.Y.Z` (plus `latest` for stable versions)
+3. `deploy` - Applies `terraform/app-runner` in workspace `prod`
 
 **Domain:** `https://block-explorer.vechain.org`
-
-**Deployment Process:**
-1. Create a version tag matching pattern `v.X.Y.Z`
-2. Go to Actions → Deploy to Production → Run workflow
-3. Select the version tag from dropdown
-4. Choose `dry-run` to preview changes or `deploy` to apply
-5. Monitor deployment progress
 
 ---
 

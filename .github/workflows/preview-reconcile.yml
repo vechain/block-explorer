@@ -111,8 +111,7 @@ jobs:
               echo "${ws}: already gone."
               continue
             fi
-            is_orphan "$pr"
-            if [ $? -ne 0 ]; then
+            if ! is_orphan "$pr"; then
               echo "${ws}: PR #${pr} no longer reads as an orphan — leaving it alone."
               continue
             fi
