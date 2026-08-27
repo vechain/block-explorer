@@ -12,6 +12,7 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 | `acm/`                   | Public certificate for the environment's domain, DNS-validated       |
 | `edge/`                  | ALB, listeners, target group, security groups, WAF, DNS record       |
 | `preview-edge/`          | Shared preview ALB, listeners, security groups, wildcard DNS record  |
+| `data/`                  | ElastiCache Serverless Valkey, its RBAC users and the URL secret     |
 | `frontend-preview/`      | One PR's target group, host-header rule and ECS service              |
 | `observability-aws/`     | AMP, Grafana, SNS, the Slack bridge, AMP rules and CloudWatch alarms |
 | `frontend/`              | The explorer's ECS service, task definition and secret               |
@@ -35,7 +36,7 @@ until the ECS work started; its state key is declared in `provider.tf` and is st
 Metrics land in two stores, split by who publishes them. What the app knows about itself — cache
 hits, upstream outcomes, HTTP status, plus per-task cgroup CPU and memory — goes to AMP, collected
 by `modules/observability-sidecar` riding in each app task. What AWS knows about our resources —
-ALB, ECS, WAF, and the shared cache when it lands — stays in CloudWatch and is alarmed there.
+ALB, ECS, WAF and the shared cache — stays in CloudWatch and is alarmed there.
 
 A standalone YACE task bridging CloudWatch into AMP was tried and removed: it put every AWS-side
 metric behind one Fargate task that could itself die, to buy a single query language nothing here
@@ -57,6 +58,19 @@ workspace stays without a SAML configuration — AMG rejects an empty role-value
 sign-in-but-nobody-mapped state to land in. Both lists need at least one group. Dashboards provision either way, since the Terraform
 provider authenticates with a service-account token rather than through SAML. A user whose `role`
 assertion matches neither list is a Viewer.
+
+## Shared cache
+
+`data/` holds one ElastiCache Serverless Valkey per account, and in dev it is shared by dev and every
+preview. The app reads it through `REDIS_URL`, injected from a Secrets Manager secret the stack
+writes: with the secret absent every proxy cache stays in-process, per task and cold on each deploy,
+which is how the environment behaves before this stack is applied and how it behaves again if the
+variable is removed. Rollback is dropping one environment variable, not a redeploy of old code.
+
+Keys are prefixed with the image tag, so two builds sharing one cache cannot read each other's
+payloads — that is what lets a preview running unmerged schema changes share dev's instance. It also
+means a deploy starts cold: the entries worth sharing are the day-long ones, decoded selectors and
+Sourcify ABIs, and they are rebuilt per release rather than carried across.
 
 ## Environment config
 
@@ -87,7 +101,7 @@ only change from merged code — a preview deploy runs the PR's own branch, so a
 let any labelled PR reshape the ingress every other preview is served through.
 
 Order matters where a stack reads another's state, and the workflow applies them serially in it:
-`network` → `ecs` → `acm` → `edge` → `preview-edge` → `observability-aws` → `frontend` →
+`network` → `ecs` → `acm` → `edge` → `preview-edge` → `data` → `observability-aws` → `frontend` →
 `observability-grafana`. `frontend` sits after the AMP workspace because its sidecar remote-writes to
 it; `observability-aws`'s alarms name the ECS service by convention rather than reading it back, which
 is what keeps that from being a cycle. To run one stack locally against dev:

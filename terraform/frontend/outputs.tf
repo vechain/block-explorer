@@ -28,6 +28,11 @@ output "sidecar_attached" {
   value       = local.sidecar_ready
 }
 
+output "cache_attached" {
+  description = "Whether the tasks use the shared Valkey. False leaves every proxy cache per-task and cold on each deploy, which is a hit-rate story rather than an outage."
+  value       = local.cache_ready
+}
+
 output "url" {
   description = "Public URL the environment serves on."
   value       = "https://${local.env.domain}"

@@ -17,6 +17,18 @@ data "terraform_remote_state" "edge" {
   }
 }
 
+data "terraform_remote_state" "cache" {
+  backend   = "s3"
+  workspace = terraform.workspace
+
+  config = {
+    bucket  = var.state_bucket
+    key     = "data/terraform.tfstate"
+    region  = var.aws_region
+    encrypt = true
+  }
+}
+
 locals {
   # By convention, not from frontend/'s state: that stack reads this one, so a read back would cycle.
   ecs_cluster_name = "${local.name}-cluster"
@@ -28,6 +40,13 @@ locals {
   alb_arn_suffix          = try(data.terraform_remote_state.edge.outputs.alb_arn_suffix, null)
   target_group_arn_suffix = try(data.terraform_remote_state.edge.outputs.target_group_arn_suffix, null)
   waf_web_acl_name        = try(data.terraform_remote_state.edge.outputs.waf_web_acl_name, null)
+
+  cache_name         = try(data.terraform_remote_state.cache.outputs.cache_name, null)
+  cache_ecpu_maximum = try(data.terraform_remote_state.cache.outputs.cache_ecpu_per_second_maximum, null)
+  cache_storage_maximum_bytes = try(
+    data.terraform_remote_state.cache.outputs.cache_data_storage_maximum_gb * 1024 * 1024 * 1024,
+    null,
+  )
 
   alerts_topic_arns = [aws_sns_topic.alerts.arn]
 }
@@ -176,6 +195,53 @@ resource "aws_cloudwatch_metric_alarm" "alb_target_5xx" {
   datapoints_to_alarm = 5
   comparison_operator = "GreaterThanThreshold"
   threshold           = 60
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = local.alerts_topic_arns
+  ok_actions    = local.alerts_topic_arns
+}
+
+# Published as a per-minute Sum, so the ceiling is the per-second cap times 60. At
+# the cap Valkey throttles rather than queues, which the app reads as a plain miss.
+resource "aws_cloudwatch_metric_alarm" "cache_ecpu_high" {
+  count = local.cache_name == null ? 0 : 1
+
+  alarm_name        = "${local.name}-cache-ecpu-high"
+  alarm_description = "Valkey ECPU usage is high — the shared cache has been above ${format("%.0f", local.saturation_threshold * 100)}% of its configured ECPU ceiling for five minutes, and commands are throttled once it reaches it."
+
+  namespace   = "AWS/ElastiCache"
+  metric_name = "ElastiCacheProcessingUnits"
+  # Serverless caches publish under clusterId, not the provisioned CacheClusterId.
+  dimensions          = { clusterId = local.cache_name }
+  statistic           = "Sum"
+  period              = 60
+  evaluation_periods  = 5
+  datapoints_to_alarm = 5
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = local.saturation_threshold * local.cache_ecpu_maximum * 60
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = local.alerts_topic_arns
+  ok_actions    = local.alerts_topic_arns
+}
+
+# A serverless cache exposes no eviction policy, so entries live their full TTL and
+# the working set is "distinct keys per day" rather than a number anyone picked.
+resource "aws_cloudwatch_metric_alarm" "cache_storage_high" {
+  count = local.cache_name == null ? 0 : 1
+
+  alarm_name        = "${local.name}-cache-storage-high"
+  alarm_description = "Valkey storage is high — the shared cache has held more than ${format("%.0f", local.saturation_threshold * 100)}% of its configured storage ceiling for fifteen minutes. Entries expire but are never evicted, so the TTLs are what have to come down."
+
+  namespace           = "AWS/ElastiCache"
+  metric_name         = "BytesUsedForCache"
+  dimensions          = { clusterId = local.cache_name }
+  statistic           = "Average"
+  period              = 300
+  evaluation_periods  = 3
+  datapoints_to_alarm = 3
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = local.saturation_threshold * local.cache_storage_maximum_bytes
   treat_missing_data  = "notBreaching"
 
   alarm_actions = local.alerts_topic_arns

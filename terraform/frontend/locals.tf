@@ -12,4 +12,9 @@ locals {
   amp_endpoint      = try(data.terraform_remote_state.observability_aws.outputs.amp_prometheus_endpoint, null)
   amp_workspace_arn = try(data.terraform_remote_state.observability_aws.outputs.amp_workspace_arn, null)
   sidecar_ready     = local.amp_endpoint != null && local.amp_workspace_arn != null
+
+  # Read the same way, for the same reason: without the data/ stack the app keeps
+  # its per-task caches rather than failing to start.
+  redis_url_secret_arn = try(data.terraform_remote_state.cache.outputs.redis_url_secret_arn, null)
+  cache_ready          = local.redis_url_secret_arn != null
 }
