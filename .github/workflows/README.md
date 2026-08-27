@@ -209,6 +209,19 @@ PR Closed/Merged:
   → Update comment to "Destroyed"
 ```
 
+### GitHub Environments are shared, Terraform workspaces are per-PR
+
+Every preview job runs against the single `preview` GitHub Environment, with `environment.url` set per
+deployment so the PR timeline still links to the right preview. The per-PR name lives only in the
+Terraform workspace (`preview-pr-{number}`), which `destroy-preview.yml` reaps.
+
+Do not name a GitHub Environment after the PR. Declaring `environment: preview-pr-N` creates that
+environment implicitly and nothing can remove it: `GITHUB_TOKEN` has no `environments` or
+`administration` permission, so the delete API is out of reach from a workflow. 113 of them
+accumulated before this was noticed. If a per-PR environment is ever genuinely needed, the teardown
+step needs a PAT or GitHub App token with Environments write, and it has to be added in the same
+change that introduces the environment.
+
 ---
 
 ## Concurrency Control

@@ -139,7 +139,7 @@ jobs:
       ecr_repository: block-explorer
       image_tag: ${{ needs.prepare-metadata.outputs.image_tag }}
       aws_region: eu-west-1
-      environment_name: preview-pr-${{ github.event.pull_request.number }}
+      environment_name: preview
     secrets:
       aws_role_arn: ${{ secrets.AWS_ACC_ROLE }}
 
@@ -155,8 +155,9 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    # Shared, never per-PR: nothing can delete an environment. See workflows/README.md.
     environment:
-      name: preview-pr-${{ github.event.pull_request.number }}
+      name: preview
       url: https://pr-${{ github.event.pull_request.number }}.block-explorer-preview.vechain.org
 
     outputs:
