@@ -11,6 +11,15 @@ locals {
     "arn:aws:iam::${local.account_id}:role/${local.name}-*",
   ]
 
+  # Every managed policy the stacks attach to a role they create. Adding a
+  # statement to an inline policy needs no entry here; attaching one does.
+  attachable_managed_policy_arns = [
+    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+    "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess",
+    "arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess",
+  ]
+
   state_bucket_arns = [
     "arn:aws:s3:::${var.state_bucket}",
     "arn:aws:s3:::${var.state_bucket}/*",

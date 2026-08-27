@@ -200,7 +200,7 @@ sending the header.
 ```bash
 cd terraform/app-runner
 terraform init
-terraform workspace select production
+terraform workspace select prod
 terraform plan
 terraform apply
 ```

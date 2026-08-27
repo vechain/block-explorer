@@ -55,7 +55,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ ! "$RAW_TAG" =~ ^v\.[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+          if [[ ! "$RAW_TAG" =~ ^v\.[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
             echo "::error::Not a version tag: '$RAW_TAG'. Expected v.X.Y.Z."
             exit 1
           fi

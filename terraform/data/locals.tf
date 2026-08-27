@@ -7,7 +7,7 @@ locals {
   # Previews exist only in explorer-dev, so in prod this read resolves to nothing
   # and the cache takes ingress from the environment's own tasks alone.
   app_security_group_id     = try(data.terraform_remote_state.edge.outputs.app_security_group_id, null)
-  preview_security_group_id = try(data.terraform_remote_state.preview_edge.outputs.app_security_group_id, null)
+  preview_security_group_id = try(data.terraform_remote_state.preview_edge[0].outputs.app_security_group_id, null)
 
   cache_endpoint = one(aws_elasticache_serverless_cache.valkey.endpoint)
 

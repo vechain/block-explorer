@@ -7,12 +7,8 @@ name: Deploy to Prod
 on:
   release:
     types: [published]
+  # Break-glass. Run it against a tag, not a branch — see the guard below.
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version tag to deploy (e.g. v.1.0.0)"
-        required: true
-        type: string
 
 concurrency:
   group: deploy-prod
@@ -25,10 +21,10 @@ env:
   GHCR_REGISTRY: ghcr.io
 
 jobs:
-  # A release can be published on a tag pointing anywhere. Refusing anything not
-  # reachable from main is what keeps unreviewed code out of prod — and no job
-  # below takes a `ref:` from event data, so the credentialed jobs never check out
-  # a tree this has not vouched for.
+  # A release can be published on a tag pointing anywhere, so this refuses
+  # anything not reachable from main. No job below takes a `ref:` from event data:
+  # every one of them checks out the ref the run started on, which this has
+  # already vouched for — and which is why a branch is refused outright.
   guard:
     name: Resolve and Verify Tag
     runs-on: ubuntu-latest
@@ -46,11 +42,20 @@ jobs:
       - name: Resolve tag
         id: resolve
         env:
-          RAW_TAG: ${{ inputs.version || github.ref_name }}
+          RAW_TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
 
-          if [[ ! "$RAW_TAG" =~ ^v\.[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+          # The credentialed jobs run whatever Terraform is in the tree they check
+          # out, and a branch moves under them. Prod deploys from a tag only.
+          if [[ "$GITHUB_REF" != refs/tags/* ]]; then
+            echo "::error::Started on '${GITHUB_REF}'. Deploy prod from a tag, not a branch."
+            exit 1
+          fi
+
+          # Anchored, so v.1.2.3junk is not a version. The optional suffix is for
+          # prereleases, which deploy prod like any other published release.
+          if [[ ! "$RAW_TAG" =~ ^v\.[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
             echo "::error::Not a version tag: '$RAW_TAG'. Expected v.X.Y.Z."
             exit 1
           fi

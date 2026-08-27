@@ -337,8 +337,6 @@ data "aws_iam_policy_document" "gha_allow" {
       "iam:TagRole",
       "iam:UntagRole",
       "iam:UpdateAssumeRolePolicy",
-      "iam:AttachRolePolicy",
-      "iam:DetachRolePolicy",
       "iam:PutRolePolicy",
       "iam:DeleteRolePolicy",
       "iam:GetRolePolicy",
@@ -347,6 +345,22 @@ data "aws_iam_policy_document" "gha_allow" {
       "iam:ListInstanceProfilesForRole",
     ]
     resources = local.pipeline_role_arns
+  }
+
+  # Only the four AWS managed policies the stacks actually attach. Unconditional,
+  # this is an escalation path: attach AdministratorAccess to a role the pipeline
+  # may also pass, and a task or Lambda it creates is account admin.
+  statement {
+    sid       = "AttachKnownManagedPolicies"
+    effect    = "Allow"
+    actions   = ["iam:AttachRolePolicy", "iam:DetachRolePolicy"]
+    resources = local.pipeline_role_arns
+
+    condition {
+      test     = "ArnEquals"
+      variable = "iam:PolicyARN"
+      values   = local.attachable_managed_policy_arns
+    }
   }
 
   # No resource-level permissions on any of these; all read-only metadata a plan

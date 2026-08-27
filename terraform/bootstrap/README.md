@@ -10,8 +10,8 @@ this stack.
 ## One-time
 
 The state bucket is the one resource in this repo created outside Terraform: it holds the state that
-would manage it. Versioning matters more here than elsewhere — five state files are written by an
-automated pipeline, and a truncated write is otherwise unrecoverable.
+would manage it. Versioning matters more here than elsewhere — every state file in it is written by
+an automated pipeline, and a truncated write is otherwise unrecoverable.
 
 ```bash
 export AWS_PROFILE=explorer-prod-admin AWS_REGION=eu-west-1

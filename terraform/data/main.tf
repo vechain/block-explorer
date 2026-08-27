@@ -31,7 +31,10 @@ data "terraform_remote_state" "edge" {
   }
 }
 
+# Gated, not left to try(): reading an absent key makes the backend create one.
 data "terraform_remote_state" "preview_edge" {
+  count = terraform.workspace == "dev" ? 1 : 0
+
   backend   = "s3"
   workspace = terraform.workspace
 
