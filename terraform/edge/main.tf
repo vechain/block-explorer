@@ -199,7 +199,6 @@ resource "aws_lb_listener_rule" "block_metrics" {
   }
 }
 
-# Off in prod, where the name resolves to App Runner until phase 7. See README.
 resource "aws_route53_record" "app" {
   count    = local.env.dns_record_enabled ? 1 : 0
   provider = aws.dns
@@ -207,6 +206,18 @@ resource "aws_route53_record" "app" {
   zone_id = data.terraform_remote_state.acm.outputs.public_zone_id
   name    = local.env.domain
   type    = "A"
+
+  # In prod this name is shared with the App Runner record until that stack goes,
+  # so both sides carry a weight. Route53 rejects a mix of the two shapes.
+  set_identifier = local.dns_weight == null ? null : "ecs-${terraform.workspace}"
+
+  dynamic "weighted_routing_policy" {
+    for_each = local.dns_weight == null ? [] : [local.dns_weight]
+
+    content {
+      weight = weighted_routing_policy.value
+    }
+  }
 
   alias {
     name                   = aws_lb.main.dns_name

@@ -4,11 +4,27 @@
 
 data "aws_apprunner_hosted_zone_id" "main" {}
 
+locals {
+  # Null until the cutover, and a simple record while it is.
+  dns_weight = lookup(local.env, "app_runner_dns_weight", null)
+}
+
 resource "aws_route53_record" "prod_frontend" {
   count   = local.env.enable_custom_domain ? 1 : 0
   zone_id = local.env.environment == "prod" ? data.terraform_remote_state.account_level.outputs.block_explorer_public_zone_prod_id : data.terraform_remote_state.account_level.outputs.block_explorer_public_zone_preview_id
   name    = local.env.domain
   type    = "A"
+
+  set_identifier = local.dns_weight == null ? null : "app-runner"
+
+  dynamic "weighted_routing_policy" {
+    for_each = local.dns_weight == null ? [] : [local.dns_weight]
+
+    content {
+      weight = weighted_routing_policy.value
+    }
+  }
+
   alias {
     name                   = aws_apprunner_service.frontend.service_url
     zone_id                = data.aws_apprunner_hosted_zone_id.main.id

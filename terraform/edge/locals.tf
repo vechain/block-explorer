@@ -6,4 +6,7 @@ locals {
 
   # Preload is sticky, so dev gets a bare one-year max-age and never asks for it.
   hsts_header_value = terraform.workspace == "prod" ? "max-age=63072000; includeSubDomains; preload" : "max-age=31536000"
+
+  # Null leaves a simple record, which is what dev owns outright.
+  dns_weight = lookup(local.env, "dns_weight", null)
 }
