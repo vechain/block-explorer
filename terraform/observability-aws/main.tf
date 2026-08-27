@@ -105,12 +105,12 @@ resource "aws_grafana_workspace" "this" {
 
 # Until the metadata URL is supplied, provisioning still works but nobody can sign in.
 resource "aws_grafana_workspace_saml_configuration" "okta" {
-  count = var.okta_saml_metadata_url == "" ? 0 : 1
+  count = local.env.grafana_okta_saml_metadata_url == "" ? 0 : 1
 
   workspace_id       = aws_grafana_workspace.this.id
-  idp_metadata_url   = var.okta_saml_metadata_url
-  admin_role_values  = var.grafana_admin_okta_groups
-  editor_role_values = var.grafana_editor_okta_groups
+  idp_metadata_url   = local.env.grafana_okta_saml_metadata_url
+  admin_role_values  = local.env.grafana_admin_okta_groups
+  editor_role_values = local.env.grafana_editor_okta_groups
 
   # Assertion names from Okta's "Amazon Managed Grafana" catalog app. They must
   # match it exactly or role mapping never fires and every SSO user is a Viewer.

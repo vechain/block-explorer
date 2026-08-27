@@ -43,9 +43,12 @@ collector is the thing that has broken. The alert rules deep-link to panel IDs i
 Alerts evaluate in every environment but `alerts_enabled` in the env YAML controls whether they are
 delivered, and dev has it off. To rehearse the path end to end: set the `SLACK_WEBHOOK_URL` secret on
 the `dev` GitHub Environment, flip `alerts_enabled` to `true`, scale the service to zero, and confirm
-the no-healthy-targets alarm arrives and then recovers. Nobody can sign in to Grafana until
-`GRAFANA_OKTA_SAML_METADATA_URL` is set — the dashboards provision regardless, since the Terraform
-provider authenticates with a service-account token rather than through SAML.
+the no-healthy-targets alarm arrives and then recovers.
+
+Grafana sign-in is Okta SAML, configured from `grafana_okta_saml_metadata_url` and the two
+`grafana_*_okta_groups` lists in the env YAML. Blank the URL and nobody can sign in, but the
+dashboards still provision — the Terraform provider authenticates with a service-account token, not
+through SAML. A user whose `role` assertion matches neither group list lands as a Viewer.
 
 ## Environment config
 
