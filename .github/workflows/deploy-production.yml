@@ -69,7 +69,7 @@ jobs:
           VERSION: ${{ needs.validate-version-format.outputs.image_tag }}
         run: |
           # GHCR tags have the v. prefix stripped (v.1.0.0 -> 1.0.0)
-          GHCR_TAG=$(echo "$VERSION" | sed 's/^v\.//')
+          GHCR_TAG="${VERSION#v.}"
           # ECR tags keep the original format (v.1.0.0)
           ECR_TAG="$VERSION"
 
