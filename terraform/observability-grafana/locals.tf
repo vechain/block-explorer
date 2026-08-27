@@ -27,7 +27,8 @@ locals {
   # Falls back to a name that matches nothing, so WAF-off renders empty panels.
   waf_web_acl_name = coalesce(try(data.terraform_remote_state.edge.outputs.waf_web_acl_name, null), "waf-disabled")
 
-  observability_ready = local.amg_workspace_endpoint != null && local.amg_service_account_token != null && local.amp_prometheus_endpoint != null
+  # Version ID, not the token: a boolean off a sensitive value is sensitive too.
+  observability_ready = local.amg_workspace_endpoint != null && local.amg_sa_token_secret_version_id != null && local.amp_prometheus_endpoint != null
 
   # Separate gate: the ALB panels need two outputs edge/ only grew in this
   # phase, so the rest of the dashboard should not wait on that apply.
