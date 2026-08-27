@@ -11,6 +11,7 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 | `ecs/`                   | ECS cluster (Container Insights on)                                  |
 | `acm/`                   | Public certificate for the environment's domain, DNS-validated       |
 | `edge/`                  | ALB, listeners, target group, security groups, WAF, DNS record       |
+| `preview-edge/`          | Shared preview ALB, listeners, security groups, wildcard DNS record  |
 | `observability-aws/`     | AMP, Grafana, SNS, the Slack bridge, AMP rules and CloudWatch alarms |
 | `frontend/`              | The explorer's ECS service, task definition and secret               |
 | `observability-grafana/` | Grafana datasources and dashboards                                   |
@@ -60,8 +61,11 @@ stacks carry no `workspace == "prod" ? … : …` ternaries. The state bucket fo
 `environments/<env>/backend.config`.
 
 Because the YAML path is derived from `terraform.workspace`, anything outside `dev` / `prod` fails at
-parse time — and every stack additionally carries a `workspace_guard` precondition. To validate
-without a backend, set the workspace through the environment:
+parse time — and every stack additionally carries a `workspace_guard` precondition.
+`environments/preview/preview.yaml` is the exception: previews are not a workspace, so `preview-edge`
+reads it from a fixed path while applying into `dev`.
+
+To validate without a backend, set the workspace through the environment:
 
 ```bash
 TF_WORKSPACE=dev terraform validate
@@ -74,9 +78,9 @@ image; the deploy chains off that build, pins `image_tag`, applies the stacks in
 ECS service. Nothing about dev needs applying by hand.
 
 Order matters where a stack reads another's state, and the workflow applies them serially in it:
-`network` → `ecs` → `acm` → `edge` → `observability-aws` → `frontend` → `observability-grafana`.
-`frontend` sits after the AMP workspace because its sidecar remote-writes to it;
-`observability-aws`'s alarms name the ECS service by convention rather than reading it back, which
+`network` → `ecs` → `acm` → `edge` → `preview-edge` → `observability-aws` → `frontend` →
+`observability-grafana`. `frontend` sits after the AMP workspace because its sidecar remote-writes to
+it; `observability-aws`'s alarms name the ECS service by convention rather than reading it back, which
 is what keeps that from being a cycle. To run one stack locally against dev:
 
 ```bash

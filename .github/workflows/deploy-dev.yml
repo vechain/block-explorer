@@ -171,7 +171,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          for stack in network ecs acm edge observability-aws frontend observability-grafana; do
+          for stack in network ecs acm edge preview-edge observability-aws frontend observability-grafana; do
             echo "::group::${stack}"
             pushd "terraform/${stack}" >/dev/null
 
