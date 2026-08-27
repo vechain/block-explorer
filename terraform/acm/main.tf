@@ -5,7 +5,7 @@
 # the dev subdomain needs its own. The zone lives in this account, so unlike
 # agent-marketplace we can write the validation record ourselves.
 #
-# Phase 5 note: the zone stays in explorer-dev, so a prod-account apply of this
+# Phase 6 note: the zone stays in explorer-dev, so a prod-account apply of this
 # stack needs a cross-account provider for the record. ACM does not care which
 # account hosts the zone.
 

@@ -19,7 +19,7 @@ data "terraform_remote_state" "network" {
 }
 
 # Both predate this migration and are still owned by account-level/, so they are
-# looked up rather than read from its state: that stack is legacy and phase 6
+# looked up rather than read from its state: that stack is legacy and phase 7
 # rewrites it.
 data "aws_acm_certificate" "wildcard" {
   domain      = "*.${local.env.domain_suffix}"
@@ -94,7 +94,7 @@ resource "aws_security_group" "app" {
   }
 
   egress {
-    description = "VPC-internal (phase 7 Valkey)."
+    description = "VPC-internal (phase 4 Valkey)."
     from_port   = 0
     to_port     = 0
     protocol    = "-1"

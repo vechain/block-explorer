@@ -12,7 +12,7 @@ variable "project" {
 
 variable "public_zone_name" {
   type        = string
-  description = "Route53 public zone the validation record goes into. Both zones live in explorer-dev, which is what makes the phase 6 weighted cutover possible."
+  description = "Route53 public zone the validation record goes into. Both zones live in explorer-dev, which is what makes the phase 7 weighted cutover possible."
   default     = "block-explorer.vechain.org"
 }
 

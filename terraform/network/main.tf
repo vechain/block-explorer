@@ -14,7 +14,7 @@ module "vpc" {
   name = "${local.name}-vpc"
   cidr = local.env.vpc_cidr
 
-  # Two is the floor: the ALB and phase 7's cache subnet group each require it.
+  # Two is the floor: the ALB and phase 4's cache subnet group each require it.
   azs = slice(data.aws_availability_zones.available.names, 0, local.az_count)
 
   public_subnets   = local.public_subnets
@@ -27,7 +27,7 @@ module "vpc" {
   private_subnet_tags  = { Network = "Private", Tier = "Application" }
   database_subnet_tags = { Network = "Private", Tier = "Database" }
 
-  # No 0.0.0.0/0 route here at all: phase 7's Valkey reaches nothing outside.
+  # No 0.0.0.0/0 route here at all: phase 4's Valkey reaches nothing outside.
   create_database_subnet_route_table = true
 
   enable_nat_gateway      = true
