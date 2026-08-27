@@ -73,9 +73,14 @@ TF_WORKSPACE=dev terraform validate
 
 ## Applying
 
-`deploy-dev.yml` owns dev. Every merge to `main` gets a `v.X.Y.Z` tag, which builds the release
-image; the deploy chains off that build, pins `image_tag`, applies the stacks in order and rolls the
-ECS service. Nothing about dev needs applying by hand.
+`deploy-dev.yml` owns everything long-lived in `explorer-dev`, `preview-edge` included. Every merge to
+`main` gets a `v.X.Y.Z` tag, which builds the release image; the deploy chains off that build, pins
+`image_tag`, applies the stacks in order and rolls the ECS service. Nothing here needs applying by
+hand.
+
+The preview ALB sits in that list rather than in `deploy-preview.yml` because it is shared and must
+only change from merged code — a preview deploy runs the PR's own branch, so applying it there would
+let any labelled PR reshape the ingress every other preview is served through.
 
 Order matters where a stack reads another's state, and the workflow applies them serially in it:
 `network` → `ecs` → `acm` → `edge` → `preview-edge` → `observability-aws` → `frontend` →
