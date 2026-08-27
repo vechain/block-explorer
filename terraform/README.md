@@ -151,9 +151,7 @@ prod traffic is one that has been running against Valkey in dev for weeks.
 **The domain is not part of this.** `dns_record_enabled` is false in `prod.yaml`, so nothing here
 touches `block-explorer.vechain.org` — it resolves to App Runner, and the new stack is reachable only
 by its ALB name, which is what the deploy verifies against with `curl --connect-to`. Turning it into a
-weighted pair is the cutover, and it happens in a single Route53 change batch rather than by an apply:
-adding `set_identifier` forces replacement, and destroy-then-create would leave a window with no
-record at all.
+weighted pair is the cutover — see below.
 
 Both public zones stay in the dev account, which is what lets that weighted pair live in one zone. So
 `acm/` and `edge/` write records through a second provider that assumes the role `dns/` owns there,
@@ -176,3 +174,32 @@ Standing up the account, in order:
 Prod Grafana has no SAML until an Okta app exists for its workspace: an AMG workspace is its own SAML
 audience, so dev's app cannot serve both. Alerts still reach Slack, and dashboards still provision,
 since the Terraform provider uses a service-account token.
+
+### Cutover
+
+`block-explorer.vechain.org` becomes a weighted pair — `app-runner` and `ecs-prod` — and traffic moves
+by weight. Both `edge/` and `app-runner/` grow a `weighted_routing_policy` when their env yaml carries
+a weight (`dns_weight`, `app_runner_dns_weight`). With no weight set they stay simple records, so dev
+never sees any of this.
+
+The two sides have to be enabled by **separate releases**, because a `release: published` starts
+`deploy-prod.yml` and `deploy-production.yml` at the same time and Route53 rejects a weighted record
+created next to a simple one of the same name. In that order the App Runner side goes first:
+
+1. **`app_runner_dns_weight: 100`, then publish a release.** Nothing moves — one record still holds
+   all the traffic, it just expresses that as a weight now. The provider turns the simple record into
+   a weighted one as a delete-plus-create inside a single Route53 change batch, which Route53 applies
+   transactionally, so the name never stops resolving. Confirm the record came back weighted before
+   going on; a `terraform plan` of `app-runner/` is clean either way, since the resource id it writes
+   already carries the set identifier.
+
+2. **`dns_record_enabled: true` and `dns_weight: 0`, then publish another release.** `edge/` adds
+   `ecs-prod` beside it — a plain create, the name being weighted already. Still nothing moves.
+
+3. **Ramp** `0 → 10 → 25 → 50 → 75 → 100`, holding at each step for the Grafana dashboards and the ALB
+   alarms. Each step is an UPSERT of both records; rollback is the same call with the old numbers,
+   which is why the ramp is not driven by an apply. `evaluate_target_health` on the ECS record means a
+   prod stack that fails its health checks leaves rotation without anyone making that call. Put the
+   final weights back into the yaml when the ramp settles, so an apply agrees with the zone.
+
+4. **Hold App Runner at weight 0 for 24–48 hours**, then decommission it.
