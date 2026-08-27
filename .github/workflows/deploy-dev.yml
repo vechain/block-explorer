@@ -168,13 +168,7 @@ jobs:
 
       - name: Plan and apply each stack
         env:
-          # An unset GitHub var interpolates to "", which is set-to-empty rather
-          # than unset — so the list variables need an explicit JSON default or
-          # Terraform raises a type error instead of applying its own.
           TF_VAR_slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          TF_VAR_okta_saml_metadata_url: ${{ vars.GRAFANA_OKTA_SAML_METADATA_URL }}
-          TF_VAR_grafana_admin_okta_groups: ${{ vars.GRAFANA_ADMIN_OKTA_GROUPS || '[]' }}
-          TF_VAR_grafana_editor_okta_groups: ${{ vars.GRAFANA_EDITOR_OKTA_GROUPS || '[]' }}
         run: |
           set -euo pipefail
 
