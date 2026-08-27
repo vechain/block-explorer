@@ -1,4 +1,9 @@
-import type { StorageInputMemory, StorageInputRedis } from 'async-cache-dedupe'
+import {
+  createStorage,
+  type StorageInputCustom,
+  type StorageInputMemory,
+  type StorageInterface,
+} from 'async-cache-dedupe'
 import Redis, { Cluster, type RedisOptions } from 'ioredis'
 import { LRUCache } from 'lru-cache'
 import { CACHE_NAMESPACE, REDIS_CLUSTER_MODE, REDIS_URL } from '@/env.api'
@@ -13,8 +18,8 @@ const NODE_OPTIONS: RedisOptions = {
   maxRetriesPerRequest: 1,
 }
 
-// `{be}` is a hash tag: one cluster slot for every key, so no multi-key command added here can CROSSSLOT.
-const keyPrefix = `{be}:${CACHE_NAMESPACE}:`
+// No hash tag: every command here is single-key, and a global tag would pin the whole keyspace to one slot.
+const keyPrefix = `${CACHE_NAMESPACE}:`
 
 // A cluster client takes credentials and TLS from its options, not from the URL.
 const createClusterClient = (url: string) => {
@@ -57,11 +62,26 @@ const cacheClient = () => {
 /** Prefixes an async-cache-dedupe namespace, which is what its storage keys are built from. */
 export const namespacedCacheName = (name: string) => `${keyPrefix}${name}`
 
-export const cacheStorage = (size: number): StorageInputRedis | StorageInputMemory => {
+// `getTTL` is the one adapter method with no try/catch of its own, and `stale` runs
+// it on every hit — a blip there would reject a hit already in hand. 0 reads as
+// expired: the entry is still served, with a refresh behind it.
+const failSoftStorage = (client: Redis): StorageInterface => {
+  const storage = createStorage('redis', { client })
+  const guarded: StorageInterface = Object.create(storage)
+
+  // The library's own type says void; the value is seconds.
+  guarded.getTTL = (key: string) => storage.getTTL(key).catch(() => 0) as Promise<void>
+
+  return guarded
+}
+
+export const cacheStorage = (size: number): StorageInputCustom | StorageInputMemory => {
   const cache = cacheClient()
+  if (!cache) return { type: 'memory', options: { size } }
+
   // The library types its client as `Redis`; a `Cluster` answers every
   // single-key command it issues.
-  return cache ? { type: 'redis', options: { client: cache as Redis } } : { type: 'memory', options: { size } }
+  return { type: 'custom', options: { storage: failSoftStorage(cache as Redis) } }
 }
 
 export interface MissCache {
