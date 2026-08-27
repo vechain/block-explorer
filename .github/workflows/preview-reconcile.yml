@@ -1,0 +1,122 @@
+name: Reconcile Preview Environments
+
+# Event-driven teardown genuinely misses cleanups: a queued destroy can be
+# evicted from the shared per-PR concurrency group by a newer run, a destroy can
+# fail on a throttle or a lock, and a long-lived labelled PR sits forever. This
+# sweep is the backstop.
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+# One sweep at a time. It cannot join the per-PR groups deploy and destroy share,
+# so what actually protects a live preview is the S3 state lock plus the
+# re-confirmation immediately before each destroy.
+concurrency:
+  group: preview-reconcile
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: eu-west-1
+  TERRAFORM_VERSION: 1.16.0
+  TERRAFORM_DIR: terraform/frontend-preview
+  TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
+
+jobs:
+  reconcile:
+    name: Reap orphaned previews
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ACC_ROLE }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      # The workspace list is the source of truth, not tags or an ECS listing:
+      # a workspace is what a leaked preview always leaves behind.
+      - name: Sweep pr-* workspaces
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          # No `set -e`: one stuck workspace must not starve the rest.
+          set -uo pipefail
+
+          terraform init -input=false -backend-config="${TERRAFORM_BACKEND_CONFIG}"
+
+          list_workspaces() {
+            terraform workspace list | tr -d '* ' | grep -E '^pr-[0-9]+$'
+          }
+
+          # Open and still carrying the label means keep. Anything else — closed,
+          # merged, unlabelled — is an orphan.
+          is_orphan() {
+            local pr="$1" json state labelled
+            if ! json=$(gh api "repos/${REPO}/pulls/${pr}" 2>/dev/null); then
+              return 2
+            fi
+            state=$(jq -r '.state' <<<"$json")
+            labelled=$(jq -r '[.labels[].name] | index("create-preview") != null' <<<"$json")
+            [ "$state" = "open" ] && [ "$labelled" = "true" ] && return 1
+            return 0
+          }
+
+          workspaces=$(list_workspaces)
+          if [ -z "$workspaces" ]; then
+            echo "No preview workspaces."
+            exit 0
+          fi
+
+          failed=0
+          for ws in $workspaces; do
+            pr="${ws#pr-}"
+
+            is_orphan "$pr"
+            case $? in
+              1) echo "${ws}: PR #${pr} is open and labelled — keeping."; continue ;;
+              2) echo "::warning::Could not query PR #${pr}; leaving ${ws} for the next sweep."; continue ;;
+            esac
+
+            # Re-confirm against the list as it is now: a deploy may have created
+            # this workspace, or a teardown removed it, since the sweep started.
+            if ! list_workspaces | grep -qx "$ws"; then
+              echo "${ws}: already gone."
+              continue
+            fi
+            is_orphan "$pr"
+            if [ $? -ne 0 ]; then
+              echo "${ws}: PR #${pr} no longer reads as an orphan — leaving it alone."
+              continue
+            fi
+
+            echo "::group::Reaping ${ws}"
+            if terraform workspace select "$ws" \
+              && terraform destroy -input=false -auto-approve -var="pr_number=${pr}" -var="image_tag=destroy" \
+              && terraform workspace select default \
+              && terraform workspace delete "$ws"; then
+              echo "${ws}: reaped."
+            else
+              echo "::warning::Failed to reap ${ws}; it will be retried next sweep."
+              failed=1
+              terraform workspace select default || true
+            fi
+            echo "::endgroup::"
+          done
+
+          exit "$failed"

@@ -12,15 +12,19 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 | `acm/`                   | Public certificate for the environment's domain, DNS-validated       |
 | `edge/`                  | ALB, listeners, target group, security groups, WAF, DNS record       |
 | `preview-edge/`          | Shared preview ALB, listeners, security groups, wildcard DNS record  |
+| `frontend-preview/`      | One PR's target group, host-header rule and ECS service              |
 | `observability-aws/`     | AMP, Grafana, SNS, the Slack bridge, AMP rules and CloudWatch alarms |
 | `frontend/`              | The explorer's ECS service, task definition and secret               |
 | `observability-grafana/` | Grafana datasources and dashboards                                   |
 | `account-level/`         | Legacy: ECR, Route53 zones, App Runner IAM and autoscaling           |
 | `app-runner/`            | Legacy: the App Runner service still serving prod                    |
 
-`modules/ecs-webservice` is the shared Fargate service shape — dev, prod and phase 3's previews
-differ by parameters, not structure. `modules/observability-sidecar` renders the ADOT container that
-scrapes `/api/metrics` over the task's loopback.
+`modules/ecs-webservice` is the shared Fargate service shape — dev, prod and previews differ by
+parameters, not structure. It holds two copies of the service resource because `ignore_changes` takes
+only a literal: dev and prod need it on `task_definition` (their deploy workflow moves the pointer out
+of band), previews need it off (the apply itself is what rolls them). `terraform_owns_task_definition`
+picks one. `modules/observability-sidecar` renders the ADOT container that scrapes `/api/metrics` over
+the task's loopback; previews do not carry it.
 
 The two legacy stacks are removed once prod has moved to ECS. `app-runner/` was named `frontend/`
 until the ECS work started; its state key is declared in `provider.tf` and is still
@@ -97,6 +101,12 @@ terraform plan
 
 `.terraform/` is per-directory, so `init` and the workspace selection are needed in each stack.
 `terraform validate` needs a workspace too, but no backend — use `TF_WORKSPACE=dev terraform validate`.
+
+`frontend-preview` is the exception to all of the above: it is applied once per PR into workspace
+`pr-<N>`, by `deploy-preview.yml` on the `create-preview` label. Never apply it by hand — the state
+lives at `env:/pr-<N>/frontend-preview/terraform.tfstate` and the workspace list is what
+`preview-reconcile.yml` sweeps, so a workspace created outside the workflow is a preview nothing owns.
+Concurrent previews cap at 100, the target-group-per-ALB quota AWS does not raise.
 
 State locking is via S3 conditional writes (`use_lockfile = true`), not DynamoDB — no lock table
 exists for these stacks, and none is needed.

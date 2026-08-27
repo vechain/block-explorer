@@ -36,27 +36,22 @@ Automated CI/CD for Block Explorer using GitHub Actions and AWS App Runner.
 ### Preview Deployment (`deploy-preview.yml`)
 
 **Triggers:**
-- PR opened/synchronized/reopened on `main` branch
+- PR opened/synchronized/reopened/labeled on `main` branch, gated on the `create-preview` label
 
-**Concurrency:** Only latest commit per PR (older builds cancelled)
+**Concurrency:** Shared with `destroy-preview.yml` per PR, never cancelling
 
 **Jobs:**
-1. `pr-comment` - Posts initial "Building" comment immediately
-2. `prepare-metadata` - Generates SHORT_SHA and image tag
-3. `build-and-push` - Builds and pushes Docker image
-4. `deploy` - Deploys to App Runner via Terraform
-5. `update-comment` - Updates PR comment with final status (always runs)
+1. `gate` - Requires the `create-preview` label; a `labeled` event for any other label is a no-op
+2. `announce` - Posts the sticky "deploying" comment
+3. `image` - Waits for the multi-arch GHCR PR image, then copies the manifest list into ECR
+4. `deploy` - Applies `terraform/frontend-preview` in workspace `pr-{number}`, waits for the service, checks `/api/health`
+5. `comment` - Updates the sticky comment with the URL or a link to the logs
 
-**Image Tag:** `pr-{number}-{short_sha}` (e.g., `pr-144-a1b2c3d`)
+**Image:** promoted from `ghcr.io/vechain/block-explorer:pr.{number}.{short_sha}`, published by
+`publish-ghcr-pr-image.yml` once the unit tests pass. Previews are not rebuilt — they run the same
+arm64 image dev and prod do.
 
-**Domain:** `https://pr-{number}.block-explorer-preview.vechain.org`
-
-**PR Comment Features:**
-- Single comment per PR (updates in-place, no spam)
-- Status icons: 🔨 Building → ✅ Ready / ❌ Failed → 🗑️ Destroyed
-- Shows both custom domain and default App Runner URL
-- Includes commit link and UTC timestamp
-- Note about 5-10 min custom domain activation
+**Domain:** `https://pr-{number}.block-explorer-preview.vechain.org`, served by the shared preview ALB.
 
 ---
 
@@ -68,9 +63,26 @@ Automated CI/CD for Block Explorer using GitHub Actions and AWS App Runner.
 **Security:** Only runs for same-repo PRs (not forks)
 
 **Jobs:**
-1. `destroy` - Runs `terraform destroy`, deletes workspace, cleans up config, updates PR comment
+1. `destroy` - Destroys the `pr-{number}` workspace, deletes it, updates the sticky comment
 
-**PR Comment:** Updates to "🗑️ Destroyed" status
+Removing the `create-preview` label does not tear a preview down; `preview-reconcile.yml` reaps it
+within six hours.
+
+---
+
+### Preview Reconcile (`preview-reconcile.yml`)
+
+**Triggers:**
+- Every six hours, and on demand
+
+Event-driven teardown misses cleanups — a queued destroy can be evicted from the shared concurrency
+group by a newer run, a destroy can fail on a throttle or a lock, and a long-lived labelled PR sits
+forever. This sweep lists the `pr-*` Terraform workspaces (the workspace list is the source of truth,
+not tags or an ECS listing) and destroys the ones whose PR is closed or no longer labelled.
+
+It is deliberately conservative: it skips on any failed PR query, re-confirms immediately before
+destroying, treats an already-gone workspace as reaped, and isolates each reap so one stuck workspace
+cannot starve the rest.
 
 ---
 
@@ -91,7 +103,7 @@ Automated CI/CD for Block Explorer using GitHub Actions and AWS App Runner.
 
 **Purpose:** Reusable workflow for building and pushing Docker images
 
-**Used By:** `deploy-production.yml`, `deploy-preview.yml`
+**Used By:** `deploy-production.yml`
 
 **Inputs:**
 - `ecr_repository` - ECR repository name
@@ -128,8 +140,8 @@ Automated CI/CD for Block Explorer using GitHub Actions and AWS App Runner.
 **Preview Tags:**
 - Includes SHORT_SHA (7-char commit hash)
 - Unique per commit on each PR
-- Forces App Runner to pull new image
-- Prevents stale deployments
+- Copied from `ghcr.io/vechain/block-explorer:pr.{number}.{short_sha}`, so the ECR tag is a manifest
+  list and an arm64 task can resolve its own platform
 
 ---
 
@@ -181,39 +193,36 @@ PREVIEW_DOMAIN_SUFFIX: block-explorer-preview.vechain.org
 | Environment | Bucket | Key |
 |-------------|--------|-----|
 | Production | `vechain-terraform-state-prod` | `env:/production/frontend/terraform.tfstate` |
-| Previews | `vechain-terraform-state-nonprod` | `env:/preview-pr-{number}/frontend/terraform.tfstate` |
+| Previews | `block-explorer-terraform-state-nonprod` | `env:/pr-{number}/frontend-preview/terraform.tfstate` |
 
 **Workspaces:**
-- `production` - Production environment
-- `preview-pr-{number}` - One workspace per PR
+- `production` - Production environment (App Runner, until the cutover)
+- `pr-{number}` - One workspace per preview
 
 ---
 
 ## Preview Environment Lifecycle
 
 ```
-PR Opened/Updated:
-  → Post "Building" comment
-  → Build Docker image
-  → Deploy to App Runner
-  → Update comment to "Ready" (with URLs)
+`create-preview` label added, or a push to an already-labelled PR:
+  → Post "deploying" comment
+  → Wait for the GHCR PR image, copy it into ECR
+  → terraform apply in workspace pr-{number}
+  → Update comment to "ready" (with the URL)
 
-New Commit Pushed:
-  → Cancel in-progress build (concurrency control)
-  → Repeat deployment with new commit
-  → Update existing comment (no new comment)
+Label removed:
+  → Nothing immediately; the reconcile sweep reaps within six hours
 
 PR Closed/Merged:
-  → Destroy all resources
-  → Delete Terraform workspace
-  → Update comment to "Destroyed"
+  → terraform destroy, delete the workspace
+  → Update comment to "torn down"
 ```
 
 ### GitHub Environments are shared, Terraform workspaces are per-PR
 
 Every preview job runs against the single `preview` GitHub Environment, with `environment.url` set per
 deployment so the PR timeline still links to the right preview. The per-PR name lives only in the
-Terraform workspace (`preview-pr-{number}`), which `destroy-preview.yml` reaps.
+Terraform workspace (`pr-{number}`), which `destroy-preview.yml` and `preview-reconcile.yml` reap.
 
 Do not name a GitHub Environment after the PR. Declaring `environment: preview-pr-N` creates that
 environment implicitly and nothing can remove it: `GITHUB_TOKEN` has no `environments` or
@@ -230,14 +239,18 @@ change that introduces the environment.
 ```yaml
 concurrency:
   group: preview-pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 ```
 
 **Behavior:**
 - Prevents race conditions with Terraform
-- Cancels old builds when new commit pushed
 - Each PR has isolated concurrency group
 - Different PRs can deploy simultaneously
+
+`cancel-in-progress` is `false` because deploy and destroy share the group: GitHub evaluates it on
+the incoming run, so `true` would let a deploy cancel a teardown mid-destroy and strand the state
+lock. The cost is that a queued teardown can be evicted by a newer run, which is what
+`preview-reconcile.yml` exists to catch.
 
 ---
 
