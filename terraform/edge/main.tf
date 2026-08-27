@@ -207,8 +207,7 @@ resource "aws_route53_record" "app" {
   name    = local.env.domain
   type    = "A"
 
-  # In prod this name is shared with the App Runner record until that stack goes,
-  # so both sides carry a weight. Route53 rejects a mix of the two shapes.
+  # Route53 rejects a weighted record beside a simple one of the same name.
   set_identifier = local.dns_weight == null ? null : "ecs-${terraform.workspace}"
 
   dynamic "weighted_routing_policy" {

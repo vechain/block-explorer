@@ -42,16 +42,14 @@ waf_enabled: true
 waf_managed_rules_blocking: false
 waf_rate_limit: 2000
 
-# Cutover step two. Adding this alongside the App Runner weight below is what
-# splits the name into a weighted pair; see README.
+# Cutover step two, once the weight below has landed. See README.
 dns_record_enabled: false
 
 # App Runner below: read only by the legacy app-runner/ stack, gone in phase 7.
 region: eu-west-1
 enable_custom_domain: true
 
-# Cutover step one: all of the traffic, but expressed as a weight, so the ECS
-# record can join the same name.
+# Cutover step one: the same traffic, said as a weight the ECS record can join.
 app_runner_dns_weight: 100
 
 cpu: 2048
