@@ -46,9 +46,11 @@ the `dev` GitHub Environment, flip `alerts_enabled` to `true`, scale the service
 the no-healthy-targets alarm arrives and then recovers.
 
 Grafana sign-in is Okta SAML, configured from `grafana_okta_saml_metadata_url` and the two
-`grafana_*_okta_groups` lists in the env YAML. Blank the URL and nobody can sign in, but the
-dashboards still provision — the Terraform provider authenticates with a service-account token, not
-through SAML. A user whose `role` assertion matches neither group list lands as a Viewer.
+`grafana_*_okta_groups` lists in the env YAML. Blank the URL, or leave the Admin list empty, and the
+workspace stays without a SAML configuration — AMG rejects an empty role-value list, so there is no
+sign-in-but-nobody-mapped state to land in. Both lists need at least one group. Dashboards provision either way, since the Terraform
+provider authenticates with a service-account token rather than through SAML. A user whose `role`
+assertion matches neither list is a Viewer.
 
 ## Environment config
 

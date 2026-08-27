@@ -103,9 +103,9 @@ resource "aws_grafana_workspace" "this" {
   grafana_version = "12.4"
 }
 
-# Until the metadata URL is supplied, provisioning still works but nobody can sign in.
+# AMG rejects an empty role-value list ("must be between 1 and 20").
 resource "aws_grafana_workspace_saml_configuration" "okta" {
-  count = local.env.grafana_okta_saml_metadata_url == "" ? 0 : 1
+  count = local.okta_saml_ready ? 1 : 0
 
   workspace_id       = aws_grafana_workspace.this.id
   idp_metadata_url   = local.env.grafana_okta_saml_metadata_url
