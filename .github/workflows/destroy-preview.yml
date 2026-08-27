@@ -37,8 +37,6 @@ jobs:
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]'
-    environment:
-      name: preview-pr-${{ github.event.pull_request.number }}
 
     steps:
       - name: Checkout code
