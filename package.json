@@ -39,6 +39,7 @@
     "date-fns": "^4.1.0",
     "i18next": "^25.4.2",
     "i18next-resources-to-backend": "^1.2.1",
+    "ioredis": "^5.11.1",
     "lru-cache": "^11.5.1",
     "mixpanel-browser": "^2.73.0",
     "motion": "^12.23.22",

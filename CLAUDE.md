@@ -139,6 +139,9 @@ Optional server-only (read by `env.api.ts`):
 
 - `INDEXER_RATE_LIMIT_BYPASS`: `x-rate-limit-bypass` token, sent only on the server-side indexer calls made by `/api/indexer`. Prod only, from Secrets Manager via `terraform/app-runner/secrets.tf`; blank or unset sends no header.
 - `METRICS_ENABLED`: `'true'` to serve `/api/metrics`; auto-enabled when `NODE_ENV=development`. Set only where a load balancer rule keeps the path off the public internet.
+- `REDIS_URL`: shared cache behind `lib/cached-proxy`. Unset keeps every proxy cache in-process, which is the local and test default; in AWS it holds a `rediss://` URL for the ElastiCache Serverless Valkey in `terraform/data/`.
+- `REDIS_CLUSTER_MODE`: `'true'` when `REDIS_URL` points at a serverless cache, which only runs in cluster mode.
+- `CACHE_NAMESPACE`: prefixed onto every cache key, set to the image tag. Dev and every preview share one Valkey, so this is what stops one build reading a payload shape another wrote.
 
 Runtime-injected (read by `lib/runtime-config/get.ts`):
 
