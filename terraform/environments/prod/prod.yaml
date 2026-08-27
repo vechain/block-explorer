@@ -9,10 +9,10 @@ az_count: 2
 # An AZ outage must not take prod egress with it. Dev: true.
 single_nat_gateway: false
 
-# ECS task. Two of these match today's App Runner instance, across two AZs.
+# ECS task. Same size as dev — prod takes load by scaling out, not up.
 image_tag: latest
-task_cpu: 1024
-task_memory: 2048
+task_cpu: 512
+task_memory: 1024
 desired_count: 2
 autoscaling_max: 8
 container_port: 3000
