@@ -148,7 +148,7 @@ jobs:
       - name: Terraform Init
         working-directory: terraform/app-runner
         run: |
-          terraform init -backend-config=../environments/prod/backend.config
+          terraform init
 
       - name: Terraform Workspace
         working-directory: terraform/app-runner

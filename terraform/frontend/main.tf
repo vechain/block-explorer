@@ -12,7 +12,7 @@ data "terraform_remote_state" "network" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "network/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
@@ -24,7 +24,7 @@ data "terraform_remote_state" "ecs" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "ecs/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
@@ -36,7 +36,7 @@ data "terraform_remote_state" "edge" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "edge/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
@@ -48,7 +48,7 @@ data "terraform_remote_state" "cache" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "data/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
@@ -60,7 +60,7 @@ data "terraform_remote_state" "observability_aws" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "observability-aws/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
@@ -113,6 +113,8 @@ module "service" {
   memory        = local.env.task_memory
   desired_count = local.env.desired_count
 
+  autoscaling_max_capacity = local.env.autoscaling_max
+
   subnet_ids         = data.terraform_remote_state.network.outputs.application_subnet_ids
   security_group_ids = [data.terraform_remote_state.edge.outputs.app_security_group_id]
   target_group_arn   = data.terraform_remote_state.edge.outputs.target_group_arn
@@ -120,7 +122,8 @@ module "service" {
   log_retention_days                 = local.env.log_retention_days
   deployment_minimum_healthy_percent = terraform.workspace == "prod" ? 100 : 50
 
-  environment = merge({
+  # First, so a stray key in the env YAML cannot shadow what follows.
+  environment = merge(local.env.runtime_environment, {
     NODE_ENV = "production"
     PORT     = tostring(local.env.container_port)
     HOSTNAME = "0.0.0.0"

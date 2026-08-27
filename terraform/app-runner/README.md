@@ -199,8 +199,8 @@ sending the header.
 
 ```bash
 cd terraform/app-runner
-terraform init -backend-config=../environments/production/backend.config
-terraform workspace select production
+terraform init
+terraform workspace select prod
 terraform plan
 terraform apply
 ```

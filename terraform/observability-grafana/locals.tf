@@ -1,5 +1,7 @@
 locals {
-  name = "${var.project}-${terraform.workspace}"
+  # The bucket the backend itself points at, so a prod apply cannot fall back to dev's.
+  state_bucket = coalesce(var.state_bucket, regex("bucket\\s*=\\s*\"([^\"]+)\"", file("../environments/${terraform.workspace}/backend.config"))[0])
+  name         = "${var.project}-${terraform.workspace}"
 
   # Pinned by hand so the committed dashboard JSON can name its datasources and
   # keep working across an environment rebuild. Changing one orphans every query

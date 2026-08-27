@@ -12,6 +12,6 @@ variable "project" {
 
 variable "state_bucket" {
   type        = string
-  description = "Bucket holding the other stacks' state. Same value as environments/<env>/backend.config, passed separately because a backend block cannot be read from within the configuration."
-  default     = "block-explorer-terraform-state-nonprod"
+  description = "Override for the bucket holding the other stacks' state. Defaults to the one environments/<env>/backend.config declares, which is where this stack's own state goes."
+  default     = null
 }

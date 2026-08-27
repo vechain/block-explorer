@@ -122,3 +122,15 @@ variable "health_check_grace_period_seconds" {
   description = "How long the ALB health check is ignored after a task starts. Must clear the container health check's 60s start period plus its three 30s retries."
   default     = 180
 }
+
+variable "autoscaling_max_capacity" {
+  type        = number
+  description = "Ceiling for CPU target tracking. Null leaves the service at a fixed desired_count, which is what previews want."
+  default     = null
+}
+
+variable "autoscaling_cpu_target" {
+  type        = number
+  description = "Average CPU utilisation the tracking policy holds the service at."
+  default     = 60
+}

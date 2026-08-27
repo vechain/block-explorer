@@ -32,3 +32,8 @@ output "log_group_name" {
   description = "CloudWatch log group for the service, shared by the app container and any sidecar."
   value       = aws_cloudwatch_log_group.this.name
 }
+
+output "autoscaling_enabled" {
+  description = "Whether Application Auto Scaling owns the task count. False leaves it at desired_count."
+  value       = local.autoscaling_enabled
+}

@@ -1,15 +1,12 @@
 # Certificate for the workspace's public domain, taken from the env YAML:
-# dev.block-explorer.vechain.org in dev.
+# dev.block-explorer.vechain.org in dev, the apex in prod.
 #
 # The existing account-level cert covers the apex exactly, with no wildcard, so
-# the dev subdomain needs its own. The zone lives in this account, so unlike
-# agent-marketplace we can write the validation record ourselves.
-#
-# Phase 6 note: the zone stays in explorer-dev, so a prod-account apply of this
-# stack needs a cross-account provider for the record. ACM does not care which
-# account hosts the zone.
+# the dev subdomain needs its own. Records go through aws.dns, see providers.tf.
 
 data "aws_route53_zone" "public" {
+  provider = aws.dns
+
   name         = var.public_zone_name
   private_zone = false
 }
@@ -28,6 +25,8 @@ resource "aws_acm_certificate" "main" {
 # Leave this record in DNS permanently — ACM reuses it to auto-renew before
 # each ~13-month expiry, and removing it breaks renewal silently.
 resource "aws_route53_record" "validation" {
+  provider = aws.dns
+
   for_each = {
     for dvo in aws_acm_certificate.main.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
@@ -58,6 +57,13 @@ resource "terraform_data" "workspace_guard" {
     precondition {
       condition     = contains(["dev", "prod"], terraform.workspace)
       error_message = "Use workspace 'dev' or 'prod' (not default). Example: terraform workspace select -or-create dev"
+    }
+
+    # Without it the zone lookup runs against the prod account and fails with a
+    # no-matching-zone error that says nothing about the missing role.
+    precondition {
+      condition     = terraform.workspace != "prod" || var.dns_role_arn != ""
+      error_message = "prod needs dns_role_arn: the public zone is in the dev account. Set DNS_WRITER_ROLE_ARN on the prod GitHub Environment."
     }
   }
 }

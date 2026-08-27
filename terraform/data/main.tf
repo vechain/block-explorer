@@ -12,7 +12,7 @@ data "terraform_remote_state" "network" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "network/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
@@ -24,19 +24,22 @@ data "terraform_remote_state" "edge" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "edge/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
   }
 }
 
+# Gated, not left to try(): reading an absent key makes the backend create one.
 data "terraform_remote_state" "preview_edge" {
+  count = terraform.workspace == "dev" ? 1 : 0
+
   backend   = "s3"
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "preview-edge/terraform.tfstate"
     region  = var.aws_region
     encrypt = true

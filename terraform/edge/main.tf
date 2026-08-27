@@ -9,7 +9,7 @@ data "terraform_remote_state" "network" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "network/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
@@ -21,7 +21,7 @@ data "terraform_remote_state" "acm" {
   workspace = terraform.workspace
 
   config = {
-    bucket  = var.state_bucket
+    bucket  = local.state_bucket
     key     = "acm/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
@@ -199,10 +199,11 @@ resource "aws_lb_listener_rule" "block_metrics" {
   }
 }
 
-# Phase 7 makes the prod name a weighted pair in one Route53 change batch, not
-# here: adding set_identifier forces replacement, and Terraform's
-# destroy-then-create would leave a window with no record at all.
+# Off in prod, where the name resolves to App Runner until phase 7. See README.
 resource "aws_route53_record" "app" {
+  count    = local.env.dns_record_enabled ? 1 : 0
+  provider = aws.dns
+
   zone_id = data.terraform_remote_state.acm.outputs.public_zone_id
   name    = local.env.domain
   type    = "A"
@@ -212,6 +213,13 @@ resource "aws_route53_record" "app" {
     zone_id                = aws_lb.main.zone_id
     evaluate_target_health = true
   }
+}
+
+# The dev record predates the count, so without this Terraform destroys and
+# recreates it.
+moved {
+  from = aws_route53_record.app
+  to   = aws_route53_record.app[0]
 }
 
 resource "terraform_data" "workspace_guard" {
