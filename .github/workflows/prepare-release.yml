@@ -39,13 +39,14 @@ jobs:
           fi
 
       # GitHub's default baseline is the preceding tag, which every merge to main
-      # produces — so the notes have to start at the last published release instead.
+      # produces. Prereleases count: deploy-production.yml fires on any published
+      # release, so the newest published one is what prod is actually running.
       - name: Resolve last published tag
         if: env.ALREADY_PUBLISHED != 'true'
         id: prev
         run: |
           set -euo pipefail
-          prev=$(gh release list --exclude-drafts --exclude-pre-releases \
+          prev=$(gh release list --exclude-drafts \
                    --limit 1 --json tagName --jq '.[0].tagName // empty')
           echo "previous=$prev" >> "$GITHUB_OUTPUT"
           echo "Baseline: ${prev:-<none>}"
