@@ -17,11 +17,11 @@ container_port: 3000
 
 log_retention_days: 30
 
-# Grafana SSO. Group values arrive in the SAML `role` attribute; an empty list
-# leaves everyone who signs in a Viewer.
+# Grafana SSO. Group values arrive in the SAML `role` attribute. SAML stays
+# unconfigured until both lists name a group.
 grafana_okta_saml_metadata_url: https://vechaineu.okta.com/app/exk1020c50lQfO4EF418/sso/saml/metadata
-grafana_admin_okta_groups: []
-grafana_editor_okta_groups: []
+grafana_admin_okta_groups: [APP_AMG_BLOCK_EXPLORER_Admin]
+grafana_editor_okta_groups: [APP_AMG_BLOCK_EXPLORER_Editor]
 
 # Rules and alarms evaluate either way; this only gates Slack delivery.
 alerts_enabled: false

@@ -2,6 +2,8 @@ locals {
   env  = yamldecode(file("../environments/${terraform.workspace}/${terraform.workspace}.yaml"))
   name = "${var.project}-${terraform.workspace}"
 
+  okta_saml_ready = local.env.grafana_okta_saml_metadata_url != "" && length(local.env.grafana_admin_okta_groups) > 0 && length(local.env.grafana_editor_okta_groups) > 0
+
   # Delivery only. Off in dev, where nobody acts on a page.
   alerts_enabled = local.env.alerts_enabled
 
