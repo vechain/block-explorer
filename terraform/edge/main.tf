@@ -90,7 +90,7 @@ resource "aws_security_group" "app" {
   }
 
   egress {
-    description = "VPC-internal (phase 4 Valkey)."
+    description = "VPC-internal (the shared Valkey)."
     from_port   = 0
     to_port     = 0
     protocol    = "-1"

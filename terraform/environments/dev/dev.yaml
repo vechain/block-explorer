@@ -17,6 +17,11 @@ container_port: 3000
 
 log_retention_days: 30
 
+# Shared Valkey. Ceilings against a runaway bill, not a capacity plan — 1000 ECPU/s
+# is the AWS floor, and the working set is tens of MB of decoded selectors and ABIs.
+cache_data_storage_max_gb: 1
+cache_ecpu_per_second_max: 1000
+
 grafana_okta_saml_metadata_url: https://vechaineu.okta.com/app/exk1020c50lQfO4EF418/sso/saml/metadata
 grafana_admin_okta_groups: [APP_AMG_BLOCK_EXPLORER_Admin]
 grafana_editor_okta_groups: [APP_AMG_BLOCK_EXPLORER_Editor]

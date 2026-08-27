@@ -16,4 +16,8 @@ locals {
 
   # Previews share dev's NAT, so they share its indexer rate limit and its token.
   indexer_secret_arn = try(data.terraform_remote_state.frontend.outputs.indexer_rate_limit_bypass_secret_arn, null)
+
+  # And dev's Valkey, fenced by the namespace the image tag gives each preview.
+  redis_url_secret_arn = try(data.terraform_remote_state.cache.outputs.redis_url_secret_arn, null)
+  cache_ready          = local.redis_url_secret_arn != null
 }

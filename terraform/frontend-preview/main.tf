@@ -46,6 +46,18 @@ data "terraform_remote_state" "preview_edge" {
   }
 }
 
+data "terraform_remote_state" "cache" {
+  backend   = "s3"
+  workspace = local.dev_workspace
+
+  config = {
+    bucket  = var.state_bucket
+    key     = "data/terraform.tfstate"
+    region  = var.aws_region
+    encrypt = true
+  }
+}
+
 # Read only for the indexer bypass secret — previews share dev's egress IP.
 data "terraform_remote_state" "frontend" {
   backend   = "s3"
@@ -120,15 +132,21 @@ module "service" {
   deployment_minimum_healthy_percent = 0
   terraform_owns_task_definition     = true
 
-  environment = {
+  environment = merge({
     NODE_ENV = "production"
     PORT     = tostring(local.env.container_port)
     HOSTNAME = "0.0.0.0"
-  }
+    }, local.cache_ready ? {
+    REDIS_CLUSTER_MODE = "true"
+    # The image tag, so this PR's payloads are unreadable to dev and to every
+    # other preview sharing the one cache.
+    CACHE_NAMESPACE = var.image_tag
+  } : {})
 
-  secrets = local.indexer_secret_arn == null ? {} : {
-    INDEXER_RATE_LIMIT_BYPASS = local.indexer_secret_arn
-  }
+  secrets = merge(
+    local.indexer_secret_arn == null ? {} : { INDEXER_RATE_LIMIT_BYPASS = local.indexer_secret_arn },
+    local.cache_ready ? { REDIS_URL = local.redis_url_secret_arn } : {},
+  )
 
   # CreateService needs the group already attached to the ALB, and only the
   # rule's forward action attaches it — an edge Terraform cannot infer.

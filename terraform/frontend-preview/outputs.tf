@@ -18,6 +18,11 @@ output "indexer_bypass_attached" {
   value       = local.indexer_secret_arn != null
 }
 
+output "cache_attached" {
+  description = "Whether this preview uses dev's shared Valkey. False only if the data stack has not been applied, which leaves the preview on per-task caches."
+  value       = local.cache_ready
+}
+
 output "terraform_workspace" {
   description = "Current Terraform workspace (pr-<N>)."
   value       = terraform.workspace

@@ -34,7 +34,7 @@ output "waf_web_acl_name" {
 }
 
 output "app_security_group_id" {
-  description = "Security group for the ECS tasks. Consumed by frontend/, and by phase 4's ElastiCache ingress rule."
+  description = "Security group for the ECS tasks. Consumed by frontend/, and by data/ for the cache's ingress rule."
   value       = aws_security_group.app.id
 }
 

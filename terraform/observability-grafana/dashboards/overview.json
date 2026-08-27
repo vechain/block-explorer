@@ -331,7 +331,7 @@
       "id": 20,
       "type": "stat",
       "title": "Cache hit rate",
-      "description": "Every cache is process-local until phase 7 puts Valkey behind them, so this is capped by how many tasks are running and resets on every deploy.",
+      "description": "Backed by the shared Valkey, so one task serves what another fetched. Keys carry the image tag, so a deploy still starts cold, and the five-second chain-state entries dominate the volume — which holds the ceiling well below 100%.",
       "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
       "gridPos": { "h": 8, "w": 6, "x": 0, "y": 27 },
       "fieldConfig": {

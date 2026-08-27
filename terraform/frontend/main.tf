@@ -43,6 +43,18 @@ data "terraform_remote_state" "edge" {
   }
 }
 
+data "terraform_remote_state" "cache" {
+  backend   = "s3"
+  workspace = terraform.workspace
+
+  config = {
+    bucket  = var.state_bucket
+    key     = "data/terraform.tfstate"
+    region  = var.aws_region
+    encrypt = true
+  }
+}
+
 data "terraform_remote_state" "observability_aws" {
   backend   = "s3"
   workspace = terraform.workspace
@@ -108,18 +120,25 @@ module "service" {
   log_retention_days                 = local.env.log_retention_days
   deployment_minimum_healthy_percent = terraform.workspace == "prod" ? 100 : 50
 
-  environment = {
+  environment = merge({
     NODE_ENV = "production"
     PORT     = tostring(local.env.container_port)
     HOSTNAME = "0.0.0.0"
     # Safe only because the ALB returns a fixed 403 for /api/metrics; the
     # sidecar scrapes it over the task's loopback instead.
     METRICS_ENABLED = "true"
-  }
+    }, local.cache_ready ? {
+    REDIS_CLUSTER_MODE = "true"
+    # Cache keys carry the tag, so a build cannot read a payload shape it did
+    # not write out of a cache dev shares with every preview.
+    CACHE_NAMESPACE = local.env.image_tag
+  } : {})
 
-  secrets = {
+  secrets = merge({
     INDEXER_RATE_LIMIT_BYPASS = aws_secretsmanager_secret.indexer_rate_limit_bypass.arn
-  }
+    }, local.cache_ready ? {
+    REDIS_URL = local.redis_url_secret_arn
+  } : {})
 
   extra_container_definitions = local.sidecar_ready ? [module.observability_sidecar.container_definition] : []
   task_role_policy_json       = local.sidecar_ready ? module.observability_sidecar.amp_write_policy_json : null
