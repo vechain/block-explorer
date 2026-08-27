@@ -1,8 +1,8 @@
 import { createCache } from 'async-cache-dedupe'
-import { LRUCache } from 'lru-cache'
 import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createErrorResponse } from '@/lib/api/index'
+import { cacheStorage, createMissCache, type MissCache, namespacedCacheName } from '@/lib/cache-store'
 import { metrics } from '@/lib/metrics'
 import { NotFoundError, UpstreamError } from '@/lib/upstream-error'
 
@@ -142,15 +142,17 @@ export const createCachedProxy = ({
   endpoints: Record<string, RegisteredEndpoint>
 }) => {
   const hits = new Map<string, CacheMethod>()
-  const misses = new Map<string, LRUCache<string, true>>()
+  const misses = new Map<string, MissCache>()
 
   for (const [path, endpoint] of Object.entries(endpoints)) {
     const defineName = `${name}_${path}`.replace(/\W/g, '_')
+    // Namespaced rather than bare: the store may be shared with another build.
+    const storageName = namespacedCacheName(defineName)
     const labels: EndpointLabels = { name, path }
-    const cache = createCache({ storage: { type: 'memory', options: { size: endpoint.cache.size } } })
+    const cache = createCache({ storage: cacheStorage(endpoint.cache.size) })
 
     cache.define(
-      defineName,
+      storageName,
       {
         ttl: endpoint.cache.ttl,
         stale: endpoint.cache.stale,
@@ -163,10 +165,10 @@ export const createCachedProxy = ({
       withUpstreamMetrics(labels, endpoint.fetch),
     )
 
-    hits.set(path, (cache as unknown as Record<string, CacheMethod>)[defineName])
+    hits.set(path, (cache as unknown as Record<string, CacheMethod>)[storageName])
 
     if (endpoint.notFound) {
-      misses.set(path, new LRUCache<string, true>({ max: endpoint.notFound.size, ttl: endpoint.notFound.ttl * 1_000 }))
+      misses.set(path, createMissCache({ name: defineName, ttl: endpoint.notFound.ttl, size: endpoint.notFound.size }))
     }
   }
 
@@ -201,7 +203,7 @@ export const createCachedProxy = ({
         notFound ? cacheControl(notFound) : NO_CACHE_CONTROL,
       )
 
-    if (missCache?.has(missKey)) return respondNotFound()
+    if (await missCache?.has(missKey)) return respondNotFound()
 
     try {
       const data = await hits.get(path)?.(parsed.params)
@@ -212,7 +214,7 @@ export const createCachedProxy = ({
       )
     } catch (error) {
       if (error instanceof NotFoundError) {
-        missCache?.set(missKey, true)
+        await missCache?.add(missKey)
         return respondNotFound()
       }
 
