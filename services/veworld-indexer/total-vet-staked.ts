@@ -20,7 +20,7 @@ const nftNameSchema = z.enum([
 
 const TOTAL_VET_STAKED_QUERY_KEY = 'getTotalVetStaked'
 
-export const totalVetStakedQueryOptions = (networkName: NetworkName) => ({
+const totalVetStakedQueryOptions = (networkName: NetworkName) => ({
   queryKey: [TOTAL_VET_STAKED_QUERY_KEY, networkName],
   queryFn: () => getTotalVetStaked({ networkName }),
   refetchInterval: 5 * 1000,
