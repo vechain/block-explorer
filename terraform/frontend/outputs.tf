@@ -13,6 +13,11 @@ output "task_definition_family" {
   value       = module.service.task_definition_family
 }
 
+output "task_definition_arn" {
+  description = "Revision this apply registered. The deploy compares it against what the service runs, and skips the roll when they match."
+  value       = module.service.task_definition_arn
+}
+
 output "log_group_name" {
   description = "CloudWatch log group for the service."
   value       = module.service.log_group_name

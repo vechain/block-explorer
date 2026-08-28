@@ -33,6 +33,7 @@ jobs:
     outputs:
       tag: ${{ steps.resolve.outputs.tag }}
       ghcr_tag: ${{ steps.resolve.outputs.ghcr_tag }}
+      app_sha: ${{ steps.content.outputs.app_sha }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -80,6 +81,17 @@ jobs:
           fi
           echo "${TAG} -> ${SHA}, reachable from main."
 
+      # At the tag, not at HEAD: a merge landing mid-deploy must not move it.
+      - name: Resolve the content SHA
+        id: content
+        env:
+          TAG: ${{ steps.resolve.outputs.tag }}
+        run: |
+          set -euo pipefail
+          APP_SHA=$(bash scripts/app-content-sha.sh "refs/tags/${TAG}")
+          echo "app_sha=${APP_SHA}" >> "$GITHUB_OUTPUT"
+          echo "${TAG} carries app content ${APP_SHA}."
+
   # The manifest list, not one platform: the tasks are arm64.
   promote:
     name: Promote Image to ECR
@@ -109,33 +121,49 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # The repository is tag-immutable, so a re-run of a release that already
-      # promoted must not try to overwrite the tag it wrote.
+      # Two tags on one manifest, each written only if absent — the repo is immutable.
       - name: Copy manifest list from GHCR to ECR
         env:
           GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ needs.guard.outputs.ghcr_tag }}
-          ECR_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ needs.guard.outputs.tag }}
+          ECR_REPO: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
           TAG: ${{ needs.guard.outputs.tag }}
+          APP_SHA: ${{ needs.guard.outputs.app_sha }}
         run: |
           set -euo pipefail
 
-          if aws ecr describe-images --repository-name "$ECR_REPOSITORY" \
-               --image-ids "imageTag=${TAG}" --no-cli-pager >/dev/null 2>&1; then
-            echo "${TAG} is already in ECR."
+          present() {
+            aws ecr describe-images --repository-name "$ECR_REPOSITORY" \
+              --image-ids "imageTag=$1" --no-cli-pager >/dev/null 2>&1
+          }
+
+          if present "$APP_SHA" && present "$TAG"; then
+            echo "${APP_SHA} and ${TAG} are both already in ECR."
             exit 0
           fi
 
           for attempt in $(seq 1 6); do
             if docker buildx imagetools inspect "$GHCR_IMAGE" >/dev/null 2>&1; then
-              docker buildx imagetools create -t "$ECR_IMAGE" "$GHCR_IMAGE"
-              docker buildx imagetools inspect "$ECR_IMAGE"
-              exit 0
+              break
+            fi
+            if [ "$attempt" = "6" ]; then
+              echo "::error::${GHCR_IMAGE} never appeared."
+              exit 1
             fi
             echo "Attempt ${attempt}/6: ${GHCR_IMAGE} not published yet, retrying in 10s..."
             sleep 10
           done
-          echo "::error::${GHCR_IMAGE} never appeared."
-          exit 1
+
+          # Source is the GHCR version tag either way: on a reused build it is
+          # already an alias of the same manifest the content tag points at.
+          for tag in "$APP_SHA" "$TAG"; do
+            if present "$tag"; then
+              echo "${tag} is already in ECR."
+              continue
+            fi
+            docker buildx imagetools create -t "${ECR_REPO}:${tag}" "$GHCR_IMAGE"
+          done
+
+          docker buildx imagetools inspect "${ECR_REPO}:${APP_SHA}"
 
   # Same stacks and the same serial order as dev, less the two that only exist
   # there: previews live in the dev account, and so does the zone role dns/ owns.
@@ -152,6 +180,7 @@ jobs:
       cluster: ${{ steps.outputs.outputs.cluster }}
       service: ${{ steps.outputs.outputs.service }}
       family: ${{ steps.outputs.outputs.family }}
+      taskdef: ${{ steps.outputs.outputs.taskdef }}
       domain: ${{ steps.outputs.outputs.domain }}
       alb: ${{ steps.outputs.outputs.alb }}
       grafana_url: ${{ steps.outputs.outputs.grafana_url }}
@@ -173,7 +202,7 @@ jobs:
 
       - name: Pin the image tag
         env:
-          TAG: ${{ needs.guard.outputs.tag }}
+          TAG: ${{ needs.guard.outputs.app_sha }}
         run: |
           set -euo pipefail
           cd terraform/environments/prod
@@ -214,6 +243,7 @@ jobs:
             echo "cluster=$(terraform output -raw cluster_name)"
             echo "service=$(terraform output -raw service_name)"
             echo "family=$(terraform output -raw task_definition_family)"
+            echo "taskdef=$(terraform output -raw task_definition_arn)"
           } >> "$GITHUB_OUTPUT"
           popd >/dev/null
 
@@ -235,7 +265,7 @@ jobs:
   roll:
     name: Roll ECS Service
     runs-on: ubuntu-latest
-    needs: terraform
+    needs: [guard, terraform]
     permissions:
       id-token: write
       contents: read
@@ -248,7 +278,31 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
 
+      # The revision rather than the image tag, so a cpu, memory, env or sidecar
+      # change that leaves the image alone still rolls.
+      - name: Check whether a roll is needed
+        id: needed
+        env:
+          CLUSTER: ${{ needs.terraform.outputs.cluster }}
+          SERVICE: ${{ needs.terraform.outputs.service }}
+          DESIRED: ${{ needs.terraform.outputs.taskdef }}
+        run: |
+          set -euo pipefail
+
+          running=$(aws ecs describe-services \
+            --cluster "$CLUSTER" --services "$SERVICE" \
+            --no-cli-pager --query 'services[0].taskDefinition' --output text)
+
+          if [ "$running" = "$DESIRED" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Already on ${running} — nothing to roll."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Running ${running}, rolling to ${DESIRED}."
+          fi
+
       - name: Deploy the new revision
+        if: steps.needed.outputs.skip == 'false'
         env:
           CLUSTER: ${{ needs.terraform.outputs.cluster }}
           SERVICE: ${{ needs.terraform.outputs.service }}
@@ -307,11 +361,18 @@ jobs:
           DOMAIN: ${{ needs.terraform.outputs.domain }}
           ALB: ${{ needs.terraform.outputs.alb }}
           GRAFANA_URL: ${{ needs.terraform.outputs.grafana_url }}
+          APP_SHA: ${{ needs.guard.outputs.app_sha }}
+          SKIPPED: ${{ steps.needed.outputs.skip }}
         run: |
           {
             echo "### Prod deployed on ECS"
             echo
             echo "- Service: \`${SERVICE}\`"
+            if [ "$SKIPPED" = "true" ]; then
+              echo "- Roll **skipped** — already running \`${APP_SHA}\` with an unchanged task definition."
+            else
+              echo "- Rolled to \`${APP_SHA}\`."
+            fi
             echo "- Serving on \`${ALB}\`, which ${DOMAIN} does not point at yet."
             if [ -n "$GRAFANA_URL" ]; then
               echo "- Grafana: ${GRAFANA_URL}/d/be-overview"

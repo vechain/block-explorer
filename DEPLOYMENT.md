@@ -65,6 +65,11 @@ The application version displayed in the UI is:
 - **Production/Preview**: The git tag or image tag passed at build time (e.g., `v.1.2.3`, or `pr-175-718a160`)
 - **Local Development**: Falls back to `package.json` version (`0.0.0-dev`)
 
+On dev and prod that is the release which last **changed** the app, not necessarily the newest one.
+Images are content-addressed (see `scripts/app-content-sha.sh`), so a release carrying only
+terraform, workflow or docs changes reuses the existing image and reports the version baked into it —
+which is the version actually serving traffic. `.github/workflows/README.md` has the full scheme.
+
 ## Initial Infrastructure Setup
 
 ### Step 1: Deploy Account-Level Infrastructure
