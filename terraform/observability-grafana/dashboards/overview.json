@@ -499,18 +499,31 @@
     {
       "id": 30,
       "type": "timeseries",
-      "title": "WAF requests by action",
-      "description": "Counted means a managed rule matched while still soaking — it would have blocked had waf_managed_rules_blocking been on.",
+      "title": "Requests allowed and blocked",
+      "description": "Every request is one or the other, so these two sum to the ALB's request count. Blocked is only ever the rate-limit rule while waf_managed_rules_blocking is off. Requests a soaking rule flagged are not a third category — they are allowed requests, and they are in the Allowed line here; the two panels below cover them.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
+          "min": 0,
+          "custom": { "lineWidth": 1, "fillOpacity": 10, "showPoints": "never" }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Allowed" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Blocked" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          }
+        ]
       },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "mean", "max"] },
+        "tooltip": { "mode": "multi" }
+      },
       "targets": [
         {
           "refId": "A",
@@ -541,40 +554,26 @@
           "period": "60",
           "matchExact": true,
           "label": "Blocked"
-        },
-        {
-          "refId": "C",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "AWS/WAFV2",
-          "metricName": "CountedRequests",
-          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL", "Region": "${region}" },
-          "statistic": "Sum",
-          "period": "60",
-          "matchExact": true,
-          "label": "Counted"
         }
       ]
     },
     {
       "id": 31,
       "type": "timeseries",
-      "title": "WAF blocks and counts by rule",
-      "description": "Which rule matched. The ALL series is the web ACL total, so it tracks the sum of the rest.",
+      "title": "Blocked by rule",
+      "description": "Which rule rejected the request. Empty is the expected reading: only rate-limit-ip is set to block while waf_managed_rules_blocking is off, and it takes sustained traffic from a single IP to trip. A rule that has never blocked publishes no metric, so it stays absent from the legend rather than drawing a zero line.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "custom": { "lineWidth": 1, "fillOpacity": 10, "showPoints": "never" }
+          "min": 0,
+          "custom": { "lineWidth": 1, "fillOpacity": 30, "showPoints": "never", "stacking": { "mode": "normal" } }
         },
         "overrides": []
       },
       "options": {
-        "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"] },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max"] },
         "tooltip": { "mode": "multi" }
       },
       "targets": [
@@ -587,11 +586,69 @@
           "region": "${region}",
           "namespace": "AWS/WAFV2",
           "metricName": "BlockedRequests",
-          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "*", "Region": "${region}" },
+          "dimensions": {
+            "WebACL": "${waf_web_acl_name}",
+            "Region": "${region}",
+            "Rule": [
+              "${waf_rule_prefix}-rate-limit-ip",
+              "${waf_rule_prefix}-ip-reputation",
+              "${waf_rule_prefix}-anonymous-ip",
+              "${waf_rule_prefix}-common",
+              "${waf_rule_prefix}-known-bad-input"
+            ]
+          },
           "statistic": "Sum",
           "period": "60",
-          "matchExact": false,
-          "label": "blocked $${PROP('Dim.Rule')}"
+          "matchExact": true,
+          "label": "$${PROP('Dim.Rule')}"
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "type": "stat",
+      "title": "Count-mode match rate",
+      "description": "Matches on a soaking rule as a share of requests served. Nothing here was rejected — this is what would start being rejected if waf_managed_rules_blocking flipped to true, so it is the cost of turning the managed groups on rather than a measure of attack traffic.",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 52 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 5 },
+              { "color": "red", "value": 20 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/WAFV2",
+          "metricName": "CountedRequests",
+          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL", "Region": "${region}" },
+          "statistic": "Sum",
+          "period": "300",
+          "matchExact": true,
+          "id": "counted",
+          "hide": true
         },
         {
           "refId": "B",
@@ -601,12 +658,76 @@
           "metricEditorMode": 0,
           "region": "${region}",
           "namespace": "AWS/WAFV2",
+          "metricName": "AllowedRequests",
+          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL", "Region": "${region}" },
+          "statistic": "Sum",
+          "period": "300",
+          "matchExact": true,
+          "id": "allowed",
+          "hide": true
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 1,
+          "region": "${region}",
+          "namespace": "",
+          "metricName": "",
+          "dimensions": {},
+          "statistic": "Sum",
+          "period": "",
+          "matchExact": true,
+          "id": "share",
+          "expression": "100 * counted / allowed",
+          "label": "of served traffic"
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "type": "timeseries",
+      "title": "Count-mode matches by rule",
+      "description": "A managed group in Count mode records the match and hands the request to the next rule, so all of this was served. Read it as a dry run of blocking, and against the Requests panel for scale. The rate-limit rule never appears: it blocks outright.",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 18, "x": 6, "y": 52 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": { "lineWidth": 1, "fillOpacity": 30, "showPoints": "never", "stacking": { "mode": "normal" } }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["last", "mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/WAFV2",
           "metricName": "CountedRequests",
-          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "*", "Region": "${region}" },
+          "dimensions": {
+            "WebACL": "${waf_web_acl_name}",
+            "Region": "${region}",
+            "Rule": [
+              "${waf_rule_prefix}-ip-reputation",
+              "${waf_rule_prefix}-anonymous-ip",
+              "${waf_rule_prefix}-common",
+              "${waf_rule_prefix}-known-bad-input"
+            ]
+          },
           "statistic": "Sum",
           "period": "60",
-          "matchExact": false,
-          "label": "counted $${PROP('Dim.Rule')}"
+          "matchExact": true,
+          "label": "$${PROP('Dim.Rule')}"
         }
       ]
     }
