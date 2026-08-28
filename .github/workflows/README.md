@@ -202,7 +202,8 @@ cannot starve the rest.
 | Preview | `pr-{number}-app-{sha12}` | `pr-144-app-ded8af8261c7` | PR number + content SHA |
 
 **Content SHA tags:**
-- From `scripts/app-content-sha.sh` — the last commit touching a Docker build input
+- From `scripts/app-content-sha.sh` — a hash of every Docker build input, so a squash merge or rebase
+  that leaves the app unchanged keeps the same tag
 - One image per distinct app build, however many releases ship it
 - What ECS task definitions reference, so identical content produces an identical revision
 

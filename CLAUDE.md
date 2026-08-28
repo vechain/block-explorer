@@ -211,9 +211,9 @@ Automated semantic versioning via git tags — `package.json` version is `0.0.0-
 
 Real version injected at build time from git tags.
 
-Images are content-addressed: `scripts/app-content-sha.sh` (also `pnpm app:sha`) resolves the last
-commit touching a Docker build input, and that `app-<sha12>` is the canonical image tag with the
-version tags aliased onto it. A release changing only terraform, workflows or docs therefore skips
+Images are content-addressed: `scripts/app-content-sha.sh` (also `pnpm app:sha`) hashes every file
+the Docker build reads, and that `app-<sha12>` is the canonical image tag with the version tags
+aliased onto it. A release changing only terraform, workflows or docs therefore skips
 both the image build and the ECS roll — and shows the version of the release that last changed the
 app, which is the one actually running.
 

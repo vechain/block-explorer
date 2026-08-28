@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 #
-# Content-addressed identity for the app image: the last commit reachable from REF
-# that touched anything the Docker build turns into image bytes. Two releases with
-# the same content resolve to the same SHA, which is what lets the build and the
-# ECS roll be skipped. See .github/workflows/README.md.
+# Content-addressed identity for the app image: a hash of every blob at REF that the
+# Docker build turns into image bytes. Identical content resolves to the same SHA
+# however it got there, which is what lets the build and the ECS roll be skipped.
+# Naming the last touching commit instead would mint a new identity on every squash
+# merge and rebase. See .github/workflows/README.md.
 #
-# Usage: scripts/app-content-sha.sh [ref]   ->   app-<sha12>   (needs full history)
+# Usage: scripts/app-content-sha.sh [ref]   ->   app-<sha12>
 
 set -euo pipefail
 
@@ -55,11 +56,13 @@ for path in "${EXCLUDED[@]}"; do
   exit 1
 done
 
-commit=$(git rev-list -1 "$REF" -- . "${EXCLUDED[@]/#/:(exclude)}")
+# Diffing against the empty tree lists every included path with its blob SHA.
+manifest=$(git -c core.quotePath=true diff-tree -r --no-commit-id \
+  "$(git hash-object -t tree /dev/null)" "$REF" -- . "${EXCLUDED[@]/#/:(exclude)}")
 
-if [ -z "$commit" ]; then
-  echo "::error::No commit reachable from '${REF}' touches any app path. The EXCLUDED list in $0 is probably wrong." >&2
+if [ -z "$manifest" ]; then
+  echo "::error::No path at '${REF}' is an app input. The EXCLUDED list in $0 is probably wrong." >&2
   exit 1
 fi
 
-echo "app-$(git rev-parse --short=12 "$commit")"
+echo "app-$(printf '%s\n' "$manifest" | git hash-object --stdin | cut -c1-12)"
