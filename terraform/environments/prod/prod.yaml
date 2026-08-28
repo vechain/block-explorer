@@ -19,10 +19,8 @@ container_port: 3000
 
 log_retention_days: 90
 
-# BYPASS_INDEXER_PROXY carries over from App Runner: the indexer's WAF rate-limits
-# our shared egress IP, so prod calls it from the browser rather than server-side.
-runtime_environment:
-  BYPASS_INDEXER_PROXY: 'true'
+# The bypass token covers our egress IP, so prod proxies the indexer like dev.
+runtime_environment: {}
 
 # Shared Valkey. Ceilings against a runaway bill, not a capacity plan.
 cache_data_storage_max_gb: 5
