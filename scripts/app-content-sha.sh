@@ -28,9 +28,14 @@ EXCLUDED=(
   .prettierrc
   .vscode
   '*.md'
+  '*.spec.ts'
+  '*.spec.tsx'
+  '*.test.ts'
+  '*.test.tsx'
   knip.config.ts
   terraform
   test
+  tests
   vitest.config.ts
 )
 

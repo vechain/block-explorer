@@ -19,7 +19,7 @@ Draft published
 ### Content-addressed images
 
 Every merge to `main` gets a version tag, but most releases change nothing the Docker build reads —
-terraform, workflows and docs are all outside it. So the canonical image tag is a **content SHA**
+terraform, workflows, tests and docs are all outside it. So the canonical image tag is a **content SHA**
 (`app-<sha12>`) from [`scripts/app-content-sha.sh`](../../scripts/app-content-sha.sh), and the version
 tags are aliases on the same manifest. Run it locally with `pnpm app:sha`.
 
