@@ -41,7 +41,8 @@ export const indexerCachedGet = <T>({
   if (!getRuntimeConfig().bypassIndexerProxy && isProxiedNetwork(networkName) && isCachedIndexerEndpoint(endPoint)) {
     return apiClient.get<T>({
       baseUrl: INDEXER_PROXY_BASE,
-      endPoint,
+      // The registry keys are slashless, so a caller may pass either form; the client joins bare.
+      endPoint: endPoint.startsWith('/') ? endPoint : `/${endPoint}`,
       params: { ...params, network: networkName },
     })
   }
