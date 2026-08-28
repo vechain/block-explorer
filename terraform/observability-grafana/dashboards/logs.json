@@ -1,12 +1,23 @@
 {
   "uid": "be-logs",
   "title": "Block explorer logs (${env})",
-  "description": "CloudWatch Logs Insights over the ECS task and WAF log groups. Auto-refresh is off by default: Insights bills on bytes scanned, and the WAF group alone is a few hundred MB an hour. Terraform owns this dashboard, so edits made here are replaced on the next apply.",
+  "description": "CloudWatch Logs Insights over the ECS task log group. Auto-refresh is off by default: Insights bills on bytes scanned. WAF request detail lives on the overview dashboard. Terraform owns this dashboard, so edits made here are replaced on the next apply.",
   "tags": ["block-explorer", "logs", "${env}"],
   "timezone": "utc",
   "schemaVersion": 41,
   "refresh": "",
   "time": { "from": "now-1h", "to": "now" },
+  "links": [
+    {
+      "type": "dashboards",
+      "title": "Block explorer",
+      "tags": ["block-explorer"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link"
+    }
+  ],
   "templating": {
     "list": [
       {
@@ -27,44 +38,21 @@
       {
         "name": "filter",
         "label": "Filter (regex, case-insensitive)",
-        "description": "Applied to the raw log line on both the app and WAF panels. Empty matches everything.",
+        "description": "Applied to the raw log line on every panel. Empty matches everything.",
         "type": "textbox",
         "current": { "text": "", "value": "" },
         "query": ""
-      },
-      {
-        "name": "outcome",
-        "label": "WAF outcome",
-        "description": "ALLOW is a request a soaking rule matched and the ACL served anyway. BLOCK is a request the ACL rejected.",
-        "type": "custom",
-        "query": "ALLOW,BLOCK",
-        "multi": true,
-        "includeAll": true,
-        "allValue": ".*",
-        "options": [
-          { "text": "ALLOW", "value": "ALLOW", "selected": true },
-          { "text": "BLOCK", "value": "BLOCK", "selected": true }
-        ],
-        "current": { "text": ["ALLOW", "BLOCK"], "value": ["ALLOW", "BLOCK"], "selected": true }
       }
     ]
   },
   "panels": [
     {
-      "id": 100,
-      "type": "row",
-      "title": "Application",
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
-      "panels": []
-    },
-    {
       "id": 1,
       "type": "timeseries",
-      "title": "Log lines per interval",
-      "description": "Honours the container and filter pickers, so with a filter set this is the rate of matching lines — the fastest way to place a burst before reading it.",
+      "title": "Log volume",
+      "description": "Honours the container and filter pickers, so with a filter set this is the rate of matching lines — the fastest way to place a burst before reading it. The app writes no log levels, so the errors series is a keyword match on the raw line (error, exception, unhandled, ECONNREFUSED, ETIMEDOUT, failed) rather than a real count.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 1 },
+      "gridPos": { "h": 8, "w": 14, "x": 0, "y": 0 },
       "interval": "1m",
       "fieldConfig": {
         "defaults": {
@@ -72,7 +60,16 @@
           "min": 0,
           "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never" }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "errors" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } },
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.lineWidth", "value": 2 }
+            ]
+          }
+        ]
       },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
       "targets": [
@@ -82,7 +79,43 @@
           "queryMode": "Logs",
           "region": "${region}",
           "logGroupNames": ["${frontend_log_group}"],
-          "expression": "filter @logStream like /^($${container:pipe})\\//\n| filter @message like /(?i)$${filter:raw}/\n| stats count(*) as lines by bin($__interval)"
+          "expression": "filter @logStream like /^($${container:pipe})\\//\n| filter @message like /(?i)$${filter:raw}/\n| parse @message /(?i)(?<errorish>error|exception|unhandled|econnrefused|etimedout|failed)/\n| stats count(*) as lines, count(errorish) as errors by bin($__interval)"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Most frequent lines",
+      "description": "Grouped by the first 100 characters, so lines differing only in a trailing id or path collapse together. tasks is how many task streams emitted it: 1 of several is one sick task, all of them is the app.",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 10, "x": 14, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto", "filterable": false } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "lines" },
+            "properties": [
+              { "id": "unit", "value": "short" },
+              { "id": "custom.width", "value": 90 },
+              { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "tasks" },
+            "properties": [{ "id": "custom.width", "value": 70 }]
+          }
+        ]
+      },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "lines", "desc": true }] },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Logs",
+          "region": "${region}",
+          "logGroupNames": ["${frontend_log_group}"],
+          "expression": "fields substr(@message, 0, 100) as line\n| filter @logStream like /^($${container:pipe})\\//\n| filter @message like /(?i)$${filter:raw}/\n| stats count(*) as lines, count_distinct(@logStream) as tasks by line\n| sort lines desc\n| limit 20"
         }
       ]
     },
@@ -92,7 +125,7 @@
       "title": "Logs — $container",
       "description": "The app has no log levels: Next.js and the console calls under lib/ write unstructured lines to stdout, and a multi-line dump such as a Zod parse failure arrives as one event per line. Search with the filter box rather than expecting a level field.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 26, "w": 24, "x": 0, "y": 6 },
+      "gridPos": { "h": 26, "w": 24, "x": 0, "y": 8 },
       "options": {
         "showTime": true,
         "showLabels": false,
@@ -109,149 +142,6 @@
           "region": "${region}",
           "logGroupNames": ["${frontend_log_group}"],
           "expression": "fields @timestamp, @message, @logStream\n| filter @logStream like /^($${container:pipe})\\//\n| filter @message like /(?i)$${filter:raw}/\n| sort @timestamp desc, @ptr desc\n| limit 500"
-        }
-      ]
-    },
-    {
-      "id": 101,
-      "type": "row",
-      "title": "WAF",
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
-      "panels": []
-    },
-    {
-      "id": 10,
-      "type": "table",
-      "title": "Count-mode matches by rule and country",
-      "description": "Requests a managed group flagged while soaking, all of them served. One hosting region dominating the table is the ordinary reading: the anonymous-IP list matches datacenter and VPN egress, which is where crawlers and wallet backends live.",
-      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 11, "w": 8, "x": 0, "y": 33 },
-      "fieldConfig": {
-        "defaults": { "custom": { "align": "auto", "filterable": false } },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "matches" },
-            "properties": [
-              { "id": "unit", "value": "short" },
-              { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }
-            ]
-          }
-        ]
-      },
-      "options": { "showHeader": true, "sortBy": [{ "displayName": "matches", "desc": true }] },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Logs",
-          "region": "${region}",
-          "logGroupNames": ["${waf_log_group}"],
-          "expression": "fields nonTerminatingMatchingRules.0.ruleId as rule, httpRequest.country as country\n| filter ispresent(rule)\n| stats count(*) as matches by rule, country\n| sort matches desc\n| limit 25"
-        }
-      ]
-    },
-    {
-      "id": 11,
-      "type": "table",
-      "title": "Count-mode matches by client IP",
-      "description": "A single IP taking most of the table means the count volume is one client, not broad hostile traffic — worth a reverse lookup before reading anything into the totals.",
-      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 11, "w": 8, "x": 8, "y": 33 },
-      "fieldConfig": {
-        "defaults": { "custom": { "align": "auto", "filterable": false } },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "matches" },
-            "properties": [
-              { "id": "unit", "value": "short" },
-              { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }
-            ]
-          }
-        ]
-      },
-      "options": { "showHeader": true, "sortBy": [{ "displayName": "matches", "desc": true }] },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Logs",
-          "region": "${region}",
-          "logGroupNames": ["${waf_log_group}"],
-          "expression": "fields nonTerminatingMatchingRules.0.ruleId as rule, httpRequest.clientIp as clientIp, httpRequest.country as country\n| filter ispresent(rule)\n| stats count(*) as matches by clientIp, country, rule\n| sort matches desc\n| limit 25"
-        }
-      ]
-    },
-    {
-      "id": 12,
-      "type": "table",
-      "title": "Count-mode matches by URI",
-      "description": "Explorer routes here mean real users behind a flagged IP range. Probe paths — wp-login, .env, phpmyadmin — mean the rule is earning its place.",
-      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 11, "w": 8, "x": 16, "y": 33 },
-      "fieldConfig": {
-        "defaults": { "custom": { "align": "auto", "filterable": false } },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "matches" },
-            "properties": [
-              { "id": "unit", "value": "short" },
-              { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }
-            ]
-          }
-        ]
-      },
-      "options": { "showHeader": true, "sortBy": [{ "displayName": "matches", "desc": true }] },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Logs",
-          "region": "${region}",
-          "logGroupNames": ["${waf_log_group}"],
-          "expression": "fields nonTerminatingMatchingRules.0.ruleId as rule, httpRequest.uri as uri\n| filter ispresent(rule)\n| stats count(*) as matches by uri\n| sort matches desc\n| limit 25"
-        }
-      ]
-    },
-    {
-      "id": 13,
-      "type": "table",
-      "title": "WAF events — $outcome",
-      "description": "The log group holds only requests a rule matched: the delivery filter drops everything else, so this is not a request log. action ALLOW next to a populated countMatchedRule is the shape to expect while waf_managed_rules_blocking is off — the rule matched, the ACL fell through to its default allow, and the request was served. action BLOCK with terminatingRuleId set is a real rejection.",
-      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 16, "w": 24, "x": 0, "y": 44 },
-      "fieldConfig": {
-        "defaults": { "custom": { "align": "auto", "filterable": true } },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "action" },
-            "properties": [
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "type": "value",
-                    "options": {
-                      "ALLOW": { "text": "ALLOW (served)", "color": "green", "index": 0 },
-                      "BLOCK": { "text": "BLOCK (rejected)", "color": "red", "index": 1 }
-                    }
-                  }
-                ]
-              },
-              { "id": "custom.cellOptions", "value": { "type": "color-text" } }
-            ]
-          }
-        ]
-      },
-      "options": { "showHeader": true, "sortBy": [{ "displayName": "@timestamp", "desc": true }] },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Logs",
-          "region": "${region}",
-          "logGroupNames": ["${waf_log_group}"],
-          "expression": "fields @timestamp, action, terminatingRuleId, nonTerminatingMatchingRules.0.ruleId as countMatchedRule, httpRequest.country as country, httpRequest.clientIp as clientIp, httpRequest.httpMethod as method, httpRequest.uri as uri\n| filter action like /^($${outcome:pipe})$/\n| filter @message like /(?i)$${filter:raw}/\n| sort @timestamp desc\n| limit 200"
         }
       ]
     }

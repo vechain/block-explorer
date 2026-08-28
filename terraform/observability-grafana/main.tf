@@ -120,11 +120,12 @@ resource "grafana_dashboard" "overview" {
     tg_suffix                 = local.target_group_arn_suffix
     waf_web_acl_name          = local.waf_web_acl_name
     waf_rule_prefix           = local.waf_rule_prefix
+    waf_log_group             = local.waf_log_group
   })
 }
 
 # No ALB dependency, so this lands on a first deploy while the overview is still
-# waiting on edge/. The WAF panels read a log group edge/ creates unconditionally.
+# waiting on edge/.
 resource "grafana_dashboard" "logs" {
   count = local.observability_ready ? 1 : 0
 
@@ -135,7 +136,6 @@ resource "grafana_dashboard" "logs" {
     env                       = terraform.workspace
     region                    = var.aws_region
     frontend_log_group        = local.frontend_log_group
-    waf_log_group             = local.waf_log_group
   })
 }
 

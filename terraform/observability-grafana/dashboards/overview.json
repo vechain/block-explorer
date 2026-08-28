@@ -1,12 +1,23 @@
 {
   "uid": "be-overview",
   "title": "Block explorer overview (${env})",
-  "description": "Infrastructure from CloudWatch, application metrics from AMP. Terraform owns this dashboard, so edits made here are replaced on the next apply.",
+  "description": "Infrastructure from CloudWatch, application metrics from AMP. The WAF request detail row is CloudWatch Logs Insights, which bills on bytes scanned — it stays collapsed so it runs only while open, and this dashboard refreshes every minute. Terraform owns this dashboard, so edits made here are replaced on the next apply.",
   "tags": ["block-explorer", "${env}"],
   "timezone": "utc",
   "schemaVersion": 41,
   "refresh": "1m",
   "time": { "from": "now-6h", "to": "now" },
+  "links": [
+    {
+      "type": "dashboards",
+      "title": "Block explorer",
+      "tags": ["block-explorer"],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true,
+      "icon": "external link"
+    }
+  ],
   "panels": [
     {
       "id": 100,
@@ -728,6 +739,143 @@
           "period": "60",
           "matchExact": true,
           "label": "$${PROP('Dim.Rule')}"
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "type": "row",
+      "title": "WAF request detail — Logs Insights, runs only while expanded",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 60 },
+      "panels": [
+        {
+          "id": 40,
+          "type": "table",
+          "title": "Flagged clients",
+          "description": "Who tripped a rule. action says what then happened: ALLOW is the count-mode dry run and the request was served, BLOCK is a real rejection. paths and rules are distinct counts, so thousands of requests over one path and one rule is a single client, not broad hostile traffic.",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "gridPos": { "h": 11, "w": 12, "x": 0, "y": 61 },
+          "fieldConfig": {
+            "defaults": { "custom": { "align": "auto", "filterable": true } },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "requests" },
+                "properties": [
+                  { "id": "unit", "value": "short" },
+                  { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "action" },
+                "properties": [
+                  { "id": "custom.width", "value": 90 },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "ALLOW": { "text": "ALLOW", "color": "green", "index": 0 },
+                          "BLOCK": { "text": "BLOCK", "color": "red", "index": 1 }
+                        }
+                      }
+                    ]
+                  },
+                  { "id": "custom.cellOptions", "value": { "type": "color-text" } }
+                ]
+              }
+            ]
+          },
+          "options": { "showHeader": true, "sortBy": [{ "displayName": "requests", "desc": true }] },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+              "queryMode": "Logs",
+              "region": "${region}",
+              "logGroupNames": ["${waf_log_group}"],
+              "expression": "fields httpRequest.clientIp as clientIp, httpRequest.country as country, httpRequest.uri as path, coalesce(nonTerminatingMatchingRules.0.ruleId, terminatingRuleId) as rule\n| stats count(*) as requests, count_distinct(path) as paths, count_distinct(rule) as rules by clientIp, country, action\n| sort requests desc\n| limit 20"
+            }
+          ]
+        },
+        {
+          "id": 41,
+          "type": "table",
+          "title": "Flagged paths",
+          "description": "What those requests asked for. Explorer routes mean real users behind a flagged IP range; probe paths — wp-login, .env, phpmyadmin — mean the rule is earning its place. clients is how many distinct sources asked for that path.",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "gridPos": { "h": 11, "w": 12, "x": 12, "y": 61 },
+          "fieldConfig": {
+            "defaults": { "custom": { "align": "auto", "filterable": true } },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "requests" },
+                "properties": [
+                  { "id": "unit", "value": "short" },
+                  { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }
+                ]
+              },
+              {
+                "matcher": { "id": "byName", "options": "method" },
+                "properties": [{ "id": "custom.width", "value": 80 }]
+              }
+            ]
+          },
+          "options": { "showHeader": true, "sortBy": [{ "displayName": "requests", "desc": true }] },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+              "queryMode": "Logs",
+              "region": "${region}",
+              "logGroupNames": ["${waf_log_group}"],
+              "expression": "fields httpRequest.uri as path, httpRequest.httpMethod as method, httpRequest.clientIp as clientIp, coalesce(nonTerminatingMatchingRules.0.ruleId, terminatingRuleId) as rule\n| stats count(*) as requests, count_distinct(clientIp) as clients by path, method, rule\n| sort requests desc\n| limit 20"
+            }
+          ]
+        },
+        {
+          "id": 42,
+          "type": "table",
+          "title": "Recent WAF events",
+          "description": "The log group holds only requests a rule matched — the delivery filter drops the rest, so this is not a request log. rule is the ACL rule; managedRule is the specific rule inside the AWS managed group, and that is the one to name when deciding what to exclude before turning blocking on. Column headers filter.",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "gridPos": { "h": 14, "w": 24, "x": 0, "y": 72 },
+          "fieldConfig": {
+            "defaults": { "custom": { "align": "auto", "filterable": true } },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "action" },
+                "properties": [
+                  { "id": "custom.width", "value": 130 },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "ALLOW": { "text": "ALLOW (served)", "color": "green", "index": 0 },
+                          "BLOCK": { "text": "BLOCK (rejected)", "color": "red", "index": 1 }
+                        }
+                      }
+                    ]
+                  },
+                  { "id": "custom.cellOptions", "value": { "type": "color-text" } }
+                ]
+              }
+            ]
+          },
+          "options": { "showHeader": true, "sortBy": [{ "displayName": "@timestamp", "desc": true }] },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+              "queryMode": "Logs",
+              "region": "${region}",
+              "logGroupNames": ["${waf_log_group}"],
+              "expression": "fields @timestamp, action, coalesce(nonTerminatingMatchingRules.0.ruleId, terminatingRuleId) as rule, coalesce(ruleGroupList.0.nonTerminatingMatchingRules.0.ruleId, ruleGroupList.0.terminatingRule.ruleId, labels.0.name) as managedRule, httpRequest.country as country, httpRequest.clientIp as clientIp, httpRequest.httpMethod as method, httpRequest.uri as path\n| sort @timestamp desc\n| limit 200"
+            }
+          ]
         }
       ]
     }
