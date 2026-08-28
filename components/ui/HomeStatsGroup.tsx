@@ -11,7 +11,7 @@ import { useSettingsStore } from '@/lib/stores/settings'
 import { useAccountTotal } from '@/services/veworld-indexer/account-totals'
 import { useTotalTransactions } from '@/services/veworld-indexer/total-transactions'
 import { useTotalVetStaked } from '@/services/veworld-indexer/total-vet-staked'
-import { ValidatorStatus, useValidators, useValidatorsCount } from '@/services/veworld-indexer/validators'
+import { ValidatorStatus, useValidators } from '@/services/veworld-indexer/validators'
 import { FiArrowUpRight } from 'react-icons/fi'
 import { Card } from './Card'
 import { MotionText } from './MotionText'
@@ -42,27 +42,26 @@ export const HomeStatsGroup = () => {
 
   const { data: totalAccounts, isLoading: isLoadingAccounts } = useAccountTotal()
   const { data: totalTransactions, isLoading: isLoadingTransactions } = useTotalTransactions()
-  const { data: activeValidatorsCount, isLoading: isLoadingActiveValidators } = useValidatorsCount({
-    status: ValidatorStatus.ACTIVE,
-  })
-  const { data: exitingValidatorsCount, isLoading: isLoadingExitingValidators } = useValidatorsCount({
-    status: ValidatorStatus.EXITING,
-  })
-
   const accounts = totalAccounts ?? 0
-  const activeValidators = activeValidatorsCount ?? 0
-  const exitingValidators = exitingValidatorsCount ?? 0
-  const validators = activeValidators + exitingValidators
 
   const { data: validatorsList, isLoading: isLoadingValidators } = useValidators()
+
   const { data: totalVetStakedData, isLoading: isLoadingTotalVetStaked } = useTotalVetStaked()
 
-  const totalValidatorStake = useMemo(() => {
-    const list = validatorsList ?? []
-    return list
-      .filter(v => v.status === ValidatorStatus.ACTIVE || v.status === ValidatorStatus.EXITING)
-      .reduce((acc, v) => acc + (v.validatorVetStaked ?? 0), 0)
-  }, [validatorsList])
+  // Both figures come off the list this card already loads. Asking the indexer for each status
+  // separately meant paging entire validator records back — 165 KB — to arrive at one integer.
+  const stakingValidators = useMemo(
+    () =>
+      (validatorsList ?? []).filter(v => v.status === ValidatorStatus.ACTIVE || v.status === ValidatorStatus.EXITING),
+    [validatorsList],
+  )
+
+  const validators = stakingValidators.length
+
+  const totalValidatorStake = useMemo(
+    () => stakingValidators.reduce((acc, v) => acc + (v.validatorVetStaked ?? 0), 0),
+    [stakingValidators],
+  )
 
   const totalDelegatorStakedVet = useMemo(() => {
     try {
@@ -102,7 +101,7 @@ export const HomeStatsGroup = () => {
     },
     {
       title: t('Validators'),
-      loading: !isSoloNetwork && (isLoadingActiveValidators || isLoadingExitingValidators),
+      loading: !isSoloNetwork && isLoadingValidators,
       value: formatNumber(validators),
       href: STARGATE_LINK,
       external: true,
