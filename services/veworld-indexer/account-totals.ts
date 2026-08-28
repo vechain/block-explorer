@@ -3,7 +3,7 @@ import { z } from 'zod'
 import type { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { IndexerVersion, indexerGet, resolveUrl } from '.'
+import { IndexerVersion, indexerCachedGet } from '.'
 
 const ACCOUNT_TOTAL_QUERY_KEY = 'getAccountTotal'
 const ACCOUNT_TOTALS_QUERY_KEY = 'getAccountTotals'
@@ -68,9 +68,10 @@ export const useAccountTotals = (startTimestamp: number, endTimestamp: number, i
 }
 
 const getAccountTotal = async (networkName: NetworkName) => {
-  const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName, IndexerVersion.V2),
-    endPoint: '/accounts/total',
+  const { data } = await indexerCachedGet({
+    networkName,
+    endPoint: 'accounts/total',
+    direct: { version: IndexerVersion.V2 },
   })
   return zodParse({
     data,
@@ -88,13 +89,14 @@ const getAccountTotals = async ({
   startTimestamp: number
   endTimestamp: number
 }) => {
-  const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName, IndexerVersion.V2),
-    endPoint: '/accounts/totals',
+  const { data } = await indexerCachedGet({
+    networkName,
+    endPoint: 'accounts/totals',
     params: {
       startTimestamp: startTimestamp.toString(),
       endTimestamp: endTimestamp.toString(),
     },
+    direct: { version: IndexerVersion.V2 },
   })
 
   return zodParse({

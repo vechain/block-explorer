@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NetworkName } from '@/lib/constants/network'
 import { DEFAULT_RUNTIME_CONFIG, RUNTIME_CONFIG_WINDOW_KEY } from '@/lib/runtime-config/types'
 
+const ADDRESS = '0x0000000000000000000000000000000000000001'
+
 const get = vi.fn().mockResolvedValue({ data: {} })
 
 vi.mock('@/lib/api', () => ({ apiClient: { get } }))
@@ -32,6 +34,22 @@ describe('indexerCachedGet', () => {
     Reflect.deleteProperty(window, RUNTIME_CONFIG_WINDOW_KEY)
   })
 
+  // The address page prefetches six of these during SSR, where a relative URL makes
+  // `fetch` throw ERR_INVALID_URL and the page silently loses its server-rendered data.
+  it('gives the proxy an absolute base during a server render', async () => {
+    const { window: saved } = globalThis
+    Reflect.deleteProperty(globalThis, 'window')
+    try {
+      const indexerCachedGet = await importSubject()
+      await indexerCachedGet({ networkName: NetworkName.MAINNET, endPoint: 'accounts/overview' })
+    } finally {
+      Object.defineProperty(globalThis, 'window', { value: saved, configurable: true, writable: true })
+    }
+
+    expect(() => new URL(pathOf())).not.toThrow()
+    expect(pathOf()).toBe('http://127.0.0.1:3000/api/indexer/accounts/overview')
+  })
+
   it('routes a cached endpoint through the server-side proxy', async () => {
     const indexerCachedGet = await importSubject()
     await indexerCachedGet({ networkName: NetworkName.MAINNET, endPoint: 'transactions/latest' })
@@ -52,6 +70,41 @@ describe('indexerCachedGet', () => {
     await indexerCachedGet({ networkName: NetworkName.MAINNET, endPoint: 'nfts' })
 
     expect(baseUrlOf()).not.toBe('/api/indexer')
+  })
+
+  // A registry key is slashless, so the direct fallback has to add the separator the
+  // versioned base URL does not carry.
+  describe('direct fallback', () => {
+    it.each(['validators', '/validators'])('builds a joinable upstream path from %s', async endPoint => {
+      setBypass(true)
+      const indexerCachedGet = await importSubject()
+      await indexerCachedGet({ networkName: NetworkName.MAINNET, endPoint })
+
+      expect(pathOf()).toMatch(/\/api\/v1\/validators$/)
+    })
+
+    it('uses the direct descriptor’s path and version over the registry key', async () => {
+      setBypass(true)
+      const indexerCachedGet = await importSubject()
+      const { IndexerVersion } = await import('./index')
+      await indexerCachedGet({
+        networkName: NetworkName.MAINNET,
+        endPoint: 'validators/details',
+        params: { address: ADDRESS },
+        direct: { endPoint: `/validators/${ADDRESS}`, params: {}, version: IndexerVersion.V2 },
+      })
+
+      expect(pathOf()).toMatch(new RegExp(`/api/v2/validators/${ADDRESS}$`))
+      expect(paramsOf()).toEqual({})
+    })
+
+    it('keeps solo off the proxy, whose indexer URL only exists in the browser', async () => {
+      const indexerCachedGet = await importSubject()
+      await indexerCachedGet({ networkName: NetworkName.SOLO, endPoint: 'accounts/total' })
+
+      expect(baseUrlOf()).not.toBe('/api/indexer')
+      expect(pathOf()).toMatch(/\/accounts\/total$/)
+    })
   })
 
   // The escape hatch for the indexer's WAF rate limiting our single egress IP: every

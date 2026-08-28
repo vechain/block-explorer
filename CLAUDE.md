@@ -147,6 +147,7 @@ Runtime-injected (read by `lib/runtime-config/get.ts`):
 
 - `ALLOW_DEV_MODE`: `'true'` to expose the dev-mode toggle (and the solo network) in the UI; auto-enabled when `NODE_ENV=development`
 - `BYPASS_INDEXER_PROXY`: `'true'` to call the indexer straight from the browser instead of through `/api/indexer`, trading the server-side cache for per-viewer source IPs. Unset everywhere now that `INDEXER_RATE_LIMIT_BYPASS` gets our shared egress IP past the indexer's WAF.
+- `INTERNAL_ORIGIN`: origin a server render uses to reach our own proxy route handlers, so it shares their cache instead of calling upstream itself — a relative URL is not fetchable off the browser. Defaults to `http://127.0.0.1:$PORT` (3000 when `PORT` is unset), which is correct in Docker and ECS; set it only when the app is not reachable on its own loopback, or when `next dev` runs on another port.
 - `SOLO_B3TR_ADDRESS`, `SOLO_VOT3_ADDRESS`, `SOLO_STARGATE_NFT_ADDRESS`, `SOLO_STARGATE_DELEGATION_ADDRESS`: solo-network contract overrides
 
 ### Internationalization

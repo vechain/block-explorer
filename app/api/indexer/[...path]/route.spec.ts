@@ -171,10 +171,7 @@ describe('GET /api/indexer/[...path]', () => {
 
   describe('request validation', () => {
     it('404s an endpoint that is not in the registry, so this is not an open proxy', async () => {
-      const response = await call('http://localhost/api/indexer/accounts/totals?network=mainnet', [
-        'accounts',
-        'totals',
-      ])
+      const response = await call('http://localhost/api/indexer/accounts/nfts?network=mainnet', ['accounts', 'nfts'])
 
       expect(response.status).toBe(404)
       expect(fetchMock).not.toHaveBeenCalled()
@@ -334,6 +331,114 @@ describe('GET /api/indexer/[...path]', () => {
 
       expect(response.status).toBe(400)
       expect(fetchMock).not.toHaveBeenCalled()
+    })
+  })
+
+  // These carry the address in the upstream path but take it as a query param, since the
+  // proxy keys an entry on its own path plus the validated query.
+  describe('path-parameter endpoints', () => {
+    it('splices the address into the upstream path and does not forward it as a query param', async () => {
+      await call(`http://localhost/api/indexer/accounts/overview?network=mainnet&address=${ADDRESS}`, [
+        'accounts',
+        'overview',
+      ])
+
+      const url = new URL(requestedUrls(fetchMock)[0])
+      expect(url.pathname).toBe(`/api/v1/accounts/overview/${ADDRESS}`)
+      expect(url.searchParams.get('address')).toBeNull()
+    })
+
+    it('keys each address separately', async () => {
+      const other = '0x0000000000000000000000000000000000000002'
+      const GET = await importRoute()
+      const send = (address: string) =>
+        GET(request(`http://localhost/api/indexer/accounts/overview?network=mainnet&address=${address}`), {
+          params: Promise.resolve({ path: ['accounts', 'overview'] }),
+        })
+
+      await send(ADDRESS)
+      await send(other)
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+    })
+
+    it('400s without the address, rather than proxying a bare collection path', async () => {
+      const response = await call('http://localhost/api/indexer/accounts/overview?network=mainnet', [
+        'accounts',
+        'overview',
+      ])
+
+      expect(response.status).toBe(400)
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('forwards the slots window alongside the spliced address', async () => {
+      await call(
+        `http://localhost/api/indexer/validators/slots?network=mainnet&address=${ADDRESS}&startTimestamp=1000&endTimestamp=2000`,
+        ['validators', 'slots'],
+      )
+
+      const url = new URL(requestedUrls(fetchMock)[0])
+      expect(url.pathname).toBe(`/api/v2/validators/${ADDRESS}/slots`)
+      expect(Object.fromEntries(url.searchParams)).toEqual({ startTimestamp: '1000', endTimestamp: '2000' })
+    })
+  })
+
+  describe('indexer API version', () => {
+    it('sends v2 resources to /api/v2 and v1 resources to /api/v1', async () => {
+      const GET = await importRoute()
+
+      await GET(request('http://localhost/api/indexer/accounts/total?network=mainnet'), {
+        params: Promise.resolve({ path: ['accounts', 'total'] }),
+      })
+      await GET(request('http://localhost/api/indexer/stargate/total-vet-staked?network=mainnet'), {
+        params: Promise.resolve({ path: ['stargate', 'total-vet-staked'] }),
+      })
+
+      const urls = requestedUrls(fetchMock)
+      expect(new URL(urls[0]).pathname).toBe('/api/v2/accounts/total')
+      expect(new URL(urls[1]).pathname).toBe('/api/v1/stargate/total-vet-staked')
+    })
+  })
+
+  describe('validators', () => {
+    const validatorsUrl = (query: string) => `http://localhost/api/indexer/validators?${query}`
+
+    it('keys an endorser-filtered list apart from the unfiltered one', async () => {
+      const GET = await importRoute()
+      const send = (query: string) =>
+        GET(request(validatorsUrl(query)), { params: Promise.resolve({ path: ['validators'] }) })
+
+      await send('network=mainnet&page=0&size=150')
+      await send(`network=mainnet&page=0&size=150&endorser=${ADDRESS}`)
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(new URL(requestedUrls(fetchMock)[0]).searchParams.get('endorser')).toBeNull()
+      expect(new URL(requestedUrls(fetchMock)[1]).searchParams.get('endorser')).toBe(ADDRESS)
+    })
+
+    it('accepts the status filter and rejects one the indexer does not define', async () => {
+      const accepted = await call(validatorsUrl('network=mainnet&page=0&size=150&status=ACTIVE'), ['validators'])
+      const rejected = await call(validatorsUrl('network=mainnet&page=0&size=150&status=SLASHED'), ['validators'])
+
+      expect(accepted.status).toBe(200)
+      expect(rejected.status).toBe(400)
+    })
+
+    it('keys each delegations page separately', async () => {
+      const GET = await importRoute()
+      const send = (page: number) =>
+        GET(
+          request(
+            `http://localhost/api/indexer/validators/delegations?network=mainnet&validator=${ADDRESS}&page=${page}&size=100`,
+          ),
+          { params: Promise.resolve({ path: ['validators', 'delegations'] }) },
+        )
+
+      await send(0)
+      await send(1)
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
     })
   })
 

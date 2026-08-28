@@ -5,15 +5,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_NETWORK, NetworkName } from '@/lib/constants/network'
 import { makeQueryClient } from '@/lib/query-client/query-client'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { indexerGet } from '.'
+import { indexerCachedGet } from '.'
 import { useAccountTotal } from './account-totals'
 
 vi.mock('.', async importOriginal => ({
   ...(await importOriginal<typeof import('.')>()),
-  indexerGet: vi.fn(),
+  indexerCachedGet: vi.fn(),
 }))
 
-const mockIndexerGet = vi.mocked(indexerGet)
+const mockIndexerCachedGet = vi.mocked(indexerCachedGet)
 
 const TOTALS_BY_NETWORK: Partial<Record<NetworkName, number>> = {
   [NetworkName.MAINNET]: 111,
@@ -30,10 +30,9 @@ const renderAccountTotal = () => {
 }
 
 beforeEach(() => {
-  mockIndexerGet.mockImplementation(({ baseUrl }) => {
-    const networkName = baseUrl.includes('testnet') ? NetworkName.TESTNET : NetworkName.MAINNET
-    return Promise.resolve({ data: TOTALS_BY_NETWORK[networkName] } as Awaited<ReturnType<typeof indexerGet>>)
-  })
+  mockIndexerCachedGet.mockImplementation(({ networkName }) =>
+    Promise.resolve({ data: TOTALS_BY_NETWORK[networkName] } as Awaited<ReturnType<typeof indexerCachedGet>>),
+  )
 })
 
 afterEach(() => {

@@ -57,6 +57,9 @@ const cursorParam = z
   .regex(/^[A-Za-z0-9._~:+/=|-]+$/)
   .optional()
 
+// Left optional rather than defaulted: the upstream returns every status when it is absent.
+const validatorStatusParam = z.enum(['NONE', 'QUEUED', 'ACTIVE', 'EXITED', 'EXITING']).optional()
+
 // Repeated query param (`?eventType=VET&eventType=NFT`). Deduped so a filter repeating a
 // value shares one entry with the plain filter; the factory sorts the values in the key.
 const eventTypeParam = z
@@ -69,12 +72,14 @@ const fetchIndexer = async ({
   network,
   endPoint,
   params,
+  version = 'v1',
 }: {
   network: ProxiedNetwork
   endPoint: string
   params: Record<string, unknown>
+  version?: 'v1' | 'v2'
 }) => {
-  const url = new URL(`${INDEXER_BASE_URLS[network]}/api/v1/${endPoint}`)
+  const url = new URL(`${INDEXER_BASE_URLS[network]}/api/${version}/${endPoint}`)
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined) continue
     // Array params are repeated keys upstream, not one comma-joined value.
@@ -180,5 +185,85 @@ export const INDEXER_ENDPOINTS = {
     // entry per block rather than one per caller per second.
     cache: liveCache(64),
     fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'explorer/block-usage', params }),
+  }),
+
+  // Registry keys are proxy paths, and the proxy keys a cache entry on the path plus the
+  // validated query. An address the upstream takes in its path therefore has to arrive as
+  // a query param and be spliced back in below.
+  'accounts/overview': defineEndpoint({
+    params: z.object({ network: proxiedNetworkSchema, address: addressParam }),
+    cache: liveCache(2_000),
+    fetch: ({ network, address }) => fetchIndexer({ network, endPoint: `accounts/overview/${address}`, params: {} }),
+  }),
+
+  'accounts/total': defineEndpoint({
+    params: z.object({ network: proxiedNetworkSchema }),
+    cache: liveCache(8),
+    fetch: ({ network }) => fetchIndexer({ network, endPoint: 'accounts/total', params: {}, version: 'v2' }),
+  }),
+
+  'accounts/totals': defineEndpoint({
+    params: z.object({
+      network: proxiedNetworkSchema,
+      startTimestamp: timestampParam,
+      endTimestamp: timestampParam,
+    }),
+    cache: liveCache(64),
+    fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'accounts/totals', params, version: 'v2' }),
+  }),
+
+  'stargate/total-vet-staked': defineEndpoint({
+    params: z.object({ network: proxiedNetworkSchema }),
+    cache: liveCache(8),
+    fetch: ({ network }) => fetchIndexer({ network, endPoint: 'stargate/total-vet-staked', params: {} }),
+  }),
+
+  validators: defineEndpoint({
+    params: z.object({
+      network: proxiedNetworkSchema,
+      page: pageParam,
+      size: pageSizeParam,
+      endorser: addressParam.optional(),
+      status: validatorStatusParam,
+    }),
+    cache: liveCache(500),
+    fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'validators', params, version: 'v2' }),
+  }),
+
+  'validators/details': defineEndpoint({
+    params: z.object({ network: proxiedNetworkSchema, address: addressParam }),
+    cache: liveCache(500),
+    fetch: ({ network, address }) =>
+      fetchIndexer({ network, endPoint: `validators/${address}`, params: {}, version: 'v2' }),
+  }),
+
+  'validators/slots': defineEndpoint({
+    params: z.object({
+      network: proxiedNetworkSchema,
+      address: addressParam,
+      startTimestamp: timestampParam,
+      endTimestamp: timestampParam,
+    }),
+    // Callers round the window to a block boundary, as block-usage does.
+    cache: liveCache(500),
+    fetch: ({ network, address, ...params }) =>
+      fetchIndexer({ network, endPoint: `validators/${address}/slots`, params, version: 'v2' }),
+  }),
+
+  'validators/delegations': defineEndpoint({
+    params: z.object({
+      network: proxiedNetworkSchema,
+      validator: addressParam,
+      page: pageParam,
+      size: pageSizeParam,
+    }),
+    cache: liveCache(2_000),
+    fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'validators/delegations', params }),
+  }),
+
+  'validators/delegations/count': defineEndpoint({
+    params: z.object({ network: proxiedNetworkSchema, validator: addressParam }),
+    cache: liveCache(500),
+    fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'validators/delegations/count', params }),
   }),
 } satisfies Record<CachedIndexerEndpoint, ReturnType<typeof defineEndpoint>>
