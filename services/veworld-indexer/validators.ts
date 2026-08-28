@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { IndexerVersion, indexerGet, resolveUrl } from '.'
+import { IndexerVersion, indexerCachedGet } from '.'
 import { indexerResponseSchema } from './schemas'
 
 const ALL_VALIDATORS_QUERY_KEY = 'getAllValidators'
@@ -48,10 +48,11 @@ const getValidators = async ({
     ...(status && { status }),
   }
 
-  const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName, IndexerVersion.V2),
-    endPoint: '/validators',
+  const { data } = await indexerCachedGet({
+    networkName,
+    endPoint: 'validators',
     params,
+    direct: { version: IndexerVersion.V2 },
   })
 
   return zodParse({

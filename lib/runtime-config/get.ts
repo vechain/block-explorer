@@ -19,6 +19,11 @@ const readFromEnv = (): RuntimeConfig => ({
   },
 })
 
+// Outside `RuntimeConfig` on purpose: the browser resolves these routes against its own
+// origin, so this never needs to reach the inline script.
+export const getInternalOrigin = () =>
+  process.env.INTERNAL_ORIGIN?.trim() || `http://127.0.0.1:${process.env.PORT?.trim() || '3000'}`
+
 /**
  * Resolve runtime config on both server and client.
  *

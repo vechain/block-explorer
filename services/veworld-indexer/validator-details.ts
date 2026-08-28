@@ -1,11 +1,12 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
+import { getUnixTime } from 'date-fns'
 import { z } from 'zod'
 import { useMemo } from 'react'
-import type { NetworkName } from '@/lib/constants/network'
+import { BLOCK_TIME_SECONDS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
-import { IndexerVersion, indexerGet, resolveUrl } from '.'
+import { IndexerVersion, indexerCachedGet } from '.'
 import { indexerResponseSchema } from './schemas'
 import { validatorMetadataQueryOptions } from './validator-metadata'
 
@@ -172,9 +173,11 @@ const getValidatorDetails = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<ValidatorIndexerData | null> => {
-  const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName, IndexerVersion.V2),
-    endPoint: `/validators/${validatorAddress}`,
+  const { data } = await indexerCachedGet({
+    networkName,
+    endPoint: 'validators/details',
+    params: { address: validatorAddress },
+    direct: { endPoint: `/validators/${validatorAddress}`, params: {}, version: IndexerVersion.V2 },
   })
 
   const parsed = zodParse({
@@ -196,9 +199,9 @@ const getValidatorDelegationsCount = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<ValidatorDelegationsCount | null> => {
-  const result = await indexerGet({
-    baseUrl: resolveUrl(networkName),
-    endPoint: '/validators/delegations/count',
+  const result = await indexerCachedGet({
+    networkName,
+    endPoint: 'validators/delegations/count',
     params: { validator: validatorAddress },
   })
 
@@ -223,13 +226,21 @@ const getValidatorMissedBlocks = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<number> => {
-  const endTimestamp = Math.floor(Date.now() / 1000)
+  // Anchored to a block boundary so concurrent viewers share one cache entry rather than
+  // minting one each per second.
+  const now = getUnixTime(new Date())
+  const endTimestamp = now - (now % BLOCK_TIME_SECONDS)
   const startTimestamp = endTimestamp - WEEK_IN_SECONDS
 
-  const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName, IndexerVersion.V2),
-    endPoint: `/validators/${validatorAddress}/slots`,
-    params: { startTimestamp: String(startTimestamp), endTimestamp: String(endTimestamp) },
+  const { data } = await indexerCachedGet({
+    networkName,
+    endPoint: 'validators/slots',
+    params: { address: validatorAddress, startTimestamp: String(startTimestamp), endTimestamp: String(endTimestamp) },
+    direct: {
+      endPoint: `/validators/${validatorAddress}/slots`,
+      params: { startTimestamp: String(startTimestamp), endTimestamp: String(endTimestamp) },
+      version: IndexerVersion.V2,
+    },
   })
 
   const parsed = zodParse({
@@ -259,9 +270,9 @@ const getValidatorDelegations = async ({
 
   // Fetch all pages
   while (hasMore) {
-    const { data } = await indexerGet({
-      baseUrl: resolveUrl(networkName),
-      endPoint: '/validators/delegations',
+    const { data } = await indexerCachedGet({
+      networkName,
+      endPoint: 'validators/delegations',
       params: { validator: validatorAddress, page: String(page), size: String(pageSize) },
     })
 

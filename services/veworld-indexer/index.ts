@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/api'
 import { NetworkName } from '@/lib/constants/network'
 import { INDEXER_PROXY_BASE, isCachedIndexerEndpoint } from '@/lib/indexer-proxy'
 import { isProxiedNetwork } from '@/lib/proxied-network'
+import { proxyBaseUrl } from '@/lib/proxy-base-url'
 import { getRuntimeConfig } from '@/lib/runtime-config/get'
 import { getRuntimeIndexerBaseUrl } from '@/lib/utils/runtime-network'
 
@@ -25,6 +26,11 @@ export const resolveUrl = (networkName: NetworkName, version: IndexerVersion = I
   throw new Error(`Invalid indexer version: ${version}`)
 }
 
+type IndexerParams = Record<string, string | string[] | undefined>
+
+// Registry keys are slashless, and the client joins baseUrl and endPoint bare.
+const joinable = (endPoint: string) => (endPoint.startsWith('/') ? endPoint : `/${endPoint}`)
+
 // Proxied endpoints are cached server-side; anything else (and always solo, whose
 // indexer URL is browser-local) goes direct. `network` is appended last so a caller
 // cannot shadow it.
@@ -32,20 +38,27 @@ export const indexerCachedGet = <T>({
   networkName,
   endPoint,
   params,
+  direct,
 }: {
   networkName: NetworkName
+  /** The proxy's registry key, which is not always the upstream path. */
   endPoint: string
-  params?: Record<string, string | string[] | undefined>
+  params?: IndexerParams
+  /** The upstream call for when the proxy is not used, where it differs from the proxy's. */
+  direct?: { endPoint?: string; params?: IndexerParams; version?: IndexerVersion }
 }) => {
   // Bypassing puts each call back on the viewer's own IP, which the indexer's WAF limits.
   if (!getRuntimeConfig().bypassIndexerProxy && isProxiedNetwork(networkName) && isCachedIndexerEndpoint(endPoint)) {
     return apiClient.get<T>({
-      baseUrl: INDEXER_PROXY_BASE,
-      // The registry keys are slashless, so a caller may pass either form; the client joins bare.
-      endPoint: endPoint.startsWith('/') ? endPoint : `/${endPoint}`,
+      baseUrl: proxyBaseUrl(INDEXER_PROXY_BASE),
+      endPoint: joinable(endPoint),
       params: { ...params, network: networkName },
     })
   }
 
-  return indexerGet<T>({ baseUrl: resolveUrl(networkName), endPoint, params })
+  return indexerGet<T>({
+    baseUrl: resolveUrl(networkName, direct?.version),
+    endPoint: joinable(direct?.endPoint ?? endPoint),
+    params: direct?.params ?? params,
+  })
 }
