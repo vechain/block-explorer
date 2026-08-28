@@ -1,9 +1,6 @@
 name: Deploy to Prod
 
-# Publishing the draft release deploy-dev.yml left is what promotes to prod. The
-# App Runner service still serving the domain has its own workflow on the same
-# trigger; until the phase 7 cutover, publishing a release deploys both, and this
-# one takes no traffic — its ALB is not in DNS yet.
+# Publishing the draft release deploy-dev.yml left is what promotes to prod.
 on:
   release:
     types: [published]
@@ -320,10 +317,7 @@ jobs:
 
           aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
 
-      # Against the ALB by name rather than by DNS: the domain still resolves to
-      # App Runner, which would answer 200 whatever this stack is doing.
-      # --connect-to keeps the Host header and the SNI, so the prod certificate
-      # and the listener rules are exercised too.
+      # By ALB name, not DNS, so no cached answer can pass the check.
       - name: Confirm the new stack is serving
         env:
           DOMAIN: ${{ needs.terraform.outputs.domain }}
