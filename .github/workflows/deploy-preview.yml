@@ -61,6 +61,15 @@ jobs:
     outputs:
       ecr_tag: ${{ steps.meta.outputs.ecr_tag }}
     steps:
+      # Base, not the PR head: this job assumes a role, so the script it runs
+      # must not be one the PR can edit.
+      - name: Checkout base
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
       - name: Resolve tags
         id: meta
         env:
@@ -68,11 +77,16 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
+          git rev-parse --verify "${HEAD_SHA}^{commit}" >/dev/null 2>&1 \
+            || git fetch --quiet origin "$HEAD_SHA"
+          APP_SHA=$(bash scripts/app-content-sha.sh "$HEAD_SHA")
           SHORT_SHA="${HEAD_SHA:0:7}"
           {
-            echo "ghcr_tag=pr.${PR_NUMBER}.${SHORT_SHA}"
-            echo "ecr_tag=pr-${PR_NUMBER}-${SHORT_SHA}"
+            echo "ghcr_wait_tag=pr.${PR_NUMBER}.${SHORT_SHA}"
+            echo "ghcr_tag=pr.${PR_NUMBER}.${APP_SHA}"
+            echo "ecr_tag=pr-${PR_NUMBER}-${APP_SHA}"
           } >> "$GITHUB_OUTPUT"
+          echo "PR #${PR_NUMBER} at ${HEAD_SHA} carries app content ${APP_SHA}."
 
       - name: Login to GHCR
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -85,7 +99,7 @@ jobs:
       # and the image build are still running on that commit.
       - name: Wait for the PR image
         env:
-          GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.ghcr_tag }}
+          GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.ghcr_wait_tag }}
         run: |
           set -euo pipefail
           for attempt in $(seq 1 40); do
@@ -115,8 +129,16 @@ jobs:
         env:
           GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.ghcr_tag }}
           ECR_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.ecr_tag }}
+          ECR_TAG: ${{ steps.meta.outputs.ecr_tag }}
         run: |
           set -euo pipefail
+
+          if aws ecr describe-images --repository-name "$ECR_REPOSITORY" \
+               --image-ids "imageTag=${ECR_TAG}" --no-cli-pager >/dev/null 2>&1; then
+            echo "${ECR_TAG} is already in ECR — this push changed nothing the build reads."
+            exit 0
+          fi
+
           docker buildx imagetools create -t "$ECR_IMAGE" "$GHCR_IMAGE"
           docker buildx imagetools inspect "$ECR_IMAGE"
 
