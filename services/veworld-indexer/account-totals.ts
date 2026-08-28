@@ -18,7 +18,7 @@ const accountTotalsResponseSchema = z.array(
   }),
 )
 
-export const accountTotalQueryOptions = (networkName: NetworkName) => ({
+const accountTotalQueryOptions = (networkName: NetworkName) => ({
   queryKey: [ACCOUNT_TOTAL_QUERY_KEY, networkName],
   queryFn: () => getAccountTotal(networkName),
   refetchInterval: 10 * 1000,
