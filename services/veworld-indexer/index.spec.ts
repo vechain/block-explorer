@@ -20,6 +20,8 @@ const importSubject = async () => {
 
 const baseUrlOf = () => get.mock.calls[0][0].baseUrl as string
 const paramsOf = () => get.mock.calls[0][0].params as Record<string, string> | undefined
+// The client joins baseUrl and endPoint bare, so only the pair together shows a missing slash.
+const pathOf = () => `${baseUrlOf()}${get.mock.calls[0][0].endPoint as string}`
 
 describe('indexerCachedGet', () => {
   beforeEach(() => {
@@ -36,6 +38,13 @@ describe('indexerCachedGet', () => {
 
     expect(baseUrlOf()).toBe('/api/indexer')
     expect(paramsOf()).toMatchObject({ network: NetworkName.MAINNET })
+  })
+
+  it.each(['explorer/block-usage', '/explorer/block-usage'])('builds a joinable proxy path from %s', async endPoint => {
+    const indexerCachedGet = await importSubject()
+    await indexerCachedGet({ networkName: NetworkName.MAINNET, endPoint })
+
+    expect(pathOf()).toBe('/api/indexer/explorer/block-usage')
   })
 
   it('goes direct to the indexer for an endpoint the proxy does not cache', async () => {
