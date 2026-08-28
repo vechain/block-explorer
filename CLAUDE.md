@@ -219,6 +219,8 @@ app, which is the one actually running.
 ## Deployment
 
 - Docker support with standalone output mode
-- Terraform/Terragrunt configurations in respective directories
-- Preview envs auto-deploy on PR at `pr-{number}.block-explorer-preview.vechain.org`, destroyed on PR close
-- See `DEPLOYMENT.md` for full deployment instructions
+- Dev, prod and previews all run as ECS Fargate services behind an ALB, across two AWS accounts, from one image
+- Terraform is one stack per directory under `terraform/`, wired only through `terraform_remote_state`
+- Merging to `main` deploys dev and leaves one draft release; publishing it deploys prod
+- Preview envs deploy on the `create-preview` label at `pr-{number}.block-explorer-preview.vechain.org`, destroyed on PR close
+- See `DEPLOYMENT.md`, `terraform/README.md` and `.github/workflows/README.md`
