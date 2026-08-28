@@ -167,8 +167,7 @@ Standing up the account, in order:
 4. Publish a release. Expect the first apply to surface a missing IAM action or two; that is what the
    scoped role costs.
 5. Put the real indexer token into `block-explorer/prod/indexer-rate-limit-bypass` in the new account.
-   `BYPASS_INDEXER_PROXY` is on in prod, so nothing needs it yet — it is what lets that flag be
-   dropped later.
+   Prod proxies the indexer server-side, so every call leaves from the NAT EIPs and needs it.
 
 Prod Grafana has no SAML until an Okta app exists for its workspace: an AMG workspace is its own SAML
 audience, so dev's app cannot serve both. Alerts still reach Slack, and dashboards still provision,

@@ -146,7 +146,7 @@ Optional server-only (read by `env.api.ts`):
 Runtime-injected (read by `lib/runtime-config/get.ts`):
 
 - `ALLOW_DEV_MODE`: `'true'` to expose the dev-mode toggle (and the solo network) in the UI; auto-enabled when `NODE_ENV=development`
-- `BYPASS_INDEXER_PROXY`: `'true'` to call the indexer straight from the browser instead of through `/api/indexer`, trading the server-side cache for per-viewer source IPs. Set in prod while the indexer's CloudFront WAF rate-limits our shared egress IP; unset it once the WAF honours `x-rate-limit-bypass`.
+- `BYPASS_INDEXER_PROXY`: `'true'` to call the indexer straight from the browser instead of through `/api/indexer`, trading the server-side cache for per-viewer source IPs. Unset everywhere now that `INDEXER_RATE_LIMIT_BYPASS` gets our shared egress IP past the indexer's WAF.
 - `SOLO_B3TR_ADDRESS`, `SOLO_VOT3_ADDRESS`, `SOLO_STARGATE_NFT_ADDRESS`, `SOLO_STARGATE_DELEGATION_ADDRESS`: solo-network contract overrides
 
 ### Internationalization
