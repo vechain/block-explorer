@@ -1,12 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { getUnixTime } from 'date-fns'
-import { getNetworkGenesisTimestamp, type NetworkName } from '@/lib/constants/network'
+import { BLOCK_TIME_SECONDS, type NetworkName } from '@/lib/constants/network'
 import { blockUsageResponseSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { indexerGet, resolveUrl } from '.'
 
 const TOTAL_TRANSACTIONS_QUERY_KEY = 'getTotalTransactions'
+
+// A floor, not a knob: under a day the indexer switches to per-block buckets and grows again.
+const WINDOW_SECONDS = 24 * 60 * 60
 
 export const totalTransactionsQueryOptions = (networkName: NetworkName) => ({
   queryKey: [TOTAL_TRANSACTIONS_QUERY_KEY, networkName],
@@ -15,14 +18,16 @@ export const totalTransactionsQueryOptions = (networkName: NetworkName) => ({
 })
 
 const getTotalTransactions = async ({ networkName }: { networkName: NetworkName }) => {
-  const genesisTimestamp = getNetworkGenesisTimestamp(networkName) ?? 0
+  // Anchored to a block boundary so concurrent viewers share one URL rather than one each.
+  const now = getUnixTime(new Date())
+  const endTimestamp = now - (now % BLOCK_TIME_SECONDS)
 
   const { data } = await indexerGet({
     baseUrl: resolveUrl(networkName),
     endPoint: '/explorer/block-usage',
     params: {
-      startTimestamp: genesisTimestamp.toString(),
-      endTimestamp: getUnixTime(new Date()).toString(),
+      startTimestamp: (endTimestamp - WINDOW_SECONDS).toString(),
+      endTimestamp: endTimestamp.toString(),
     },
   })
 
