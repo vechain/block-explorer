@@ -24,6 +24,7 @@
     "token-registry:update": "node scripts/update-token-registry.mjs",
     "token-registry:check": "node scripts/check-token-registry.mjs",
     "check:pr-bloat": "BASE_REF=origin/main HEAD_REF=WORKTREE node scripts/check-pr-bloat.mjs",
+    "app:sha": "bash scripts/app-content-sha.sh",
     "ghcr:push": "docker build -t ghcr.io/vechain/block-explorer:latest . && docker push ghcr.io/vechain/block-explorer:latest"
   },
   "dependencies": {

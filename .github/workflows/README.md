@@ -8,13 +8,29 @@ App Runner until the cutover.
 ```
 PR merged to main
   → codebase-versioning.yml tags v.X.Y.Z (increment:* label picks the bump)
-  → publish-ghcr-image.yml builds the multi-arch image
+  → publish-ghcr-image.yml builds the multi-arch image, or aliases one it already has
   → deploy-dev.yml promotes it to ECR and deploys dev
   → prepare-release.yml leaves exactly one draft release
 
 Draft published
   → deploy-production.yml deploys prod
 ```
+
+### Content-addressed images
+
+Every merge to `main` gets a version tag, but most releases change nothing the Docker build reads —
+terraform, workflows and docs are all outside it. So the canonical image tag is a **content SHA**
+(`app-<sha12>`) from [`scripts/app-content-sha.sh`](../../scripts/app-content-sha.sh), and the version
+tags are aliases on the same manifest. Run it locally with `pnpm app:sha`.
+
+Two things fall out of that. `publish-ghcr-image.yml` probes GHCR for the content SHA and skips both
+arch builds when it is already published. And because the image tag is what Terraform pins, the task
+definition of such a release is byte-identical, so `deploy-dev.yml` and `deploy-prod.yml` skip the ECS
+roll too — each compares the revision the apply registered against the one the service runs. Terraform
+still applies every release; terraform changes are exactly what these releases carry.
+
+The version baked into the bundle is therefore the release that last *changed* the app, not the one
+being cut. That is what is running, so it is what the footer says.
 
 ## Workflows
 
@@ -25,10 +41,10 @@ Draft published
 - Manual dispatch with a version tag (break-glass, e.g. to roll back)
 
 **Jobs:**
-1. `guard` - Resolves the tag and refuses anything not reachable from `main`
-2. `promote` - Copies the GHCR manifest list into ECR under a `dev-` prefix, keeping both arches
+1. `guard` - Resolves the tag and its content SHA, and refuses anything not reachable from `main`
+2. `promote` - Copies the GHCR manifest list into ECR as `dev-app-<sha>`, keeping both arches. Skipped when that tag is already there
 3. `terraform` - Applies each stack serially in dependency order, planning immediately before each apply
-4. `roll` - Moves the service to the new task definition revision, then checks `/api/health` and that `/api/metrics` is 403
+4. `roll` - Moves the service to the new task definition revision unless it already runs it, then checks `/api/health` and that `/api/metrics` is 403
 5. `draft-release` - Calls `prepare-release.yml` (not on dispatch)
 
 **Domain:** `https://dev.block-explorer.vechain.org`
@@ -186,14 +202,21 @@ cannot starve the rest.
 
 | Environment | Pattern | Example | Purpose |
 |-------------|---------|---------|---------|
-| Production | `v.X.Y.Z` | `v.1.2.3` | Semantic version tag |
+| Dev (ECS) | `dev-app-{sha12}` | `dev-app-ded8af8261c7` | Content SHA — what Terraform pins |
+| Prod (ECS) | `app-{sha12}` | `app-ded8af8261c7` | Content SHA — what Terraform pins |
+| Prod (alias) | `v.X.Y.Z` | `v.1.2.3` | Semantic version, aliased onto the same manifest |
 | Preview | `pr-{number}-{short_sha}` | `pr-144-a1b2c3d` | PR number + 7-char commit SHA |
 
-**Production Tags:**
+**Content SHA tags:**
+- From `scripts/app-content-sha.sh` — the last commit touching a Docker build input
+- One image per distinct app build, however many releases ship it
+- What ECS task definitions reference, so identical content produces an identical revision
+
+**Production version tags:**
 - Uses semantic versioning (`v.X.Y.Z`)
 - Must match an existing git tag
-- Immutable - each version deployed once
-- Provides clear release history
+- Immutable - each version written once
+- An alias for readability and for the `v.`-prefixed ECR lifecycle rule, not what ECS resolves
 
 **Preview Tags:**
 - Includes SHORT_SHA (7-char commit hash)

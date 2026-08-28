@@ -141,7 +141,7 @@ Optional server-only (read by `env.api.ts`):
 - `METRICS_ENABLED`: `'true'` to serve `/api/metrics`; auto-enabled when `NODE_ENV=development`. Set only where a load balancer rule keeps the path off the public internet.
 - `REDIS_URL`: shared cache behind `lib/cached-proxy`. Unset keeps every proxy cache in-process, which is the local and test default; in AWS it holds a `rediss://` URL for the ElastiCache Serverless Valkey in `terraform/data/`.
 - `REDIS_CLUSTER_MODE`: `'true'` when `REDIS_URL` points at a serverless cache, which only runs in cluster mode.
-- `CACHE_NAMESPACE`: prefixed onto every cache key, set to the image tag. Dev and every preview share one Valkey, so this is what stops one build reading a payload shape another wrote.
+- `CACHE_NAMESPACE`: prefixed onto every cache key, set to the image tag — a content SHA on dev and prod, so a release that rebuilt nothing keeps its warm namespace. Dev and every preview share one Valkey, so this is what stops one build reading a payload shape another wrote.
 
 Runtime-injected (read by `lib/runtime-config/get.ts`):
 
@@ -209,6 +209,12 @@ Automated semantic versioning via git tags — `package.json` version is `0.0.0-
 - `increment:major` — breaking changes (1.0.0 → 2.0.0)
 
 Real version injected at build time from git tags.
+
+Images are content-addressed: `scripts/app-content-sha.sh` (also `pnpm app:sha`) resolves the last
+commit touching a Docker build input, and that `app-<sha12>` is the canonical image tag with the
+version tags aliased onto it. A release changing only terraform, workflows or docs therefore skips
+both the image build and the ECS roll — and shows the version of the release that last changed the
+app, which is the one actually running.
 
 ## Deployment
 
