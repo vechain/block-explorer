@@ -1,7 +1,8 @@
-import { isServer, queryOptions, skipToken, useQuery } from '@tanstack/react-query'
+import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
 import { apiClient, ApiError } from '@/lib/api'
 import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { isProxiedNetwork } from '@/lib/proxied-network'
+import { proxyBaseUrl } from '@/lib/proxy-base-url'
 import { type BlockId, type BlockRevision, blockCompressedSchema, blockExpandedSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { BEST_BLOCK_ENDPOINT, BLOCK_ENDPOINT, isConcreteBlockRevision, THOR_PROXY_BASE } from '@/lib/thor-proxy'
@@ -15,15 +16,13 @@ const BLOCK_COMPRESSED_QUERY_KEY = 'getBlockCompressed'
 /**
  * Blocks come from the node rather than the indexer, so they go through our own cache at
  * `/api/thor` — without it every viewer fetches the same block from the public node.
- * Server-side callers go direct: the pages that prefetch blocks are already ISR-cached,
- * and a loopback request would need an absolute URL. Solo goes direct too, its node URL
- * being browser-local.
+ * Solo goes direct, its node URL being browser-local.
  */
-const shouldProxy = (networkName: NetworkName) => !isServer && isProxiedNetwork(networkName)
+const shouldProxy = (networkName: NetworkName) => isProxiedNetwork(networkName)
 
 const getBlockViaProxy = async ({ endPoint, params }: { endPoint: string; params: Record<string, string> }) => {
   try {
-    const { data } = await apiClient.get<unknown>({ baseUrl: THOR_PROXY_BASE, endPoint, params })
+    const { data } = await apiClient.get<unknown>({ baseUrl: proxyBaseUrl(THOR_PROXY_BASE), endPoint, params })
     return data
   } catch (error) {
     // The proxy turns Thor's null body into a 404; callers expect an absent block.
