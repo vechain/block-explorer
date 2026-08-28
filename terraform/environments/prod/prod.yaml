@@ -41,8 +41,9 @@ waf_enabled: true
 waf_managed_rules_blocking: false
 waf_rate_limit: 2000
 
-# Cutover step two, once the weight below has landed. See README.
-dns_record_enabled: false
+# Cutover step two: the ECS record joins the name, taking none of the traffic.
+dns_record_enabled: true
+dns_weight: 0
 
 # App Runner below: read only by the legacy app-runner/ stack, gone in phase 7.
 region: eu-west-1
