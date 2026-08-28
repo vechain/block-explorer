@@ -196,10 +196,15 @@ created next to a simple one of the same name. In that order the App Runner side
 2. **`dns_record_enabled: true` and `dns_weight: 0`, then publish another release.** `edge/` adds
    `ecs-prod` beside it — a plain create, the name being weighted already. Still nothing moves.
 
-3. **Ramp** `0 → 10 → 25 → 50 → 75 → 100`, holding at each step for the Grafana dashboards and the ALB
-   alarms. Each step is an UPSERT of both records; rollback is the same call with the old numbers,
-   which is why the ramp is not driven by an apply. `evaluate_target_health` on the ECS record means a
-   prod stack that fails its health checks leaves rotation without anyone making that call. Put the
-   final weights back into the yaml when the ramp settles, so an apply agrees with the zone.
+3. **Freeze releases, then ramp** `0 → 10 → 25 → 50 → 75 → 100`, holding at each step for the Grafana
+   dashboards and the ALB alarms. Each step is an UPSERT of both records; rollback is the same call
+   with the old numbers, which is why the ramp is not driven by an apply. `evaluate_target_health` on
+   the ECS record means a prod stack that fails its health checks leaves rotation without anyone
+   making that call.
+
+   The freeze is load-bearing. Neither record ignores changes to its weight, so a release published
+   mid-ramp applies the yaml's numbers over whatever the ramp has reached — and the two records are
+   written by two workflows that can fail independently, so a half-applied release leaves a split the
+   zone will happily serve. Lift the freeze by putting the settled weights back into the yaml.
 
 4. **Hold App Runner at weight 0 for 24–48 hours**, then decommission it.
