@@ -127,6 +127,8 @@ module "service" {
     NODE_ENV = "production"
     PORT     = tostring(local.env.container_port)
     HOSTNAME = "0.0.0.0"
+    # Must outlive the ALB's 60s idle_timeout, or it reuses a socket Node has closed.
+    KEEP_ALIVE_TIMEOUT = "65000"
     # Safe only because the ALB returns a fixed 403 for /api/metrics; the
     # sidecar scrapes it over the task's loopback instead.
     METRICS_ENABLED = "true"
