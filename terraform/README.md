@@ -52,6 +52,13 @@ Dashboards live in `observability-grafana/` as a separate stack because the Graf
 initialise against a workspace the same apply is creating. The alert rules deep-link to panel IDs in
 `dashboards/overview.json` — renumbering a panel breaks the link from Slack.
 
+`dashboards/logs.json` reads the ECS and WAF log groups through CloudWatch Logs Insights, which bills
+on bytes scanned, so it ships with auto-refresh off. Its WAF panels and the overview's WAF row both
+name each rule explicitly: the `Rule` dimension carries the `visibility_config` metric name, and a
+wildcard also matches the `ALL` aggregate and the managed groups' nested sub-rules, which double-counts.
+`CountedRequests` overlaps `AllowedRequests` for the same reason — a count-mode match does not
+terminate evaluation — so the two never belong in one stack.
+
 Alerts evaluate in every environment but `alerts_enabled` in the env YAML controls whether they are
 delivered, and dev has it off. To rehearse the path end to end: set the `SLACK_WEBHOOK_URL` secret on
 the `dev` GitHub Environment, flip `alerts_enabled` to `true`, scale the service to zero, and confirm

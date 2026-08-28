@@ -28,6 +28,13 @@ locals {
   # Falls back to a name that matches nothing, so WAF-off renders empty panels.
   waf_web_acl_name = coalesce(try(data.terraform_remote_state.edge.outputs.waf_web_acl_name, null), "waf-disabled")
 
+  # Rule dimension values are visibility_config metric names, not terraform rule names.
+  waf_rule_prefix = "${local.name}-waf"
+
+  # Mirrors the naming in frontend/ and edge/ rather than another remote state read.
+  frontend_log_group = "/ecs/${local.frontend_service_name}"
+  waf_log_group      = "aws-waf-logs-${local.name}"
+
   # Version ID, not the token: a boolean off a sensitive value is sensitive too.
   observability_ready = local.amg_workspace_endpoint != null && local.amg_sa_token_secret_version_id != null && local.amp_prometheus_endpoint != null
 
