@@ -49,6 +49,10 @@ dns_weight: 100
 # moved block-explorer.vechain.org only.
 extra_domain:
   name: explore.vechain.org
+  app_runner_target: hmhfp8n3wn.eu-west-1.awsapprunner.com
+  # Still all on App Runner. The flip that created the pair, and the ramp, are in the README.
+  dns_weight: 0
+  app_runner_dns_weight: 100
 
 # App Runner below: read only by the legacy app-runner/ stack, gone in phase 7.
 region: eu-west-1
