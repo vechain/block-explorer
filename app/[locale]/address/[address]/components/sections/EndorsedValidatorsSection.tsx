@@ -55,7 +55,7 @@ export const EndorsedValidatorsSection = ({ address }: { address: AddressString 
   const rows: EndorsedValidatorRow[] = (validators ?? []).map(validator => ({
     id: validator.id as AddressString,
     validator: validator.id as AddressString,
-    status: validator.status,
+    status: validator.status ?? ValidatorStatus.NONE,
     validatorStake: validator.validatorVetStaked ?? 0,
     delegated: validator.delegatorVetStaked ?? 0,
     totalStaked: validator.vetStaked ?? 0,
