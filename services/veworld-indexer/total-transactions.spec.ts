@@ -4,8 +4,7 @@ import { NetworkName } from '@/lib/constants/network'
 const indexerGet = vi.fn()
 
 vi.mock('.', () => ({
-  indexerGet: (...args: unknown[]) => indexerGet(...args),
-  resolveUrl: () => 'https://indexer.test/api/v1',
+  indexerCachedGet: (...args: unknown[]) => indexerGet(...args),
 }))
 
 const { totalTransactionsQueryOptions } = await import('./total-transactions')
@@ -66,7 +65,25 @@ describe('totalTransactionsQueryOptions', () => {
     expect(paramsOf(1)).not.toEqual(paramsOf(0))
   })
 
-  it('reports zero when the window holds no blocks', async () => {
+  it('goes to the cached proxy path, not straight at the indexer', async () => {
+    vi.setSystemTime(new Date('2026-08-28T12:00:00Z'))
+    await run()
+
+    expect(indexerGet.mock.calls[0][0]).toMatchObject({
+      networkName: NetworkName.MAINNET,
+      endPoint: 'explorer/block-usage',
+    })
+  })
+
+  it('falls back to all history rather than reporting zero on an idle chain', async () => {
+    vi.setSystemTime(new Date('2026-08-28T12:00:00Z'))
+    indexerGet.mockResolvedValueOnce({ data: [] }).mockResolvedValueOnce({ data: [point('158207010')] })
+
+    await expect(run()).resolves.toBe(158207010)
+    expect(Number(paramsOf(1).startTimestamp)).toBe(1530316800)
+  })
+
+  it('reports zero only when even the full history is empty', async () => {
     vi.setSystemTime(new Date('2026-08-28T12:00:00Z'))
     indexerGet.mockResolvedValue({ data: [] })
 
