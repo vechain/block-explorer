@@ -12,8 +12,8 @@ variable "project" {
 
 variable "public_zone_names" {
   type        = list(string)
-  description = "Public zones in this account the prod pipeline may write into."
-  default     = ["block-explorer.vechain.org"]
+  description = "Public zones in this account the prod pipeline may write into. explore.vechain.org is the name users type; it still resolves to App Runner."
+  default     = ["block-explorer.vechain.org", "explore.vechain.org"]
 }
 
 variable "prod_deploy_role_arn" {
