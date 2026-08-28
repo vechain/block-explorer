@@ -28,11 +28,10 @@ runtime_environment:
 cache_data_storage_max_gb: 5
 cache_ecpu_per_second_max: 15000
 
-# Prod needs its own Okta SAML app — an AMG workspace is its own audience, so
-# dev's cannot serve it. Blank leaves the workspace without SSO.
-grafana_okta_saml_metadata_url: ''
-grafana_admin_okta_groups: []
-grafana_editor_okta_groups: []
+# An AMG workspace is its own SAML audience, so prod needs its own Okta app.
+grafana_okta_saml_metadata_url: https://vechaineu.okta.com/app/exk1033qa0eZpldKg418/sso/saml/metadata
+grafana_admin_okta_groups: [APP_AMG_BLOCK_EXPLORER_Admin]
+grafana_editor_okta_groups: [APP_AMG_BLOCK_EXPLORER_Editor]
 
 # Needs SLACK_WEBHOOK_URL on the prod Environment, or the apply fails.
 alerts_enabled: true
