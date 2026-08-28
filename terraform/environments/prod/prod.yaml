@@ -8,13 +8,12 @@ az_count: 2
 # An AZ outage must not take prod egress with it. Dev: true.
 single_nat_gateway: false
 
-# ECS task. Four times dev: at 512 the two tasks pinned at 100% CPU the moment
-# explore.vechain.org moved, which is the load App Runner ran on 2 vCPU each.
+# ECS task. One process per task saturates at 1.2 vCPU, so 2048 stranded roughly 40%.
 image_tag: latest # Overwritten by the deploy with the content SHA it resolved.
-task_cpu: 2048
-task_memory: 4096
+task_cpu: 1024
+task_memory: 2048 # Fargate's floor at this cpu size; peak RSS under load was 493 MB.
 desired_count: 2
-autoscaling_max: 8
+autoscaling_max: 16 # Same 16 vCPU ceiling as 2048 x 8, in units that fill.
 container_port: 3000
 
 log_retention_days: 90
