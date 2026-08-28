@@ -4,7 +4,7 @@ import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerGet, resolveUrl } from '.'
+import { indexerCachedGet } from '.'
 import {
   type IndexerGetErc721Params,
   type IndexerResponse,
@@ -55,9 +55,9 @@ const getErc721Tokens = async ({
   networkName: NetworkName
   params: IndexerGetErc721Params
 }) => {
-  const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName),
-    endPoint: '/nfts',
+  const { data } = await indexerCachedGet({
+    networkName,
+    endPoint: 'nfts',
     params: serializeZodParams(params),
   })
 

@@ -3,7 +3,7 @@ import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { IndexerVersion, indexerGet, resolveUrl } from '.'
+import { indexerCachedGet } from '.'
 import { indexerResponseSchema, tokenHistorySchema } from './schemas'
 import { ZERO_ADDRESS } from '@vechain/sdk-core'
 
@@ -29,9 +29,9 @@ const getTokenHistory = async (networkName: NetworkName, params: TokenHistoryPar
   if (size !== undefined) searchParams.set('size', String(size))
   if (direction) searchParams.set('direction', direction)
 
-  const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName, IndexerVersion.V1),
-    endPoint: '/nfts/history',
+  const { data } = await indexerCachedGet({
+    networkName,
+    endPoint: 'nfts/history',
     params: Object.fromEntries(searchParams),
   })
 
