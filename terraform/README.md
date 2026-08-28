@@ -19,8 +19,7 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 | `observability-aws/`     | AMP, Grafana, SNS, the Slack bridge, AMP rules and CloudWatch alarms |
 | `frontend/`              | The explorer's ECS service, task definition and secret               |
 | `observability-grafana/` | Grafana datasources and dashboards                                   |
-| `account-level/`         | Legacy: ECR, Route53 zones, App Runner IAM and autoscaling           |
-| `app-runner/`            | Legacy: the App Runner service still serving prod                    |
+| `account-level/`         | Legacy: ECR, the Route53 zones and the certs previews still use      |
 
 `modules/ecs-webservice` is the shared Fargate service shape — dev, prod and previews differ by
 parameters, not structure. It holds two copies of the service resource because `ignore_changes` takes
@@ -32,9 +31,8 @@ the env YAML — previews stay at one task.
 `modules/observability-sidecar` renders the ADOT container that scrapes `/api/metrics` over the task's
 loopback; previews do not carry it.
 
-The two legacy stacks are removed once prod has moved to ECS. `app-runner/` was named `frontend/`
-until the ECS work started; its state key is declared in `provider.tf` and is still
-`frontend/terraform.tfstate`, so the rename moved no state.
+`account-level/` is what is left of the App Runner setup: the ECR repository, both public zones and
+the wildcard certificate `preview-edge/` reads. It is applied by hand, not by a pipeline.
 
 ## Observability
 
@@ -91,8 +89,6 @@ stacks carry no `workspace == "prod" ? … : …` ternaries. The state bucket fo
 `environments/<env>/backend.config`, and the stacks that read another stack's state read that file
 back rather than defaulting to a bucket name — the two environments are in different accounts, so a
 prod apply that fell through to dev's bucket would quietly read dev's network and skip dev's cache.
-`app-runner/` is the exception: it pins the old bucket in its own `provider.tf`, because
-`environments/prod/backend.config` now names the new account's.
 
 Because the YAML path is derived from `terraform.workspace`, anything outside `dev` / `prod` fails at
 parse time — and every stack additionally carries a `workspace_guard` precondition.
@@ -155,12 +151,8 @@ Same stacks, a second account, and a separate state bucket — `deploy-prod.yml`
 ElastiCache is built with the account rather than retrofitted, so the image that eventually takes
 prod traffic is one that has been running against Valkey in dev for weeks.
 
-**The domain is not part of this.** `dns_record_enabled` is false in `prod.yaml`, so nothing here
-touches `block-explorer.vechain.org` — it resolves to App Runner, and the new stack is reachable only
-by its ALB name, which is what the deploy verifies against with `curl --connect-to`. Turning it into a
-weighted pair is the cutover — see below.
-
-Both public zones stay in the dev account, which is what lets that weighted pair live in one zone. So
+Both public zones stay in the dev account, which is what let the cutover's weighted pair live in one
+zone, and is still where `block-explorer.vechain.org` resolves from. So
 `acm/` and `edge/` write records through a second provider that assumes the role `dns/` owns there,
 and `bootstrap/` grants the deploy role nothing on Route53 in its own account.
 
@@ -182,123 +174,33 @@ Prod Grafana has no SAML until an Okta app exists for its workspace: an AMG work
 audience, so dev's app cannot serve both. Alerts still reach Slack, and dashboards still provision,
 since the Terraform provider uses a service-account token.
 
-### Cutover
+### The records on the prod domains
 
-`block-explorer.vechain.org` becomes a weighted pair — `app-runner` and `ecs-prod` — and traffic moves
-by weight. Both `edge/` and `app-runner/` grow a `weighted_routing_policy` when their env yaml carries
-a weight (`dns_weight`, `app_runner_dns_weight`). With no weight set they stay simple records, so dev
-never sees any of this.
+`block-explorer.vechain.org` and `explore.vechain.org` each carry a weighted A-alias with set
+identifier `ecs-prod`, left over from the cutovers: each shared its name with an `app-runner` record
+until App Runner was deleted. Each is the only record on its name now, and the weight is a formality —
+`edge/` keeps it because dropping `dns_weight` would replace the record for no gain.
 
-The two sides have to be enabled by **separate releases**, because a `release: published` starts
-`deploy-prod.yml` and `deploy-production.yml` at the same time and Route53 rejects a weighted record
-created next to a simple one of the same name. In that order the App Runner side goes first:
+Worth remembering the next time prod has to move. Two weighted records on one name, ramped with an
+UPSERT per step, made rollback a weight change rather than a revert, and `evaluate_target_health` took
+a failing origin out of rotation unattended. Four things about the shape itself.
 
-1. **`app_runner_dns_weight: 100`, then publish a release.** Nothing moves — one record still holds
-   all the traffic, it just expresses that as a weight now. The provider turns the simple record into
-   a weighted one as a delete-plus-create inside a single Route53 change batch, which Route53 applies
-   transactionally, so the name never stops resolving. Confirm the record came back weighted before
-   going on; a `terraform plan` of `app-runner/` is clean either way, since the resource id it writes
-   already carries the set identifier.
+Terraform cannot turn a simple record into a weighted one. Route53 rejects a weighted record created
+beside a simple one of the same name, and the provider offers no path between them, so the apply
+fails outright. `block-explorer.vechain.org` got its first weight from a stack that already owned the
+record; `explore.vechain.org` needed a manual `change-resource-record-sets` batch deleting the simple
+record and creating both weighted ones in one transaction.
 
-2. **`dns_record_enabled: true` and `dns_weight: 0`, then publish another release.** `edge/` adds
-   `ecs-prod` beside it — a plain create, the name being weighted already. Still nothing moves.
+Run that batch before the **merge**, not before the release. A merge to `main` cuts a release and the
+deploy chains straight off it, so there is no gap in which to do it — skipping it fails the prod
+deploy at `edge/` and skips every stack after it.
 
-3. **Freeze releases, then ramp** `0 → 10 → 25 → 50 → 75 → 100`, holding at each step for the Grafana
-   dashboards and the ALB alarms. Each step is an UPSERT of both records; rollback is the same call
-   with the old numbers, which is why the ramp is not driven by an apply. `evaluate_target_health` on
-   the ECS record means a prod stack that fails its health checks leaves rotation without anyone
-   making that call.
+A single apply is not atomic across two records either. The provider sends one Route53 change per
+record, so an interrupted apply leaves the weights mismatched. Read both back after every write.
 
-   The freeze is load-bearing. Neither record ignores changes to its weight, so a release published
-   mid-ramp applies the yaml's numbers over whatever the ramp has reached — and the two records are
-   written by two workflows that can fail independently, so a half-applied release leaves a split the
-   zone will happily serve. Lift the freeze by putting the settled weights back into the yaml.
+And freeze releases for the length of the ramp. Neither record ignores changes to its weight, so a
+release lands the yaml's numbers over whatever the ramp has reached.
 
-4. **Hold App Runner at weight 0 for 24–48 hours**, then decommission it.
-
-### explore.vechain.org
-
-That ramp moved `block-explorer.vechain.org`. `explore.vechain.org` is a separate zone holding its own
-simple alias at App Runner, so none of it reached that name — and that is the name users type, and
-effectively all of prod's traffic. It moves the same way, with two differences.
-
-`edge/` owns both halves of its pair, keyed off `extra_domain` in the env yaml, so one stack writes
-both records rather than two workflows that can fail independently, and the App Runner teardown has no
-record of its own to unpick. That narrows the failure modes; it does not make a step atomic. The
-provider sends one Route53 change per record, so an interrupted apply still leaves the weights
-mismatched — read both back after every write.
-
-The pair also has to be created out of band, because Terraform cannot make the first move: turning a
-simple record into a weighted one is a replacement, and the provider's delete and create are separate
-calls. That window is fine on a name nobody resolves and not on this one. So the flip is a single
-Route53 change batch, run once, before the release that applies `edge/`:
-
-```
-aws route53 change-resource-record-sets --hosted-zone-id <explore.vechain.org zone> \
-  --change-batch file://flip.json
-```
-
-Three changes in one batch, which Route53 applies transactionally, so the name never stops resolving.
-`DELETE` has to repeat the existing record exactly or the batch is rejected — check it against the
-zone first, and take the ALB's own alias zone from `edge/`'s `alb_zone_id` output:
-
-```json
-{
-  "Changes": [
-    {
-      "Action": "DELETE",
-      "ResourceRecordSet": {
-        "Name": "explore.vechain.org.",
-        "Type": "A",
-        "AliasTarget": {
-          "DNSName": "hmhfp8n3wn.eu-west-1.awsapprunner.com.",
-          "HostedZoneId": "Z087551914Z2PCAU0QHMW",
-          "EvaluateTargetHealth": true
-        }
-      }
-    },
-    {
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "explore.vechain.org.",
-        "Type": "A",
-        "SetIdentifier": "app-runner",
-        "Weight": 100,
-        "AliasTarget": {
-          "DNSName": "hmhfp8n3wn.eu-west-1.awsapprunner.com.",
-          "HostedZoneId": "Z087551914Z2PCAU0QHMW",
-          "EvaluateTargetHealth": true
-        }
-      }
-    },
-    {
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "explore.vechain.org.",
-        "Type": "A",
-        "SetIdentifier": "ecs-prod",
-        "Weight": 0,
-        "AliasTarget": {
-          "DNSName": "<prod ALB dns name>.",
-          "HostedZoneId": "<prod ALB zone id>",
-          "EvaluateTargetHealth": true
-        }
-      }
-    }
-  ]
-}
-```
-
-Both records set `allow_overwrite`, so the apply that follows adopts them instead of colliding with
-them.
-
-Then ramp as above, freeze included — these records track the yaml like every other, so a release
-published mid-ramp resets both weights to it, which here hands the whole name back to App Runner. Move
-the pair in one UPSERT: Route53 splits traffic by each weight over their sum, so `ecs-prod` at 100
-beside `app-runner` at 100 is half the traffic, not the cutover. `app-runner`/`ecs-prod` goes 100/0,
-90/10, 75/25, 50/50, 25/75, 0/100, reading both records back at each step. Lift the freeze by putting
-the settled weights into the yaml.
-
-Watch ECS CPU and task count through the ramp, not just the ALB. App Runner serves this name on 4–8
-instances of 2 vCPU and prod ECS runs the dev task size, so the ramp is the first real load that stack
-has ever taken.
+Size the origin before ramping, not after. App Runner served `explore.vechain.org` on four to eight
+instances of 2 vCPU; prod ECS started the ramp at dev's 512/1024 and pinned at 100% CPU the moment the
+name landed on it.

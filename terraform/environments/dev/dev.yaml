@@ -17,7 +17,7 @@ desired_count: 1
 autoscaling_max: 2
 container_port: 3000
 
-# The dev name is ours to create. Prod's already answers on App Runner.
+# The dev name is ours to create.
 dns_record_enabled: true
 
 log_retention_days: 30

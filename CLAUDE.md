@@ -137,7 +137,7 @@ Required (see `.env`):
 
 Optional server-only (read by `env.api.ts`):
 
-- `INDEXER_RATE_LIMIT_BYPASS`: `x-rate-limit-bypass` token, sent only on the server-side indexer calls made by `/api/indexer`. Prod only, from Secrets Manager via `terraform/app-runner/secrets.tf`; blank or unset sends no header.
+- `INDEXER_RATE_LIMIT_BYPASS`: `x-rate-limit-bypass` token, sent only on the server-side indexer calls made by `/api/indexer`. From Secrets Manager via `terraform/frontend/`; blank or unset sends no header.
 - `METRICS_ENABLED`: `'true'` to serve `/api/metrics`; auto-enabled when `NODE_ENV=development`. Set only where a load balancer rule keeps the path off the public internet.
 - `REDIS_URL`: shared cache behind `lib/cached-proxy`. Unset keeps every proxy cache in-process, which is the local and test default; in AWS it holds a `rediss://` URL for the ElastiCache Serverless Valkey in `terraform/data/`.
 - `REDIS_CLUSTER_MODE`: `'true'` when `REDIS_URL` points at a serverless cache, which only runs in cluster mode.
@@ -219,6 +219,8 @@ app, which is the one actually running.
 ## Deployment
 
 - Docker support with standalone output mode
-- Terraform/Terragrunt configurations in respective directories
-- Preview envs auto-deploy on PR at `pr-{number}.block-explorer-preview.vechain.org`, destroyed on PR close
-- See `DEPLOYMENT.md` for full deployment instructions
+- Dev, prod and previews all run as ECS Fargate services behind an ALB, across two AWS accounts, from one image
+- Terraform is one stack per directory under `terraform/`, wired only through `terraform_remote_state`
+- Merging to `main` deploys dev and leaves one draft release; publishing it deploys prod
+- Preview envs deploy on the `create-preview` label at `pr-{number}.block-explorer-preview.vechain.org`, destroyed on PR close
+- See `DEPLOYMENT.md`, `terraform/README.md` and `.github/workflows/README.md`

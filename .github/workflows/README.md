@@ -1,7 +1,6 @@
 # GitHub Actions Workflows
 
-Automated CI/CD for Block Explorer. Dev and previews run on ECS Fargate; production is still on
-App Runner until the cutover.
+Automated CI/CD for Block Explorer. Dev, prod and previews all run on ECS Fargate, from one image.
 
 ## The release path
 
@@ -13,7 +12,7 @@ PR merged to main
   → prepare-release.yml leaves exactly one draft release
 
 Draft published
-  → deploy-production.yml deploys prod
+  → deploy-prod.yml deploys prod
 ```
 
 ### Content-addressed images
@@ -105,17 +104,24 @@ absent. It only annotates findings onto the diff.
 
 ---
 
-### Production Deployment (`deploy-production.yml`)
+### Production Deployment (`deploy-prod.yml`)
 
 **Triggers:**
-- A GitHub Release being published
+- A GitHub Release being published — the single draft `deploy-dev.yml` left
+- Manual dispatch against a tag (break-glass, e.g. to roll back)
 
 **Jobs:**
-1. `validate-version-format` - Validates the tag is `v.X.Y.Z`
-2. `promote-to-ecr` - Copies the GHCR image into ECR as `v.X.Y.Z` (plus `latest` for stable versions)
-3. `deploy` - Applies `terraform/app-runner` in workspace `prod`
+1. `guard` - Resolves the tag and refuses anything not reachable from `main`
+2. `promote` - Copies the GHCR manifest list into the prod account's ECR, keeping both arches
+3. `terraform` - Applies each stack serially in dependency order, planning immediately before each apply
+4. `roll` - Moves the service to the new revision, then checks `/api/health` and that `/api/metrics` is 403
 
 **Domain:** `https://block-explorer.vechain.org`
+
+Same shape as the dev deploy, in a second account. Both guard the tag identically — it can point
+anywhere, so one unreachable from `main` is refused before any credential is handed out. Prod approval
+is a GitHub Environment protection rule, and `vars.AWS_OIDC_ROLE_ARN` resolves per Environment, so no
+workflow here branches on the target.
 
 ---
 
@@ -186,31 +192,6 @@ cannot starve the rest.
 
 ---
 
-### Build & Push (Reusable) (`build-push-ecr.yml`)
-
-**Purpose:** Reusable workflow for building and pushing Docker images
-
-**Used By:** `deploy-production.yml`
-
-**Inputs:**
-- `ecr_repository` - ECR repository name
-- `image_tag` - Docker image tag
-- `aws_region` - AWS region
-- `dockerfile_path` - Path to Dockerfile (default: `./Dockerfile`)
-- `context_path` - Build context (default: `.`)
-
-**Outputs:**
-- `tag` - Image tag that was pushed
-- `uri` - Full URI of pushed image
-
-**Configuration:**
-- Platform: `linux/amd64` (single platform only)
-- Provenance: `false` (prevents manifest index)
-- SBOM: `false` (prevents attestations)
-- Cache: GitHub Actions cache
-
----
-
 ## Image Tagging Strategy
 
 | Environment | Pattern | Example | Purpose |
@@ -240,11 +221,15 @@ cannot starve the rest.
 
 ## Authentication
 
-**Method:** OpenID Connect (OIDC)
+OIDC throughout — no long-lived keys.
 
-**AWS Role:** `${{ secrets.AWS_ACC_ROLE }}`
+`vars.AWS_OIDC_ROLE_ARN` is set per GitHub Environment, one variable name resolving to a different
+role in `dev` and in `prod`, which is what keeps every `if env == prod` conditional out of the
+workflows. Prod approval is an Environment protection rule on the same object. The preview workflows
+still use `secrets.AWS_ACC_ROLE`, the shared dev-account role.
 
-**Permissions Required:**
+Neither role ARN is committed: they carry account ids, and this repo is public.
+
 ```yaml
 permissions:
   id-token: write      # OIDC token
@@ -254,43 +239,15 @@ permissions:
 
 ---
 
-## Configuration
-
-### Secrets (Repository Settings)
-
-| Secret | Description | Example |
-|--------|-------------|---------|
-| `AWS_ACC_ROLE` | IAM role ARN with OIDC trust | `arn:aws:iam::123456789:role/github-actions` |
-
-### Variables (Optional Repository Variables)
-
-| Variable | Default | Override |
-|----------|---------|----------|
-| `AWS_REGION` | `eu-west-1` | Set via repository variables |
-| `ECR_REPOSITORY` | `block-explorer` | Set via repository variables |
-
-### Environment Variables (Workflow-level)
-
-```yaml
-AWS_REGION: eu-west-1
-ECR_REPOSITORY: block-explorer
-TERRAFORM_VERSION: 1.16.0
-PROJECT_NAME: block-explorer
-PREVIEW_DOMAIN_SUFFIX: block-explorer-preview.vechain.org
-```
-
----
-
 ## Terraform State
 
-| Environment | Bucket | Key |
-|-------------|--------|-----|
-| Production | `vechain-terraform-state-prod` | `env:/production/frontend/terraform.tfstate` |
-| Previews | `block-explorer-terraform-state-nonprod` | `env:/pr-{number}/frontend-preview/terraform.tfstate` |
+One bucket per account, one key per stack, workspace-namespaced. Bucket names are in
+`terraform/environments/<env>/backend.config`; the layout is in
+[terraform/README.md](../../terraform/README.md).
 
 **Workspaces:**
-- `production` - Production environment (App Runner, until the cutover)
-- `pr-{number}` - One workspace per preview
+- `dev` / `prod` - one per environment, in different accounts
+- `pr-{number}` - one per preview, in the dev account
 
 ---
 
@@ -350,10 +307,10 @@ lock. The cost is that a queued teardown can be evicted by a newer run, which is
 ## Cost Optimization
 
 ### Preview Environments
-- **Min instances:** 1 (App Runner requirement)
-- **Max instances:** 2
-- **CPU/Memory:** 512 MB / 1 GB (50% of production)
-- **Auto-cleanup:** Destroyed when PR closes
+- **Tasks:** 1, no autoscaling
+- **CPU/Memory:** 512 / 1024, the same as dev, so a preview cannot OOM where dev does not
+- **Cache:** shared with dev, namespaced by image tag
+- **Auto-cleanup:** destroyed when the PR closes, and swept every six hours regardless
 
 ### Image Lifecycle (ECR)
 - Keeps last 30 production images (tagged `v.*`)
@@ -370,10 +327,9 @@ lock. The cost is that a queued teardown can be evicted by a newer run, which is
 - Ensure Dockerfile exists and is valid
 
 ### Deployment failures
-- Check Terraform logs in GitHub Actions
-- Verify AWS credentials are valid
-- Check App Runner service logs in CloudWatch
-- Ensure environment config file is valid YAML
+- Check the Terraform plan in the job that failed — each stack is planned immediately before its apply
+- Container logs are in CloudWatch under `/ecs/block-explorer-<env>-frontend`
+- Ensure the environment config file is valid YAML
 
 ### PR comment not updating
 - Verify `pull-requests: write` permission is set
@@ -386,8 +342,7 @@ lock. The cost is that a queued teardown can be evicted by a newer run, which is
 - Old builds should be cancelled automatically
 
 ### Custom domain not activating
-- Wait 5-10 minutes after first deployment
-- Check Route53 validation records exist
-- Use default App Runner URL in the meantime
-- Verify ACM certificate is issued
+- Check the ACM certificate is issued and its Route53 validation records exist
+- Both public zones are in the dev account; prod writes into them through an assumed role
+- The ALB's own DNS name works meanwhile — `curl --connect-to` is how the deploy verifies it
 

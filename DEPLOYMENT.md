@@ -1,446 +1,61 @@
 # Block Explorer Deployment Guide
 
-This document provides a comprehensive guide for deploying the Block Explorer application using AWS App Runner and Terraform.
+Dev, prod and per-PR previews all run as ECS Fargate services behind an ALB, in two AWS accounts, from
+one image. None of the three is deployed by hand; only the account-setup stacks are.
 
-## Architecture Overview
+- **Infrastructure** — [terraform/README.md](terraform/README.md): the stack layout, environment
+  config, the shared cache, observability, and how prod's account is stood up.
+- **Pipelines** — [.github/workflows/README.md](.github/workflows/README.md): what runs when, and the
+  preview lifecycle.
 
-The infrastructure consists of:
+| Environment | Domain                                           | Deployed by                              |
+| ----------- | ------------------------------------------------ | ---------------------------------------- |
+| Dev         | `dev.block-explorer.vechain.org`                 | every merge to `main`                    |
+| Prod        | `block-explorer.vechain.org`                     | publishing the draft release dev left    |
+| Preview     | `pr-{number}.block-explorer-preview.vechain.org` | the `create-preview` label on an open PR |
 
-- **Production Environment**: Single permanent App Runner service at `block-explorer.vechain.org`
-- **Preview Environments**: Ephemeral services at `pr-{number}.block-explorer-preview.vechain.org`
-- **Terraform Workspaces**: Separate workspace for production and each preview
-- **State Management**: S3 buckets with DynamoDB locking
-- **Shared Auto Scaling**: Account-level auto scaling configurations (avoids AWS quota limits)
+## Versioning
 
-## Prerequisites
+Version numbers come from git tags and are **never stored in `package.json`**, which stays at
+`0.0.0-dev`.
 
-1. **AWS Account** with permissions for:
-   - ECR (Elastic Container Registry)
-   - App Runner
-   - Route53
-   - ACM (Certificate Manager)
-   - S3
-   - DynamoDB
-   - IAM
-
-2. **Tools Required**:
-   - AWS CLI configured
-   - Terraform >= 1.6.0
-   - Docker
-   - Node.js 20.17.0 (for local development)
-   - pnpm 9.x
-
-3. **GitHub Repository Secrets**:
-   - `AWS_ACC_ROLE` - IAM role ARN with OIDC trust for GitHub Actions
-   - `VECHAINCI_SSH_PRIVATE_KEYS` - Deploy key for semantic versioning
-
-## Versioning Strategy
-
-### Automated Semantic Versioning
-
-This project uses **automated semantic versioning** via GitHub Actions. Version numbers are managed entirely through git tags and are **never stored in `package.json`**.
-
-**How it works:**
-
-1. When you open a PR, you must add one of these labels:
-   - `increment:major` - Breaking changes (1.x.x → 2.0.0)
-   - `increment:minor` - New features (1.1.x → 1.2.0)
-   - `increment:patch` - Bug fixes (1.1.1 → 1.1.2)
-
-2. The `validate-version-label.yml` workflow ensures every PR has a valid label
-
-3. When a PR is merged to `main`, the `codebase-versioning.yml` workflow:
-   - Reads the PR label
-   - Calculates the next version number
-   - Creates and pushes a new git tag (e.g., `v.1.2.3`)
-
-4. The version is injected at build time via the `NEXT_PUBLIC_APP_VERSION` environment variable
-
-**Note:** The `package.json` version is set to `0.0.0-dev` and is **not used** for versioning. The real version comes from git tags.
-
-### Version Display
-
-The application version displayed in the UI is:
-
-- **Production/Preview**: The git tag or image tag passed at build time (e.g., `v.1.2.3`, or `pr-175-718a160`)
-- **Local Development**: Falls back to `package.json` version (`0.0.0-dev`)
+Every PR needs one label before it merges — `increment:major`, `increment:minor` or
+`increment:patch`; `validate-version-label.yml` blocks the merge without one. On merge,
+`codebase-versioning.yml` reads the label and pushes the next `v.X.Y.Z` tag. That tag is what builds
+the image and what the UI shows, injected at build time as `NEXT_PUBLIC_APP_VERSION`. Locally the
+version falls back to `package.json`, so it reads `0.0.0-dev`.
 
 On dev and prod that is the release which last **changed** the app, not necessarily the newest one.
-Images are content-addressed (see `scripts/app-content-sha.sh`), so a release carrying only
-terraform, workflow or docs changes reuses the existing image and reports the version baked into it —
-which is the version actually serving traffic. `.github/workflows/README.md` has the full scheme.
+Images are content-addressed (see `scripts/app-content-sha.sh`), so a release carrying only terraform,
+workflow or docs changes reuses the existing image and reports the version baked into it — which is
+the version actually serving traffic. `.github/workflows/README.md` has the full tagging scheme.
 
-## Initial Infrastructure Setup
+## Releasing to prod
 
-### Step 1: Deploy Account-Level Infrastructure
+Each dev deploy leaves exactly one draft release. Publishing it is the prod deploy: the image is
+promoted from GHCR into the prod account's ECR, the Terraform stacks are applied in order, and the ECS
+service is rolled and then checked over its ALB. Dev and prod run the same image, so parity is
+structural rather than maintained by hand.
 
-```bash
-cd terraform/account-level
-terraform init --backend-config="../environments/<env-name>"
-terraform apply
-```
+Rolling back is a `workflow_dispatch` of `deploy-prod.yml` against the previous tag.
 
-**Created Resources**:
+## Public Docker image
 
-- ECR repository for Docker images
-- IAM roles for App Runner
-- ACM certificates (production + wildcard for previews)
-- Route53 hosted zone configuration
-- Shared auto scaling configurations (production + preview)
-
-**Important**: Save the outputs from this step:
-
-```bash
-terraform output
-```
-
-## Production Deployment
-
-### Automated (Recommended)
-
-Production deployments are triggered manually via workflow dispatch from a version tag:
-
-1. **Ensure your changes are merged to `main`** with the appropriate version label
-2. **Wait for the version tag** to be created automatically (e.g., `v.1.5.0`)
-3. **Go to Actions → Deploy to Production → Run workflow**
-4. **Select the version tag** from the "Use workflow from" dropdown
-5. **Choose action**:
-   - `dry-run` - Preview changes without deploying
-   - `deploy` - Apply changes to production
-6. **Monitor deployment** progress in the workflow logs
-
-The workflow will:
-
-1. Validate the version tag format (`v.X.Y.Z`)
-2. Build Docker image with the version tag
-3. Push to ECR with tag `v.X.Y.Z`
-4. Update production config
-5. Deploy via Terraform
-6. Push the image to GHCR (`ghcr.io/vechain/block-explorer`) with the version tag and `latest`
-7. Create a GitHub Release (if new version)
-
-### Manual Deployment (Not Recommended)
-
-```bash
-# 1. Get AWS ECR credentials
-aws ecr get-login-password --region eu-west-1 | \
-  docker login --username AWS --password-stdin <ECR_URL>
-
-# 2. Build and push image (use the version tag)
-VERSION_TAG="v.1.5.0"
-docker build -t block-explorer --build-arg NEXT_PUBLIC_APP_VERSION=${VERSION_TAG} .
-docker tag block-explorer:latest <ECR_URL>/block-explorer:${VERSION_TAG}
-docker push <ECR_URL>/block-explorer:${VERSION_TAG}
-
-# 3. Update config
-cd terraform/environments/prod
-sed -i "s/^image_tag:.*/image_tag: ${VERSION_TAG}/" prod.yaml
-
-# 4. Deploy
-cd ../../app-runner
-terraform init
-terraform workspace select prod
-terraform plan
-terraform apply
-```
-
-## Preview Environment Deployment
-
-Previews run on ECS behind the shared preview ALB, and are **never applied by hand** — the state
-lives in a per-PR Terraform workspace the reconcile sweep treats as the source of truth, so a
-workspace created outside the workflow is a preview nothing owns.
-
-1. Add the `create-preview` label to a pull request against `main`.
-2. Every later push redeploys it. Removing the label does not tear it down; closing the PR does, and
-   `preview-reconcile.yml` reaps anything the teardown missed within six hours.
-
-The URL is posted as a sticky comment on the PR.
-
-**Image**: promoted from `ghcr.io/vechain/block-explorer:pr.{number}.{short_sha}`, which
-`publish-ghcr-pr-image.yml` publishes once the unit tests pass, into ECR as
-`pr-{number}-app-{sha12}`. Previews are not rebuilt — they run the same arm64 image dev and prod run,
-and a push that changes nothing the build reads reuses the image already there.
-
-**Domain**: `https://pr-{number}.block-explorer-preview.vechain.org`
-
-Concurrent previews cap at 100 — the target-group-per-ALB quota, which AWS does not raise.
-
-## Destroying Preview Environments
-
-Closing or merging the PR destroys the preview. `preview-reconcile.yml` runs every six hours and
-reaps any `pr-*` workspace whose PR is closed or no longer labelled, which is what covers a teardown
-that was evicted from its concurrency group or failed on a lock.
-
-To force one by hand, re-run `preview-reconcile.yml` from the Actions tab rather than running
-Terraform locally.
-
-## Environment Configuration
-
-### Production Config
-
-File: `terraform/environments/prod/prod.yaml`
-
-Key settings:
-
-- `cpu: 512` / `memory: 1024` - 0.5 vCPU, 1 GB RAM
-- `port: 3000` - Application port
-- `health_check_path: /` - Health check endpoint
-
-### Preview Config
-
-File: `terraform/environments/preview/preview.yaml`, shared by every `pr-N` workspace.
-
-Key settings:
-
-- `task_cpu: 512` / `task_memory: 1024` - matches dev, so a preview cannot OOM where dev does not
-- `container_port: 3000` - Application port
-- `log_retention_days: 14`
-
-### Auto Scaling Configuration
-
-Auto scaling is managed at the **account level** (`terraform/account-level/autoscaling.tf`), not per-environment. This is required because [AWS limits accounts to 10 unique auto scaling configuration names](https://docs.aws.amazon.com/apprunner/latest/dg/manage-autoscaling.html).
-
-| Config                   | Min Size | Max Size | Max Concurrency |
-| ------------------------ | -------- | -------- | --------------- |
-| `block-explorer-prod`    | 1        | 10       | 100             |
-| `block-explorer-preview` | 1        | 2        | 100             |
-
-All preview environments share the same `block-explorer-preview` auto scaling configuration.
-
-**To modify auto scaling settings:**
-
-```bash
-cd terraform/account-level
-# Edit autoscaling.tf
-terraform plan
-terraform apply
-```
-
-## Monitoring
-
-### CloudWatch Logs
-
-View logs for production:
-
-```bash
-aws logs tail /aws/apprunner/prod-block-explorer/*/application --follow
-```
-
-View logs for preview:
-
-```bash
-PR_NUMBER=123
-aws logs tail /ecs/block-explorer-preview-pr-${PR_NUMBER} --follow
-```
-
-### Service Status
-
-Check App Runner service status:
-
-```bash
-aws apprunner list-services --region eu-west-1
-```
-
-Get service details:
-
-```bash
-aws apprunner describe-service --service-arn <SERVICE_ARN>
-```
-
-## Troubleshooting
-
-### Build Failures
-
-**Issue**: Docker build fails in GitHub Actions
-
-**Solution**:
-
-1. Check the workflow logs in GitHub Actions
-2. Test build locally: `docker build -t block-explorer .`
-3. Verify `next.config.ts` has `output: 'standalone'`
-4. Check pnpm-lock.yaml is compatible with pnpm 9.15.4
-
-### Service Won't Start
-
-**Issue**: App Runner service fails to start
-
-**Solutions**:
-
-1. Check CloudWatch Logs for errors
-2. Verify the Docker image starts locally:
-   ```bash
-   docker run -p 3000:3000 <ECR_URL>/block-explorer:pr-123
-   ```
-3. Check health check endpoint returns 200 OK
-
-### Custom Domain Not Working
-
-**Issue**: Custom domain shows certificate errors
-
-**Solutions**:
-
-1. Verify certificate is validated in ACM console
-2. Check DNS records in Route53
-3. Wait for DNS propagation (up to 48 hours)
-4. Verify custom domain association status:
-   ```bash
-   aws apprunner list-custom-domains --service-arn <SERVICE_ARN>
-   ```
-
-### Workspace Conflicts
-
-**Issue**: Cannot switch workspaces or workspace doesn't exist
-
-**Solutions**:
-
-1. List workspaces: `terraform workspace list`
-2. Create if missing: `terraform workspace new <name>`
-3. Ensure correct backend config: `-backend-config=../environments/<env>/backend.config`
-
-### Version Label Missing
-
-**Issue**: PR checks fail with "missing version label"
-
-**Solution**:
-
-1. Add one of the required labels to your PR:
-   - `increment:patch` - for bug fixes
-   - `increment:minor` - for new features
-   - `increment:major` - for breaking changes
-2. Re-run the check
-
-## Cost Breakdown
-
-**Important Note**: AWS App Runner requires a minimum of 1 instance (`min_size: 1`). It doesn't support scaling to zero. However, you only pay for provisioned memory when idle (not CPU), making costs very low for inactive preview environments.
-
-### Production (Monthly)
-
-- App Runner: ~$25-30 (1 vCPU, 2GB RAM, 24/7)
-- ECR Storage: $1-2 per GB
-- Data Transfer: $0.09 per GB
-- **Total: ~$30-35/month**
-
-### Preview Environments (Monthly)
-
-- Preview ALB: ~$18, flat regardless of how many previews are open
-- Fargate per preview: ~$15 (0.5 vCPU, 1GB, arm64, 24/7)
-- ECR Storage: shared with production
-
-### Example with 5 Active PRs
-
-- Production: $35
-- Preview ALB: $18
-- 5 Previews: $75
-- **Total: ~$128/month**
-
-Previews bill until the PR closes, so the label is the cost control. Remove it from a PR that is
-parked and the reconcile sweep reaps it within six hours.
-
-## Cleanup
-
-### Remove All Preview Environments
-
-Remove the `create-preview` label from every open PR that has one, then run
-`preview-reconcile.yml` from the Actions tab. It sweeps every `pr-*` workspace and reaps the ones
-whose PR is closed or unlabelled.
-
-### Delete Production
-
-```bash
-cd terraform/app-runner
-terraform init
-terraform workspace select prod
-terraform destroy
-```
-
-### Delete All Infrastructure
-
-```bash
-# 1. Delete all environments (production + previews)
-cd terraform/app-runner
-# ... destroy each workspace ...
-
-# 2. Delete account-level resources
-cd ../account-level
-terraform destroy
-```
-
-## Best Practices
-
-1. **Always use feature branches** and create PRs to test changes in preview environments
-2. **Add version labels to PRs** - required for CI to pass and for versioning
-3. **Review preview environments** before merging to production
-4. **Deploy to production from version tags** - never deploy untagged commits
-5. **Monitor costs** in AWS Cost Explorer, especially for preview environments
-6. **Clean up old images** in ECR regularly (automated via lifecycle policy)
-
-## Security Considerations
-
-1. **IAM Roles**: Follow principle of least privilege
-2. **Secrets Management**: Store sensitive values in AWS Secrets Manager or SSM Parameter Store
-3. **Network Security**: App Runner services are public by default; use WAF for additional protection
-4. **Image Scanning**: ECR automatic scanning is enabled for vulnerability detection
-5. **HTTPS Only**: All traffic is encrypted via HTTPS (App Runner default)
-6. **OIDC Authentication**: GitHub Actions uses OpenID Connect (no long-lived credentials)
-
-## Image Tagging Strategy
-
-| Environment | Pattern                   | Example                   | Purpose                                      |
-| ----------- | ------------------------- | ------------------------- | -------------------------------------------- |
-| Dev         | `dev-app-{sha12}`         | `dev-app-ded8af8261c7`    | Content SHA — what Terraform pins            |
-| Production  | `app-{sha12}`             | `app-ded8af8261c7`        | Content SHA — what Terraform pins            |
-| Production  | `v.X.Y.Z`                 | `v.1.2.3`                 | Semantic version, aliased onto that manifest |
-| Preview     | `pr-{number}-app-{sha12}` | `pr-144-app-ded8af8261c7` | PR number + content SHA                      |
-
-**Production Tags:**
-
-- The content SHA is what ECS resolves; one image per distinct app build, however many releases ship it
-- The version alias keeps the release readable and matches the `v.`-prefixed ECR lifecycle rule
-- Immutable - each tag written once
-- Provides clear release history
-
-**Preview Tags:**
-
-- One per distinct app build on a PR, not one per commit
-- Scoped per PR, so a reused image never carries another PR's baked version
-- An apply with a new value is what rolls the preview service
-
-## Public Docker Image (GHCR)
-
-The Block Explorer image is also published to **GitHub Container Registry** (`ghcr.io`) as a public image. This allows anyone to pull and run the explorer locally — useful when running a local VeChain node and wanting a block explorer alongside it.
-
-### Automated Publishing
-
-Every successful production deployment automatically pushes the image to GHCR with both the version tag and `latest`. This is handled by the `push-ghcr` job in `deploy-production.yml`, which runs after the deploy job completes.
-
-### Manual Publishing
-
-For ad-hoc pushes outside the CI pipeline:
-
-```bash
-# Login to GHCR (one-time, requires a GitHub PAT or `gh auth token`)
-echo $(gh auth token) | docker login ghcr.io -u $(gh api user --jq .login) --password-stdin
-
-# Build and push the "latest" image to GHCR
-pnpm ghcr:push
-```
-
-To push a specific version tag instead of `latest`:
-
-```bash
-docker build -t ghcr.io/vechain/block-explorer:v.1.2.3 .
-docker push ghcr.io/vechain/block-explorer:v.1.2.3
-```
-
-### Pulling the image
-
-Since the image is public, no authentication is needed to pull:
+The image is published to GitHub Container Registry as a public image, which is what makes it usable
+next to a local VeChain node.
 
 ```bash
 docker pull ghcr.io/vechain/block-explorer:latest
 ```
 
-Or in a `docker-compose.yml`:
+`publish-ghcr-image.yml` pushes it on every `v.*` tag, multi-arch. For an ad-hoc push outside CI:
+
+```bash
+echo $(gh auth token) | docker login ghcr.io -u $(gh api user --jq .login) --password-stdin
+pnpm ghcr:push
+```
+
+In a `docker-compose.yml`:
 
 ```yaml
 services:
@@ -457,19 +72,18 @@ services:
       - NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL}
 ```
 
-## Support
+## When a deploy goes wrong
 
-For issues or questions:
+Start at the workflow run: every deploy plans each stack immediately before applying it, and the roll
+step fails loudly if `/api/health` does not come back 200 or `/api/metrics` is reachable from outside.
 
-1. Check CloudWatch Logs first
-2. Review GitHub Actions workflow logs
-3. Consult AWS App Runner documentation
-4. Review Terraform state: `terraform show`
-
-## Additional Resources
-
-- [AWS App Runner Documentation](https://docs.aws.amazon.com/apprunner/)
-- [Terraform Documentation](https://www.terraform.io/docs)
-- [Next.js Deployment](https://nextjs.org/docs/deployment)
-- [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
-- [Semantic Versioning](https://semver.org/)
+- **Task starts and dies** — container logs are in CloudWatch under
+  `/ecs/block-explorer-<env>-frontend`, and
+  the ECS service events name the reason. A missing secret is the usual one; secrets are read only at
+  task start, so a value written after a deploy needs another roll.
+- **Targets never go healthy** — the target group's health check is `/api/health` on the container
+  port. Confirm the task is listening on it before looking at the ALB.
+- **Alarms and dashboards** — Grafana, linked from the deploy summary. Alert routing and what is
+  alarmed are in [terraform/README.md](terraform/README.md).
+- **A preview is stuck** — `preview-reconcile.yml` sweeps orphaned workspaces every six hours and can
+  be run on demand.

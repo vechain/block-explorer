@@ -13,12 +13,9 @@ locals {
   # Only prod answers to a second name, and only until its cutover lands.
   extra_domain = try(local.env.extra_domain.name, null)
 
-  # Empty until the atomic flip has made that name a weighted pair.
+  # Empty where the environment has no such name, which is every one but prod.
   extra_weighted = can(local.env.extra_domain.dns_weight) ? toset(compact([local.extra_domain])) : toset([])
 
-  # Defaulted rather than left null: the record bodies are type-checked even when
-  # for_each is empty, and dev sets none of these.
-  extra_dns_weight            = try(local.env.extra_domain.dns_weight, 0)
-  extra_app_runner_dns_weight = try(local.env.extra_domain.app_runner_dns_weight, 0)
-  extra_app_runner_target     = try(local.env.extra_domain.app_runner_target, "")
+  # Defaulted, not null: the body is type-checked even when for_each is empty.
+  extra_dns_weight = try(local.env.extra_domain.dns_weight, 0)
 }
