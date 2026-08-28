@@ -9,4 +9,7 @@ locals {
 
   # Null leaves a simple record, which is what dev owns outright.
   dns_weight = lookup(local.env, "dns_weight", null)
+
+  # Only prod answers to a second name, and only until its cutover lands.
+  extra_domain = try(local.env.extra_domain.name, null)
 }

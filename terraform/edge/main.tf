@@ -176,6 +176,15 @@ resource "aws_lb_listener" "https" {
   }
 }
 
+# The listener's own certificate_arn is the default one; a second name has to be
+# added here, or the ALB answers it with a mismatched cert.
+resource "aws_lb_listener_certificate" "extra" {
+  count = local.extra_domain == null ? 0 : 1
+
+  listener_arn    = aws_lb_listener.https.arn
+  certificate_arn = data.terraform_remote_state.acm.outputs.extra_certificate_arn
+}
+
 # Scraped in-task over loopback, so it never needs to cross the ALB. Priority 10
 # keeps the block under any future auth gate, covering authenticated users too.
 resource "aws_lb_listener_rule" "block_metrics" {

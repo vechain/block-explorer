@@ -52,6 +52,61 @@ resource "aws_acm_certificate_validation" "main" {
   }
 }
 
+# explore.vechain.org, which is its own zone apex — so the domain doubles as the
+# zone name. The only cert covering it today is a blue/green leftover, expired.
+data "aws_route53_zone" "extra" {
+  for_each = local.extra_domains
+  provider = aws.dns
+
+  name         = each.value
+  private_zone = false
+}
+
+resource "aws_acm_certificate" "extra" {
+  for_each = local.extra_domains
+
+  domain_name       = each.value
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = { Name = each.value }
+}
+
+# Permanent, for the same renewal reason as the record above.
+resource "aws_route53_record" "extra_validation" {
+  provider = aws.dns
+
+  for_each = {
+    for dvo in flatten([for c in aws_acm_certificate.extra : tolist(c.domain_validation_options)]) :
+    dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.extra[each.key].zone_id
+}
+
+resource "aws_acm_certificate_validation" "extra" {
+  for_each = local.extra_domains
+
+  certificate_arn         = aws_acm_certificate.extra[each.key].arn
+  validation_record_fqdns = [aws_route53_record.extra_validation[each.key].fqdn]
+
+  timeouts {
+    create = var.validation_timeout
+  }
+}
+
 resource "terraform_data" "workspace_guard" {
   lifecycle {
     precondition {
