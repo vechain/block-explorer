@@ -1,9 +1,5 @@
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { notFound, redirect } from 'next/navigation'
-
-// ISR: Cache page for 10 seconds - confirmations increase with each new block
-export const revalidate = 10
-
 import type { NetworkName } from '@/lib/constants/network'
 import { getQueryClient } from '@/lib/query-client/query-client'
 import { type Transaction, type TransactionId, transactionIdSchema } from '@/lib/schemas'

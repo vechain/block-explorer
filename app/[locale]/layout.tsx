@@ -32,6 +32,7 @@ export const metadata: Metadata = {
 // Force per-request rendering so RuntimeConfigScript reads process.env at runtime,
 // not at build time. Without this, a prebuilt standalone server would bake in whatever
 // env vars were set when the image was built.
+// This covers every route beneath, so no page under it can opt back into ISR.
 export const dynamic = 'force-dynamic'
 
 export default async function RootLayout({
