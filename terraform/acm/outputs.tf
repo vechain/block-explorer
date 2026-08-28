@@ -13,6 +13,16 @@ output "public_zone_id" {
   value       = data.aws_route53_zone.public.zone_id
 }
 
+output "extra_certificate_arn" {
+  description = "ARN of the ISSUED certificate for the second name, null where the environment has none. edge/ attaches it to the HTTPS listener."
+  value       = one([for v in aws_acm_certificate_validation.extra : v.certificate_arn])
+}
+
+output "extra_public_zone_id" {
+  description = "Route53 zone ID for the second name, holding only its validation record so far. The cutover points that name's weighted records here."
+  value       = one([for z in data.aws_route53_zone.extra : z.zone_id])
+}
+
 output "terraform_workspace" {
   description = "Current Terraform workspace (dev or prod). Mirrored for cross-stack consistency."
   value       = terraform.workspace

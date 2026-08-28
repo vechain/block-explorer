@@ -45,6 +45,11 @@ waf_rate_limit: 2000
 dns_record_enabled: true
 dns_weight: 100
 
+# The name users type, and effectively all of prod's traffic; the ramp above
+# moved block-explorer.vechain.org only.
+extra_domain:
+  name: explore.vechain.org
+
 # App Runner below: read only by the legacy app-runner/ stack, gone in phase 7.
 region: eu-west-1
 enable_custom_domain: true
