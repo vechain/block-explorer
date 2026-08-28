@@ -20,7 +20,8 @@ export enum ValidatorStatus {
 
 const validatorSchema = z.object({
   id: z.string(),
-  status: z.nativeEnum(ValidatorStatus),
+  // Mainnet returns records carrying only stats, with no status.
+  status: z.nativeEnum(ValidatorStatus).optional(),
   vetStaked: z.number().optional(),
   validatorVetStaked: z.number().optional(),
   delegatorVetStaked: z.number().optional(),
