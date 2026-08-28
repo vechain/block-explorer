@@ -41,16 +41,16 @@ waf_enabled: true
 waf_managed_rules_blocking: false
 waf_rate_limit: 2000
 
-# Cutover step two: the ECS record joins the name, taking none of the traffic.
+# The zone as the ramp left it. Rollback is a weight change, not a revert.
 dns_record_enabled: true
-dns_weight: 0
+dns_weight: 100
 
 # App Runner below: read only by the legacy app-runner/ stack, gone in phase 7.
 region: eu-west-1
 enable_custom_domain: true
 
-# Cutover step one: the same traffic, said as a weight the ECS record can join.
-app_runner_dns_weight: 100
+# Drained. Held here for 24-48h before the service is deleted.
+app_runner_dns_weight: 0
 
 cpu: 2048
 memory: 4096
