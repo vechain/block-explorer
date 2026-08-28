@@ -38,6 +38,12 @@ still publishes the `pr.{number}.{short_sha}` tag either way, because that is th
 `deploy-preview.yml` waits on. Previews need no roll check: Terraform owns the task definition there,
 so an unchanged image tag is already a no-op apply.
 
+`deploy-preview.yml` promotes **from that commit alias**, not from a content tag it derives itself.
+The two workflows hash different refs — the publish uses the default branch at build time, the deploy
+uses the PR's base at event time — so a `labeled` event arriving after `scripts/app-content-sha.sh`
+changed on `main` would otherwise name a content tag that was never published, and the copy would
+fail. The alias resolves to the same manifest, and the ECR destination stays content-addressed.
+
 ## Workflows
 
 ### Dev Deployment (`deploy-dev.yml`)

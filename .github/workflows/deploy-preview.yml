@@ -82,8 +82,7 @@ jobs:
           APP_SHA=$(bash scripts/app-content-sha.sh "$HEAD_SHA")
           SHORT_SHA="${HEAD_SHA:0:7}"
           {
-            echo "ghcr_wait_tag=pr.${PR_NUMBER}.${SHORT_SHA}"
-            echo "ghcr_tag=pr.${PR_NUMBER}.${APP_SHA}"
+            echo "ghcr_tag=pr.${PR_NUMBER}.${SHORT_SHA}"
             echo "ecr_tag=pr-${PR_NUMBER}-${APP_SHA}"
           } >> "$GITHUB_OUTPUT"
           echo "PR #${PR_NUMBER} at ${HEAD_SHA} carries app content ${APP_SHA}."
@@ -99,7 +98,7 @@ jobs:
       # and the image build are still running on that commit.
       - name: Wait for the PR image
         env:
-          GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.ghcr_wait_tag }}
+          GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.ghcr_tag }}
         run: |
           set -euo pipefail
           for attempt in $(seq 1 40); do
@@ -124,7 +123,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
 
       # Copies the manifest list rather than one platform, so the arm64 task can
-      # resolve its own architecture.
+      # resolve its own architecture. Source is the alias just waited for.
       - name: Copy manifest list from GHCR to ECR
         env:
           GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.ghcr_tag }}

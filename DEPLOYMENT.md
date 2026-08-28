@@ -157,8 +157,9 @@ workspace created outside the workflow is a preview nothing owns.
 The URL is posted as a sticky comment on the PR.
 
 **Image**: promoted from `ghcr.io/vechain/block-explorer:pr.{number}.{short_sha}`, which
-`publish-ghcr-pr-image.yml` builds once the unit tests pass, into ECR as `pr-{number}-{short_sha}`.
-Previews are not rebuilt — they run the same arm64 image dev and prod run.
+`publish-ghcr-pr-image.yml` publishes once the unit tests pass, into ECR as
+`pr-{number}-app-{sha12}`. Previews are not rebuilt — they run the same arm64 image dev and prod run,
+and a push that changes nothing the build reads reuses the image already there.
 
 **Domain**: `https://pr-{number}.block-explorer-preview.vechain.org`
 
@@ -384,10 +385,10 @@ terraform destroy
 
 ## Image Tagging Strategy
 
-| Environment | Pattern                   | Example          | Purpose                |
-| ----------- | ------------------------- | ---------------- | ---------------------- |
-| Production  | `v.X.Y.Z`                 | `v.1.2.3`        | Semantic version tag   |
-| Preview     | `pr-{number}-{short_sha}` | `pr-144-a1b2c3d` | PR number + commit SHA |
+| Environment | Pattern                   | Example                   | Purpose                 |
+| ----------- | ------------------------- | ------------------------- | ----------------------- |
+| Production  | `v.X.Y.Z`                 | `v.1.2.3`                 | Semantic version tag    |
+| Preview     | `pr-{number}-app-{sha12}` | `pr-144-app-ded8af8261c7` | PR number + content SHA |
 
 **Production Tags:**
 
@@ -398,10 +399,9 @@ terraform destroy
 
 **Preview Tags:**
 
-- Includes SHORT_SHA (7-char commit hash)
-- Unique per commit on each PR
-- Forces App Runner to pull new image
-- Prevents stale deployments
+- One per distinct app build on a PR, not one per commit
+- Scoped per PR, so a reused image never carries another PR's baked version
+- An apply with a new value is what rolls the preview service
 
 ## Public Docker Image (GHCR)
 
