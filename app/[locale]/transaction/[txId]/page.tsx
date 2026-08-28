@@ -1,1 +1,1 @@
-export { default, revalidate } from '../../transactions/[txId]/page'
+export { default } from '../../transactions/[txId]/page'

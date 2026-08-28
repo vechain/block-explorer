@@ -1,10 +1,6 @@
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 import z from 'zod'
-
-// ISR: Cache page for 60 seconds - NFT ownership can change but infrequently
-export const revalidate = 60
-
 import { getQueryClient } from '@/lib/query-client/query-client'
 import { addressStringSchema, type AddressString } from '@/lib/schemas'
 import { NftDetailPageContent } from './components/NftDetailPageContent'
