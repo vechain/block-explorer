@@ -442,6 +442,104 @@ describe('GET /api/indexer/[...path]', () => {
     })
   })
 
+  // The address page reads these from the browser on every visit, so an over-eager
+  // default here would change the upstream request rather than just the cache key.
+  describe('contract, token and NFT endpoints', () => {
+    it('splices the contract address into the upstream path', async () => {
+      await call(`http://localhost/api/indexer/contracts/details?network=mainnet&address=${ADDRESS}`, [
+        'contracts',
+        'details',
+      ])
+
+      const url = new URL(requestedUrls(fetchMock)[0])
+      expect(url.pathname).toBe(`/api/v1/contracts/${ADDRESS}`)
+      expect(url.searchParams.get('address')).toBeNull()
+    })
+
+    it('keeps the paging params alongside the spliced master address', async () => {
+      await call(`http://localhost/api/indexer/contracts/by-master?network=mainnet&address=${ADDRESS}&page=2&size=25`, [
+        'contracts',
+        'by-master',
+      ])
+
+      const url = new URL(requestedUrls(fetchMock)[0])
+      expect(url.pathname).toBe(`/api/v1/contracts/by-master/${ADDRESS}`)
+      expect(Object.fromEntries(url.searchParams)).toEqual({ page: '2', size: '25' })
+    })
+
+    it('omits a direction the caller never sent, rather than defaulting it', async () => {
+      await call(`http://localhost/api/indexer/nfts?network=mainnet&address=${ADDRESS}&page=0&size=10`, ['nfts'])
+
+      const forwarded = new URL(requestedUrls(fetchMock)[0]).searchParams
+      expect(forwarded.get('direction')).toBeNull()
+      expect(forwarded.get('officialTokensOnly')).toBeNull()
+    })
+
+    it('keys each NFT page separately', async () => {
+      const GET = await importRoute()
+      const send = (page: number) =>
+        GET(request(`http://localhost/api/indexer/nfts?network=mainnet&address=${ADDRESS}&page=${page}&size=10`), {
+          params: Promise.resolve({ path: ['nfts'] }),
+        })
+
+      await send(0)
+      await send(1)
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+    })
+
+    const historyUrl = (tokenId: string) =>
+      `http://localhost/api/indexer/nfts/history?network=mainnet&contractAddress=${ADDRESS}&tokenId=${tokenId}&page=0&size=20`
+
+    it('accepts the largest uint256 token id', async () => {
+      const response = await call(historyUrl((2n ** 256n - 1n).toString()), ['nfts', 'history'])
+
+      expect(response.status).toBe(200)
+    })
+
+    it.each([
+      ['a non-decimal id', '0x01'],
+      // 78 digits, but above the uint256 maximum — length alone would let this through.
+      ['an id past the uint256 maximum', '9'.repeat(78)],
+    ])('400s %s', async (_label, tokenId) => {
+      const response = await call(historyUrl(tokenId), ['nfts', 'history'])
+
+      expect(response.status).toBe(400)
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('treats a leading-zero token id as the same entry, not a second spelling', async () => {
+      const GET = await importRoute()
+      const send = (tokenId: string) =>
+        GET(request(historyUrl(tokenId)), { params: Promise.resolve({ path: ['nfts', 'history'] }) })
+
+      await send('7')
+      await send('007')
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect(new URL(requestedUrls(fetchMock)[0]).searchParams.get('tokenId')).toBe('7')
+    })
+
+    it('400s the token list without an address, so it cannot be paged unscoped', async () => {
+      const response = await call('http://localhost/api/indexer/transfers/fungible-tokens-contracts?network=mainnet', [
+        'transfers',
+        'fungible-tokens-contracts',
+      ])
+
+      expect(response.status).toBe(400)
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('accepts the token page size the account page actually asks for', async () => {
+      const response = await call(
+        `http://localhost/api/indexer/transfers/fungible-tokens-contracts?network=mainnet&address=${ADDRESS}&size=100`,
+        ['transfers', 'fungible-tokens-contracts'],
+      )
+
+      expect(response.status).toBe(200)
+    })
+  })
+
   describe('rate limit bypass', () => {
     const headersOfFirstCall = () => (fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>
 

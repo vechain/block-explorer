@@ -67,7 +67,8 @@ describe('indexerCachedGet', () => {
 
   it('goes direct to the indexer for an endpoint the proxy does not cache', async () => {
     const indexerCachedGet = await importSubject()
-    await indexerCachedGet({ networkName: NetworkName.MAINNET, endPoint: 'nfts' })
+    // Synthetic on purpose: naming a real path makes this fail the day it gets registered.
+    await indexerCachedGet({ networkName: NetworkName.MAINNET, endPoint: 'not-proxied' })
 
     expect(baseUrlOf()).not.toBe('/api/indexer')
   })

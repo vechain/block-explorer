@@ -17,6 +17,11 @@ const CACHED_INDEXER_ENDPOINTS = [
   'validators/slots',
   'validators/delegations',
   'validators/delegations/count',
+  'contracts/details',
+  'contracts/by-master',
+  'transfers/fungible-tokens-contracts',
+  'nfts',
+  'nfts/history',
 ] as const
 
 export type CachedIndexerEndpoint = (typeof CACHED_INDEXER_ENDPOINTS)[number]
