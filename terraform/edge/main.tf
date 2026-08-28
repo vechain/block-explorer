@@ -241,33 +241,7 @@ moved {
   to   = aws_route53_record.app[0]
 }
 
-# Both halves of the second name live here, not split with app-runner/. See README.
-data "aws_apprunner_hosted_zone_id" "extra" {}
-
-resource "aws_route53_record" "extra_app_runner" {
-  for_each = local.extra_weighted
-  provider = aws.dns
-
-  zone_id = data.terraform_remote_state.acm.outputs.extra_public_zone_id
-  name    = each.value
-  type    = "A"
-
-  set_identifier = "app-runner"
-
-  # Adopts what the flip already created rather than colliding with it.
-  allow_overwrite = true
-
-  weighted_routing_policy {
-    weight = local.extra_app_runner_dns_weight
-  }
-
-  alias {
-    name                   = local.extra_app_runner_target
-    zone_id                = data.aws_apprunner_hosted_zone_id.extra.id
-    evaluate_target_health = true
-  }
-}
-
+# Sole record on the name since App Runner went. See README.
 resource "aws_route53_record" "extra_app" {
   for_each = local.extra_weighted
   provider = aws.dns

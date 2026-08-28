@@ -1,5 +1,4 @@
-# Production. Read by the ECS stacks, and by the App Runner service still
-# serving the domain until the cutover — its keys are the last block.
+# Production. Read by the ECS stacks.
 environment: prod
 domain: block-explorer.vechain.org
 
@@ -42,7 +41,7 @@ waf_enabled: true
 waf_managed_rules_blocking: false
 waf_rate_limit: 2000
 
-# The zone as the ramp left it. Rollback is a weight change, not a revert.
+# Sole record on the name now; the weight stays because dropping it replaces it.
 dns_record_enabled: true
 dns_weight: 100
 
@@ -50,30 +49,5 @@ dns_weight: 100
 # moved block-explorer.vechain.org only.
 extra_domain:
   name: explore.vechain.org
-  app_runner_target: hmhfp8n3wn.eu-west-1.awsapprunner.com
-  # As its ramp left it. Rollback is a weight change, not a revert.
+  # Sole record on this name too, and weighted for the same reason.
   dns_weight: 100
-  app_runner_dns_weight: 0
-
-# App Runner below: read only by the legacy app-runner/ stack, gone in phase 7.
-region: eu-west-1
-enable_custom_domain: true
-
-# Drained. Held here for 24-48h before the service is deleted.
-app_runner_dns_weight: 0
-
-cpu: 2048
-memory: 4096
-port: 3000
-
-min_size: 1 # Minumum allowed by app runner
-max_size: 10
-max_concurrency: 100 # Max concurrent requests per instance
-
-health_check_path: /
-node_env: production
-
-environment_variables:
-  NEXT_PUBLIC_NETWORK: mainnet
-  # Temporary: drop once the indexer's CloudFront WAF honours x-rate-limit-bypass.
-  BYPASS_INDEXER_PROXY: 'true'
