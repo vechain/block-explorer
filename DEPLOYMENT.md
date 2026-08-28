@@ -385,16 +385,18 @@ terraform destroy
 
 ## Image Tagging Strategy
 
-| Environment | Pattern                   | Example                   | Purpose                 |
-| ----------- | ------------------------- | ------------------------- | ----------------------- |
-| Production  | `v.X.Y.Z`                 | `v.1.2.3`                 | Semantic version tag    |
-| Preview     | `pr-{number}-app-{sha12}` | `pr-144-app-ded8af8261c7` | PR number + content SHA |
+| Environment | Pattern                   | Example                   | Purpose                                      |
+| ----------- | ------------------------- | ------------------------- | -------------------------------------------- |
+| Dev         | `dev-app-{sha12}`         | `dev-app-ded8af8261c7`    | Content SHA — what Terraform pins            |
+| Production  | `app-{sha12}`             | `app-ded8af8261c7`        | Content SHA — what Terraform pins            |
+| Production  | `v.X.Y.Z`                 | `v.1.2.3`                 | Semantic version, aliased onto that manifest |
+| Preview     | `pr-{number}-app-{sha12}` | `pr-144-app-ded8af8261c7` | PR number + content SHA                      |
 
 **Production Tags:**
 
-- Uses semantic versioning (`v.X.Y.Z`)
-- Created automatically when PRs are merged
-- Immutable - each version deployed once
+- The content SHA is what ECS resolves; one image per distinct app build, however many releases ship it
+- The version alias keeps the release readable and matches the `v.`-prefixed ECR lifecycle rule
+- Immutable - each tag written once
 - Provides clear release history
 
 **Preview Tags:**
