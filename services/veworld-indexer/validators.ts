@@ -73,7 +73,7 @@ export const allValidatorsQueryOptions = (networkName: NetworkName, options?: Va
   refetchInterval: 60 * 1000,
 })
 
-export const validatorsCountQueryOptions = (networkName: NetworkName, options?: ValidatorCountOptions) => ({
+const validatorsCountQueryOptions = (networkName: NetworkName, options?: ValidatorCountOptions) => ({
   queryKey: [ALL_VALIDATORS_COUNT_QUERY_KEY, networkName, options?.endorser, options?.status],
   queryFn: () => getAllValidatorsCount(networkName, options),
   refetchInterval: 60 * 1000,
