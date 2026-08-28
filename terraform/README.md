@@ -208,3 +208,90 @@ created next to a simple one of the same name. In that order the App Runner side
    zone will happily serve. Lift the freeze by putting the settled weights back into the yaml.
 
 4. **Hold App Runner at weight 0 for 24–48 hours**, then decommission it.
+
+### explore.vechain.org
+
+That ramp moved `block-explorer.vechain.org`. `explore.vechain.org` is a separate zone holding its own
+simple alias at App Runner, so none of it reached that name — and that is the name users type, and
+effectively all of prod's traffic. It moves the same way, with two differences.
+
+`edge/` owns both halves of its pair, keyed off `extra_domain` in the env yaml, so one stack writes
+both records rather than two workflows that can fail independently, and the App Runner teardown has no
+record of its own to unpick. That narrows the failure modes; it does not make a step atomic. The
+provider sends one Route53 change per record, so an interrupted apply still leaves the weights
+mismatched — read both back after every write.
+
+The pair also has to be created out of band, because Terraform cannot make the first move: turning a
+simple record into a weighted one is a replacement, and the provider's delete and create are separate
+calls. That window is fine on a name nobody resolves and not on this one. So the flip is a single
+Route53 change batch, run once, before the release that applies `edge/`:
+
+```
+aws route53 change-resource-record-sets --hosted-zone-id <explore.vechain.org zone> \
+  --change-batch file://flip.json
+```
+
+Three changes in one batch, which Route53 applies transactionally, so the name never stops resolving.
+`DELETE` has to repeat the existing record exactly or the batch is rejected — check it against the
+zone first, and take the ALB's own alias zone from `edge/`'s `alb_zone_id` output:
+
+```json
+{
+  "Changes": [
+    {
+      "Action": "DELETE",
+      "ResourceRecordSet": {
+        "Name": "explore.vechain.org.",
+        "Type": "A",
+        "AliasTarget": {
+          "DNSName": "hmhfp8n3wn.eu-west-1.awsapprunner.com.",
+          "HostedZoneId": "Z087551914Z2PCAU0QHMW",
+          "EvaluateTargetHealth": true
+        }
+      }
+    },
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "explore.vechain.org.",
+        "Type": "A",
+        "SetIdentifier": "app-runner",
+        "Weight": 100,
+        "AliasTarget": {
+          "DNSName": "hmhfp8n3wn.eu-west-1.awsapprunner.com.",
+          "HostedZoneId": "Z087551914Z2PCAU0QHMW",
+          "EvaluateTargetHealth": true
+        }
+      }
+    },
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "explore.vechain.org.",
+        "Type": "A",
+        "SetIdentifier": "ecs-prod",
+        "Weight": 0,
+        "AliasTarget": {
+          "DNSName": "<prod ALB dns name>.",
+          "HostedZoneId": "<prod ALB zone id>",
+          "EvaluateTargetHealth": true
+        }
+      }
+    }
+  ]
+}
+```
+
+Both records set `allow_overwrite`, so the apply that follows adopts them instead of colliding with
+them.
+
+Then ramp as above, freeze included — these records track the yaml like every other, so a release
+published mid-ramp resets both weights to it, which here hands the whole name back to App Runner. Move
+the pair in one UPSERT: Route53 splits traffic by each weight over their sum, so `ecs-prod` at 100
+beside `app-runner` at 100 is half the traffic, not the cutover. `app-runner`/`ecs-prod` goes 100/0,
+90/10, 75/25, 50/50, 25/75, 0/100, reading both records back at each step. Lift the freeze by putting
+the settled weights into the yaml.
+
+Watch ECS CPU and task count through the ramp, not just the ALB. App Runner serves this name on 4–8
+instances of 2 vCPU and prod ECS runs the dev task size, so the ramp is the first real load that stack
+has ever taken.
