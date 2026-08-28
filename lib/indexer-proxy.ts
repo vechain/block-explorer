@@ -7,6 +7,7 @@ const CACHED_INDEXER_ENDPOINTS = [
   'transactions/contract',
   'transfers/latest',
   'transfers',
+  'explorer/block-usage',
 ] as const
 
 export type CachedIndexerEndpoint = (typeof CACHED_INDEXER_ENDPOINTS)[number]

@@ -35,6 +35,9 @@ const booleanParam = z
   .default('false')
   .transform(value => value === 'true')
 
+// Unix seconds. Bounded so a caller cannot fork the cache with arbitrary integers.
+const timestampParam = z.coerce.number().int().min(0).max(MAX_PAGE)
+
 const pageSizeParam = z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(10)
 const pageParam = z.coerce.number().int().min(0).max(MAX_PAGE).default(0)
 
@@ -165,5 +168,17 @@ export const INDEXER_ENDPOINTS = {
     arrayParams: ['eventType'],
     cache: liveCache(2_000),
     fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'transfers', params }),
+  }),
+
+  'explorer/block-usage': defineEndpoint({
+    params: z.object({
+      network: proxiedNetworkSchema,
+      startTimestamp: timestampParam,
+      endTimestamp: timestampParam,
+    }),
+    // Callers round endTimestamp to a block boundary, which is what keeps this to one
+    // entry per block rather than one per caller per second.
+    cache: liveCache(64),
+    fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'explorer/block-usage', params }),
   }),
 } satisfies Record<CachedIndexerEndpoint, ReturnType<typeof defineEndpoint>>
