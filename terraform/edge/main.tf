@@ -134,6 +134,9 @@ resource "aws_lb_target_group" "app" {
   }
 
   deregistration_delay = 60
+
+  # Round robin gives a task its full share before Next.js has loaded a route or V8 has warmed.
+  slow_start = 30
 }
 
 # ---------------------------------------------------------------------------
