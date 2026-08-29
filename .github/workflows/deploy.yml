@@ -232,9 +232,9 @@ jobs:
               --image-ids "imageTag=$1" --no-cli-pager >/dev/null 2>&1
           }
 
-          read -ra tags <<<"$TAGS"
+          read -ra wanted <<<"$TAGS"
           missing=()
-          for tag in "${tags[@]}"; do
+          for tag in "${wanted[@]}"; do
             if present "$tag"; then
               echo "${tag} is already in ECR."
             else
@@ -342,8 +342,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          read -ra stacks <<<"$STACKS"
-          for stack in "${stacks[@]}"; do
+          read -ra ordered <<<"$STACKS"
+          for stack in "${ordered[@]}"; do
             echo "::group::${stack}"
             pushd "terraform/${stack}" >/dev/null
 
