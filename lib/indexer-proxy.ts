@@ -30,3 +30,6 @@ export const isCachedIndexerEndpoint = (endPoint: string): endPoint is CachedInd
   (CACHED_INDEXER_ENDPOINTS as readonly string[]).includes(endPoint.replace(/^\/+/, ''))
 
 export const INDEXER_PROXY_BASE = '/api/indexer'
+
+/** Callers round the `validators/slots` window to this and the proxy caches for exactly it. */
+export const VALIDATOR_SLOTS_ANCHOR_SECONDS = 5 * 60

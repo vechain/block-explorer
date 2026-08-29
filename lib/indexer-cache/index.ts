@@ -3,7 +3,7 @@ import { INDEXER_RATE_LIMIT_BYPASS } from '@/env.api'
 import { VEWORLD_INDEXER_MAINNET_URL, VEWORLD_INDEXER_TESTNET_URL } from '@/env.public'
 import { type CacheProfile, defineEndpoint } from '@/lib/cached-proxy'
 import { BLOCK_TIME_SECONDS, NetworkName } from '@/lib/constants/network'
-import { type CachedIndexerEndpoint } from '@/lib/indexer-proxy'
+import { type CachedIndexerEndpoint, VALIDATOR_SLOTS_ANCHOR_SECONDS } from '@/lib/indexer-proxy'
 import { type ProxiedNetwork, proxiedNetworkSchema } from '@/lib/proxied-network'
 import { fetchUpstream, NotFoundError, UpstreamError } from '@/lib/upstream-error'
 import { INDEXER_HEADERS } from '@/services/veworld-indexer'
@@ -125,6 +125,14 @@ const liveCache = (size: number): CacheProfile => ({
   stale: BLOCK_TIME_SECONDS / 2,
   size,
 })
+
+// Held for the window the caller anchors to, so one entry serves every viewer in it. No
+// stale budget: the key rotates with the window, so a stale entry is never asked for again.
+const slotsCache: CacheProfile = {
+  ttl: VALIDATOR_SLOTS_ANCHOR_SECONDS,
+  stale: 0,
+  size: 500,
+}
 
 // Short-lived, since an address can become any of these, but past the page's 60s refetch.
 const ADDRESS_NOT_FOUND_TTL_SECONDS = 2 * 60
@@ -277,8 +285,7 @@ export const INDEXER_ENDPOINTS = {
       startTimestamp: timestampParam,
       endTimestamp: timestampParam,
     }),
-    // Callers round the window to a block boundary, as block-usage does.
-    cache: liveCache(500),
+    cache: slotsCache,
     fetch: ({ network, address, ...params }) =>
       fetchIndexer({ network, endPoint: `validators/${address}/slots`, params, version: 'v2' }),
   }),

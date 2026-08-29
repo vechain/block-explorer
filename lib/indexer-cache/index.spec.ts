@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createCachedProxy } from '@/lib/cached-proxy'
+import { VALIDATOR_SLOTS_ANCHOR_SECONDS } from '@/lib/indexer-proxy'
 import { metrics } from '@/lib/metrics'
 import { INDEXER_ENDPOINTS } from './index'
 
@@ -90,6 +91,20 @@ describe('INDEXER_ENDPOINTS', () => {
       outcomes.find(entry => entry.labels.path === 'transactions/latest' && entry.labels.outcome === 'upstream_error')
         ?.value,
     ).toBe(2)
+  })
+
+  // The caller anchors the window to the same period. If the entry expired first the key
+  // would move before it could be reused, which is how this endpoint reached a 0.14% hit
+  // ratio in prod — 58k upstream calls in six hours for a seven-day aggregate.
+  it('holds a slots window for as long as the caller keeps asking for it', async () => {
+    const response = await send(
+      buildProxy(),
+      'validators/slots',
+      `network=mainnet&address=${ADDRESS}&startTimestamp=1787390000&endTimestamp=1787990000`,
+    )
+
+    expect(VALIDATOR_SLOTS_ANCHOR_SECONDS).toBe(300)
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=0, s-maxage=300, stale-while-revalidate=0')
   })
 
   it('serves a found record from cache and does not negative-cache it', async () => {
