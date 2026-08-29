@@ -6,7 +6,8 @@ const ADDRESS = '0x0000000000000000000000000000000000000001'
 
 const get = vi.fn().mockResolvedValue({ data: {} })
 
-vi.mock('@/lib/api', () => ({ apiClient: { get } }))
+// Only the client is stubbed: `indexerCachedGetOrNull` matches on the real `ApiError`.
+vi.mock('@/lib/api', async () => ({ apiClient: { get }, ApiError: (await import('@/lib/api/types')).ApiError }))
 
 // These services only ever run in the browser, where the flag arrives on `window` via
 // <RuntimeConfigScript> rather than from process.env.
@@ -135,5 +136,57 @@ describe('indexerCachedGet', () => {
 
       expect(baseUrlOf()).toBe('/api/indexer')
     })
+  })
+})
+
+describe('indexerCachedGetOrNull', () => {
+  const lookup = { networkName: NetworkName.MAINNET, endPoint: 'contracts/details', params: { address: ADDRESS } }
+
+  // `ApiError` comes from the reset graph too: the subject matches on identity, and the
+  // spec's own top-level binding survives resetModules as a different class.
+  const importSubject = async () => {
+    vi.resetModules()
+    const { indexerCachedGetOrNull } = await import('./index')
+    const { ApiError } = await import('@/lib/api')
+    return { indexerCachedGetOrNull, ApiError }
+  }
+
+  beforeEach(() => {
+    get.mockClear()
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(window, RUNTIME_CONFIG_WINDOW_KEY)
+  })
+
+  it('unwraps the record where the lookup finds one', async () => {
+    const { indexerCachedGetOrNull } = await importSubject()
+    get.mockResolvedValueOnce({ data: { master: ADDRESS } })
+
+    await expect(indexerCachedGetOrNull(lookup)).resolves.toEqual({ master: ADDRESS })
+  })
+
+  // The whole point of the proxy's negative cache: an address with no record is an answer.
+  it('turns the proxy 404 into an absent record rather than an error', async () => {
+    const { indexerCachedGetOrNull, ApiError } = await importSubject()
+    get.mockRejectedValueOnce(new ApiError({ status: 404 }))
+
+    await expect(indexerCachedGetOrNull(lookup)).resolves.toBeNull()
+  })
+
+  it('absorbs the indexer’s own 404 when the proxy is bypassed', async () => {
+    setBypass(true)
+    const { indexerCachedGetOrNull, ApiError } = await importSubject()
+    get.mockRejectedValueOnce(new ApiError({ status: 404 }))
+
+    await expect(indexerCachedGetOrNull(lookup)).resolves.toBeNull()
+    expect(baseUrlOf()).not.toBe('/api/indexer')
+  })
+
+  it.each([400, 429, 502, 504])('rethrows a %d rather than reporting an absent record', async status => {
+    const { indexerCachedGetOrNull, ApiError } = await importSubject()
+    get.mockRejectedValueOnce(new ApiError({ status }))
+
+    await expect(indexerCachedGetOrNull(lookup)).rejects.toMatchObject({ status })
   })
 })
