@@ -126,8 +126,7 @@ jobs:
             echo "pr_tag=pr.${PR_NUM}.${SHORT_SHA}"
           } >> "$GITHUB_OUTPUT"
 
-  # One namespace with the release: nothing PR-specific is baked in, so the same
-  # content is the same image and either side can serve the other.
+  # One namespace with the release: nothing PR-specific is baked in any more.
   detect:
     needs: validate
     if: needs.validate.outputs.publish == 'true'
