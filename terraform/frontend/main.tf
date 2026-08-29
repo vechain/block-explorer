@@ -114,6 +114,7 @@ module "service" {
   desired_count = local.env.desired_count
 
   autoscaling_max_capacity                 = local.env.autoscaling_max
+  autoscaling_cpu_target                   = local.env.autoscaling_cpu_target
   autoscaling_request_count_target         = local.env.autoscaling_request_count_target
   autoscaling_request_count_resource_label = "${data.terraform_remote_state.edge.outputs.alb_arn_suffix}/${data.terraform_remote_state.edge.outputs.target_group_arn_suffix}"
 
