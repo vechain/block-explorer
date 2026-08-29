@@ -134,3 +134,15 @@ variable "autoscaling_cpu_target" {
   description = "Average CPU utilisation the tracking policy holds the service at."
   default     = 60
 }
+
+variable "autoscaling_request_count_resource_label" {
+  type        = string
+  description = "ALB and target group the request-count policy measures, as `<alb_arn_suffix>/<target_group_arn_suffix>`. Null drops the policy, leaving CPU tracking alone — which is what previews want."
+  default     = null
+}
+
+variable "autoscaling_request_count_target" {
+  type        = number
+  description = "Requests per target per minute the tracking policy holds the service at. Ignored unless autoscaling_request_count_resource_label is set."
+  default     = 2500
+}

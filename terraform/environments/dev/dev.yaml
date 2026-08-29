@@ -16,6 +16,7 @@ task_memory: 1024
 desired_count: 1
 # Scaling has nothing to react to here; it is on so prod does not run it first.
 autoscaling_max: 2
+autoscaling_request_count_target: 2500
 container_port: 3000
 
 # The dev name is ours to create.

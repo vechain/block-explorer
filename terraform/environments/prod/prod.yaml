@@ -15,6 +15,8 @@ task_cpu: 1024
 task_memory: 2048 # Fargate's floor at this cpu size; peak RSS under load was 493 MB.
 desired_count: 2
 autoscaling_max: 16 # Same 16 vCPU ceiling as 2048 x 8, in units that fill.
+# Served comfortably at ~2.9k on 2026-08-29; 4k was already shedding.
+autoscaling_request_count_target: 2500
 container_port: 3000
 
 log_retention_days: 90
