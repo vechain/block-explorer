@@ -186,9 +186,7 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
-      # Pinned to the image, not to this release: a release that changed nothing the
-      # app reads then registers no revision, and the footer keeps the release that
-      # last changed the app.
+      # Pinned to the image, not to this release, so a no-op release registers no revision.
       - name: Pin the image tag and version
         env:
           IMAGE_TAG: ${{ needs.guard.outputs.ecr_tag }}

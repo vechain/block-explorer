@@ -127,8 +127,7 @@ module "service" {
     NODE_ENV = "production"
     PORT     = tostring(local.env.container_port)
     HOSTNAME = "0.0.0.0"
-    # The release that last changed the app, which the deploy pins to the image
-    # rather than to itself — a docs-only release must not register a revision.
+    # The deploy pins this to the image, so a no-op release registers no revision.
     APP_VERSION = local.env.app_version
     # Must outlive the ALB's 60s idle_timeout, or it reuses a socket Node has closed.
     KEEP_ALIVE_TIMEOUT = "65000"
