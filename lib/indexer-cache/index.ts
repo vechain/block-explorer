@@ -24,6 +24,9 @@ const RATE_LIMIT_BYPASS_HEADER: Record<string, string> = INDEXER_RATE_LIMIT_BYPA
 const MAX_PAGE_SIZE = 150
 const MAX_PAGE = 2_147_483_647
 const MAX_CURSOR_LENGTH = 512
+// A uint256 is at most 78 decimal digits, but not every 78-digit value is one.
+const MAX_TOKEN_ID_LENGTH = 78
+const MAX_TOKEN_ID = 2n ** 256n - 1n
 
 const addressParam = z
   .string()
@@ -44,11 +47,24 @@ const pageParam = z.coerce.number().int().min(0).max(MAX_PAGE).default(0)
 // Defaulted to the upstream default so an explicit DESC and an omitted value share a key.
 const directionParam = z.enum(['ASC', 'DESC']).default('DESC')
 
+// Undefaulted: sending a DESC the caller omitted would reorder the page, not just the key.
+const optionalDirectionParam = z.enum(['ASC', 'DESC']).optional()
+
 // Left undefaulted: the upstream default is unspecified, so absence must stay absent.
-const includeDelegatedParam = z
+const optionalBooleanParam = z
   .enum(['true', 'false'])
   .transform(value => value === 'true')
   .optional()
+
+// Length-capped before parsing, then value-bounded; canonicalized so `007` and `7` are
+// one entry rather than two spellings of the same token.
+const tokenIdParam = z
+  .string()
+  .max(MAX_TOKEN_ID_LENGTH)
+  .regex(/^\d+$/)
+  .transform(tokenId => BigInt(tokenId))
+  .refine(tokenId => tokenId <= MAX_TOKEN_ID)
+  .transform(tokenId => tokenId.toString())
 
 // Upstream cursors are `blockNumber|index`, so the pipe belongs in the allowlist.
 const cursorParam = z
@@ -128,7 +144,7 @@ export const INDEXER_ENDPOINTS = {
       size: pageSizeParam,
       expanded: booleanParam,
       direction: directionParam,
-      includeDelegated: includeDelegatedParam,
+      includeDelegated: optionalBooleanParam,
     }),
     cache: liveCache(2_000),
     fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'transactions', params }),
@@ -265,5 +281,64 @@ export const INDEXER_ENDPOINTS = {
     params: z.object({ network: proxiedNetworkSchema, validator: addressParam }),
     cache: liveCache(500),
     fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'validators/delegations/count', params }),
+  }),
+
+  'contracts/details': defineEndpoint({
+    params: z.object({ network: proxiedNetworkSchema, address: addressParam }),
+    cache: liveCache(2_000),
+    fetch: ({ network, address }) => fetchIndexer({ network, endPoint: `contracts/${address}`, params: {} }),
+  }),
+
+  'contracts/by-master': defineEndpoint({
+    params: z.object({
+      network: proxiedNetworkSchema,
+      address: addressParam,
+      page: pageParam,
+      size: pageSizeParam,
+    }),
+    cache: liveCache(2_000),
+    fetch: ({ network, address, ...params }) =>
+      fetchIndexer({ network, endPoint: `contracts/by-master/${address}`, params }),
+  }),
+
+  'transfers/fungible-tokens-contracts': defineEndpoint({
+    params: z.object({
+      network: proxiedNetworkSchema,
+      address: addressParam,
+      officialTokensOnly: optionalBooleanParam,
+      page: pageParam,
+      size: pageSizeParam,
+      direction: optionalDirectionParam,
+    }),
+    cache: liveCache(2_000),
+    fetch: ({ network, ...params }) =>
+      fetchIndexer({ network, endPoint: 'transfers/fungible-tokens-contracts', params }),
+  }),
+
+  nfts: defineEndpoint({
+    params: z.object({
+      network: proxiedNetworkSchema,
+      address: addressParam,
+      contractAddress: addressParam.optional(),
+      tokenId: tokenIdParam.optional(),
+      page: pageParam,
+      size: pageSizeParam,
+      direction: optionalDirectionParam,
+    }),
+    cache: liveCache(2_000),
+    fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'nfts', params }),
+  }),
+
+  'nfts/history': defineEndpoint({
+    params: z.object({
+      network: proxiedNetworkSchema,
+      contractAddress: addressParam,
+      tokenId: tokenIdParam,
+      page: pageParam,
+      size: pageSizeParam,
+      direction: optionalDirectionParam,
+    }),
+    cache: liveCache(2_000),
+    fetch: ({ network, ...params }) => fetchIndexer({ network, endPoint: 'nfts/history', params }),
   }),
 } satisfies Record<CachedIndexerEndpoint, ReturnType<typeof defineEndpoint>>

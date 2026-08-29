@@ -3,7 +3,7 @@ import type { NetworkName } from '@/lib/constants/network'
 import { type AddressString } from '@/lib/schemas/common'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerGet, resolveUrl } from '.'
+import { indexerCachedGet } from '.'
 import { indexerContractSchema } from './schemas'
 
 const CONTRACT_QUERY_KEY = 'getContract'
@@ -20,9 +20,11 @@ export const useContract = ({ address, enabled = true }: { address: AddressStrin
 }
 
 const getContract = async ({ networkName, address }: { networkName: NetworkName; address: AddressString }) => {
-  const { data } = await indexerGet({
-    baseUrl: resolveUrl(networkName),
-    endPoint: `/contracts/${address}`,
+  const { data } = await indexerCachedGet({
+    networkName,
+    endPoint: 'contracts/details',
+    params: { address },
+    direct: { endPoint: `/contracts/${address}`, params: {} },
   })
 
   return zodParse({
