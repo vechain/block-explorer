@@ -2,7 +2,8 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { getUnixTime } from 'date-fns'
 import { z } from 'zod'
 import { useMemo } from 'react'
-import { BLOCK_TIME_SECONDS, type NetworkName } from '@/lib/constants/network'
+import { type NetworkName } from '@/lib/constants/network'
+import { VALIDATOR_SLOTS_ANCHOR_SECONDS } from '@/lib/indexer-proxy'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
@@ -228,10 +229,9 @@ const getValidatorMissedBlocks = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<number> => {
-  // Anchored to a block boundary so concurrent viewers share one cache entry rather than
-  // minting one each per second.
+  // Anchored to the proxy's cache window, not a block: a faster-moving key is never reused.
   const now = getUnixTime(new Date())
-  const endTimestamp = now - (now % BLOCK_TIME_SECONDS)
+  const endTimestamp = now - (now % VALIDATOR_SLOTS_ANCHOR_SECONDS)
   const startTimestamp = endTimestamp - WEEK_IN_SECONDS
 
   const { data } = await indexerCachedGet({

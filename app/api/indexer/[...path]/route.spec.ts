@@ -156,6 +156,14 @@ describe('GET /api/indexer/[...path]', () => {
     it('never serves chain state older than one block', async () => {
       const { INDEXER_ENDPOINTS } = await import('@/lib/indexer-cache')
       const { BLOCK_TIME_SECONDS } = await import('@/lib/constants/network')
+      const { VALIDATOR_SLOTS_ANCHOR_SECONDS } = await import('@/lib/indexer-proxy')
+
+      // Exempt because it is not point-in-time chain state: a seven-day ratio cannot move
+      // inside one window, and its caller anchors the key to that same period. Adding to
+      // this has to be a deliberate edit — one block is the rule for everything else.
+      const windowedAggregates: Record<string, number> = {
+        'validators/slots': VALIDATOR_SLOTS_ANCHOR_SECONDS,
+      }
 
       // async-cache-dedupe stores an entry for ttl + stale and serves it for that whole
       // window, so that sum is the real staleness bound. Every indexer profile is fixed;
@@ -164,7 +172,8 @@ describe('GET /api/indexer/[...path]', () => {
         const { ttl, stale } = endpoint.cache
         if (typeof ttl !== 'number') throw new Error(`${path} defers its lifetime to the response`)
 
-        expect({ path, maxAge: ttl + stale }).toEqual({ path, maxAge: BLOCK_TIME_SECONDS })
+        const bound = windowedAggregates[path] ?? BLOCK_TIME_SECONDS
+        expect({ path, maxAge: ttl + stale }).toEqual({ path, maxAge: bound })
       }
     })
   })
