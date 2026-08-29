@@ -13,10 +13,13 @@ image_tag: latest # Overwritten by the deploy with the content SHA it resolved.
 app_version: dev # Overwritten by the deploy with the release that last changed the app.
 task_cpu: 1024
 task_memory: 2048 # Fargate's floor at this cpu size; peak RSS under load was 493 MB.
-desired_count: 2
+# Also the autoscaling floor, so it is what a burst starts from after a quiet spell.
+desired_count: 4
 autoscaling_max: 16 # Same 16 vCPU ceiling as 2048 x 8, in units that fill.
 # Served comfortably at ~2.9k on 2026-08-29; 4k was already shedding.
 autoscaling_request_count_target: 2500
+# A task takes ~2 min to contribute and bursts have peaked inside one; the gap is reaction time.
+autoscaling_cpu_target: 45
 container_port: 3000
 
 log_retention_days: 90
