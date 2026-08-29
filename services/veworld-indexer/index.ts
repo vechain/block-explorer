@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api'
+import { ApiError, apiClient } from '@/lib/api'
 import { NetworkName } from '@/lib/constants/network'
 import { INDEXER_PROXY_BASE, isCachedIndexerEndpoint } from '@/lib/indexer-proxy'
 import { isProxiedNetwork } from '@/lib/proxied-network'
@@ -34,19 +34,16 @@ const joinable = (endPoint: string) => (endPoint.startsWith('/') ? endPoint : `/
 // Proxied endpoints are cached server-side; anything else (and always solo, whose
 // indexer URL is browser-local) goes direct. `network` is appended last so a caller
 // cannot shadow it.
-export const indexerCachedGet = <T>({
-  networkName,
-  endPoint,
-  params,
-  direct,
-}: {
+interface IndexerCachedGetArgs {
   networkName: NetworkName
   /** The proxy's registry key, which is not always the upstream path. */
   endPoint: string
   params?: IndexerParams
   /** The upstream call for when the proxy is not used, where it differs from the proxy's. */
   direct?: { endPoint?: string; params?: IndexerParams; version?: IndexerVersion }
-}) => {
+}
+
+export const indexerCachedGet = <T>({ networkName, endPoint, params, direct }: IndexerCachedGetArgs) => {
   // Bypassing puts each call back on the viewer's own IP, which the indexer's WAF limits.
   if (!getRuntimeConfig().bypassIndexerProxy && isProxiedNetwork(networkName) && isCachedIndexerEndpoint(endPoint)) {
     return apiClient.get<T>({
@@ -61,4 +58,16 @@ export const indexerCachedGet = <T>({
     endPoint: joinable(direct?.endPoint ?? endPoint),
     params: direct?.params ?? params,
   })
+}
+
+// For a lookup whose 404 means the address has no such record. Catching it here covers the
+// direct path too, where the indexer's own 404 arrives instead of the proxy's.
+export const indexerCachedGetOrNull = async <T>(args: IndexerCachedGetArgs): Promise<T | null> => {
+  try {
+    const { data } = await indexerCachedGet<T>(args)
+    return data ?? null
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null
+    throw error
+  }
 }

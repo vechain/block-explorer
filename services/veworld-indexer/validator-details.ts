@@ -6,7 +6,7 @@ import { BLOCK_TIME_SECONDS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
-import { IndexerVersion, indexerCachedGet } from '.'
+import { IndexerVersion, indexerCachedGet, indexerCachedGetOrNull } from '.'
 import { indexerResponseSchema } from './schemas'
 import { validatorMetadataQueryOptions } from './validator-metadata'
 
@@ -173,12 +173,14 @@ const getValidatorDetails = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<ValidatorIndexerData | null> => {
-  const { data } = await indexerCachedGet({
+  const data = await indexerCachedGetOrNull({
     networkName,
     endPoint: 'validators/details',
     params: { address: validatorAddress },
     direct: { endPoint: `/validators/${validatorAddress}`, params: {}, version: IndexerVersion.V2 },
   })
+
+  if (data === null) return null
 
   const parsed = zodParse({
     data,

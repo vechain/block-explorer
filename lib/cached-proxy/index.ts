@@ -117,6 +117,9 @@ const upstreamOutcome = (error: unknown) => {
   return 'error'
 }
 
+// An upstream 4xx is the upstream answering, not a fault of ours; a timeout stays a 504.
+const proxiedStatus = (status: number) => (status === 504 || (status >= 400 && status < 500) ? status : 502)
+
 const withUpstreamMetrics =
   (labels: EndpointLabels, fetch: CacheMethod): CacheMethod =>
   async params => {
@@ -220,8 +223,10 @@ export const createCachedProxy = ({
 
       // Never cached — a cached outage outlives the outage.
       if (error instanceof UpstreamError) {
-        const status = error.status === 504 ? 504 : 502
-        return withCacheControl(createErrorResponse({ status, message: error.message }), NO_CACHE_CONTROL)
+        return withCacheControl(
+          createErrorResponse({ status: proxiedStatus(error.status), message: error.message }),
+          NO_CACHE_CONTROL,
+        )
       }
 
       console.error(`Unexpected error in ${name} proxy route:`, {
