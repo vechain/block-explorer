@@ -72,6 +72,18 @@ sign-in-but-nobody-mapped state to land in. Both lists need at least one group. 
 provider authenticates with a service-account token rather than through SAML. A user whose `role`
 assertion matches neither list is a Viewer.
 
+### ALB access logs
+
+`edge/` writes ALB access logs to a private bucket in the same account, expiring after 30 days. They
+are the only per-request record: CloudWatch counts a 5xx spike per minute but holds no request, so
+without them a spike can be attributed to a window and never to a URL, client or target — which is
+how the 2026-08-28 incident had to be diagnosed.
+
+The bucket policy grants the regional ELB account rather than the `logdelivery` service principal,
+because that principal only covers Regions enabled after August 2022 and eu-west-1 predates it. It is
+resolved through `aws_elb_service_account` rather than hardcoded. Bucket names are global and this
+account is shared with three other stacks, so the account ID is part of the name.
+
 ## Shared cache
 
 `data/` holds one ElastiCache Serverless Valkey per account, and in dev it is shared by dev and every

@@ -99,6 +99,71 @@ resource "aws_security_group" "app" {
 }
 
 # ---------------------------------------------------------------------------
+# Access logs. Per-request forensics CloudWatch counts cannot give — see README.
+# ---------------------------------------------------------------------------
+resource "aws_s3_bucket" "alb_logs" {
+  bucket = "${local.name}-alb-logs-${data.aws_caller_identity.current.account_id}"
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_s3_bucket_public_access_block" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# ALB log delivery cannot write to a bucket with a customer-managed key.
+resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Prod writes a few GB a day, and these are for reading back days, not quarters.
+resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  rule {
+    id     = "expire"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      days = 30
+    }
+  }
+}
+
+# eu-west-1 predates the logdelivery service principal newer Regions use.
+data "aws_elb_service_account" "main" {}
+
+data "aws_iam_policy_document" "alb_logs" {
+  statement {
+    principals {
+      type        = "AWS"
+      identifiers = [data.aws_elb_service_account.main.arn]
+    }
+
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.alb_logs.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
+  }
+}
+
+resource "aws_s3_bucket_policy" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+  policy = data.aws_iam_policy_document.alb_logs.json
+}
+
+# ---------------------------------------------------------------------------
 # Load balancer
 # ---------------------------------------------------------------------------
 
@@ -111,6 +176,14 @@ resource "aws_lb" "main" {
 
   enable_deletion_protection = terraform.workspace == "prod"
   drop_invalid_header_fields = true
+
+  access_logs {
+    bucket  = aws_s3_bucket.alb_logs.id
+    enabled = true
+  }
+
+  # The bucket refuses the first delivery until its policy lands.
+  depends_on = [aws_s3_bucket_policy.alb_logs]
 }
 
 # Health check path is /api/health, not /: middleware.ts skips /api/*, so this
