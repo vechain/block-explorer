@@ -113,7 +113,9 @@ module "service" {
   memory        = local.env.task_memory
   desired_count = local.env.desired_count
 
-  autoscaling_max_capacity = local.env.autoscaling_max
+  autoscaling_max_capacity                 = local.env.autoscaling_max
+  autoscaling_request_count_target         = local.env.autoscaling_request_count_target
+  autoscaling_request_count_resource_label = "${data.terraform_remote_state.edge.outputs.alb_arn_suffix}/${data.terraform_remote_state.edge.outputs.target_group_arn_suffix}"
 
   subnet_ids         = data.terraform_remote_state.network.outputs.application_subnet_ids
   security_group_ids = [data.terraform_remote_state.edge.outputs.app_security_group_id]

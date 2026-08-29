@@ -25,7 +25,7 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 parameters, not structure. It holds two copies of the service resource because `ignore_changes` takes
 only a literal: dev and prod need it on `task_definition` (their deploy workflow moves the pointer out
 of band), previews need it off (the apply itself is what rolls them). `terraform_owns_task_definition`
-picks one. It also owns the CPU target-tracking policy, which is off unless `autoscaling_max` is set in
+picks one. It also owns the target-tracking policies, which are off unless `autoscaling_max` is set in
 the env YAML — previews stay at one task.
 
 `modules/observability-sidecar` renders the ADOT container that scrapes `/api/metrics` over the task's
@@ -84,6 +84,24 @@ Keys are prefixed with the image tag, so two builds sharing one cache cannot rea
 payloads — that is what lets a preview running unmerged schema changes share dev's instance. It also
 means a deploy starts cold: the entries worth sharing are the day-long ones, decoded selectors and
 Sourcify ABIs, and they are rebuilt per release rather than carried across.
+
+## Autoscaling
+
+`modules/ecs-webservice` holds the service at two target-tracking policies at once, and the pairing
+is the point. CPU leads, because every page is server-rendered per request and load shows up there
+before it shows up as queueing. But the metric is a service _average_, and a task that is booting or
+being replaced contributes near-zero CPU to it — so the average reads low exactly when the service is
+failing. On 2026-08-28 that inverted the controller: it scaled prod in to 5 tasks and then 4 while
+p99 sat at 22s and one host was healthy.
+
+Requests per target moves the other way. When targets drop out the surviving ones each take a larger
+share, so the metric rises through the same failure that pushes average CPU down. Application Auto
+Scaling scales out on whichever policy asks for more and scales in only when both agree, which leaves
+CPU leading in normal conditions and stops it shedding capacity during a brownout.
+
+The request-count policy needs the ALB it is measured against, passed as
+`autoscaling_request_count_resource_label`. Previews do not wire one through, so they keep CPU
+tracking alone.
 
 ## Environment config
 
