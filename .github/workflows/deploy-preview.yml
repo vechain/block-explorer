@@ -60,6 +60,7 @@ jobs:
       name: preview
     outputs:
       ecr_tag: ${{ steps.meta.outputs.ecr_tag }}
+      app_version: ${{ steps.meta.outputs.app_version }}
     steps:
       # Base, not the PR head: this job assumes a role, so the script it runs
       # must not be one the PR can edit.
@@ -84,6 +85,7 @@ jobs:
           {
             echo "ghcr_tag=pr.${PR_NUMBER}.${SHORT_SHA}"
             echo "ecr_tag=pr-${PR_NUMBER}-${APP_SHA}"
+            echo "app_version=v.0.0.0-pr.${PR_NUMBER}.${SHORT_SHA}"
           } >> "$GITHUB_OUTPUT"
           echo "PR #${PR_NUMBER} at ${HEAD_SHA} carries app content ${APP_SHA}."
 
@@ -176,12 +178,13 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           IMAGE_TAG: ${{ needs.image.outputs.ecr_tag }}
+          APP_VERSION: ${{ needs.image.outputs.app_version }}
         run: |
           set -euo pipefail
           terraform init -input=false -backend-config="${TERRAFORM_BACKEND_CONFIG}"
           terraform workspace select -or-create "pr-${PR_NUMBER}"
           terraform plan -input=false -out=tfplan \
-            -var="pr_number=${PR_NUMBER}" -var="image_tag=${IMAGE_TAG}"
+            -var="pr_number=${PR_NUMBER}" -var="image_tag=${IMAGE_TAG}" -var="app_version=${APP_VERSION}"
           terraform apply -input=false -auto-approve tfplan
 
       - name: Read outputs

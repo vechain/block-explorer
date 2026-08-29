@@ -1,8 +1,3 @@
-import packageJson from '@/package.json'
-
-/** App version - set at build time from git tag, falls back to package.json for local dev @public */
-export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || packageJson.version
-
 const requireEnv = (name: string, value: string | undefined) => {
   if (!value) {
     throw new Error(`${name} is not set`)

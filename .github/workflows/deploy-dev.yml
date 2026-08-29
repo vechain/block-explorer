@@ -186,14 +186,34 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
-      - name: Pin the image tag
+      # Pinned to the image, not to this release: a release that changed nothing the
+      # app reads then registers no revision, and the footer keeps the release that
+      # last changed the app.
+      - name: Pin the image tag and version
         env:
-          TAG: ${{ needs.guard.outputs.ecr_tag }}
+          IMAGE_TAG: ${{ needs.guard.outputs.ecr_tag }}
+          VERSION_TAG: ${{ needs.guard.outputs.tag }}
+          FAMILY: block-explorer-dev-frontend
         run: |
           set -euo pipefail
+
+          running=$(aws ecs describe-task-definition --task-definition "$FAMILY" --no-cli-pager \
+            --query "taskDefinition.containerDefinitions[?name=='frontend'] | [0]" --output json 2>/dev/null || true)
+
+          app_version="$VERSION_TAG"
+          if [ -n "${running:-}" ] && [ "$running" != "null" ]; then
+            running_image=$(jq -r '.image // empty' <<<"$running")
+            running_version=$(jq -r '.environment[]? | select(.name == "APP_VERSION") | .value' <<<"$running")
+            if [ "${running_image##*:}" = "$IMAGE_TAG" ] && [ -n "$running_version" ]; then
+              app_version="$running_version"
+              echo "${IMAGE_TAG} already serves ${app_version}; keeping it."
+            fi
+          fi
+
           cd terraform/environments/dev
-          sed -i "s|^image_tag:.*|image_tag: ${TAG}|" dev.yaml
-          grep '^image_tag:' dev.yaml
+          sed -i "s|^image_tag:.*|image_tag: ${IMAGE_TAG}|" dev.yaml
+          sed -i "s|^app_version:.*|app_version: ${app_version}|" dev.yaml
+          grep -E '^(image_tag|app_version):' dev.yaml
 
       - name: Plan and apply each stack
         env:

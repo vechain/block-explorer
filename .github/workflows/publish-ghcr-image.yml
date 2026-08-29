@@ -120,8 +120,6 @@ jobs:
         with:
           file: Dockerfile
           platforms: ${{ matrix.platform }}
-          build-args: |
-            NEXT_PUBLIC_APP_VERSION=${{ env.versionTag }}
           context: ./
           provenance: false
           sbom: false

@@ -5,9 +5,11 @@ import Image from 'next/image'
 import { useTranslation } from 'react-i18next'
 import { Logo } from './Logo'
 import { FiExternalLink } from 'react-icons/fi'
+import { getRuntimeConfig } from '@/lib/runtime-config/get'
 
 export const Footer = () => {
   const { t } = useTranslation()
+  const { appVersion } = getRuntimeConfig()
   const linkProps = {
     color: 'text.secondary',
     target: '_blank',
@@ -37,7 +39,7 @@ export const Footer = () => {
             <VStack alignItems={{ base: 'start', md: 'center' }} gap={2} width={{ base: '100%', md: 'auto' }}>
               <Logo h={{ base: 6, md: 8 }} />
               <Text fontSize="sm" color="gray.500">
-                {process.env.NEXT_PUBLIC_APP_VERSION || 'dev'}
+                {appVersion}
               </Text>
             </VStack>
             <HStack
