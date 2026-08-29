@@ -13,7 +13,7 @@ locals {
 
   autoscaling_enabled = var.autoscaling_max_capacity != null
 
-  # Needs the ALB it is measured against, which previews do not wire through.
+  # Needs an ALB to measure against, so it is narrower than autoscaling_enabled.
   request_count_enabled = local.autoscaling_enabled && var.autoscaling_request_count_resource_label != null
 }
 

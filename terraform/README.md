@@ -100,8 +100,9 @@ Scaling scales out on whichever policy asks for more and scales in only when bot
 CPU leading in normal conditions and stops it shedding capacity during a brownout.
 
 The request-count policy needs the ALB it is measured against, passed as
-`autoscaling_request_count_resource_label`. Previews do not wire one through, so they keep CPU
-tracking alone.
+`autoscaling_request_count_resource_label`; without one, CPU is the only signal. That is a separate
+switch from `autoscaling_max`, which is what turns target tracking on at all — previews set neither,
+so they run no autoscaling and stay at one task.
 
 ## Environment config
 
