@@ -15,7 +15,6 @@ RUN corepack enable && \
 COPY . .
 
 # Build arguments for all configurable URLs
-ARG NEXT_PUBLIC_APP_VERSION
 ARG NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL=https://api.gateway-proxy.vechain.org
 ARG B32_URL=https://b32.vecha.in
 ARG NEXT_PUBLIC_COIN_API_URL=https://coin-api.veworld.vechain.org
@@ -24,7 +23,6 @@ ARG NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL=https://indexer.testnet.vechain.org
 ARG NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL
 
 # Set environment variables for build
-ENV NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION}
 ENV NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL=${NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL}
 ENV B32_URL=${B32_URL}
 ENV NEXT_PUBLIC_COIN_API_URL=${NEXT_PUBLIC_COIN_API_URL}

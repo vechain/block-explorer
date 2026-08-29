@@ -145,6 +145,7 @@ Optional server-only (read by `env.api.ts`):
 
 Runtime-injected (read by `lib/runtime-config/get.ts`):
 
+- `APP_VERSION`: version string the footer shows; `dev` when unset. Runtime rather than build-time so one image serves every PR and every release — see the versioning section.
 - `ALLOW_DEV_MODE`: `'true'` to expose the dev-mode toggle (and the solo network) in the UI; auto-enabled when `NODE_ENV=development`
 - `BYPASS_INDEXER_PROXY`: `'true'` to call the indexer straight from the browser instead of through `/api/indexer`, trading the server-side cache for per-viewer source IPs. Unset everywhere now that `INDEXER_RATE_LIMIT_BYPASS` gets our shared egress IP past the indexer's WAF.
 - `INTERNAL_ORIGIN`: origin a server render uses to reach our own proxy route handlers, so it shares their cache instead of calling upstream itself — a relative URL is not fetchable off the browser. Defaults to `http://127.0.0.1:$PORT` (3000 when `PORT` is unset), which is correct in Docker and ECS; set it only when the app is not reachable on its own loopback, or when `next dev` runs on another port.
@@ -209,13 +210,14 @@ Automated semantic versioning via git tags — `package.json` version is `0.0.0-
 - `increment:minor` — new features (1.0.0 → 1.1.0)
 - `increment:major` — breaking changes (1.0.0 → 2.0.0)
 
-Real version injected at build time from git tags.
+Real version comes from the git tag, injected as `APP_VERSION` at container start rather than baked
+into the bundle — so the image carries no PR or release identity and one build serves them all.
 
 Images are content-addressed: `scripts/app-content-sha.sh` (also `pnpm app:sha`) hashes every file
 the Docker build reads, and that `app-<sha12>` is the canonical image tag with the version tags
-aliased onto it. A release changing only terraform, workflows or docs therefore skips
-both the image build and the ECS roll — and shows the version of the release that last changed the
-app, which is the one actually running.
+aliased onto it. A release changing only terraform, workflows or docs therefore skips both the image
+build and the ECS roll — the deploy pins `APP_VERSION` to whatever already serves that image, so a
+new release cannot register a task definition that differs only by a version string.
 
 ## Deployment
 

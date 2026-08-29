@@ -133,9 +133,10 @@ module "service" {
   terraform_owns_task_definition     = true
 
   environment = merge({
-    NODE_ENV = "production"
-    PORT     = tostring(local.env.container_port)
-    HOSTNAME = "0.0.0.0"
+    NODE_ENV    = "production"
+    PORT        = tostring(local.env.container_port)
+    HOSTNAME    = "0.0.0.0"
+    APP_VERSION = var.app_version
     }, local.cache_ready ? {
     REDIS_CLUSTER_MODE = "true"
     # The image tag, so this PR's payloads are unreadable to dev and to every

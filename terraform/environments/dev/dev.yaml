@@ -10,6 +10,7 @@ single_nat_gateway: true
 
 # ECS task
 image_tag: latest # Overwritten by the deploy with the content SHA it resolved.
+app_version: dev # Overwritten by the deploy with the release that last changed the app.
 task_cpu: 512
 task_memory: 1024
 desired_count: 1

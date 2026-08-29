@@ -22,12 +22,12 @@ Version numbers come from git tags and are **never stored in `package.json`**, w
 Every PR needs one label before it merges — `increment:major`, `increment:minor` or
 `increment:patch`; `validate-version-label.yml` blocks the merge without one. On merge,
 `codebase-versioning.yml` reads the label and pushes the next `v.X.Y.Z` tag. That tag is what builds
-the image and what the UI shows, injected at build time as `NEXT_PUBLIC_APP_VERSION`. Locally the
-version falls back to `package.json`, so it reads `0.0.0-dev`.
+the image and what the UI shows, injected at container start as `APP_VERSION`. Unset, it reads `dev`.
 
 On dev and prod that is the release which last **changed** the app, not necessarily the newest one.
 Images are content-addressed (see `scripts/app-content-sha.sh`), so a release carrying only terraform,
-workflow or docs changes reuses the existing image and reports the version baked into it — which is
+workflow or docs changes reuses the existing image, and the deploy carries its version forward rather
+than registering a task definition that differs only by a version string — so what the footer shows is
 the version actually serving traffic. `.github/workflows/README.md` has the full tagging scheme.
 
 ## Releasing to prod
@@ -64,7 +64,7 @@ services:
     ports:
       - '3000:3000'
     environment:
-      - NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION}
+      - APP_VERSION=${APP_VERSION}
       - NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL=${NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL}
       - B32_URL=${B32_URL}
       - NEXT_PUBLIC_COIN_API_URL=${NEXT_PUBLIC_COIN_API_URL}

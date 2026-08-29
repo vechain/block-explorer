@@ -9,6 +9,7 @@ const parseAddress = (value: string | undefined): AddressString | undefined => {
 }
 
 const readFromEnv = (): RuntimeConfig => ({
+  appVersion: process.env.APP_VERSION?.trim() || 'dev',
   allowDevMode: process.env.ALLOW_DEV_MODE === 'true' || process.env.NODE_ENV === 'development',
   bypassIndexerProxy: process.env.BYPASS_INDEXER_PROXY === 'true',
   soloContracts: {

@@ -10,6 +10,7 @@ single_nat_gateway: false
 
 # ECS task. One process per task saturates at 1.2 vCPU, so 2048 stranded roughly 40%.
 image_tag: latest # Overwritten by the deploy with the content SHA it resolved.
+app_version: dev # Overwritten by the deploy with the release that last changed the app.
 task_cpu: 1024
 task_memory: 2048 # Fargate's floor at this cpu size; peak RSS under load was 493 MB.
 desired_count: 2

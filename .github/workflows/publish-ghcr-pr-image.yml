@@ -38,7 +38,6 @@ jobs:
       head_sha: ${{ steps.meta.outputs.head_sha }}
       short_sha: ${{ steps.meta.outputs.short_sha }}
       pr_tag: ${{ steps.meta.outputs.pr_tag }}
-      pr_version: ${{ steps.meta.outputs.pr_version }}
     steps:
       - name: Resolve PR metadata
         id: meta
@@ -64,7 +63,6 @@ jobs:
               echo "head_sha="
               echo "short_sha="
               echo "pr_tag="
-              echo "pr_version="
             } >> "$GITHUB_OUTPUT"
             exit 0
           }
@@ -126,10 +124,10 @@ jobs:
             echo "head_sha=${HEAD_SHA}"
             echo "short_sha=${SHORT_SHA}"
             echo "pr_tag=pr.${PR_NUM}.${SHORT_SHA}"
-            echo "pr_version=v.0.0.0-pr.${PR_NUM}.${SHORT_SHA}"
           } >> "$GITHUB_OUTPUT"
 
-  # Reuses any image with this content; publishes under pr.* so a PR-baked version never becomes a release.
+  # One namespace with the release: nothing PR-specific is baked in, so the same
+  # content is the same image and either side can serve the other.
   detect:
     needs: validate
     if: needs.validate.outputs.publish == 'true'
@@ -139,9 +137,7 @@ jobs:
       packages: read
     outputs:
       app_sha: ${{ steps.sha.outputs.app_sha }}
-      content_tag: ${{ steps.sha.outputs.content_tag }}
       exists: ${{ steps.probe.outputs.exists }}
-      reuse_ref: ${{ steps.probe.outputs.reuse_ref }}
     steps:
       # Default branch, not the PR head: the script itself must not be the PR's.
       - name: Checkout repository
@@ -160,7 +156,6 @@ jobs:
             || git fetch --quiet origin "$HEAD_SHA"
           APP_SHA=$(bash scripts/app-content-sha.sh "$HEAD_SHA")
           echo "app_sha=${APP_SHA}" >> "$GITHUB_OUTPUT"
-          echo "content_tag=pr.${APP_SHA}" >> "$GITHUB_OUTPUT"
           echo "PR #${PR_NUMBER} at ${HEAD_SHA} carries app content ${APP_SHA}."
 
       - name: Login to GHCR
@@ -170,27 +165,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Release images first: they carry a real version rather than some PR's.
       - name: Probe GHCR for the content SHA
         id: probe
         env:
-          IMAGE: ${{ env.registry }}/${{ github.repository }}
-          APP_SHA: ${{ steps.sha.outputs.app_sha }}
-          CONTENT_TAG: ${{ steps.sha.outputs.content_tag }}
+          IMAGE: ${{ env.registry }}/${{ github.repository }}:${{ steps.sha.outputs.app_sha }}
         run: |
           set -euo pipefail
-          for candidate in "${IMAGE}:${APP_SHA}" "${IMAGE}:${CONTENT_TAG}"; do
-            if docker buildx imagetools inspect "$candidate" >/dev/null 2>&1; then
-              {
-                echo "exists=true"
-                echo "reuse_ref=${candidate}"
-              } >> "$GITHUB_OUTPUT"
-              echo "${candidate} is already published — this push only needs its commit tag."
-              exit 0
-            fi
-          done
-          echo "exists=false" >> "$GITHUB_OUTPUT"
-          echo "Nothing published carries ${APP_SHA} — building."
+          if docker buildx imagetools inspect "$IMAGE" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "${IMAGE} is already published — this push only needs its commit tag."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "${IMAGE} is not published — building."
+          fi
 
   build:
     needs: [validate, detect]
@@ -235,8 +222,6 @@ jobs:
         with:
           file: Dockerfile
           platforms: ${{ matrix.platform }}
-          build-args: |
-            NEXT_PUBLIC_APP_VERSION=${{ needs.validate.outputs.pr_version }}
           context: ./
           provenance: false
           sbom: false
@@ -292,8 +277,7 @@ jobs:
         env:
           IMAGE: ${{ env.registry }}/${{ github.repository }}
           PR_TAG: ${{ needs.validate.outputs.pr_tag }}
-          CONTENT_TAG: ${{ needs.detect.outputs.content_tag }}
-          REUSE_REF: ${{ needs.detect.outputs.reuse_ref }}
+          CONTENT_TAG: ${{ needs.detect.outputs.app_sha }}
           EXISTS: ${{ needs.detect.outputs.exists }}
         run: |
           set -euo pipefail
@@ -301,7 +285,7 @@ jobs:
           tags=("-t" "${IMAGE}:${PR_TAG}")
 
           if [ "${EXISTS}" = "true" ]; then
-            sources=("${REUSE_REF}")
+            sources=("${IMAGE}:${CONTENT_TAG}")
           else
             tags+=("-t" "${IMAGE}:${CONTENT_TAG}")
             sources=()
