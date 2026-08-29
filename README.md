@@ -67,7 +67,7 @@ This project uses **automated semantic versioning**. Version numbers are managed
 
 ### Note on `package.json` Version
 
-The `package.json` version is set to `0.0.0-dev` and is **not used** for production versioning. The real version is injected at build time from git tags.
+The `package.json` version is set to `0.0.0-dev` and is **not used** for production versioning. The real version comes from git tags, injected as `APP_VERSION` at container start.
 
 ## Deployment
 

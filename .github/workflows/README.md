@@ -28,14 +28,14 @@ definition of such a release is byte-identical, so `deploy-dev.yml` and `deploy-
 roll too — each compares the revision the apply registered against the one the service runs. Terraform
 still applies every release; terraform changes are exactly what these releases carry.
 
-The version baked into the bundle is therefore the release that last *changed* the app, not the one
-being cut. That is what is running, so it is what the footer says.
+The footer therefore shows the release that last *changed* the app, not the one being cut — that is
+what is running. `APP_VERSION` reaches the container at start rather than being baked in, and the
+deploy pins it to the image, so a no-op release registers no new revision.
 
-Previews work the same way, with the content SHA scoped per PR (`pr.{number}.app-{sha}`) so a push
-reuses only its own PR's image and never inherits another PR's baked version. `publish-ghcr-pr-image.yml`
-still publishes the `pr.{number}.{short_sha}` tag either way, because that is the signal
-`deploy-preview.yml` waits on. Previews need no roll check: Terraform owns the task definition there,
-so an unchanged image tag is already a no-op apply.
+Previews share that one namespace: nothing PR-specific is in the image, so a release can skip a build
+a PR already did. `publish-ghcr-pr-image.yml` still publishes the `pr.{number}.{short_sha}` tag either
+way, because that is the signal `deploy-preview.yml` waits on. Previews need no roll check: Terraform
+owns the task definition there, so an unchanged image tag is already a no-op apply.
 
 `deploy-preview.yml` promotes **from that commit alias**, not from a content tag it derives itself.
 The two workflows hash different refs — the publish uses the default branch at build time, the deploy
@@ -139,7 +139,7 @@ workflow here branches on the target.
 4. `deploy` - Applies `terraform/frontend-preview` in workspace `pr-{number}`, waits for the service, checks `/api/health`
 5. `comment` - Updates the sticky comment with the URL or a link to the logs
 
-**Image:** promoted from `ghcr.io/vechain/block-explorer:pr.{number}.app-{sha12}`, published by
+**Image:** promoted from `ghcr.io/vechain/block-explorer:pr.{number}.{short_sha}`, published by
 `publish-ghcr-pr-image.yml` once the unit tests pass. Previews are not rebuilt — they run the same
 arm64 image dev and prod do. The `image` job waits on the commit-tagged alias, which that workflow
 publishes whether or not it built anything.
@@ -215,7 +215,7 @@ cannot starve the rest.
 
 **Preview Tags:**
 - One per distinct app build on a PR, not one per commit
-- Copied from `ghcr.io/vechain/block-explorer:pr.{number}.app-{sha12}`, so the ECR tag is a manifest
+- Copied from `ghcr.io/vechain/block-explorer:pr.{number}.{short_sha}`, so the ECR tag is a manifest
   list and an arm64 task can resolve its own platform
 
 ---
