@@ -123,13 +123,14 @@ resource "aws_lb_target_group" "app" {
   target_type = "ip"
   vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
 
+  # ECS kills what this marks unhealthy, and the probe queues behind SSR on one event loop.
   health_check {
     path                = "/api/health"
     matcher             = "200"
     interval            = 30
-    timeout             = 5
+    timeout             = 10
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 5
   }
 
   deregistration_delay = 60
