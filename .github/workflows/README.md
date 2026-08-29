@@ -8,11 +8,11 @@ Automated CI/CD for Block Explorer. Dev, prod and previews all run on ECS Fargat
 PR merged to main
   → codebase-versioning.yml tags v.X.Y.Z (increment:* label picks the bump)
   → publish-ghcr-image.yml builds the multi-arch image, or aliases one it already has
-  → deploy-dev.yml promotes it to ECR and deploys dev
+  → deploy.yml promotes it to ECR and deploys dev
   → prepare-release.yml leaves exactly one draft release
 
 Draft published
-  → deploy-prod.yml deploys prod
+  → deploy.yml deploys prod
 ```
 
 ### Content-addressed images
@@ -24,9 +24,9 @@ tags are aliases on the same manifest. Run it locally with `pnpm app:sha`.
 
 Two things fall out of that. `publish-ghcr-image.yml` probes GHCR for the content SHA and skips both
 arch builds when it is already published. And because the image tag is what Terraform pins, the task
-definition of such a release is byte-identical, so `deploy-dev.yml` and `deploy-prod.yml` skip the ECS
-roll too — each compares the revision the apply registered against the one the service runs. Terraform
-still applies every release; terraform changes are exactly what these releases carry.
+definition of such a release is byte-identical, so `deploy.yml` skips the ECS roll too — it compares
+the revision the apply registered against the one the service runs. Terraform still applies every
+release; terraform changes are exactly what these releases carry.
 
 The footer therefore shows the release that last *changed* the app, not the one being cut — that is
 what is running. `APP_VERSION` reaches the container at start rather than being baked in, and the
@@ -45,38 +45,70 @@ fail. The alias resolves to the same manifest, and the ECR destination stays con
 
 ## Workflows
 
-### Dev Deployment (`deploy-dev.yml`)
+### Deployment (`deploy.yml`)
 
-**Triggers:**
-- Completion of `publish-ghcr-image.yml`, so the image is guaranteed to exist rather than polled for
-- Manual dispatch with a version tag (break-glass, e.g. to roll back)
+One workflow for both environments, with the target derived from the trigger. Dev and prod deploy the
+same image, so parity is structural rather than maintained by hand.
+
+| Trigger | Target |
+|---|---|
+| Completion of `publish-ghcr-image.yml` | dev — the image is guaranteed to exist rather than polled for |
+| A GitHub Release being published | prod — the single draft `prepare-release.yml` left |
+| Manual dispatch | either, chosen by the `environment` input (break-glass, e.g. to roll back) |
 
 **Jobs:**
-1. `guard` - Resolves the tag and its content SHA, and refuses anything not reachable from `main`
-2. `promote` - Copies the GHCR manifest list into ECR as `dev-app-<sha>`, keeping both arches. Skipped when that tag is already there
+1. `guard` - Resolves the target, the tag and its content SHA, refuses anything not reachable from `main`, and derives the per-environment names below
+2. `promote` - Copies the GHCR manifest list into that account's ECR, keeping both arches. Each tag is written only if absent
 3. `terraform` - Applies each stack serially in dependency order, planning immediately before each apply
-4. `roll` - Moves the service to the new task definition revision unless it already runs it, then checks `/api/health` and that `/api/metrics` is 403
-5. `draft-release` - Calls `prepare-release.yml` (not on dispatch)
+4. `roll` - Moves the service to the new task definition revision unless it already runs it, then checks `/api/health` and that `/api/metrics` is 403, both over the ALB by name
+5. `draft-release` - Calls `prepare-release.yml` (dev only, and not on dispatch)
 
-**Domain:** `https://dev.block-explorer.vechain.org`
+**Domains:** `https://dev.block-explorer.vechain.org`, `https://block-explorer.vechain.org`
 
-The `terraform` job takes the default checkout and passes the tag through as a string. It holds AWS
-credentials and Terraform executes whatever is in the tree, so checking out a `ref:` taken from event
-data would be an untrusted checkout with execution — CodeQL rates it critical and `main`'s
-`code_scanning` rule blocks the merge.
+#### What actually differs between the two
+
+`vars.AWS_OIDC_ROLE_ARN` resolves per GitHub Environment and prod approval is a protection rule on the
+same object, so credentials need no conditional. `TF_VAR_prod_deploy_role_arn` and `TF_VAR_dns_role_arn`
+are each set on one Environment only and pass unconditionally — the other resolves to `""`, which is
+the off value the stacks already read as "not cross-account". Everything else is derived: the task
+family is `block-explorer-<env>-frontend`, the config is `terraform/environments/<env>/<env>.yaml`,
+and the workspace and backend config follow the same pattern. That leaves three `guard` outputs:
+
+| | dev | prod |
+|---|---|---|
+| `image_tag` | `dev-app-<sha>` — the registry is shared with previews | `app-<sha>` |
+| `alias_tag` | none | `v.X.Y.Z`, aliased onto the same manifest |
+| `stacks` | the 8, plus `dns` and `preview-edge` | the 8 |
+
+The ref a run starts on is part of the security model, because the credentialed jobs apply whatever
+Terraform they check out. **Dev takes `main`'s tree with the tag's image; prod takes the tag's own
+tree**, which is why a branch is refused there outright.
+
+The `terraform` job never takes a `ref:` from event data — that would be an untrusted checkout with
+execution, which CodeQL rates critical and `main`'s `code_scanning` rule blocks. Only the image
+travels as a tag, and that is a string.
+
+Stacks are applied serially, each planned immediately before its own apply. The design doc's parallel
+plan matrix is deliberately not used: on a first deploy the downstream stacks cannot plan at all until
+the upstream state they read exists. The plan file never leaves the job, because a binary plan can
+carry state.
+
+The `roll` job checks the ALB by name rather than by DNS. `services-stable` already means the tasks
+are healthy in the target group, so what is left to prove is the ALB in front of them — and going
+through DNS would let a cached or weighted answer pass the check on the deployed stack's behalf.
 
 ---
 
 ### Prepare Release Draft (`prepare-release.yml`)
 
-Called by `deploy-dev.yml` after a successful deploy. Deletes any stale `v.*` draft and cuts a fresh
+Called by `deploy.yml` after a successful dev deploy. Deletes any stale `v.*` draft and cuts a fresh
 one for the just-deployed tag, so cutting prod is "open the single draft and click Publish".
 
 Notes start at the last *published* release, not GitHub's default baseline — every merge to `main`
 produces a tag, so the default picks the previous dev-only cut.
 
-It is a `workflow_call` rather than a `workflow_run` chained off the deploy, because "Deploy to Dev"
-is itself `workflow_run`-triggered: its own `head_branch` is `main`, so the deployed tag is not
+It is a `workflow_call` rather than a `workflow_run` chained off the deploy, because the deploy's dev
+path is itself `workflow_run`-triggered: its own `head_branch` is `main`, so the deployed tag is not
 recoverable from the event payload. Passing it as an input is exact.
 
 Skipped on `workflow_dispatch` deploys — a break-glass run may be redeploying an older tag, and
@@ -101,27 +133,6 @@ which would leave that PR waiting forever on a required status.
 `.github/actionlint-matcher.json` is vendored from actionlint v1.7.8 because the reusable workflow
 registers it with `::add-matcher::` unconditionally, and the runner fails the step when the file is
 absent. It only annotates findings onto the diff.
-
----
-
-### Production Deployment (`deploy-prod.yml`)
-
-**Triggers:**
-- A GitHub Release being published — the single draft `deploy-dev.yml` left
-- Manual dispatch against a tag (break-glass, e.g. to roll back)
-
-**Jobs:**
-1. `guard` - Resolves the tag and refuses anything not reachable from `main`
-2. `promote` - Copies the GHCR manifest list into the prod account's ECR, keeping both arches
-3. `terraform` - Applies each stack serially in dependency order, planning immediately before each apply
-4. `roll` - Moves the service to the new revision, then checks `/api/health` and that `/api/metrics` is 403
-
-**Domain:** `https://block-explorer.vechain.org`
-
-Same shape as the dev deploy, in a second account. Both guard the tag identically — it can point
-anywhere, so one unreachable from `main` is refused before any credential is handed out. Prod approval
-is a GitHub Environment protection rule, and `vars.AWS_OIDC_ROLE_ARN` resolves per Environment, so no
-workflow here branches on the target.
 
 ---
 

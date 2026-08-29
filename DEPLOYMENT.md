@@ -37,7 +37,8 @@ promoted from GHCR into the prod account's ECR, the Terraform stacks are applied
 service is rolled and then checked over its ALB. Dev and prod run the same image, so parity is
 structural rather than maintained by hand.
 
-Rolling back is a `workflow_dispatch` of `deploy-prod.yml` against the previous tag.
+Rolling back is a `workflow_dispatch` of `deploy.yml` against the previous tag, with `prod` as the
+environment.
 
 ## Public Docker image
 

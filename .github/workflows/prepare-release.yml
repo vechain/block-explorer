@@ -1,9 +1,6 @@
 name: Prepare release draft
 
-# Called by deploy-dev.yml rather than chained off it with workflow_run: "Deploy
-# to Dev" is itself workflow_run-triggered, so its own head_branch is `main` and
-# the tag the reference implementation reads from there never arrives. Taking it
-# as an input is exact, and survives the prod fold in phase 6.
+# Called by deploy.yml, which is itself workflow_run-triggered — see workflows/README.md.
 on:
   workflow_call:
     inputs:
@@ -39,7 +36,7 @@ jobs:
           fi
 
       # GitHub's default baseline is the preceding tag, which every merge to main
-      # produces. Prereleases count: deploy-production.yml fires on any published
+      # produces. Prereleases count: the prod deploy fires on any published
       # release, so the newest published one is what prod is actually running.
       - name: Resolve last published tag
         if: env.ALREADY_PUBLISHED != 'true'

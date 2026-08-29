@@ -125,7 +125,7 @@ TF_WORKSPACE=dev terraform validate
 
 ## Applying
 
-`deploy-dev.yml` owns everything long-lived in `explorer-dev`, `preview-edge` included. Every merge to
+`deploy.yml` owns everything long-lived in `explorer-dev`, `preview-edge` included. Every merge to
 `main` gets a `v.X.Y.Z` tag, which builds the release image; the deploy chains off that build, pins
 `image_tag`, applies the stacks in order and rolls the ECS service. Nothing here needs applying by
 hand.
@@ -168,7 +168,7 @@ per-IP rate limit for the whole environment.
 
 ## Prod
 
-Same stacks, a second account, and a separate state bucket — `deploy-prod.yml` applies them on
+Same stacks, a second account, and a separate state bucket — the same `deploy.yml` applies them on
 `release: published`, less `preview-edge` and `dns`, which exist only in the dev account. Prod's
 ElastiCache is built with the account rather than retrofitted, so the image that eventually takes
 prod traffic is one that has been running against Valkey in dev for weeks.

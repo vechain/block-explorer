@@ -1,14 +1,39 @@
-name: Deploy to Prod
+name: Deploy
 
-# Publishing the draft release deploy-dev.yml left is what promotes to prod.
+# One workflow, both environments, target derived from the trigger:
+#   image build finished  → dev   (every merge to main gets a v.X.Y.Z tag)
+#   release published     → prod  (the single draft the dev deploy left)
+#   dispatch              → either, break-glass
+# vars.AWS_OIDC_ROLE_ARN resolves per GitHub Environment and prod approval is a
+# protection rule on the same object, so no job below branches on the target.
 on:
+  workflow_run:
+    workflows: ["Build & Publish Release Image"]
+    types: [completed]
   release:
     types: [published]
-  # Break-glass. Run it against a tag, not a branch — see the guard below.
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+        default: dev
+      version:
+        description: "Version tag to deploy (e.g. v.1.0.0). Defaults to the ref when dispatched from a tag."
+        required: false
+        type: string
 
+run-name: >-
+  Deploy ${{ inputs.version || github.event.workflow_run.head_branch || github.ref_name }}
+  → ${{ github.event_name == 'release' && 'prod' || (inputs.environment || 'dev') }}
+
+# From the event, not from guard: concurrency is evaluated before any job runs.
 concurrency:
-  group: deploy-prod
+  group: deploy-${{ github.event_name == 'release' && 'prod' || (inputs.environment || 'dev') }}
   cancel-in-progress: false
 
 env:
@@ -18,50 +43,90 @@ env:
   GHCR_REGISTRY: ghcr.io
 
 jobs:
-  # A release can be published on a tag pointing anywhere, so this refuses
-  # anything not reachable from main. No job below takes a `ref:` from event data:
-  # every one of them checks out the ref the run started on, which this has
-  # already vouched for — and which is why a branch is refused outright.
+  # A v.* tag can be pushed to any branch, hence the ancestor check.
   guard:
-    name: Resolve and Verify Tag
+    name: Resolve Target and Verify Tag
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     outputs:
+      environment: ${{ steps.resolve.outputs.environment }}
       tag: ${{ steps.resolve.outputs.tag }}
       ghcr_tag: ${{ steps.resolve.outputs.ghcr_tag }}
-      app_sha: ${{ steps.content.outputs.app_sha }}
+      app_sha: ${{ steps.derive.outputs.app_sha }}
+      image_tag: ${{ steps.derive.outputs.image_tag }}
+      alias_tag: ${{ steps.derive.outputs.alias_tag }}
+      stacks: ${{ steps.derive.outputs.stacks }}
+      domain: ${{ steps.derive.outputs.domain }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      - name: Resolve tag
+      - name: Resolve target and tag
         id: resolve
         env:
-          RAW_TAG: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ENV: ${{ inputs.environment }}
+          # workflow_run always starts on the default branch and carries the tag
+          # name in head_branch; a release starts on the tag itself.
+          DEV_TAG: ${{ inputs.version || github.event.workflow_run.head_branch }}
+          PROD_TAG: ${{ inputs.version || github.ref_name }}
         run: |
           set -euo pipefail
 
+          case "$EVENT_NAME" in
+            workflow_run)      environment=dev ;;
+            release)           environment=prod ;;
+            workflow_dispatch) environment="$INPUT_ENV" ;;
+            *) echo "::error::Unsupported event: ${EVENT_NAME}"; exit 1 ;;
+          esac
+
           # The credentialed jobs run whatever Terraform is in the tree they check
-          # out, and a branch moves under them. Prod deploys from a tag only.
-          if [[ "$GITHUB_REF" != refs/tags/* ]]; then
-            echo "::error::Started on '${GITHUB_REF}'. Deploy prod from a tag, not a branch."
+          # out, so the ref they start on is part of the security model. Dev takes
+          # main's tree with the tag's image; prod takes the tag's own tree, which
+          # is why a branch is refused there outright.
+          case "$environment" in
+            dev)
+              raw_tag="$DEV_TAG"
+              if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+                echo "::error::Started on '${GITHUB_REF}'. Dispatch a dev deploy from main — it applies whatever Terraform it checks out."
+                exit 1
+              fi
+              ;;
+            prod)
+              raw_tag="$PROD_TAG"
+              if [[ "$GITHUB_REF" != refs/tags/* ]]; then
+                echo "::error::Started on '${GITHUB_REF}'. Deploy prod from a tag, not a branch."
+                exit 1
+              fi
+              ;;
+            *) echo "::error::Unknown environment: '${environment}'"; exit 1 ;;
+          esac
+
+          if [ -z "$raw_tag" ]; then
+            echo "::error::No version to deploy. Pass the 'version' input when dispatching a dev deploy."
             exit 1
           fi
 
           # Anchored, so v.1.2.3junk is not a version. The optional suffix is for
-          # prereleases, which deploy prod like any other published release.
-          if [[ ! "$RAW_TAG" =~ ^v\.[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "::error::Not a version tag: '$RAW_TAG'. Expected v.X.Y.Z."
+          # prereleases, which deploy like any other published release.
+          if [[ ! "$raw_tag" =~ ^v\.[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Not a version tag: '${raw_tag}'. Expected v.X.Y.Z."
             exit 1
           fi
 
-          # GHCR strips the v. prefix. This account's registry holds nothing but
-          # releases, so ECR keeps the tag as it is.
-          echo "tag=${RAW_TAG}" >> "$GITHUB_OUTPUT"
-          echo "ghcr_tag=${RAW_TAG#v.}" >> "$GITHUB_OUTPUT"
+          {
+            echo "environment=${environment}"
+            echo "tag=${raw_tag}"
+            # GHCR strips the v. prefix.
+            echo "ghcr_tag=${raw_tag#v.}"
+          } >> "$GITHUB_OUTPUT"
+          echo "${raw_tag} → ${environment}."
 
       - name: Verify the tag is reachable from main
         env:
@@ -78,16 +143,50 @@ jobs:
           fi
           echo "${TAG} -> ${SHA}, reachable from main."
 
-      # At the tag, not at HEAD: a merge landing mid-deploy must not move it.
-      - name: Resolve the content SHA
-        id: content
+      # The content SHA is read at the tag, not at HEAD: a merge landing
+      # mid-deploy must not move it.
+      - name: Derive content SHA and environment names
+        id: derive
         env:
           TAG: ${{ steps.resolve.outputs.tag }}
+          ENVIRONMENT: ${{ steps.resolve.outputs.environment }}
         run: |
           set -euo pipefail
+
           APP_SHA=$(bash scripts/app-content-sha.sh "refs/tags/${TAG}")
-          echo "app_sha=${APP_SHA}" >> "$GITHUB_OUTPUT"
-          echo "${TAG} carries app content ${APP_SHA}."
+
+          # Dev's registry is shared with the previews, hence the prefix. Prod's
+          # holds nothing but releases, and aliases the version onto the same
+          # manifest for readability and the v.* lifecycle rule. Dev also owns
+          # the two stacks prod has no copy of: the previews live in that
+          # account, and so does the zone role dns/ hands prod.
+          case "$ENVIRONMENT" in
+            dev)
+              image_tag="dev-${APP_SHA}"
+              alias_tag=""
+              stacks="dns network ecs acm edge preview-edge data observability-aws frontend observability-grafana"
+              ;;
+            prod)
+              image_tag="${APP_SHA}"
+              alias_tag="${TAG}"
+              stacks="network ecs acm edge data observability-aws frontend observability-grafana"
+              ;;
+          esac
+
+          domain=$(awk -F': *' '/^domain:/ {print $2; exit}' "terraform/environments/${ENVIRONMENT}/${ENVIRONMENT}.yaml")
+          if [ -z "$domain" ]; then
+            echo "::error::No domain in terraform/environments/${ENVIRONMENT}/${ENVIRONMENT}.yaml"
+            exit 1
+          fi
+
+          {
+            echo "app_sha=${APP_SHA}"
+            echo "image_tag=${image_tag}"
+            echo "alias_tag=${alias_tag}"
+            echo "stacks=${stacks}"
+            echo "domain=${domain}"
+          } >> "$GITHUB_OUTPUT"
+          echo "${TAG} carries app content ${APP_SHA}, deploying to ${domain}."
 
   # The manifest list, not one platform: the tasks are arm64.
   promote:
@@ -99,7 +198,7 @@ jobs:
       contents: read
       packages: read
     environment:
-      name: prod
+      name: ${{ needs.guard.outputs.environment }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
@@ -118,13 +217,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Two tags on one manifest, each written only if absent — the repo is immutable.
+      # Each tag written only if absent — the repo is immutable.
       - name: Copy manifest list from GHCR to ECR
         env:
           GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ needs.guard.outputs.ghcr_tag }}
           ECR_REPO: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
-          TAG: ${{ needs.guard.outputs.tag }}
-          APP_SHA: ${{ needs.guard.outputs.app_sha }}
+          IMAGE_TAG: ${{ needs.guard.outputs.image_tag }}
+          TAGS: ${{ needs.guard.outputs.image_tag }} ${{ needs.guard.outputs.alias_tag }}
         run: |
           set -euo pipefail
 
@@ -133,8 +232,18 @@ jobs:
               --image-ids "imageTag=$1" --no-cli-pager >/dev/null 2>&1
           }
 
-          if present "$APP_SHA" && present "$TAG"; then
-            echo "${APP_SHA} and ${TAG} are both already in ECR."
+          read -ra tags <<<"$TAGS"
+          missing=()
+          for tag in "${tags[@]}"; do
+            if present "$tag"; then
+              echo "${tag} is already in ECR."
+            else
+              missing+=("$tag")
+            fi
+          done
+
+          if [ "${#missing[@]}" -eq 0 ]; then
+            echo "This release ships content that is already here."
             exit 0
           fi
 
@@ -152,18 +261,13 @@ jobs:
 
           # Source is the GHCR version tag either way: on a reused build it is
           # already an alias of the same manifest the content tag points at.
-          for tag in "$APP_SHA" "$TAG"; do
-            if present "$tag"; then
-              echo "${tag} is already in ECR."
-              continue
-            fi
+          for tag in "${missing[@]}"; do
             docker buildx imagetools create -t "${ECR_REPO}:${tag}" "$GHCR_IMAGE"
           done
 
-          docker buildx imagetools inspect "${ECR_REPO}:${APP_SHA}"
+          docker buildx imagetools inspect "${ECR_REPO}:${IMAGE_TAG}"
 
-  # Same stacks and the same serial order as dev, less the two that only exist
-  # there: previews live in the dev account, and so does the zone role dns/ owns.
+  # Serial, each stack planned immediately before its own apply — see workflows/README.md.
   terraform:
     name: Apply Terraform
     runs-on: ubuntu-latest
@@ -172,7 +276,8 @@ jobs:
       id-token: write
       contents: read
     environment:
-      name: prod
+      name: ${{ needs.guard.outputs.environment }}
+      url: https://${{ needs.guard.outputs.domain }}
     outputs:
       cluster: ${{ steps.outputs.outputs.cluster }}
       service: ${{ steps.outputs.outputs.service }}
@@ -182,6 +287,7 @@ jobs:
       alb: ${{ steps.outputs.outputs.alb }}
       grafana_url: ${{ steps.outputs.outputs.grafana_url }}
     steps:
+      # No `ref:` from event data: this job holds AWS credentials and Terraform runs the tree.
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -200,13 +306,14 @@ jobs:
       # Pinned to the image, not to this release, so a no-op release registers no revision.
       - name: Pin the image tag and version
         env:
-          IMAGE_TAG: ${{ needs.guard.outputs.app_sha }}
+          ENVIRONMENT: ${{ needs.guard.outputs.environment }}
+          IMAGE_TAG: ${{ needs.guard.outputs.image_tag }}
           VERSION_TAG: ${{ needs.guard.outputs.tag }}
-          FAMILY: block-explorer-prod-frontend
         run: |
           set -euo pipefail
 
-          running=$(aws ecs describe-task-definition --task-definition "$FAMILY" --no-cli-pager \
+          family="block-explorer-${ENVIRONMENT}-frontend"
+          running=$(aws ecs describe-task-definition --task-definition "$family" --no-cli-pager \
             --query "taskDefinition.containerDefinitions[?name=='frontend'] | [0]" --output json 2>/dev/null || true)
 
           app_version="$VERSION_TAG"
@@ -219,26 +326,29 @@ jobs:
             fi
           fi
 
-          cd terraform/environments/prod
-          sed -i "s|^image_tag:.*|image_tag: ${IMAGE_TAG}|" prod.yaml
-          sed -i "s|^app_version:.*|app_version: ${app_version}|" prod.yaml
-          grep -E '^(image_tag|app_version):' prod.yaml
+          cd "terraform/environments/${ENVIRONMENT}"
+          sed -i "s|^image_tag:.*|image_tag: ${IMAGE_TAG}|" "${ENVIRONMENT}.yaml"
+          sed -i "s|^app_version:.*|app_version: ${app_version}|" "${ENVIRONMENT}.yaml"
+          grep -E '^(image_tag|app_version):' "${ENVIRONMENT}.yaml"
 
+      # Both role vars pass unconditionally; the inapplicable one resolves to "".
       - name: Plan and apply each stack
         env:
+          ENVIRONMENT: ${{ needs.guard.outputs.environment }}
+          STACKS: ${{ needs.guard.outputs.stacks }}
           TF_VAR_slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          # The public zones are in the dev account, so acm/ and edge/ reach
-          # Route53 by assuming the role dns/ owns there.
+          TF_VAR_prod_deploy_role_arn: ${{ vars.PROD_DEPLOY_ROLE_ARN }}
           TF_VAR_dns_role_arn: ${{ vars.DNS_WRITER_ROLE_ARN }}
         run: |
           set -euo pipefail
 
-          for stack in network ecs acm edge data observability-aws frontend observability-grafana; do
+          read -ra stacks <<<"$STACKS"
+          for stack in "${stacks[@]}"; do
             echo "::group::${stack}"
             pushd "terraform/${stack}" >/dev/null
 
-            terraform init -input=false -backend-config=../environments/prod/backend.config
-            terraform workspace select -or-create prod
+            terraform init -input=false -backend-config="../environments/${ENVIRONMENT}/backend.config"
+            terraform workspace select -or-create "$ENVIRONMENT"
 
             # Plan file never leaves this job: a binary plan can carry state.
             terraform plan -input=false -out=tfplan
@@ -269,6 +379,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           popd >/dev/null
 
+          # Null until the AMP workspace exists, and `-raw` refuses a null.
           pushd terraform/observability-grafana >/dev/null
           echo "grafana_url=$(terraform output -raw amg_workspace_url 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
           popd >/dev/null
@@ -285,7 +396,8 @@ jobs:
       id-token: write
       contents: read
     environment:
-      name: prod
+      name: ${{ needs.guard.outputs.environment }}
+      url: https://${{ needs.guard.outputs.domain }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
@@ -335,7 +447,7 @@ jobs:
 
           aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
 
-      # By ALB name, not DNS, so no cached answer can pass the check.
+      # By ALB name, not DNS, so no cached or weighted answer can pass this.
       - name: Confirm the new stack is serving
         env:
           DOMAIN: ${{ needs.terraform.outputs.domain }}
@@ -360,6 +472,7 @@ jobs:
             sleep 15
           done
 
+          # The ALB must refuse this even though the sidecar scrapes it in-task.
           code=$(curl "${via[@]}" -s -o /dev/null -w '%{http_code}' "https://${host}/api/metrics" || true)
           if [ "$code" != "403" ]; then
             echo "::error::/api/metrics returned '${code}' on the ALB, expected 403."
@@ -369,15 +482,16 @@ jobs:
 
       - name: Summary
         env:
+          ENVIRONMENT: ${{ needs.guard.outputs.environment }}
           SERVICE: ${{ needs.terraform.outputs.service }}
           DOMAIN: ${{ needs.terraform.outputs.domain }}
-          ALB: ${{ needs.terraform.outputs.alb }}
           GRAFANA_URL: ${{ needs.terraform.outputs.grafana_url }}
           APP_SHA: ${{ needs.guard.outputs.app_sha }}
+          TAG: ${{ needs.guard.outputs.tag }}
           SKIPPED: ${{ steps.needed.outputs.skip }}
         run: |
           {
-            echo "### Prod deployed on ECS"
+            echo "### ${ENVIRONMENT} deployed — ${TAG}"
             echo
             echo "- Service: \`${SERVICE}\`"
             if [ "$SKIPPED" = "true" ]; then
@@ -385,8 +499,22 @@ jobs:
             else
               echo "- Rolled to \`${APP_SHA}\`."
             fi
-            echo "- Serving on \`${ALB}\`, which ${DOMAIN} does not point at yet."
+            echo "- ${DOMAIN}"
             if [ -n "$GRAFANA_URL" ]; then
               echo "- Grafana: ${GRAFANA_URL}/d/be-overview"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # Only the dev path drafts a release, and only when it was not hand-started: a
+  # break-glass run may be redeploying an older tag, and drafting a release for
+  # it would offer prod that rollback as the next cut.
+  draft-release:
+    name: Prepare Release Draft
+    needs: [guard, roll]
+    if: github.event_name == 'workflow_run'
+    # Caps the called workflow rather than leaning on the repository default.
+    permissions:
+      contents: write
+    uses: ./.github/workflows/prepare-release.yml
+    with:
+      tag: ${{ needs.guard.outputs.tag }}
