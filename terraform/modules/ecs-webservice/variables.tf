@@ -137,7 +137,7 @@ variable "autoscaling_cpu_target" {
 
 variable "autoscaling_request_count_resource_label" {
   type        = string
-  description = "ALB and target group the request-count policy measures, as `<alb_arn_suffix>/<target_group_arn_suffix>`. Null drops the policy, leaving CPU tracking alone — which is what previews want."
+  description = "ALB and target group the request-count policy measures, as `<alb_arn_suffix>/<target_group_arn_suffix>`. Null drops that policy only, leaving CPU as the sole signal; whether either policy exists at all is autoscaling_max_capacity's call."
   default     = null
 }
 
