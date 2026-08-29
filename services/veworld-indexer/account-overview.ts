@@ -4,7 +4,7 @@ import type { NetworkName } from '@/lib/constants/network'
 import { addressStringSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerCachedGet } from '.'
+import { indexerCachedGetOrNull } from '.'
 
 const ACCOUNT_OVERVIEW_QUERY_KEY = 'getAccountOverview'
 
@@ -39,12 +39,15 @@ export const useAccountOverview = (address: string) => {
 }
 
 const getAccountOverview = async ({ networkName, address }: { networkName: NetworkName; address: string }) => {
-  const { data } = await indexerCachedGet({
+  const data = await indexerCachedGetOrNull({
     networkName,
     endPoint: 'accounts/overview',
     params: { address },
     direct: { endPoint: `/accounts/overview/${address}`, params: {} },
   })
+
+  if (data === null) return null
+
   return zodParse({
     data,
     schema: accountOverviewSchema,

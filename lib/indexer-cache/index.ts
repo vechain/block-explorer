@@ -5,7 +5,7 @@ import { type CacheProfile, defineEndpoint } from '@/lib/cached-proxy'
 import { BLOCK_TIME_SECONDS, NetworkName } from '@/lib/constants/network'
 import { type CachedIndexerEndpoint } from '@/lib/indexer-proxy'
 import { type ProxiedNetwork, proxiedNetworkSchema } from '@/lib/proxied-network'
-import { fetchUpstream, UpstreamError } from '@/lib/upstream-error'
+import { fetchUpstream, NotFoundError, UpstreamError } from '@/lib/upstream-error'
 import { INDEXER_HEADERS } from '@/services/veworld-indexer'
 
 // Resolved server-side so the client can never steer the proxy at another host.
@@ -89,11 +89,14 @@ const fetchIndexer = async ({
   endPoint,
   params,
   version = 'v1',
+  absentOn404 = false,
 }: {
   network: ProxiedNetwork
   endPoint: string
   params: Record<string, unknown>
   version?: 'v1' | 'v2'
+  /** Set where the upstream 404s for a resource that does not exist, rather than as a fault. */
+  absentOn404?: boolean
 }) => {
   const url = new URL(`${INDEXER_BASE_URLS[network]}/api/${version}/${endPoint}`)
   for (const [key, value] of Object.entries(params)) {
@@ -109,6 +112,7 @@ const fetchIndexer = async ({
     cache: 'no-store',
   })
 
+  if (absentOn404 && response.status === 404) throw new NotFoundError()
   if (!response.ok) throw new UpstreamError('veworld-indexer', response.status)
 
   return response.json() as Promise<unknown>
@@ -120,6 +124,16 @@ const liveCache = (size: number): CacheProfile => ({
   ttl: BLOCK_TIME_SECONDS / 2,
   stale: BLOCK_TIME_SECONDS / 2,
   size,
+})
+
+// Short-lived, since an address can become any of these, but past the page's 60s refetch.
+const ADDRESS_NOT_FOUND_TTL_SECONDS = 2 * 60
+
+const addressNotFound = (message: string) => ({
+  ttl: ADDRESS_NOT_FOUND_TTL_SECONDS,
+  stale: ADDRESS_NOT_FOUND_TTL_SECONDS,
+  size: 2_000,
+  message,
 })
 
 // `network` is required on every endpoint, so it is part of every cache key. It selects
@@ -209,7 +223,9 @@ export const INDEXER_ENDPOINTS = {
   'accounts/overview': defineEndpoint({
     params: z.object({ network: proxiedNetworkSchema, address: addressParam }),
     cache: liveCache(2_000),
-    fetch: ({ network, address }) => fetchIndexer({ network, endPoint: `accounts/overview/${address}`, params: {} }),
+    notFound: addressNotFound('Account overview not found'),
+    fetch: ({ network, address }) =>
+      fetchIndexer({ network, endPoint: `accounts/overview/${address}`, params: {}, absentOn404: true }),
   }),
 
   'accounts/total': defineEndpoint({
@@ -249,8 +265,9 @@ export const INDEXER_ENDPOINTS = {
   'validators/details': defineEndpoint({
     params: z.object({ network: proxiedNetworkSchema, address: addressParam }),
     cache: liveCache(500),
+    notFound: addressNotFound('Validator not found'),
     fetch: ({ network, address }) =>
-      fetchIndexer({ network, endPoint: `validators/${address}`, params: {}, version: 'v2' }),
+      fetchIndexer({ network, endPoint: `validators/${address}`, params: {}, version: 'v2', absentOn404: true }),
   }),
 
   'validators/slots': defineEndpoint({
@@ -286,7 +303,9 @@ export const INDEXER_ENDPOINTS = {
   'contracts/details': defineEndpoint({
     params: z.object({ network: proxiedNetworkSchema, address: addressParam }),
     cache: liveCache(2_000),
-    fetch: ({ network, address }) => fetchIndexer({ network, endPoint: `contracts/${address}`, params: {} }),
+    notFound: addressNotFound('Contract not found'),
+    fetch: ({ network, address }) =>
+      fetchIndexer({ network, endPoint: `contracts/${address}`, params: {}, absentOn404: true }),
   }),
 
   'contracts/by-master': defineEndpoint({

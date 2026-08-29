@@ -75,6 +75,23 @@ describe('createCachedProxy', () => {
     expect(upstream).toHaveBeenCalledTimes(2)
   })
 
+  // Rewriting these to 502 counted the upstream's own answer as a server error of ours.
+  it('passes an upstream 4xx through instead of rewriting it to a server error', async () => {
+    for (const status of [400, 403, 404, 429]) {
+      const proxy = buildProxy(vi.fn().mockRejectedValue(new UpstreamError('test-upstream', status)))
+
+      expect((await send(proxy)).status).toBe(status)
+    }
+  })
+
+  it('keeps a timeout a 504 and any other upstream status a 502', async () => {
+    const timedOut = buildProxy(vi.fn().mockRejectedValue(new UpstreamError('test-upstream', 504)))
+    const unavailable = buildProxy(vi.fn().mockRejectedValue(new UpstreamError('test-upstream', 500)))
+
+    expect((await send(timedOut)).status).toBe(504)
+    expect((await send(unavailable)).status).toBe(502)
+  })
+
   it('maps an unexpected error to 500 without caching', async () => {
     const upstream = vi.fn().mockRejectedValue(new Error('boom'))
     const proxy = buildProxy(upstream)
