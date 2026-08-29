@@ -102,7 +102,7 @@ variable "deployment_minimum_healthy_percent" {
 
 variable "cpu_architecture" {
   type        = string
-  description = "X86_64 or ARM64, and it must match the image: a mismatch fails the task at start with no useful error on the target group. Safe on ARM64 only because deploy-dev.yml copies the GHCR manifest list into ECR instead of flattening it to one platform."
+  description = "X86_64 or ARM64, and it must match the image: a mismatch fails the task at start with no useful error on the target group. Safe on ARM64 only because deploy.yml copies the GHCR manifest list into ECR instead of flattening it to one platform."
   default     = "ARM64"
 
   validation {
