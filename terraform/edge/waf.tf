@@ -10,9 +10,8 @@
 locals {
   waf_enabled = local.env.waf_enabled
 
-  # Scraper blocklist. Empty unless an environment names ranges, so the rules
-  # drop out entirely rather than sitting there matching nothing.
-  waf_blocked_cidrs      = lookup(local.env, "waf_blocked_cidrs", [])
+  # Scraper blocklist. The CIDRs live in the IP set in AWS, not here — see the
+  # blocklist runbook in terraform/README.md.
   waf_blocked_asns       = lookup(local.env, "waf_blocked_asns", [])
   waf_blocklist_blocking = lookup(local.env, "waf_blocklist_blocking", false)
 
@@ -24,15 +23,24 @@ locals {
   }
 }
 
+# Blocked ranges are operational data, not config: this repo is public, and a
+# blocklist that needs a release to change is one that does not get used. AWS
+# holds the entries, `addresses` seeds an empty set on first create only, and
+# ignore_changes keeps apply from reverting whoever edited it last.
+#
 # IPv4 only. The ASN rule is what covers the same networks over IPv6, which is
 # the half a CIDR blocklist quietly misses.
 resource "aws_wafv2_ip_set" "blocklist" {
-  count = local.waf_enabled && length(local.waf_blocked_cidrs) > 0 ? 1 : 0
+  count = local.waf_enabled ? 1 : 0
 
   name               = "${local.name}-waf-blocklist"
   scope              = "REGIONAL"
   ip_address_version = "IPV4"
-  addresses          = local.waf_blocked_cidrs
+  addresses          = []
+
+  lifecycle {
+    ignore_changes = [addresses]
+  }
 }
 
 resource "aws_wafv2_web_acl" "main" {
@@ -62,8 +70,10 @@ resource "aws_wafv2_web_acl" "main" {
   }
 
   # Ahead of the rate limit, and in Count until soaked like the managed groups.
+  # Always present now that the entries live in AWS: an empty set matches
+  # nothing, and Terraform cannot see whether the set is empty to gate on it.
   dynamic "rule" {
-    for_each = local.waf_enabled && length(local.waf_blocked_cidrs) > 0 ? [1] : []
+    for_each = local.waf_enabled ? [1] : []
 
     content {
       name     = "blocklist-cidr"
