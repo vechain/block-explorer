@@ -13,6 +13,9 @@ type DecodedSelector = { source: 'b32'; abi: AbiItem } | { source: 'openchain'; 
 
 const SELECTOR_QUERY_KEY = 'getDecodedSelector'
 
+// The route's own max-age: re-asked eventually, since a swallowed failure reads as an answer.
+const CACHE_TIME_MS = 60 * 60 * 1_000
+
 const fetchDecodedSelector = async (kind: SelectorKind, hash: HexString): Promise<DecodedSelector | null> => {
   try {
     const response = await fetch(`/api/decode/selector?kind=${kind}&hash=${hash.toLowerCase()}`)
@@ -27,7 +30,8 @@ const decodedSelectorQueryOptions = (kind: SelectorKind, hash: HexString | null 
   queryOptions({
     queryKey: [SELECTOR_QUERY_KEY, kind, hash?.toLowerCase()],
     queryFn: hash ? () => fetchDecodedSelector(kind, hash) : skipToken,
-    staleTime: Infinity,
+    staleTime: CACHE_TIME_MS,
+    gcTime: CACHE_TIME_MS,
   })
 
 export const useDecodedSelector = (kind: SelectorKind, hash: HexString | null | undefined) =>
