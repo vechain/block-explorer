@@ -1,6 +1,5 @@
 import { type Transaction, transactionTypeSchema } from '@/lib/schemas/transactions'
 import type { NetworkName } from '@/lib/constants/network'
-import { useBaseFeePerGas } from '@/services/thor/block'
 import { useLegacyBaseFeePerGas } from '@/services/thor/transaction'
 import type { TransactionReceipt } from '@/lib/schemas'
 import { formatGwei } from 'viem'
@@ -129,6 +128,11 @@ export const useTransactionGasInsights = ({
   return []
 }
 
+// Galactica burns the base fee and credits only the priority fee, so `paid - reward`
+// is exactly `gasUsed * baseFee` and the block need not be fetched to read it.
+export const deriveBaseFeePerGas = (receipt: TransactionReceipt | null) =>
+  receipt && receipt.gasUsed > BigInt(0) ? (receipt.paid - receipt.reward) / receipt.gasUsed : undefined
+
 const useTxGasFees = ({
   transaction,
   receipt,
@@ -140,18 +144,16 @@ const useTxGasFees = ({
 }): TxGasFeesResult => {
   const totalFeePaid = receipt?.paid ?? BigInt(0)
 
-  const { isLoading: isBaseFeePerGasLoading, data: baseFeePerGas } = useBaseFeePerGas(
-    transaction?.meta.blockID,
-    networkName,
-  )
   const { isLoading: isLegacyBaseFeePerGasLoading, data: legacyBaseFeePerGas } = useLegacyBaseFeePerGas(networkName)
 
-  if (isBaseFeePerGasLoading || !baseFeePerGas || isLegacyBaseFeePerGasLoading || !legacyBaseFeePerGas)
-    return { type: 'loading' }
+  if (isLegacyBaseFeePerGasLoading || !legacyBaseFeePerGas) return { type: 'loading' }
 
   const isDynamicFee = transaction.type === transactionTypeSchema.enum.DYNAMIC_FEE
 
   if (isDynamicFee) {
+    const baseFeePerGas = deriveBaseFeePerGas(receipt)
+    if (baseFeePerGas === undefined) return { type: 'loading' }
+
     const { maxFeePerGas, maxPriorityFeePerGas } = transaction
     const priorityFeePerGas = calculatePriorityFeePerGas({ maxPriorityFeePerGas, maxFeePerGas, baseFeePerGas })
 
