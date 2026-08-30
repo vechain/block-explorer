@@ -3,6 +3,7 @@
 import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
 import type { AbiItem } from 'viem'
 import type { HexString } from '@/lib/schemas'
+import { UpstreamError } from '@/lib/upstream-error'
 
 type SelectorKind = 'function' | 'event'
 
@@ -17,13 +18,12 @@ const SELECTOR_QUERY_KEY = 'getDecodedSelector'
 const CACHE_TIME_MS = 60 * 60 * 1_000
 
 const fetchDecodedSelector = async (kind: SelectorKind, hash: HexString): Promise<DecodedSelector | null> => {
-  try {
-    const response = await fetch(`/api/decode/selector?kind=${kind}&hash=${hash.toLowerCase()}`)
-    if (!response.ok) return null
-    return (await response.json()) as DecodedSelector
-  } catch {
-    return null
-  }
+  const response = await fetch(`/api/decode/selector?kind=${kind}&hash=${hash.toLowerCase()}`)
+  // Only the 404 is definitive; the rest the route sends no-store, so throwing keeps it uncached.
+  if (response.status === 404) return null
+  if (!response.ok) throw new UpstreamError('decode/selector', response.status)
+
+  return (await response.json()) as DecodedSelector
 }
 
 const decodedSelectorQueryOptions = (kind: SelectorKind, hash: HexString | null | undefined) =>
