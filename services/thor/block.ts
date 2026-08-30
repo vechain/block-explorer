@@ -114,9 +114,9 @@ export const blockCompressedQueryOptions = (networkName: NetworkName, revision: 
     staleTime: Infinity,
   })
 
-export const useBestBlockCompressed = (networkName?: NetworkName) => {
+export const useBestBlockCompressed = (networkName?: NetworkName, { enabled = true } = {}) => {
   const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
-  return useQuery(bestBlockCompressedQueryOptions(networkName ?? activeNetworkName))
+  return useQuery({ ...bestBlockCompressedQueryOptions(networkName ?? activeNetworkName), enabled })
 }
 
 export const useBlockExpanded = (revision: BlockRevision | undefined) => {
