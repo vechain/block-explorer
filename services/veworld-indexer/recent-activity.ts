@@ -62,7 +62,9 @@ export const useRecentBlocksExpanded = ({ count }: { count: number }) => {
   // Widens the window when blocks in it fail to load; tracks `count` so a larger page
   // size takes effect at once rather than ten blocks per render.
   const [extraBlocks, setExtraBlocks] = useState(0)
-  const blocksToFetch = count + extraBlocks
+  // Clamped on read, so shrinking the page size cannot leave an earlier widening mounted.
+  const extra = Math.min(extraBlocks, count)
+  const blocksToFetch = count + extra
   const { data: bestBlock, isPending: bestBlockPending } = useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
   const bestBlockNumber = bestBlock?.number
 
@@ -87,10 +89,10 @@ export const useRecentBlocksExpanded = ({ count }: { count: number }) => {
 
   useEffect(() => {
     if (bestBlockNumber === undefined || blocksPending) return
-    if (latestBlocks.length < count && bestBlockNumber > blocksToFetch && extraBlocks < count) {
-      setExtraBlocks(previous => previous + 10)
+    if (latestBlocks.length < count && bestBlockNumber > blocksToFetch && extra < count) {
+      setExtraBlocks(extra + 10)
     }
-  }, [blocksPending, latestBlocks.length, count, blocksToFetch, bestBlockNumber, extraBlocks])
+  }, [blocksPending, latestBlocks.length, count, blocksToFetch, bestBlockNumber, extra])
 
   return {
     data: latestBlocks,
