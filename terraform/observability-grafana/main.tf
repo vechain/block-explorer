@@ -51,18 +51,19 @@ resource "grafana_data_source" "amp" {
   uid  = local.datasource_uid_amp
   url  = local.amp_prometheus_endpoint
 
-  json_data_encoded = jsonencode({
-    httpMethod      = "POST"
-    sigV4Auth       = true
-    sigV4AuthType   = "default"
-    sigV4Region     = var.aws_region
-    manageAlerts    = true
+  json_data_encoded = jsonencode(merge({
+    httpMethod    = "POST"
+    sigV4Auth     = true
+    sigV4AuthType = "default"
+    sigV4Region   = var.aws_region
+    manageAlerts  = local.alerts_enabled
+    }, local.alerts_enabled ? {
     alertmanagerUid = local.datasource_uid_amp_alertmanager
-  })
+  } : {}))
 }
 
 resource "grafana_data_source" "amp_alertmanager" {
-  count = local.observability_ready ? 1 : 0
+  count = local.observability_ready && local.alerts_enabled ? 1 : 0
 
   type = "alertmanager"
   name = "amp-alertmanager-${terraform.workspace}"

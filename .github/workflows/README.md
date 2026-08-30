@@ -60,7 +60,7 @@ same image, so parity is structural rather than maintained by hand.
 1. `guard` - Resolves the target, the tag and its content SHA, refuses anything not reachable from `main`, and derives the per-environment names below
 2. `promote` - Copies the GHCR manifest list into that account's ECR, keeping both arches. Each tag is written only if absent
 3. `terraform` - Applies each stack serially in dependency order, planning immediately before each apply
-4. `roll` - Moves the service to the new task definition revision unless it already runs it, then checks `/api/health` and that `/api/metrics` is 403, both over the ALB by name
+4. `roll` - Wakes the service if it is parked (dev only), moves it to the new task definition revision unless it already runs it, then checks `/api/health` and that `/api/metrics` is 403, both over the ALB by name
 5. `draft-release` - Calls `prepare-release.yml` (dev only, and not on dispatch)
 
 **Domains:** `https://dev.block-explorer.vechain.org`, `https://block-explorer.vechain.org`
@@ -113,6 +113,42 @@ recoverable from the event payload. Passing it as an input is exact.
 
 Skipped on `workflow_dispatch` deploys — a break-glass run may be redeploying an older tag, and
 drafting a release for it would offer prod that rollback as the next cut.
+
+---
+
+### Hibernate Dev (`hibernate-dev.yml`)
+
+**Triggers:** manual dispatch, `mode` of `hibernate` or `wake`
+
+Parks `block-explorer-dev-frontend` at zero tasks when dev is not needed, and restores it to its
+autoscaling floor on the way back. It shares `deploy.yml`'s `deploy-dev` concurrency group, so it
+cannot interleave with a dev deploy.
+
+Order is load-bearing: target tracking is suspended **before** the count drops, because Application
+Auto Scaling holds a service at its target's `min_capacity` and a live target scales it straight back
+out. Terraform does not manage `suspended_state`, so a suspension survives every apply — which is
+also why hibernating and then deploying without waking would leave a service that cannot scale.
+
+The service and cluster names come from `terraform/frontend`'s outputs rather than being spelled out
+in the workflow: a wrong name scales nothing and still reports success.
+
+Waking is idempotent and lives in two places. This workflow's `wake` mode is the operator's button;
+`deploy.yml`'s `roll` job asserts the same thing on every **dev** deploy, so a dev deploy can never
+land on a parked service. It reads the service rather than a flag, which means it also heals a
+hibernate that half-applied and a service someone scaled down by hand, and it only acts *below* the
+floor — capacity autoscaling put above it is not the deploy's to reset. It sits in `roll` rather than
+in its own job because a job referencing a protected environment adds another approval gate to prod.
+
+Prod is excluded rather than merely never parked. There, a suspended scalable target or a zero
+desired count means someone is holding capacity down on purpose, and a deploy that silently lifted it
+would undo an incident response — so the `/api/health` check is left to fail loudly instead.
+
+**While hibernated:** `https://dev.block-explorer.vechain.org` returns 503. Nothing alarms — dev sets
+`alerts_enabled: false`, which builds no alarms and no AMP alert rules at all, so there is no red
+state to sit in and nothing to silence before parking the service.
+
+Only the ECS task stops. The NAT gateway, both ALBs, the Valkey cache and the WAF bill on, and they
+are most of what dev costs — hibernating buys back roughly the Fargate line, not the environment.
 
 ---
 
@@ -323,6 +359,9 @@ lock. The cost is that a queued teardown can be evicted by a newer run, which is
 - **CPU/Memory:** 512 / 1024, the same as dev, so a preview cannot OOM where dev does not
 - **Cache:** shared with dev, namespaced by image tag
 - **Auto-cleanup:** destroyed when the PR closes, and swept every six hours regardless
+
+### Dev
+- **Hibernation:** `hibernate-dev.yml` parks the service at zero tasks on demand; any dev deploy wakes it
 
 ### Image Lifecycle (ECR)
 - Keeps last 30 production images (tagged `v.*`)

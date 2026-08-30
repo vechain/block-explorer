@@ -20,6 +20,9 @@ locals {
   amg_sa_token_secret_version_id = try(data.terraform_remote_state.observability_aws.outputs.amg_service_account_token_secret_version_id, null)
   amp_prometheus_endpoint        = try(data.terraform_remote_state.observability_aws.outputs.amp_prometheus_endpoint, null)
 
+  # Off, there is no rule group or Alertmanager definition to point Grafana at.
+  alerts_enabled = try(data.terraform_remote_state.observability_aws.outputs.alerts_enabled, false)
+
   amg_service_account_token = try(data.aws_secretsmanager_secret_version.amg_sa_token[0].secret_string, null)
 
   alb_arn_suffix          = try(data.terraform_remote_state.edge.outputs.alb_arn_suffix, null)
