@@ -1,6 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import type { TransactionReceipt } from '@/lib/schemas'
-import { deriveBaseFeePerGas } from './useTransactionGasInsights'
+import { renderHook } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import type { Transaction, TransactionReceipt } from '@/lib/schemas'
+import { deriveBaseFeePerGas, useTransactionGasInsights } from './useTransactionGasInsights'
+
+const mocks = vi.hoisted(() => ({ legacyBaseFeePerGas: { isLoading: false, data: null as bigint | null } }))
+
+vi.mock('next/navigation', () => ({ useParams: () => ({ locale: 'en' }) }))
+vi.mock('@/services/thor/transaction', () => ({ useLegacyBaseFeePerGas: () => mocks.legacyBaseFeePerGas }))
 
 // Real mainnet receipts, paired with the baseFeePerGas their block reports.
 const FIXTURES = [
@@ -54,5 +60,30 @@ describe('deriveBaseFeePerGas', () => {
 
   it('gives up when the receipt has not resolved', () => {
     expect(deriveBaseFeePerGas(null)).toBeUndefined()
+  })
+})
+
+const DYNAMIC_TX = {
+  type: 81,
+  gas: 326446,
+  maxFeePerGas: 20_000_000_000_000n,
+  maxPriorityFeePerGas: 1_000_000_000_000n,
+  meta: { blockID: `0x${'a'.repeat(64)}` },
+} as unknown as Transaction
+
+describe('useTransactionGasInsights', () => {
+  // The legacy price is a separate call with its own null path, and only the legacy branch
+  // reads it — gating dynamic fees on it strands them on the loading branch.
+  it('resolves dynamic fees when the legacy gas price is unavailable', () => {
+    mocks.legacyBaseFeePerGas = { isLoading: false, data: null }
+
+    const { result } = renderHook(() =>
+      useTransactionGasInsights({
+        transaction: DYNAMIC_TX,
+        receipt: receipt({ gasUsed: 326446n, paid: 0x2f632f7dd6e95000n, reward: 0x2157e6adb709000n }),
+      }),
+    )
+
+    expect(result.current.map(insight => insight.label)).toContain('Priority Fee per Gas')
   })
 })
