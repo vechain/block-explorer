@@ -10,12 +10,29 @@
 locals {
   waf_enabled = local.env.waf_enabled
 
+  # Scraper blocklist. Empty unless an environment names ranges, so the rules
+  # drop out entirely rather than sitting there matching nothing.
+  waf_blocked_cidrs      = lookup(local.env, "waf_blocked_cidrs", [])
+  waf_blocked_asns       = lookup(local.env, "waf_blocked_asns", [])
+  waf_blocklist_blocking = lookup(local.env, "waf_blocklist_blocking", false)
+
   waf_managed_groups = {
     "ip-reputation"   = { name = "AWSManagedRulesAmazonIpReputationList", priority = 20 }
     "anonymous-ip"    = { name = "AWSManagedRulesAnonymousIpList", priority = 30 }
     "common"          = { name = "AWSManagedRulesCommonRuleSet", priority = 40 }
     "known-bad-input" = { name = "AWSManagedRulesKnownBadInputsRuleSet", priority = 50 }
   }
+}
+
+# IPv4 only. The ASN rule is what covers the same networks over IPv6, which is
+# the half a CIDR blocklist quietly misses.
+resource "aws_wafv2_ip_set" "blocklist" {
+  count = local.waf_enabled && length(local.waf_blocked_cidrs) > 0 ? 1 : 0
+
+  name               = "${local.name}-waf-blocklist"
+  scope              = "REGIONAL"
+  ip_address_version = "IPV4"
+  addresses          = local.waf_blocked_cidrs
 }
 
 resource "aws_wafv2_web_acl" "main" {
@@ -41,6 +58,71 @@ resource "aws_wafv2_web_acl" "main" {
         field_keys = ["authorization", "cookie", "x-rate-limit-bypass"]
       }
       action = "SUBSTITUTION"
+    }
+  }
+
+  # Ahead of the rate limit, and in Count until soaked like the managed groups.
+  dynamic "rule" {
+    for_each = local.waf_enabled && length(local.waf_blocked_cidrs) > 0 ? [1] : []
+
+    content {
+      name     = "blocklist-cidr"
+      priority = 5
+
+      action {
+        dynamic "block" {
+          for_each = local.waf_blocklist_blocking ? [1] : []
+          content {}
+        }
+        dynamic "count" {
+          for_each = local.waf_blocklist_blocking ? [] : [1]
+          content {}
+        }
+      }
+
+      statement {
+        ip_set_reference_statement {
+          arn = aws_wafv2_ip_set.blocklist[0].arn
+        }
+      }
+
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "${local.name}-waf-blocklist-cidr"
+        sampled_requests_enabled   = true
+      }
+    }
+  }
+
+  dynamic "rule" {
+    for_each = local.waf_enabled && length(local.waf_blocked_asns) > 0 ? [1] : []
+
+    content {
+      name     = "blocklist-asn"
+      priority = 6
+
+      action {
+        dynamic "block" {
+          for_each = local.waf_blocklist_blocking ? [1] : []
+          content {}
+        }
+        dynamic "count" {
+          for_each = local.waf_blocklist_blocking ? [] : [1]
+          content {}
+        }
+      }
+
+      statement {
+        asn_match_statement {
+          asn_list = local.waf_blocked_asns
+        }
+      }
+
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "${local.name}-waf-blocklist-asn"
+        sampled_requests_enabled   = true
+      }
     }
   }
 
