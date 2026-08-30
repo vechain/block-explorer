@@ -46,7 +46,6 @@ waf_rate_limit: 2000
 
 # AS24940 stays out: the soak matched real clients on it that the CIDR never saw.
 waf_blocklist_blocking: true
-waf_blocked_cidrs: [144.76.0.0/16]
 waf_blocked_asns: []
 
 # Sole record on the name now; the weight stays because dropping it replaces it.

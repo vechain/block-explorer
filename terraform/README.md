@@ -133,6 +133,32 @@ To validate without a backend, set the workspace through the environment:
 TF_WORKSPACE=dev terraform validate
 ```
 
+## WAF blocklist
+
+`edge/` creates the `<env>-waf-blocklist` IP set and wires it to a rule at priority 5, but it does not
+own the entries: `addresses` seeds an empty set on first create and `lifecycle.ignore_changes` keeps
+later applies from reverting whoever edited it last. This repo is public, so committed ranges tell a
+scraper exactly what to route around — and a blocklist that needs a release to change is one that
+does not get used in the moment it is needed.
+
+```bash
+scripts/waf-blocklist.sh list   prod
+scripts/waf-blocklist.sh add    prod 144.76.0.0/16
+scripts/waf-blocklist.sh remove prod 144.76.0.0/16
+```
+
+Edits take effect within seconds and need no apply. `list` uses the `-read` profile; `add` and
+`remove` need `explorer-<env>-admin`. The script sends the set's `LockToken` back, so two concurrent
+edits fail loudly instead of one silently clobbering the other.
+
+Whether the rule blocks or merely counts is still Terraform's call, via `waf_blocklist_blocking` in
+the env YAML — so the soak convention survives, and `false` is the safe off-switch that keeps the
+metrics flowing. `waf_blocked_asns` stays in the YAML too: an ASN names a hosting provider rather
+than a target, and the rule is inline in the ACL where `ignore_changes` cannot reach it.
+
+Because the entries are invisible to Terraform, `plan` will never report drift on them. The live list
+is whatever `list` prints, and the Grafana "Blocked by rule" panel is how you confirm it is biting.
+
 ## Applying
 
 `deploy.yml` owns everything long-lived in `explorer-dev`, `preview-edge` included. Every merge to
