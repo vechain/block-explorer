@@ -44,8 +44,7 @@ waf_enabled: true
 waf_managed_rules_blocking: false
 waf_rate_limit: 2000
 
-# Hetzner range fronting the SE Ranking crawler. The ASN list is empty because
-# the soak matched real clients on AS24940 that the CIDR never saw.
+# AS24940 stays out: the soak matched real clients on it that the CIDR never saw.
 waf_blocklist_blocking: true
 waf_blocked_cidrs: [144.76.0.0/16]
 waf_blocked_asns: []
