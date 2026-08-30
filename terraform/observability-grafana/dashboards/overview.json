@@ -653,7 +653,7 @@
       "id": 31,
       "type": "timeseries",
       "title": "Blocked by rule",
-      "description": "Which rule rejected the request. Empty is the expected reading: only rate-limit-ip is set to block while waf_managed_rules_blocking is off, and it takes sustained traffic from a single IP to trip. A rule that has never blocked publishes no metric, so it stays absent from the legend rather than drawing a zero line.",
+      "description": "Which rule rejected the request. Only rate-limit-ip and the blocklist rules reject while waf_managed_rules_blocking is off — the rate limiter takes sustained traffic from a single IP to trip, so a steady blocklist line against an empty rate-limit one is the normal reading. A rule that has never blocked publishes no metric, so it stays absent from the legend rather than drawing a zero line.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 52 },
       "fieldConfig": {
@@ -683,6 +683,8 @@
             "Region": "${region}",
             "Rule": [
               "${waf_rule_prefix}-rate-limit-ip",
+              "${waf_rule_prefix}-blocklist-cidr",
+              "${waf_rule_prefix}-blocklist-asn",
               "${waf_rule_prefix}-ip-reputation",
               "${waf_rule_prefix}-anonymous-ip",
               "${waf_rule_prefix}-common",
@@ -781,7 +783,7 @@
       "id": 33,
       "type": "timeseries",
       "title": "Count-mode matches by rule",
-      "description": "A managed group in Count mode records the match and hands the request to the next rule, so all of this was served. Read it as a dry run of blocking, and against the Requests panel for scale. The rate-limit rule never appears: it blocks outright.",
+      "description": "A rule in Count mode records the match and hands the request to the next rule, so all of this was served. Read it as a dry run of blocking, and against the Requests panel for scale. The rate-limit rule never appears: it blocks outright. A blocklist rule appears here only where waf_blocklist_blocking is still off, and moves to Blocked by rule once it flips.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
       "gridPos": { "h": 8, "w": 18, "x": 6, "y": 60 },
       "fieldConfig": {
@@ -810,6 +812,8 @@
             "WebACL": "${waf_web_acl_name}",
             "Region": "${region}",
             "Rule": [
+              "${waf_rule_prefix}-blocklist-cidr",
+              "${waf_rule_prefix}-blocklist-asn",
               "${waf_rule_prefix}-ip-reputation",
               "${waf_rule_prefix}-anonymous-ip",
               "${waf_rule_prefix}-common",
