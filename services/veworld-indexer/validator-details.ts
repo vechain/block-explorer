@@ -158,7 +158,8 @@ export interface ValidatorDetails {
   cycleEndBlock: number
   startBlock: number
   completedPeriods: number
-  currentBlockNumber: number
+  // Block the cycle countdown projects from, with the chain timestamp it was produced at.
+  chainHead?: { number: number; timestamp: number }
 
   // Metadata
   metadata?: ValidatorMetadata
@@ -338,9 +339,6 @@ export const validatorDelegationsQueryOptions = (networkName: NetworkName, addre
 export const useValidatorDetails = (address: string | undefined) => {
   const { activeNetwork } = useSettingsStore()
 
-  const { data: bestBlock } = useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
-  const currentBlockNumber = bestBlock?.number ?? 0
-
   const results = useQueries({
     queries: [
       validatorDetailsQueryOptions(activeNetwork.name, address),
@@ -352,6 +350,21 @@ export const useValidatorDetails = (address: string | undefined) => {
   })
 
   const [validatorQuery, delegationsCountQuery, missedBlocksQuery, metadataQuery, delegationsQuery] = results
+
+  // Only the cycle countdown reads this, so it stays off the address pages that turn out
+  // not to be validators, which is nearly all of them.
+  const { data: bestBlock } = useQuery({
+    ...bestBlockCompressedQueryOptions(activeNetwork.name),
+    enabled: Boolean(validatorQuery.data),
+    // One anchor is enough — the countdown projects forward at the chain's own cadence.
+    // Never stale, or focus and reconnect would fetch a replacement behind the interval.
+    refetchInterval: false,
+    staleTime: Infinity,
+  })
+  const chainHead = useMemo(
+    () => (bestBlock ? { number: bestBlock.number, timestamp: bestBlock.timestamp } : undefined),
+    [bestBlock],
+  )
 
   const validator = useMemo<ValidatorDetails | null>(() => {
     const validatorData = validatorQuery.data as ValidatorIndexerData | null | undefined
@@ -398,7 +411,7 @@ export const useValidatorDetails = (address: string | undefined) => {
       cycleEndBlock: validatorData.cycleEndBlock ?? 0,
       startBlock: validatorData.startBlock ?? 0,
       completedPeriods: validatorData.completedPeriods ?? 0,
-      currentBlockNumber,
+      chainHead,
 
       metadata: metadata ?? undefined,
     }
@@ -408,7 +421,7 @@ export const useValidatorDetails = (address: string | undefined) => {
     missedBlocksQuery.data,
     metadataQuery.data,
     delegationsQuery.data,
-    currentBlockNumber,
+    chainHead,
   ])
 
   const isPending = validatorQuery.isPending || delegationsCountQuery.isPending || metadataQuery.isPending

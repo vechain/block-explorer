@@ -27,4 +27,3 @@ export const hexToBigIntSchema = hexStringSchema.transform(hex => hexToBigInt(he
 export type AddressString = z.infer<typeof addressStringSchema>
 export type HexString = z.infer<typeof hexStringSchema>
 export type TransactionId = z.infer<typeof transactionIdSchema>
-export type BlockId = z.infer<typeof blockIdSchema>

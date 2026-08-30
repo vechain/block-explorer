@@ -6,8 +6,10 @@ import { useTranslation } from 'react-i18next'
 import { VETBalance } from '@/components/ui/Balance'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { useTransactionGasInsights } from '@/hooks/useTransactionGasInsights'
+import { CONFIRMATIONS_CAP, confirmationsToShow, isConfirmationsSettled } from '@/lib/confirmations'
 import type { NetworkName } from '@/lib/constants/network'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { useBestBlockCompressed } from '@/services/thor/block'
 
 /**
@@ -25,7 +27,15 @@ export const TransactionOverview = ({
   networkName?: NetworkName
 }) => {
   const { t } = useTranslation()
-  const { data: bestBlock, isPending: isBestBlockPending } = useBestBlockCompressed(networkName)
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  const status: 'success' | 'reverted' | 'pending' = receipt ? (receipt.reverted ? 'reverted' : 'success') : 'pending'
+
+  // Only a confirmation count reads the head, and past the cap it stops moving — the other
+  // two badges are fixed text.
+  const settled = isConfirmationsSettled(transaction.meta.blockTimestamp, networkName ?? activeNetworkName)
+  const { data: bestBlock } = useBestBlockCompressed(networkName, {
+    enabled: status === 'success' && !settled,
+  })
   const feeAndGasInsights = useTransactionGasInsights({ transaction, receipt, networkName })
 
   // Sum of clause-attached VET (most txs have a single clause; multi-clause
@@ -36,12 +46,13 @@ export const TransactionOverview = ({
   // share the same renderer as the expert-mode breakdown below.
   const feePaidNode = feeAndGasInsights.find(i => i.label === t('Fee Paid'))?.value ?? <Skeleton h="20px" w="80px" />
 
-  const status: 'success' | 'reverted' | 'pending' = receipt ? (receipt.reverted ? 'reverted' : 'success') : 'pending'
   const statusBadge = renderStatusBadge({
     status,
-    bestBlockNumber: bestBlock?.number,
-    transactionBlockNumber: transaction.meta.blockNumber,
-    isBestBlockPending,
+    confirmations: confirmationsToShow({
+      settled,
+      bestBlockNumber: bestBlock?.number,
+      transactionBlockNumber: transaction.meta.blockNumber,
+    }),
     successLabel: t('Confirmations'),
     revertedLabel: t('Reverted'),
     pendingLabel: t('Pending'),
@@ -67,17 +78,13 @@ export const TransactionOverview = ({
 
 const renderStatusBadge = ({
   status,
-  bestBlockNumber,
-  transactionBlockNumber,
-  isBestBlockPending,
+  confirmations,
   successLabel,
   revertedLabel,
   pendingLabel,
 }: {
   status: 'success' | 'reverted' | 'pending'
-  bestBlockNumber: number | undefined
-  transactionBlockNumber: number
-  isBestBlockPending: boolean
+  confirmations: number | undefined
   successLabel: string
   revertedLabel: string
   pendingLabel: string
@@ -98,7 +105,7 @@ const renderStatusBadge = ({
     )
   }
 
-  if (isBestBlockPending || bestBlockNumber === undefined) {
+  if (confirmations === undefined) {
     return (
       <Box>
         <Skeleton width="80px" height="24px" rounded="full" />
@@ -106,14 +113,12 @@ const renderStatusBadge = ({
     )
   }
 
-  const confirmations = Math.max(0, bestBlockNumber - transactionBlockNumber)
-  const capped = confirmations > 12 ? 12 : confirmations
-  const palette = capped === 12 ? 'success' : 'pending'
+  const palette = confirmations === CONFIRMATIONS_CAP ? 'success' : 'pending'
 
   return (
     <Badge bg={`${palette}-surface`} color={`${palette}-text`} px="2" py="1" rounded="full" textStyle="bodyM" gap="1">
-      {capped >= 12 && <LuChevronRight />}
-      {capped} {successLabel.toLowerCase()}
+      {confirmations >= CONFIRMATIONS_CAP && <LuChevronRight />}
+      {confirmations} {successLabel.toLowerCase()}
     </Badge>
   )
 }

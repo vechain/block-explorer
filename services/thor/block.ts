@@ -3,7 +3,7 @@ import { apiClient, ApiError } from '@/lib/api'
 import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { isProxiedNetwork } from '@/lib/proxied-network'
 import { proxyBaseUrl } from '@/lib/proxy-base-url'
-import { type BlockId, type BlockRevision, blockCompressedSchema, blockExpandedSchema } from '@/lib/schemas'
+import { type BlockRevision, blockCompressedSchema, blockExpandedSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { BEST_BLOCK_ENDPOINT, BLOCK_ENDPOINT, isConcreteBlockRevision, THOR_PROXY_BASE } from '@/lib/thor-proxy'
 import { zodParse } from '@/lib/utils/zod'
@@ -114,28 +114,12 @@ export const blockCompressedQueryOptions = (networkName: NetworkName, revision: 
     staleTime: Infinity,
   })
 
-/**
- * Base fee per gas
- */
-
-const baseFeePerGasQueryOptions = (networkName: NetworkName, blockId: BlockId | undefined) =>
-  queryOptions({
-    queryKey: [BLOCK_COMPRESSED_QUERY_KEY, networkName, blockId],
-    queryFn: blockId ? () => getBlockCompressed({ networkName, revision: blockId }) : skipToken,
-    select: data => data.baseFeePerGas,
-  })
-
-export const useBestBlockCompressed = (networkName?: NetworkName) => {
+export const useBestBlockCompressed = (networkName?: NetworkName, { enabled = true } = {}) => {
   const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
-  return useQuery(bestBlockCompressedQueryOptions(networkName ?? activeNetworkName))
+  return useQuery({ ...bestBlockCompressedQueryOptions(networkName ?? activeNetworkName), enabled })
 }
 
 export const useBlockExpanded = (revision: BlockRevision | undefined) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery(blockExpandedQueryOptions(activeNetwork.name, revision))
-}
-
-export const useBaseFeePerGas = (blockId: BlockId | undefined, networkName?: NetworkName) => {
-  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
-  return useQuery(baseFeePerGasQueryOptions(networkName ?? activeNetworkName, blockId))
 }
