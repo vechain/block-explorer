@@ -122,11 +122,15 @@ const implIsAddress = (impl: AddressString | null): impl is AddressString => imp
 
 const RESOLVED_ABI_QUERY_KEY = 'getResolvedAbi'
 
+// The route's own max-age: re-asked eventually, so verifying a contract has an effect.
+const CACHE_TIME_MS = 60 * 60 * 1_000
+
 const resolvedAbiQueryOptions = (networkName: NetworkName, address: AddressString | null | undefined) =>
   queryOptions({
     queryKey: [RESOLVED_ABI_QUERY_KEY, networkName, address?.toLowerCase()],
     queryFn: address ? () => fetchResolvedAbi(networkName, address) : skipToken,
-    staleTime: Infinity,
+    staleTime: CACHE_TIME_MS,
+    gcTime: CACHE_TIME_MS,
   })
 
 export const useResolvedAbi = (address: AddressString | null | undefined, networkName?: NetworkName) => {

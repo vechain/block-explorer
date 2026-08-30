@@ -4,9 +4,9 @@ import { SOURCIFY_URL } from '@/env.api'
 import { defineEndpoint } from '@/lib/cached-proxy'
 import { fetchUpstream, NotFoundError, UpstreamError } from './upstream-error'
 
+const HOUR = 3_600
 const DAY = 86_400
 const WEEK = 604_800
-const FIVE_MINUTES = 300
 
 interface SourcifyHit {
   abi: Abi
@@ -34,13 +34,13 @@ export const sourcifyEndpoint = defineEndpoint({
   }),
   invalidParamsMessage: 'chainId must be numeric and address must be a hex address',
 
-  cache: { ttl: DAY, stale: WEEK, browserMaxAge: 3600, size: 10_000 },
+  cache: { ttl: DAY, stale: WEEK, browserMaxAge: HOUR, size: 10_000 },
 
-  // Short, so a freshly-verified contract is not shadowed by the long success TTL.
+  // Shorter than a hit: verifying a contract is the one thing that changes this answer.
   notFound: {
-    ttl: FIVE_MINUTES,
-    stale: DAY,
-    browserMaxAge: FIVE_MINUTES,
+    ttl: HOUR,
+    stale: WEEK,
+    browserMaxAge: HOUR,
     size: 10_000,
     message: 'Contract not verified on Sourcify',
   },
