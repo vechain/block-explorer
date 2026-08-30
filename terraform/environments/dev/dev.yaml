@@ -37,7 +37,7 @@ grafana_okta_saml_metadata_url: https://vechaineu.okta.com/app/exk1020c50lQfO4EF
 grafana_admin_okta_groups: [APP_AMG_BLOCK_EXPLORER_Admin]
 grafana_editor_okta_groups: [APP_AMG_BLOCK_EXPLORER_Editor]
 
-# Rules and alarms evaluate either way; this only gates Slack delivery.
+# Off entirely: no alarms, no AMP alert rules, no Alertmanager.
 alerts_enabled: false
 
 # WAF. The rate-based IP rule always blocks; the AWS managed groups stay in

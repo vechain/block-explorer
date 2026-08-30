@@ -158,8 +158,7 @@ resource "aws_lambda_permission" "sns_to_slack_invoke" {
   source_arn    = aws_sns_topic.alerts.arn
 }
 
-# Both pipelines publish to the one topic, so this subscription is the single gate
-# on delivery. Rules and alarms evaluate and show their state without it.
+# The topic, bridge and secret are built either way; only this is gated.
 resource "aws_sns_topic_subscription" "sns_to_slack" {
   count = local.alerts_enabled ? 1 : 0
 
@@ -188,13 +187,18 @@ resource "aws_prometheus_rule_group_namespace" "recording" {
   data         = local.recording_rules_yaml
 }
 
+# Gated, unlike the recording rules above: the dashboards query those.
 resource "aws_prometheus_rule_group_namespace" "alerts" {
+  count = local.alerts_enabled ? 1 : 0
+
   workspace_id = aws_prometheus_workspace.this.id
   name         = "${local.name}-alerts"
   data         = local.alert_rules_yaml
 }
 
 resource "aws_prometheus_alert_manager_definition" "this" {
+  count = local.alerts_enabled ? 1 : 0
+
   workspace_id = aws_prometheus_workspace.this.id
   definition   = local.alertmanager_definition
 }

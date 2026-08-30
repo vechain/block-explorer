@@ -60,10 +60,20 @@ metric name, and a wildcard also matches the `ALL` aggregate and the managed gro
 which double-counts. `CountedRequests` overlaps `AllowedRequests` for the same reason — a count-mode
 match does not terminate evaluation — so the two never belong in one stack.
 
-Alerts evaluate in every environment but `alerts_enabled` in the env YAML controls whether they are
-delivered, and dev has it off. To rehearse the path end to end: set the `SLACK_WEBHOOK_URL` secret on
-the `dev` GitHub Environment, flip `alerts_enabled` to `true`, scale the service to zero, and confirm
-the no-healthy-targets alarm arrives and then recovers.
+`alerts_enabled` in the env YAML turns alerting on, and dev has it off — no CloudWatch alarms, no AMP
+alert rule group, no Alertmanager definition, and Grafana's Alerting UI is not wired to any of them.
+Nobody acts on a dev page, and dev is hibernated often enough that alarms there would read as
+permanently red. The recording rules are separate and always built, because the dashboards query them.
+
+So is the delivery path — topic, bridge Lambda and webhook secret — which costs nothing idle and is
+what keeps re-enabling a one-line flip rather than a wait on that secret's seven-day recovery window.
+To rehearse end to end: set the `SLACK_WEBHOOK_URL` secret on the `dev` GitHub Environment, flip
+`alerts_enabled` to `true`, deploy, scale the service to zero, and confirm the no-healthy-targets
+alarm arrives and then recovers.
+
+The cost of dev not evaluating the AMP rules is that **prod is now the first apply to parse a new
+one** — `aws_prometheus_rule_group_namespace` is what validates the YAML and its PromQL, server-side.
+Rehearsing in dev before touching `alert_rules_yaml` is the cheap way round it.
 
 Grafana sign-in is Okta SAML, configured from `grafana_okta_saml_metadata_url` and the two
 `grafana_*_okta_groups` lists in the env YAML. Blank the URL, or leave the Admin list empty, and the
