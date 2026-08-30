@@ -28,11 +28,46 @@
       "panels": []
     },
     {
+      "id": 5,
+      "type": "stat",
+      "title": "Total requests",
+      "description": "Everything the load balancer routed over the selected range — the area under the line beside it. Pages, assets and API calls together.",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 4, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "colorMode": "none",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/ApplicationELB",
+          "metricName": "RequestCount",
+          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
+          "statistic": "Sum",
+          "period": "",
+          "matchExact": true,
+          "label": "Requests"
+        }
+      ]
+    },
+    {
       "id": 1,
       "type": "timeseries",
       "title": "Requests per minute",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "gridPos": { "h": 8, "w": 8, "x": 4, "y": 1 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -205,11 +240,57 @@
       ]
     },
     {
+      "id": 6,
+      "type": "table",
+      "title": "Requests by endpoint",
+      "description": "Counted at the app, so this covers the proxy API routes only — page and asset requests are not in here, and it will not add up to the total above. A path the allowlist does not carry is counted against its proxy's /* row rather than growing a series of its own.",
+      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 17 },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto", "filterable": true } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "endpoint" },
+            "properties": [{ "id": "custom.width", "value": 320 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "requests" },
+            "properties": [
+              { "id": "unit", "value": "short" },
+              { "id": "decimals", "value": 0 },
+              { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }
+            ]
+          }
+        ]
+      },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "requests", "desc": true }] },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
+          "editorMode": "code",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "expr": "sum by (route) (increase(block_explorer_http_responses_total{source=\"app-frontend\"}[$__range]))"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "renameByName": { "route": "endpoint", "Value": "requests", "Value #A": "requests" }
+          }
+        }
+      ]
+    },
+    {
       "id": 101,
       "type": "row",
       "title": "Tasks",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 },
       "panels": []
     },
     {
@@ -218,7 +299,7 @@
       "title": "Tasks running against desired",
       "description": "A gap that outlasts a rolling deploy is a stuck deploy or a placement failure.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 18 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 26 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -267,7 +348,7 @@
       "title": "Task CPU against reservation",
       "description": "One series per task, from that task's own sidecar.",
       "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 18 },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 26 },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -301,7 +382,7 @@
       "type": "timeseries",
       "title": "Task memory against reservation",
       "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 18 },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 26 },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -335,7 +416,7 @@
       "type": "row",
       "title": "Cache and upstreams",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 },
       "panels": []
     },
     {
@@ -344,7 +425,7 @@
       "title": "Cache hit rate",
       "description": "Backed by the shared Valkey, so one task serves what another fetched. Keys carry the image tag, so a deploy still starts cold, and the five-second chain-state entries dominate the volume — which holds the ceiling well below 100%.",
       "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 27 },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 35 },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -384,7 +465,7 @@
       "title": "Cache lookups by result",
       "description": "A stale serve is counted as a hit — the library raises no separate event — so the background-refresh rate reads as upstream fetches minus misses.",
       "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 9, "x": 6, "y": 27 },
+      "gridPos": { "h": 8, "w": 9, "x": 6, "y": 35 },
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
@@ -410,7 +491,7 @@
       "title": "Upstream fetches by outcome",
       "description": "not_found is expected traffic. upstream_error means a Thor node or the indexer refused.",
       "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 9, "x": 15, "y": 27 },
+      "gridPos": { "h": 8, "w": 9, "x": 15, "y": 35 },
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
@@ -436,7 +517,7 @@
       "title": "Upstream fetch duration",
       "description": "The top histogram bucket is the upstream timeout, so p99 flattening there means requests are timing out rather than slowing down.",
       "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 35 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 43 },
       "fieldConfig": {
         "defaults": {
           "unit": "s",
@@ -479,7 +560,7 @@
       "title": "API responses by status",
       "description": "Counted at the app, labelled by matched route template rather than raw path.",
       "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 35 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 43 },
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
@@ -504,7 +585,7 @@
       "type": "row",
       "title": "WAF",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 51 },
       "panels": []
     },
     {
@@ -513,7 +594,7 @@
       "title": "Requests allowed and blocked",
       "description": "Every request is one or the other, so these two sum to the ALB's request count. Blocked is only ever the rate-limit rule while waf_managed_rules_blocking is off. Requests a soaking rule flagged are not a third category — they are allowed requests, and they are in the Allowed line here; the two panels below cover them.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 52 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -574,7 +655,7 @@
       "title": "Blocked by rule",
       "description": "Which rule rejected the request. Empty is the expected reading: only rate-limit-ip is set to block while waf_managed_rules_blocking is off, and it takes sustained traffic from a single IP to trip. A rule that has never blocked publishes no metric, so it stays absent from the legend rather than drawing a zero line.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 52 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -621,7 +702,7 @@
       "title": "Count-mode match rate",
       "description": "Matches on a soaking rule as a share of requests served. Nothing here was rejected — this is what would start being rejected if waf_managed_rules_blocking flipped to true, so it is the cost of turning the managed groups on rather than a measure of attack traffic.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 52 },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 60 },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -702,7 +783,7 @@
       "title": "Count-mode matches by rule",
       "description": "A managed group in Count mode records the match and hands the request to the next rule, so all of this was served. Read it as a dry run of blocking, and against the Requests panel for scale. The rate-limit rule never appears: it blocks outright.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 18, "x": 6, "y": 52 },
+      "gridPos": { "h": 8, "w": 18, "x": 6, "y": 60 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -747,7 +828,7 @@
       "type": "row",
       "title": "WAF request detail — Logs Insights, runs only while expanded",
       "collapsed": true,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 60 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 68 },
       "panels": [
         {
           "id": 40,
@@ -755,7 +836,7 @@
           "title": "Flagged clients",
           "description": "Who tripped a rule. action says what then happened: ALLOW is the count-mode dry run and the request was served, BLOCK is a real rejection. paths and rules are distinct counts, so thousands of requests over one path and one rule is a single client, not broad hostile traffic.",
           "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "gridPos": { "h": 11, "w": 12, "x": 0, "y": 61 },
+          "gridPos": { "h": 11, "w": 12, "x": 0, "y": 69 },
           "fieldConfig": {
             "defaults": { "custom": { "align": "auto", "filterable": true } },
             "overrides": [
@@ -805,7 +886,7 @@
           "title": "Flagged paths",
           "description": "What those requests asked for. Explorer routes mean real users behind a flagged IP range; probe paths — wp-login, .env, phpmyadmin — mean the rule is earning its place. clients is how many distinct sources asked for that path.",
           "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "gridPos": { "h": 11, "w": 12, "x": 12, "y": 61 },
+          "gridPos": { "h": 11, "w": 12, "x": 12, "y": 69 },
           "fieldConfig": {
             "defaults": { "custom": { "align": "auto", "filterable": true } },
             "overrides": [
@@ -840,7 +921,7 @@
           "title": "Recent WAF events",
           "description": "The log group holds only requests a rule matched — the delivery filter drops the rest, so this is not a request log. rule is the ACL rule; managedRule is the specific rule inside the AWS managed group, and that is the one to name when deciding what to exclude before turning blocking on. Column headers filter.",
           "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "gridPos": { "h": 14, "w": 24, "x": 0, "y": 72 },
+          "gridPos": { "h": 14, "w": 24, "x": 0, "y": 80 },
           "fieldConfig": {
             "defaults": { "custom": { "align": "auto", "filterable": true } },
             "overrides": [
