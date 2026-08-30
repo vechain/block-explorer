@@ -405,6 +405,59 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ vars.AWS_OIDC_ROLE_ARN }}
 
+      # Reverses hibernate-dev.yml, and heals one that only half-applied. Reads
+      # the service rather than a flag, so a hand-scaled service wakes too, and
+      # only acts below the floor — autoscaling above it is not ours to reset.
+      - name: Wake the service if it is parked
+        env:
+          CLUSTER: ${{ needs.terraform.outputs.cluster }}
+          SERVICE: ${{ needs.terraform.outputs.service }}
+        run: |
+          set -euo pipefail
+
+          resource="service/${CLUSTER}/${SERVICE}"
+          target=$(aws application-autoscaling describe-scalable-targets \
+            --service-namespace ecs \
+            --scalable-dimension ecs:service:DesiredCount \
+            --resource-ids "$resource" \
+            --no-cli-pager --query 'ScalableTargets[0]' --output json)
+
+          floor=$(jq -r '.MinCapacity // 1' <<<"$target")
+          suspended=$(jq -r '[.SuspendedState // {} | .[]] | any' <<<"$target")
+          desired=$(aws ecs describe-services --cluster "$CLUSTER" --services "$SERVICE" \
+            --no-cli-pager --query 'services[0].desiredCount' --output text)
+
+          if [ "$desired" -ge "$floor" ] && [ "$suspended" = "false" ]; then
+            echo "${SERVICE} is running ${desired} task(s) and scaling freely."
+            exit 0
+          fi
+
+          restored=()
+
+          if [ "$suspended" = "true" ]; then
+            aws application-autoscaling register-scalable-target \
+              --service-namespace ecs \
+              --scalable-dimension ecs:service:DesiredCount \
+              --resource-id "$resource" \
+              --suspended-state '{"DynamicScalingInSuspended":false,"DynamicScalingOutSuspended":false,"ScheduledScalingSuspended":false}' \
+              --no-cli-pager
+            restored+=("target tracking resumed")
+          fi
+
+          if [ "$desired" -lt "$floor" ]; then
+            aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
+              --desired-count "$floor" --no-cli-pager --query 'service.desiredCount' --output text
+            restored+=("desired count ${desired} -> ${floor}")
+          fi
+
+          did=$(printf '%s, ' "${restored[@]}")
+          {
+            echo "### Woken from hibernation"
+            echo
+            echo "\`${SERVICE}\`: ${did%, }."
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # The revision rather than the image tag, so a cpu, memory, env or sidecar
       # change that leaves the image alone still rolls.
       - name: Check whether a roll is needed
