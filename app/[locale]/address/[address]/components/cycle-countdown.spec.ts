@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ValidatorDetails } from '@/services/veworld-indexer/validator-details'
-import { cycleEndsAtMs } from './cycle-countdown'
+import { countdownTickMs, cycleEndsAtMs } from './cycle-countdown'
 
 // A real mainnet validator: 7-day cycles, 23 of them done, anchored on block 25,754,875.
 const ANCHOR_MS = 1_788_080_160_000
@@ -32,5 +32,29 @@ describe('cycleEndsAtMs', () => {
 
   it('has no cycle to end when the period length is unknown', () => {
     expect(cycleEndsAtMs({ ...VALIDATOR, cyclePeriodLength: 0 })).toBeNull()
+  })
+})
+
+const MINUTE_MS = 60_000
+
+describe('countdownTickMs', () => {
+  it('idles at a minute while the label reads days and hours', () => {
+    expect(countdownTickMs(3 * 24 * 60 * MINUTE_MS)).toBe(MINUTE_MS)
+    expect(countdownTickMs(MINUTE_MS + 1)).toBe(MINUTE_MS)
+  })
+
+  // Below a minute the label counts seconds, which a minute-long tick would freeze.
+  it('ticks every second through the final minute', () => {
+    expect(countdownTickMs(MINUTE_MS)).toBe(1_000)
+    expect(countdownTickMs(1)).toBe(1_000)
+  })
+
+  it('drops back to a minute once the cycle has passed', () => {
+    expect(countdownTickMs(0)).toBe(MINUTE_MS)
+    expect(countdownTickMs(-5_000)).toBe(MINUTE_MS)
+  })
+
+  it('idles when there is no cycle end to count towards', () => {
+    expect(countdownTickMs(null)).toBe(MINUTE_MS)
   })
 })

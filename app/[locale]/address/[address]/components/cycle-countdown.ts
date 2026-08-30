@@ -11,3 +11,11 @@ export const cycleEndsAtMs = (validator: ValidatorDetails): number | null => {
 
   return chainHead.timestamp + (currentPeriodEndBlock - chainHead.number) * BLOCK_TIME_SECONDS * 1000
 }
+
+const SECOND_MS = 1_000
+const MINUTE_MS = 60 * SECOND_MS
+
+// The label counts seconds through the final minute, so it has to tick that fast to reach
+// zero; a minute is plenty for the days and hours it reads the rest of the time.
+export const countdownTickMs = (remainingMs: number | null) =>
+  remainingMs !== null && remainingMs > 0 && remainingMs <= MINUTE_MS ? SECOND_MS : MINUTE_MS

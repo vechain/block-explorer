@@ -357,7 +357,9 @@ export const useValidatorDetails = (address: string | undefined) => {
     ...bestBlockCompressedQueryOptions(activeNetwork.name),
     enabled: Boolean(validatorQuery.data),
     // One anchor is enough — the countdown projects forward at the chain's own cadence.
+    // Never stale, or focus and reconnect would fetch a replacement behind the interval.
     refetchInterval: false,
+    staleTime: Infinity,
   })
   const chainHead = useMemo(
     () => (bestBlock ? { number: bestBlock.number, timestamp: bestBlock.timestamp } : undefined),
