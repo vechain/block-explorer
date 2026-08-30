@@ -1,6 +1,7 @@
-import type { Abi } from 'viem'
+import type { Abi, AbiEvent, AbiFunction } from 'viem'
+import { erc20Abi, erc721Abi, erc1155Abi, toEventSelector, toFunctionSelector } from 'viem'
 import { NetworkName } from '@/lib/constants/network'
-import type { AddressString } from '@/lib/schemas'
+import type { AddressString, HexString } from '@/lib/schemas'
 
 // Protocol built-ins (same address on every network, not on Sourcify).
 import authorityAbi from './abis/authority.json'
@@ -207,4 +208,48 @@ export function getAllBundledAbis(): Abi[] {
   for (const v of Object.values(BUILTIN)) out.push(v.abi)
   for (const v of Object.values(CURATED_ABIS_BY_NAME)) out.push(v.abi)
   return out
+}
+
+// Hashing the whole bundle costs a few thousand keccaks, so it happens on first use.
+let signatureIndex: { functions: Map<string, AbiFunction>; events: Map<string, AbiEvent> } | null = null
+
+const countIndexed = (item: AbiEvent) => item.inputs.filter(input => input.indexed).length
+
+// Indexed count as well as topic0: ERC-20 and ERC-721 `Transfer` share a signature.
+const eventKey = (topic0: string, indexedCount: number) => `${topic0}:${indexedCount}`
+
+// Indexed ahead of our own, and first writer wins, so the canonical param names beat VTHO's.
+const STANDARD_ABIS: Abi[] = [erc20Abi, erc721Abi, erc1155Abi]
+
+const buildSignatureIndex = () => {
+  const functions = new Map<string, AbiFunction>()
+  const events = new Map<string, AbiEvent>()
+
+  for (const abi of [...STANDARD_ABIS, ...getAllBundledAbis()]) {
+    for (const item of abi) {
+      try {
+        if (item.type === 'function') {
+          const selector = toFunctionSelector(item).toLowerCase()
+          if (!functions.has(selector)) functions.set(selector, item)
+        } else if (item.type === 'event' && !item.anonymous) {
+          const key = eventKey(toEventSelector(item).toLowerCase(), countIndexed(item))
+          if (!events.has(key)) events.set(key, item)
+        }
+      } catch {
+        continue
+      }
+    }
+  }
+
+  return { functions, events }
+}
+
+const getSignatureIndex = () => (signatureIndex ??= buildSignatureIndex())
+
+export function getBundledFunctionItem(selector: HexString): AbiFunction | null {
+  return getSignatureIndex().functions.get(selector.toLowerCase()) ?? null
+}
+
+export function getBundledEventItem(topic0: HexString, indexedCount: number): AbiEvent | null {
+  return getSignatureIndex().events.get(eventKey(topic0.toLowerCase(), indexedCount)) ?? null
 }
