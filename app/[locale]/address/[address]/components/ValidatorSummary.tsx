@@ -2,7 +2,7 @@
 
 import { Badge, Box, Flex, Grid, Heading, HStack, Link, Stack, Text, VStack } from '@chakra-ui/react'
 import Image from 'next/image'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LuExternalLink, LuGlobe, LuMapPin } from 'react-icons/lu'
 import { Card } from '@/components/ui/Card'
@@ -14,6 +14,7 @@ import { LevelName, type ValidatorDetails, ValidatorStatus } from '@/services/ve
 import { useVnsName } from '@/services/thor/vns'
 import { getStargateLink } from '@/lib/constants/stargate-nft'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { cycleEndsAtMs } from './cycle-countdown'
 
 // Block time on VeChain is 10 seconds
 const BLOCK_TIME_IN_SECONDS = 10
@@ -47,6 +48,19 @@ const formatDuration = (ms: number): string => {
   if (hours >= 1) return `${hours} hour${hours === 1 ? '' : 's'}`
   if (minutes >= 1) return `${minutes} minute${minutes === 1 ? '' : 's'}`
   return `${seconds} second${seconds === 1 ? '' : 's'}`
+}
+
+// Drives the countdown now that nothing polls the chain for it. A minute is ample for a
+// label rounded to whole minutes, hours and days.
+const useMinuteTick = () => {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  return now
 }
 
 // Abbreviate large numbers (e.g., 1000000 -> "1M")
@@ -106,19 +120,17 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
   const { activeNetwork } = useSettingsStore()
   const stargateValidatorLink = getStargateLink(activeNetwork.name, `/validator/${address}`)
 
-  // Calculate time until next cycle based on current block number (like Stargate)
+  const now = useMinuteTick()
+
+  // The cycle end is a fixed moment, so it is projected once from the anchored block at the
+  // chain's 10s cadence and then counted down locally, rather than re-read every block.
   const timeUntilNextCycle = useMemo(() => {
-    if (!validator || validator.cyclePeriodLength === 0 || validator.currentBlockNumber === 0) return '-'
+    const endsAt = cycleEndsAtMs(validator)
+    if (endsAt === null) return '-'
 
-    const completedBlocks = validator.completedPeriods * validator.cyclePeriodLength
-    const currentPeriodEndBlock = validator.startBlock + completedBlocks + validator.cyclePeriodLength
-    const blocksUntilNextCycle = Math.max(0, currentPeriodEndBlock - validator.currentBlockNumber)
-
-    if (blocksUntilNextCycle === 0) return '-'
-
-    const timeMs = blocksToSeconds(blocksUntilNextCycle) * 1000
-    return formatDuration(timeMs)
-  }, [validator])
+    const remainingMs = endsAt - now
+    return remainingMs <= 0 ? '-' : formatDuration(remainingMs)
+  }, [validator, now])
 
   // Calculate cycle duration
   const cycleDuration = useMemo(() => {
