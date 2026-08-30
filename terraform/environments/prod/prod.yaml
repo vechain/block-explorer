@@ -44,11 +44,11 @@ waf_enabled: true
 waf_managed_rules_blocking: false
 waf_rate_limit: 2000
 
-# Hetzner ranges fronting the SE Ranking crawler. Count first: AS24940 is a
-# large hosting network, so read the sampled requests before flipping this.
-waf_blocklist_blocking: false
+# Hetzner range fronting the SE Ranking crawler. The ASN list is empty because
+# the soak matched real clients on AS24940 that the CIDR never saw.
+waf_blocklist_blocking: true
 waf_blocked_cidrs: [144.76.0.0/16]
-waf_blocked_asns: [24940]
+waf_blocked_asns: []
 
 # Sole record on the name now; the weight stays because dropping it replaces it.
 dns_record_enabled: true
