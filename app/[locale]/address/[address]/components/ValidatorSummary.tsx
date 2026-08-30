@@ -14,7 +14,7 @@ import { LevelName, type ValidatorDetails, ValidatorStatus } from '@/services/ve
 import { useVnsName } from '@/services/thor/vns'
 import { getStargateLink } from '@/lib/constants/stargate-nft'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { cycleEndsAtMs } from './cycle-countdown'
+import { countdownTickMs, cycleEndsAtMs } from './cycle-countdown'
 
 // Block time on VeChain is 10 seconds
 const BLOCK_TIME_IN_SECONDS = 10
@@ -50,15 +50,16 @@ const formatDuration = (ms: number): string => {
   return `${seconds} second${seconds === 1 ? '' : 's'}`
 }
 
-// Drives the countdown now that nothing polls the chain for it. A minute is ample for a
-// label rounded to whole minutes, hours and days.
-const useMinuteTick = () => {
+// Drives the countdown now that nothing polls the chain for it, speeding up for the
+// final minute the label counts out in seconds.
+const useCountdownNow = (endsAt: number | null) => {
   const [now, setNow] = useState(() => Date.now())
+  const tickMs = countdownTickMs(endsAt === null ? null : endsAt - now)
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 60_000)
+    const id = setInterval(() => setNow(Date.now()), tickMs)
     return () => clearInterval(id)
-  }, [])
+  }, [tickMs])
 
   return now
 }
@@ -120,17 +121,17 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
   const { activeNetwork } = useSettingsStore()
   const stargateValidatorLink = getStargateLink(activeNetwork.name, `/validator/${address}`)
 
-  const now = useMinuteTick()
-
   // The cycle end is a fixed moment, so it is projected once from the anchored block at the
   // chain's 10s cadence and then counted down locally, rather than re-read every block.
+  const endsAt = cycleEndsAtMs(validator)
+  const now = useCountdownNow(endsAt)
+
   const timeUntilNextCycle = useMemo(() => {
-    const endsAt = cycleEndsAtMs(validator)
     if (endsAt === null) return '-'
 
     const remainingMs = endsAt - now
     return remainingMs <= 0 ? '-' : formatDuration(remainingMs)
-  }, [validator, now])
+  }, [endsAt, now])
 
   // Calculate cycle duration
   const cycleDuration = useMemo(() => {
