@@ -407,8 +407,10 @@ jobs:
 
       # Reverses hibernate-dev.yml, and heals one that only half-applied. Reads
       # the service rather than a flag, so a hand-scaled service wakes too, and
-      # only acts below the floor — autoscaling above it is not ours to reset.
+      # only acts below the floor. dev only: capacity held down on prod is
+      # deliberate, and the health check below should fail rather than lift it.
       - name: Wake the service if it is parked
+        if: needs.guard.outputs.environment == 'dev'
         env:
           CLUSTER: ${{ needs.terraform.outputs.cluster }}
           SERVICE: ${{ needs.terraform.outputs.service }}

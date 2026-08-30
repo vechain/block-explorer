@@ -60,7 +60,7 @@ same image, so parity is structural rather than maintained by hand.
 1. `guard` - Resolves the target, the tag and its content SHA, refuses anything not reachable from `main`, and derives the per-environment names below
 2. `promote` - Copies the GHCR manifest list into that account's ECR, keeping both arches. Each tag is written only if absent
 3. `terraform` - Applies each stack serially in dependency order, planning immediately before each apply
-4. `roll` - Wakes the service if it is parked, moves it to the new task definition revision unless it already runs it, then checks `/api/health` and that `/api/metrics` is 403, both over the ALB by name
+4. `roll` - Wakes the service if it is parked (dev only), moves it to the new task definition revision unless it already runs it, then checks `/api/health` and that `/api/metrics` is 403, both over the ALB by name
 5. `draft-release` - Calls `prepare-release.yml` (dev only, and not on dispatch)
 
 **Domains:** `https://dev.block-explorer.vechain.org`, `https://block-explorer.vechain.org`
@@ -133,11 +133,15 @@ The service and cluster names come from `terraform/frontend`'s outputs rather th
 in the workflow: a wrong name scales nothing and still reports success.
 
 Waking is idempotent and lives in two places. This workflow's `wake` mode is the operator's button;
-`deploy.yml`'s `roll` job asserts the same thing on every deploy, so a deploy can never land on a
-parked service. It reads the service rather than a flag, which means it also heals a hibernate that
-half-applied and a service someone scaled down by hand, and it only acts *below* the floor — capacity
-autoscaling put above it is not the deploy's to reset. It sits in `roll` rather than in its own job
-because a job referencing a protected environment adds another approval gate to prod.
+`deploy.yml`'s `roll` job asserts the same thing on every **dev** deploy, so a dev deploy can never
+land on a parked service. It reads the service rather than a flag, which means it also heals a
+hibernate that half-applied and a service someone scaled down by hand, and it only acts *below* the
+floor — capacity autoscaling put above it is not the deploy's to reset. It sits in `roll` rather than
+in its own job because a job referencing a protected environment adds another approval gate to prod.
+
+Prod is excluded rather than merely never parked. There, a suspended scalable target or a zero
+desired count means someone is holding capacity down on purpose, and a deploy that silently lifted it
+would undo an incident response — so the `/api/health` check is left to fail loudly instead.
 
 **While hibernated:** `https://dev.block-explorer.vechain.org` returns 503. Nothing alarms — dev sets
 `alerts_enabled: false`, which builds no alarms and no AMP alert rules at all, so there is no red
