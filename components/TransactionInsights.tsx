@@ -4,12 +4,13 @@ import { Alert, Badge, Box, Heading, Skeleton, Text, VStack } from '@chakra-ui/r
 import { LuChevronRight } from 'react-icons/lu'
 import { useTranslation } from 'react-i18next'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
-import { CONFIRMATIONS_CAP, isConfirmationsSettled } from '@/lib/confirmations'
+import { CONFIRMATIONS_CAP, confirmationsToShow, isConfirmationsSettled } from '@/lib/confirmations'
 import type { NetworkName } from '@/lib/constants/network'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
 import { useTransactionGasInsights } from '@/hooks/useTransactionGasInsights'
 import { TxTypeBadge } from '@/components/ui/TxTypeBadge'
 import { useFormatNumber } from '@/hooks/useFormatting'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { useBestBlockCompressed } from '@/services/thor/block'
 import { useTransactionFailureInsight } from '@/services/thor/transaction'
 
@@ -32,7 +33,8 @@ export const TransactionInsight = ({
 
   // The card below is expert-only and stops moving past the cap, so the head is read only
   // when it is both on screen and still able to change the number.
-  const settled = isConfirmationsSettled(transaction.meta.blockTimestamp)
+  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
+  const settled = isConfirmationsSettled(transaction.meta.blockTimestamp, networkName ?? activeNetworkName)
   const { data: bestBlock, isPending: isBestBlockPending } = useBestBlockCompressed(networkName, {
     enabled: expert && !settled,
   })
@@ -47,7 +49,11 @@ export const TransactionInsight = ({
     networkName,
   })
 
-  const confirmations = settled ? CONFIRMATIONS_CAP : getConfirmations(bestBlock?.number, transaction.meta.blockNumber)
+  const confirmations = confirmationsToShow({
+    settled,
+    bestBlockNumber: bestBlock?.number,
+    transactionBlockNumber: transaction.meta.blockNumber,
+  })
   const confirmationsStatus = getConfirmationsStatus(confirmations)
 
   const additionalInsights: DataCardGroupItem[] = [
@@ -156,18 +162,10 @@ export const TransactionInsight = ({
   )
 }
 
-function getConfirmations(bestBlockNumber: number | undefined, transactionBlockNumber: number) {
-  if (bestBlockNumber === undefined) return undefined
-
-  const confirmations = bestBlockNumber - transactionBlockNumber
-
-  return confirmations > 12 ? 12 : confirmations
-}
-
 function getConfirmationsStatus(confirmations: number | undefined) {
   if (confirmations === undefined) return 'error'
 
-  if (confirmations === 12) return 'success'
+  if (confirmations === CONFIRMATIONS_CAP) return 'success'
 
   return 'pending'
 }
