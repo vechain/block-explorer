@@ -87,10 +87,10 @@ export const useRecentBlocksExpanded = ({ count }: { count: number }) => {
 
   useEffect(() => {
     if (bestBlockNumber === undefined || blocksPending) return
-    if (latestBlocks.length < count && bestBlockNumber > blocksToFetch) {
+    if (latestBlocks.length < count && bestBlockNumber > blocksToFetch && extraBlocks < count) {
       setExtraBlocks(previous => previous + 10)
     }
-  }, [blocksPending, latestBlocks.length, count, blocksToFetch, bestBlockNumber])
+  }, [blocksPending, latestBlocks.length, count, blocksToFetch, bestBlockNumber, extraBlocks])
 
   return {
     data: latestBlocks,

@@ -3,8 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createCachedProxy } from '@/lib/cached-proxy'
 import { THOR_ENDPOINTS } from './index'
 
+const nowSeconds = () => Math.floor(Date.now() / 1_000)
+
 const BLOCK = { number: 123, id: '0x'.padEnd(66, 'a'), isFinalized: false }
-const FINALIZED_BLOCK = { ...BLOCK, isFinalized: true }
+const freshBlock = () => ({ ...BLOCK, timestamp: nowSeconds() })
+const settledBlock = () => ({ ...BLOCK, timestamp: nowSeconds() - 60 * 60 })
+const finalizedBlock = () => ({ ...freshBlock(), isFinalized: true })
 
 const jsonResponse = (body: unknown) => new Response(JSON.stringify(body), { status: 200 })
 
@@ -22,7 +26,7 @@ const requestedUrl = (call: number) => String(fetchMock.mock.calls[call][0])
 
 describe('THOR_ENDPOINTS', () => {
   beforeEach(() => {
-    fetchMock = vi.fn(() => Promise.resolve(jsonResponse(BLOCK)))
+    fetchMock = vi.fn(() => Promise.resolve(jsonResponse(freshBlock())))
     vi.stubGlobal('fetch', fetchMock)
   })
   afterEach(() => vi.unstubAllGlobals())
@@ -33,21 +37,30 @@ describe('THOR_ENDPOINTS', () => {
     const first = await send(proxy, 'blocks', 'network=mainnet&revision=123')
     await send(proxy, 'blocks', 'network=mainnet&revision=123')
 
-    await expect(first.json()).resolves.toEqual(BLOCK)
+    await expect(first.json()).resolves.toMatchObject(BLOCK)
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(requestedUrl(0)).toBe('https://mainnet.vechain.org/blocks/123')
   })
 
   it('gives a finalized block a lifetime far longer than a block time', async () => {
-    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse(FINALIZED_BLOCK)))
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse(finalizedBlock())))
 
     const response = await send(buildProxy(), 'blocks', 'network=mainnet&revision=123')
 
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=600, s-maxage=600, stale-while-revalidate=10')
   })
 
-  // A fork can still reassign an unfinalized height to a different block.
-  it('holds an unfinalized block for one block only, browser included', async () => {
+  // Finality trails the head by over an hour, so depth is what makes these reusable.
+  it('gives a block long behind the head the settled lifetime without waiting for finality', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse(settledBlock())))
+
+    const response = await send(buildProxy(), 'blocks', 'network=mainnet&revision=123')
+
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=600, s-maxage=600, stale-while-revalidate=10')
+  })
+
+  // A fork can still reassign a recent height to a different block.
+  it('holds a block near the head for one block only, browser included', async () => {
     const response = await send(buildProxy(), 'blocks', 'network=mainnet&revision=123')
 
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=10, s-maxage=10, stale-while-revalidate=10')
@@ -125,7 +138,7 @@ describe('THOR_ENDPOINTS', () => {
 
 describe('revision parsing', () => {
   beforeEach(() => {
-    fetchMock = vi.fn(() => Promise.resolve(jsonResponse(BLOCK)))
+    fetchMock = vi.fn(() => Promise.resolve(jsonResponse(freshBlock())))
     vi.stubGlobal('fetch', fetchMock)
   })
   afterEach(() => vi.unstubAllGlobals())

@@ -6,7 +6,6 @@ import type { AddressString } from '@/lib/schemas'
 import { parseNetworkFromParams } from '@/lib/utils/network'
 import { logPrefetchFailures } from '@/lib/utils/prefetch'
 import { accountQueryOptions } from '@/services/thor/account'
-import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
 import { vnsNameQueryOptions } from '@/services/thor/vns'
 import { accountOverviewQueryOptions } from '@/services/veworld-indexer/account-overview'
 import { allValidatorsQueryOptions } from '@/services/veworld-indexer/validators'
@@ -40,7 +39,6 @@ export default async function AddressPage({
     queryClient.prefetchQuery(vnsNameQueryOptions(activeNetworkName, address)),
     queryClient.prefetchQuery(accountOverviewQueryOptions(activeNetworkName, address)),
     queryClient.prefetchQuery(allValidatorsQueryOptions(activeNetworkName, { endorser: address })),
-    queryClient.prefetchQuery(bestBlockCompressedQueryOptions(activeNetworkName)),
     queryClient.prefetchQuery(validatorDetailsQueryOptions(activeNetworkName, address)),
     queryClient.prefetchQuery(validatorDelegationsCountQueryOptions(activeNetworkName, address)),
     queryClient.prefetchQuery(validatorMissedBlocksQueryOptions(activeNetworkName, address)),
@@ -53,7 +51,6 @@ export default async function AddressPage({
     'vnsName',
     'accountOverview',
     'endorsedValidators',
-    'bestBlock',
     'validatorDetails',
     'validatorDelegationsCount',
     'validatorMissedBlocks',
