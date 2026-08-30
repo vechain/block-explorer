@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { VETBalance } from '@/components/ui/Balance'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { useTransactionGasInsights } from '@/hooks/useTransactionGasInsights'
+import { CONFIRMATIONS_CAP, cappedConfirmations, isConfirmationsSettled } from '@/lib/confirmations'
 import type { NetworkName } from '@/lib/constants/network'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
 import { useBestBlockCompressed } from '@/services/thor/block'
@@ -25,7 +26,9 @@ export const TransactionOverview = ({
   networkName?: NetworkName
 }) => {
   const { t } = useTranslation()
-  const { data: bestBlock, isPending: isBestBlockPending } = useBestBlockCompressed(networkName)
+  // Past the cap the badge reads the same forever, so the head stops being worth reading.
+  const settled = isConfirmationsSettled(transaction.meta.blockTimestamp)
+  const { data: bestBlock, isPending: isBestBlockPending } = useBestBlockCompressed(networkName, { enabled: !settled })
   const feeAndGasInsights = useTransactionGasInsights({ transaction, receipt, networkName })
 
   // Sum of clause-attached VET (most txs have a single clause; multi-clause
@@ -41,7 +44,8 @@ export const TransactionOverview = ({
     status,
     bestBlockNumber: bestBlock?.number,
     transactionBlockNumber: transaction.meta.blockNumber,
-    isBestBlockPending,
+    isBestBlockPending: isBestBlockPending && !settled,
+    settled,
     successLabel: t('Confirmations'),
     revertedLabel: t('Reverted'),
     pendingLabel: t('Pending'),
@@ -70,6 +74,7 @@ const renderStatusBadge = ({
   bestBlockNumber,
   transactionBlockNumber,
   isBestBlockPending,
+  settled,
   successLabel,
   revertedLabel,
   pendingLabel,
@@ -78,6 +83,7 @@ const renderStatusBadge = ({
   bestBlockNumber: number | undefined
   transactionBlockNumber: number
   isBestBlockPending: boolean
+  settled: boolean
   successLabel: string
   revertedLabel: string
   pendingLabel: string
@@ -98,7 +104,7 @@ const renderStatusBadge = ({
     )
   }
 
-  if (isBestBlockPending || bestBlockNumber === undefined) {
+  if (!settled && (isBestBlockPending || bestBlockNumber === undefined)) {
     return (
       <Box>
         <Skeleton width="80px" height="24px" rounded="full" />
@@ -106,13 +112,12 @@ const renderStatusBadge = ({
     )
   }
 
-  const confirmations = Math.max(0, bestBlockNumber - transactionBlockNumber)
-  const capped = confirmations > 12 ? 12 : confirmations
-  const palette = capped === 12 ? 'success' : 'pending'
+  const capped = settled ? CONFIRMATIONS_CAP : cappedConfirmations(bestBlockNumber ?? 0, transactionBlockNumber)
+  const palette = capped === CONFIRMATIONS_CAP ? 'success' : 'pending'
 
   return (
     <Badge bg={`${palette}-surface`} color={`${palette}-text`} px="2" py="1" rounded="full" textStyle="bodyM" gap="1">
-      {capped >= 12 && <LuChevronRight />}
+      {capped >= CONFIRMATIONS_CAP && <LuChevronRight />}
       {capped} {successLabel.toLowerCase()}
     </Badge>
   )

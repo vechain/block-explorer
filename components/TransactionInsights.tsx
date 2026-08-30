@@ -4,6 +4,7 @@ import { Alert, Badge, Box, Heading, Skeleton, Text, VStack } from '@chakra-ui/r
 import { LuChevronRight } from 'react-icons/lu'
 import { useTranslation } from 'react-i18next'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
+import { CONFIRMATIONS_CAP, isConfirmationsSettled } from '@/lib/confirmations'
 import type { NetworkName } from '@/lib/constants/network'
 import type { Transaction, TransactionReceipt } from '@/lib/schemas'
 import { useTransactionGasInsights } from '@/hooks/useTransactionGasInsights'
@@ -29,7 +30,12 @@ export const TransactionInsight = ({
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
 
-  const { data: bestBlock, isPending: isBestBlockPending } = useBestBlockCompressed(networkName)
+  // The card below is expert-only and stops moving past the cap, so the head is read only
+  // when it is both on screen and still able to change the number.
+  const settled = isConfirmationsSettled(transaction.meta.blockTimestamp)
+  const { data: bestBlock, isPending: isBestBlockPending } = useBestBlockCompressed(networkName, {
+    enabled: expert && !settled,
+  })
   const isReverted = receipt?.reverted ?? false
   const { data: failureInsight } = useTransactionFailureInsight(transaction, isReverted, networkName)
   const revertReason = failureInsight?.revertReason
@@ -41,7 +47,7 @@ export const TransactionInsight = ({
     networkName,
   })
 
-  const confirmations = getConfirmations(bestBlock?.number, transaction.meta.blockNumber)
+  const confirmations = settled ? CONFIRMATIONS_CAP : getConfirmations(bestBlock?.number, transaction.meta.blockNumber)
   const confirmationsStatus = getConfirmationsStatus(confirmations)
 
   const additionalInsights: DataCardGroupItem[] = [
@@ -49,7 +55,7 @@ export const TransactionInsight = ({
       title: t('Confirmations'),
       children: (
         <Box>
-          {isBestBlockPending ? (
+          {isBestBlockPending && !settled ? (
             <Skeleton width="52px" height="29px" rounded="full" />
           ) : (
             <Badge
@@ -64,8 +70,8 @@ export const TransactionInsight = ({
               rounded="full"
               flexShrink={1}
             >
-              {confirmations && confirmations >= 12 && <LuChevronRight />}
-              {getConfirmations(bestBlock?.number, transaction.meta.blockNumber)}
+              {confirmations !== undefined && confirmations >= CONFIRMATIONS_CAP && <LuChevronRight />}
+              {confirmations}
             </Badge>
           )}
         </Box>
