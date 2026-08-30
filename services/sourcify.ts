@@ -7,6 +7,7 @@ import { getKnownContractAbi, getKnownContractName, isBuiltinAddress } from '@/l
 import { isProxiedNetwork } from '@/lib/proxied-network'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { UpstreamError } from '@/lib/upstream-error'
 
 interface ResolvedAbi {
   abi: Abi
@@ -16,15 +17,13 @@ interface ResolvedAbi {
 
 // The route follows EIP-1967 proxies itself, so this is one request and no chain read.
 const fetchSourcify = async (networkName: NetworkName, address: AddressString) => {
-  try {
-    const response = await fetch(`/api/sourcify?network=${networkName}&address=${address}`)
-    if (!response.ok) return null
-    const body = (await response.json()) as { abi: Abi; contractName?: string }
-    if (!body?.abi || !Array.isArray(body.abi)) return null
-    return body
-  } catch {
-    return null
-  }
+  const response = await fetch(`/api/sourcify?network=${networkName}&address=${address}`)
+  // Only the 404 is definitive; the rest the route sends no-store, so throwing keeps it uncached.
+  if (response.status === 404) return null
+  if (!response.ok) throw new UpstreamError('sourcify', response.status)
+
+  const body = (await response.json()) as { abi: Abi; contractName?: string }
+  return body?.abi && Array.isArray(body.abi) ? body : null
 }
 
 const fetchResolvedAbi = async (networkName: NetworkName, address: AddressString): Promise<ResolvedAbi | null> => {
