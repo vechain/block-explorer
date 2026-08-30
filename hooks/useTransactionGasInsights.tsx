@@ -146,11 +146,7 @@ const useTxGasFees = ({
 
   const { isLoading: isLegacyBaseFeePerGasLoading, data: legacyBaseFeePerGas } = useLegacyBaseFeePerGas(networkName)
 
-  if (isLegacyBaseFeePerGasLoading || !legacyBaseFeePerGas) return { type: 'loading' }
-
-  const isDynamicFee = transaction.type === transactionTypeSchema.enum.DYNAMIC_FEE
-
-  if (isDynamicFee) {
+  if (transaction.type === transactionTypeSchema.enum.DYNAMIC_FEE) {
     const baseFeePerGas = deriveBaseFeePerGas(receipt)
     if (baseFeePerGas === undefined) return { type: 'loading' }
 
@@ -166,6 +162,9 @@ const useTxGasFees = ({
       totalFeePaid,
     }
   }
+
+  // Only the legacy price below needs this, and it is a separate call that can come back null.
+  if (isLegacyBaseFeePerGasLoading || !legacyBaseFeePerGas) return { type: 'loading' }
 
   const gasPriceCoef = transaction.gasPriceCoef
 
