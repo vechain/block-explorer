@@ -8,6 +8,7 @@ const nowSeconds = () => Math.floor(Date.now() / 1_000)
 const BLOCK = { number: 123, id: '0x'.padEnd(66, 'a'), isFinalized: false }
 const freshBlock = () => ({ ...BLOCK, timestamp: nowSeconds() })
 const settledBlock = () => ({ ...BLOCK, timestamp: nowSeconds() - 60 * 60 })
+const nearlySettledBlock = () => ({ ...BLOCK, timestamp: nowSeconds() - 29 * 60 })
 const finalizedBlock = () => ({ ...freshBlock(), isFinalized: true })
 
 const jsonResponse = (body: unknown) => new Response(JSON.stringify(body), { status: 200 })
@@ -61,6 +62,15 @@ describe('THOR_ENDPOINTS', () => {
 
   // A fork can still reassign a recent height to a different block.
   it('holds a block near the head for one block only, browser included', async () => {
+    const response = await send(buildProxy(), 'blocks', 'network=mainnet&revision=123')
+
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=10, s-maxage=10, stale-while-revalidate=10')
+  })
+
+  // Age stands in for depth, so the window has to stay wider than any plausible halt.
+  it('does not settle a block just short of the age window', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse(nearlySettledBlock())))
+
     const response = await send(buildProxy(), 'blocks', 'network=mainnet&revision=123')
 
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=10, s-maxage=10, stale-while-revalidate=10')

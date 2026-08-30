@@ -45,9 +45,9 @@ const fetchBlock = async ({
   return block
 }
 
-// Finality trails the head by over an hour, so keying off it alone leaves every block a
-// viewer opens on the one-block lifetime. This depth is past any reorg the network produces.
-const SETTLED_BLOCK_AGE_SECONDS = 5 * 60
+// Age stands in for depth because the response carries no distance from the head. A halt
+// this long would age the head into "settled" and could outlive a reorg on recovery.
+const SETTLED_BLOCK_AGE_SECONDS = 30 * 60
 const SETTLED_BLOCK_TTL_SECONDS = 10 * 60
 
 const blockSchema = z.object({ isFinalized: z.boolean(), timestamp: z.number() })
