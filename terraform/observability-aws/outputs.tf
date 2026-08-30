@@ -44,7 +44,7 @@ output "alerts_sns_topic_arn" {
 }
 
 output "alerts_enabled" {
-  description = "Whether the bridge Lambda is subscribed to the topic. False in dev: rules and alarms evaluate, nothing is delivered."
+  description = "Whether alerting is on at all. False in dev: no CloudWatch alarms, no AMP alert rules, no Alertmanager and no subscription. Recording rules and the delivery path are built either way."
   value       = local.alerts_enabled
 }
 
