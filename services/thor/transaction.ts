@@ -169,7 +169,7 @@ const decodeRevertPayload = async (
   // bundled ABI (reverts often surface from a contract called internally,
   // not the clause's target), then OpenChain as a last resort.
   if (target) {
-    const resolved = await getResolvedAbi(networkName, target)
+    const resolved = await getResolvedAbi(networkName, target).catch(() => null)
     if (resolved?.abi) {
       const decoded = decodeCustomError(resolved.abi, data)
       if (decoded) {
@@ -209,7 +209,8 @@ const decodeRevertPayload = async (
   // encoding scheme, so we can re-use the function-signature lookup. The
   // service falls through b32 → OpenChain server-side; here we just take
   // whichever ABI fragment it returns.
-  const selectorResult = await getDecodedSelector('function', selector)
+  // Degraded rather than failed: a raw revert reason beats no insight at all.
+  const selectorResult = await getDecodedSelector('function', selector).catch(() => null)
   if (selectorResult) {
     const synthetic =
       selectorResult.source === 'b32' ? selectorResult.abi : signatureToFunctionItem(selectorResult.signature)

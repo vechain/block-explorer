@@ -5,9 +5,9 @@ import { NotFoundError, UpstreamError } from '@/lib/upstream-error'
 import { fetchB32 } from './sources/b32'
 import { fetchOpenchain } from './sources/openchain'
 
+const HALF_DAY = 43_200
 const DAY = 86_400
 const WEEK = 604_800
-const FIVE_MINUTES = 300
 
 // b32 gives a full ABI fragment; OpenChain gives a bare signature the client must
 // interpret, since indexed params depend on the caller's topic count.
@@ -28,11 +28,12 @@ export const selectorEndpoint = defineEndpoint({
     .refine(({ kind, hash }) => (kind === 'function' ? FUNCTION_HASH : EVENT_HASH).test(hash)),
   invalidParamsMessage: "kind must be 'function' or 'event', and hash length must match kind",
 
-  cache: { ttl: DAY, stale: WEEK, browserMaxAge: 3600, size: 50_000 },
+  // A hash and its signature are bound for good, and both sources only ever gain entries.
+  cache: { ttl: WEEK, stale: WEEK, browserMaxAge: DAY, size: 50_000 },
   notFound: {
-    ttl: FIVE_MINUTES,
-    stale: DAY,
-    browserMaxAge: FIVE_MINUTES,
+    ttl: HALF_DAY,
+    stale: WEEK,
+    browserMaxAge: HALF_DAY,
     size: 50_000,
     message: 'Selector not found in b32 or OpenChain',
   },

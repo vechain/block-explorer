@@ -3,11 +3,8 @@
 import { useMemo } from 'react'
 import type { AbiParameter } from 'viem'
 import z from 'zod'
-import {
-  decodeCalldata as decodeCalldataFromAbi,
-  getSelector,
-  signatureToFunctionItem,
-} from '@/lib/abi-registry'
+import { decodeCalldata as decodeCalldataFromAbi, getSelector, signatureToFunctionItem } from '@/lib/abi-registry'
+import { getBundledFunctionItem } from '@/lib/known-contracts'
 import { type AddressString, hexStringSchema, type HexString } from '@/lib/schemas'
 import * as abi from '@/lib/schemas/abi'
 import { zodParse } from '@/lib/utils/zod'
@@ -20,17 +17,26 @@ export type InputData = {
 }
 
 export const useDecodeInputData = (hexData: HexString, address?: AddressString | null) => {
+  const selector = getSelector(hexData)
+
   // 1. Address-aware: known contracts + Sourcify (with EIP-1967 proxy follow).
-  const { data: resolved, isFetching: resolvedFetching } = useResolvedAbi(address ?? null)
+  // Skipped without a selector — a bare VET transfer has nothing to decode.
+  const { data: resolved, isFetching: resolvedFetching } = useResolvedAbi(selector ? (address ?? null) : null)
   const resolvedDecoded = useMemo(() => {
     if (!resolved?.abi) return null
     return decodeCalldataFromAbi(resolved.abi, hexData)
   }, [resolved, hexData])
 
-  const selector = getSelector(hexData)
-  const skipSelectorLookup = resolvedDecoded !== null || resolvedFetching
+  // 2. Bundled ABIs: the standard signatures, without a round-trip.
+  const bundledDecoded = useMemo(() => {
+    if (resolvedDecoded || !selector) return null
+    const item = getBundledFunctionItem(selector)
+    return item ? decodeCalldataFromAbi([item], hexData) : null
+  }, [resolvedDecoded, selector, hexData])
 
-  // 2. Selector decoder: server-side b32 → OpenChain fallback in one call.
+  const skipSelectorLookup = resolvedDecoded !== null || bundledDecoded !== null || resolvedFetching
+
+  // 3. Selector decoder: server-side b32 → OpenChain fallback in one call.
   const { data: selectorResult, isFetching: selectorFetching } = useDecodedSelector(
     'function',
     skipSelectorLookup ? null : selector,
@@ -46,7 +52,7 @@ export const useDecodeInputData = (hexData: HexString, address?: AddressString |
     return decodeCalldataFromAbi([item], hexData)
   }, [resolvedDecoded, selectorResult, selector, hexData])
 
-  const decoded = resolvedDecoded ?? selectorDecoded
+  const decoded = resolvedDecoded ?? bundledDecoded ?? selectorDecoded
 
   const data: InputData = useMemo(() => {
     if (!decoded) return { raw: hexStringSchema.parse(hexData) }

@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import z from 'zod'
 import { decodeEventLog as decodeEventLogFromAbi, signatureToEventItem } from '@/lib/abi-registry'
+import { getBundledEventItem } from '@/lib/known-contracts'
 import type { HexString, RawEvent } from '@/lib/schemas'
 import { addressStringSchema, EventType, rawEventSchema } from '@/lib/schemas'
 import * as abi from '@/lib/schemas/abi'
@@ -49,8 +50,18 @@ export const useDecodeEvent = (rawEvent: RawEvent) => {
     return decodeEventLogFromAbi(resolved.abi, { topics: rawEvent.topics as HexString[], data: rawEvent.data })
   }, [resolved, rawEvent, topic0])
 
-  // 2. Selector decoder: server-side b32 → OpenChain fallback in one call.
-  const skipSelectorLookup = erc721TransferDecoded !== null || resolvedDecoded !== null || resolvedFetching
+  // 2. Bundled ABIs: the standard events, without a round-trip. The indexed
+  // layout has to match the log's topic count for the fragment to apply.
+  const bundledDecoded = useMemo(() => {
+    if (erc721TransferDecoded || resolvedDecoded || !topic0) return null
+    const item = getBundledEventItem(topic0, rawEvent.topics.length - 1)
+    if (!item) return null
+    return decodeEventLogFromAbi([item], { topics: rawEvent.topics as HexString[], data: rawEvent.data })
+  }, [erc721TransferDecoded, resolvedDecoded, rawEvent, topic0])
+
+  // 3. Selector decoder: server-side b32 → OpenChain fallback in one call.
+  const skipSelectorLookup =
+    erc721TransferDecoded !== null || resolvedDecoded !== null || bundledDecoded !== null || resolvedFetching
   const { data: selectorResult, isFetching: selectorFetching } = useDecodedSelector(
     'event',
     skipSelectorLookup ? null : (topic0 ?? null),
@@ -83,7 +94,7 @@ export const useDecodeEvent = (rawEvent: RawEvent) => {
     return null
   }, [erc721TransferDecoded, resolvedDecoded, selectorResult, rawEvent, topic0])
 
-  const decoded = erc721TransferDecoded ?? resolvedDecoded ?? selectorDecoded
+  const decoded = erc721TransferDecoded ?? resolvedDecoded ?? bundledDecoded ?? selectorDecoded
 
   const event: ParsedEvent = useMemo(() => {
     const parsedRaw = parsedRawEventSchema.parse({ type: EventType.RAW, raw: rawEvent })
