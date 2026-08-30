@@ -338,9 +338,6 @@ export const validatorDelegationsQueryOptions = (networkName: NetworkName, addre
 export const useValidatorDetails = (address: string | undefined) => {
   const { activeNetwork } = useSettingsStore()
 
-  const { data: bestBlock } = useQuery(bestBlockCompressedQueryOptions(activeNetwork.name))
-  const currentBlockNumber = bestBlock?.number ?? 0
-
   const results = useQueries({
     queries: [
       validatorDetailsQueryOptions(activeNetwork.name, address),
@@ -352,6 +349,14 @@ export const useValidatorDetails = (address: string | undefined) => {
   })
 
   const [validatorQuery, delegationsCountQuery, missedBlocksQuery, metadataQuery, delegationsQuery] = results
+
+  // Only the cycle countdown reads this, so it stays off the address pages that turn out
+  // not to be validators, which is nearly all of them.
+  const { data: bestBlock } = useQuery({
+    ...bestBlockCompressedQueryOptions(activeNetwork.name),
+    enabled: Boolean(validatorQuery.data),
+  })
+  const currentBlockNumber = bestBlock?.number ?? 0
 
   const validator = useMemo<ValidatorDetails | null>(() => {
     const validatorData = validatorQuery.data as ValidatorIndexerData | null | undefined

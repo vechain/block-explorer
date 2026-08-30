@@ -45,24 +45,29 @@ const fetchBlock = async ({
   return block
 }
 
-// Only a finalized block is settled: BFT rejects any branch that does not descend from
-// the finalized checkpoint, so until then a fork can still reassign a height to another
-// block. Finalized responses are therefore the only ones allowed to outlive a block.
-const FINALIZED_BLOCK_TTL_SECONDS = 10 * 60
+// Finality trails the head by over an hour, so keying off it alone leaves every block a
+// viewer opens on the one-block lifetime. This depth is past any reorg the network produces.
+const SETTLED_BLOCK_AGE_SECONDS = 5 * 60
+const SETTLED_BLOCK_TTL_SECONDS = 10 * 60
 
-const finalizedBlockSchema = z.object({ isFinalized: z.boolean() })
+const blockSchema = z.object({ isFinalized: z.boolean(), timestamp: z.number() })
 
-const blockTtl = (block: unknown) => {
-  const parsed = finalizedBlockSchema.safeParse(block)
-  return parsed.success && parsed.data.isFinalized ? FINALIZED_BLOCK_TTL_SECONDS : BLOCK_TIME_SECONDS
+const isSettled = (block: unknown) => {
+  const parsed = blockSchema.safeParse(block)
+  if (!parsed.success) return false
+
+  const { isFinalized, timestamp } = parsed.data
+  return isFinalized || Date.now() / 1_000 - timestamp > SETTLED_BLOCK_AGE_SECONDS
 }
+
+const blockTtl = (block: unknown) => (isSettled(block) ? SETTLED_BLOCK_TTL_SECONDS : BLOCK_TIME_SECONDS)
 
 const blockCache: CacheProfile = {
   ttl: blockTtl,
   // Added to the resolved ttl, so it stays at one block: an unsettled block may be served
-  // for at most two, a finalized one for the full lifetime.
+  // for at most two, a settled one for the full lifetime.
   stale: BLOCK_TIME_SECONDS,
-  browserMaxAge: FINALIZED_BLOCK_TTL_SECONDS,
+  browserMaxAge: SETTLED_BLOCK_TTL_SECONDS,
   size: 500,
 }
 
