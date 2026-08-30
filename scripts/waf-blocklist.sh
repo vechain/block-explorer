@@ -53,10 +53,7 @@ case "$action" in
   *) usage ;;
 esac
 
-# update-ip-set replaces the set wholesale, so rebuild the whole list. The
-# LockToken read above is what makes a concurrent edit fail loudly rather than
-# silently clobbering. python3 does the set arithmetic and emits the JSON the
-# CLI wants for a list parameter.
+# update-ip-set replaces the set wholesale, so rebuild the whole list.
 addresses=$(ACTION="$action" CURRENT="$current" CIDR="$cidr" python3 -c '
 import json, os, sys
 
