@@ -305,7 +305,7 @@ const getValidatorDelegations = async ({
 }
 
 // Query options for validator details
-export const validatorDetailsQueryOptions = (networkName: NetworkName, address: string | undefined) => ({
+const validatorDetailsQueryOptions = (networkName: NetworkName, address: string | undefined) => ({
   queryKey: ['validatorDetails', networkName, address],
   queryFn: () => getValidatorDetails({ networkName, validatorAddress: address! }),
   enabled: !!address,
@@ -313,7 +313,7 @@ export const validatorDetailsQueryOptions = (networkName: NetworkName, address: 
 })
 
 // Query options for delegations count
-export const validatorDelegationsCountQueryOptions = (networkName: NetworkName, address: string | undefined) => ({
+const validatorDelegationsCountQueryOptions = (networkName: NetworkName, address: string | undefined) => ({
   queryKey: ['validatorDelegationsCount', networkName, address],
   queryFn: () => getValidatorDelegationsCount({ networkName, validatorAddress: address! }),
   enabled: !!address,
@@ -329,7 +329,7 @@ export const validatorMissedBlocksQueryOptions = (networkName: NetworkName, addr
 })
 
 // Query options for delegations (unique wallets and total NFTs)
-export const validatorDelegationsQueryOptions = (networkName: NetworkName, address: string | undefined) => ({
+const validatorDelegationsQueryOptions = (networkName: NetworkName, address: string | undefined) => ({
   queryKey: ['validatorDelegations', networkName, address],
   queryFn: () => getValidatorDelegations({ networkName, validatorAddress: address! }),
   enabled: !!address,

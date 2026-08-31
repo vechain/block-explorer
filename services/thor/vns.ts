@@ -9,7 +9,7 @@ import { getThorClient } from './client'
 
 const VNS_NAME_QUERY_KEY = 'getVnsName'
 
-export const vnsNameQueryOptions = (networkName: NetworkName, address: AddressString | undefined) =>
+const vnsNameQueryOptions = (networkName: NetworkName, address: AddressString | undefined) =>
   queryOptions({
     queryKey: [VNS_NAME_QUERY_KEY, networkName, address],
     queryFn: address ? () => getVnsName({ networkName, address }) : skipToken,

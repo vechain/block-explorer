@@ -1,31 +1,23 @@
-import { dehydrate, HydrationBoundary } from '@tanstack/react-query'
-import { notFound } from 'next/navigation'
+'use client'
+
+import { useTranslation } from 'react-i18next'
 import z from 'zod'
-import { getQueryClient } from '@/lib/query-client/query-client'
-import { addressStringSchema, type AddressString } from '@/lib/schemas'
+import { NotFound } from '@/components/error/NotFound'
+import { useRouteSegments } from '@/hooks/useRouteSegments'
+import { addressStringSchema } from '@/lib/schemas'
 import { NftDetailPageContent } from './components/NftDetailPageContent'
 
 const tokenIdParamSchema = z.string().regex(/^\d+$/)
 
-export default async function NftDetailPage({
-  params,
-}: {
-  params: Promise<{ contractAddress: string; tokenId: string }>
-}) {
-  const { contractAddress, tokenId } = await params
+export default function NftDetailPage() {
+  const { t } = useTranslation()
+  const [, contractAddressParam, tokenIdParam] = useRouteSegments()
+  const contractAddress = addressStringSchema.safeParse(contractAddressParam)
+  const tokenId = tokenIdParamSchema.safeParse(tokenIdParam)
 
-  if (!addressStringSchema.safeParse(contractAddress).success || !tokenIdParamSchema.safeParse(tokenId).success) {
-    notFound()
+  if (!contractAddress.success || !tokenId.success) {
+    return <NotFound title={t('NFT not found')} description={t('The NFT you are looking for does not exist')} />
   }
 
-  const validContractAddress = contractAddress as AddressString
-  const validTokenId = BigInt(tokenId)
-
-  const queryClient = getQueryClient()
-
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <NftDetailPageContent contractAddress={validContractAddress} tokenId={validTokenId} />
-    </HydrationBoundary>
-  )
+  return <NftDetailPageContent contractAddress={contractAddress.data} tokenId={BigInt(tokenId.data)} />
 }
