@@ -4,9 +4,9 @@ import { RuntimeConfigProvider } from './provider'
 import { DEFAULT_RUNTIME_CONFIG, RUNTIME_CONFIG_URL, RUNTIME_CONFIG_WINDOW_KEY, type RuntimeConfig } from './types'
 
 const CONFIG: RuntimeConfig = {
+  ...DEFAULT_RUNTIME_CONFIG,
   appVersion: '1.2.3',
   allowDevMode: true,
-  bypassIndexerProxy: false,
   soloContracts: { b3tr: '0x0000000000000000000000000000000000000001' },
 }
 
@@ -55,5 +55,17 @@ describe('RuntimeConfigProvider', () => {
 
     await waitFor(() => expect(screen.queryByTestId('child')).not.toBeNull())
     expect(publishedConfig()).toEqual(DEFAULT_RUNTIME_CONFIG)
+  })
+
+  // During a rolling deploy the payload comes from a container built before the field
+  // existed, and discarding the whole config over it would take dev mode down with it.
+  it('defaults a field the serving container does not know about', async () => {
+    const { b32Url: _omitted, ...withoutB32Url } = CONFIG
+    stubFetch(() => jsonResponse(withoutB32Url))
+
+    renderProvider()
+
+    await waitFor(() => expect(screen.queryByTestId('child')).not.toBeNull())
+    expect(publishedConfig()).toEqual(CONFIG)
   })
 })

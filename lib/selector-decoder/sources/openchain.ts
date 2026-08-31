@@ -1,5 +1,5 @@
 import DataLoader from 'dataloader'
-import { OPENCHAIN_URL } from '@/env.api'
+import { getRuntimeConfig } from '@/lib/runtime-config/get'
 import { UpstreamError } from '@/lib/upstream-error'
 
 type Kind = 'function' | 'event'
@@ -21,7 +21,7 @@ const pickBest = (entries: Array<{ name: string; filtered?: boolean }> | null | 
 }
 
 // One DataLoader per kind. Module-scoped so concurrent requests across the
-// whole pod coalesce into a single batched upstream call within each tick.
+// whole page coalesce into a single batched upstream call within each tick.
 // `cache: false` because the calling service owns the long-lived cache —
 // the loader is purely a per-tick batch window.
 const buildLoader = (kind: Kind) =>
@@ -34,7 +34,7 @@ const buildLoader = (kind: Kind) =>
       const results = await Promise.allSettled(
         chunks.map(async chunk => {
           const params = new URLSearchParams({ [kind]: chunk.join(','), filter: 'true' })
-          const res = await fetch(`${OPENCHAIN_URL}?${params.toString()}`, {
+          const res = await fetch(`${getRuntimeConfig().openchainUrl}?${params.toString()}`, {
             signal: AbortSignal.timeout(10_000),
           })
           if (!res.ok) throw new UpstreamError('openchain', res.status)

@@ -23,7 +23,7 @@ import {
 import { useSettingsStore } from '@/lib/stores/settings'
 import { getPossibleSelectorMismatch, type PossibleSelectorMismatch } from '@/lib/transaction-failure-insights'
 import { zodParse } from '@/lib/utils/zod'
-import { getDecodedSelector } from '@/services/selector-decoder'
+import { decodeSelector } from '@/lib/selector-decoder'
 import { getResolvedAbi } from '@/services/sourcify'
 import { getThorClient } from './client'
 
@@ -206,11 +206,9 @@ const decodeRevertPayload = async (
   }
 
   // Selector decoder fallback. Custom errors share the function-selector
-  // encoding scheme, so we can re-use the function-signature lookup. The
-  // service falls through b32 → OpenChain server-side; here we just take
-  // whichever ABI fragment it returns.
+  // encoding scheme, so we can re-use the function-signature lookup.
   // Degraded rather than failed: a raw revert reason beats no insight at all.
-  const selectorResult = await getDecodedSelector('function', selector).catch(() => null)
+  const selectorResult = await decodeSelector('function', selector).catch(() => null)
   if (selectorResult) {
     const synthetic =
       selectorResult.source === 'b32' ? selectorResult.abi : signatureToFunctionItem(selectorResult.signature)
