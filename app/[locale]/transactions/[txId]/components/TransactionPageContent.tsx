@@ -15,27 +15,21 @@ import { Card } from '@/components/ui/Card'
 import { ToggleGroup, type ToggleOption } from '@/components/ui/ToggleGroup'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useRedirectOnNotFound } from '@/hooks/useRedirectOnNotFound'
+import { useResolvedTransaction } from '@/hooks/useResolvedTransaction'
 import { type Transaction, type TransactionId, type TransactionReceipt } from '@/lib/schemas'
 import { type NetworkName } from '@/lib/constants/network'
-import { useSettingsStore } from '@/lib/stores/settings'
 import { TransactionDetailsView } from '@/lib/types'
-import { getNetworkNameFromSearchParams } from '@/lib/utils/network'
-import { useTransaction, useTransactionReceipt } from '@/services/thor/transaction'
+import { useTransactionReceipt } from '@/services/thor/transaction'
 
-export const TransactionPageContent = ({
-  transactionId,
-  view,
-}: {
-  transactionId: TransactionId
-  view: string | undefined
-}) => {
+export const TransactionPageContent = ({ transactionId }: { transactionId: TransactionId }) => {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
-  const requestedNetworkName = getNetworkNameFromSearchParams(searchParams)
-  const transactionNetworkName = requestedNetworkName ?? activeNetworkName
-  const { data: transaction, isPending: isTransactionPending } = useTransaction(transactionId, transactionNetworkName)
+  const {
+    transaction,
+    networkName: transactionNetworkName,
+    isPending: isTransactionPending,
+  } = useResolvedTransaction(transactionId)
   const { data: receipt, isPending: isReceiptPending } = useTransactionReceipt(transactionId, transactionNetworkName)
 
   const isNotFound = useRedirectOnNotFound({
@@ -53,7 +47,7 @@ export const TransactionPageContent = ({
     throw new Error('Could not fetch Transaction receipt')
   }
 
-  const currentView = getTransactionDetailsView(view)
+  const currentView = getTransactionDetailsView(searchParams.get('view'))
 
   return (
     <TransactionDetails
@@ -195,7 +189,7 @@ const countEvents = (receipt: TransactionReceipt | null): number => {
 
 const DETAILS_CARD_ID = 'transaction-details'
 
-const getTransactionDetailsView = (view: string | undefined): TransactionDetailsView => {
+const getTransactionDetailsView = (view: string | null): TransactionDetailsView => {
   if (view === TransactionDetailsView.EVENTS) return TransactionDetailsView.EVENTS
 
   return TransactionDetailsView.CLAUSES

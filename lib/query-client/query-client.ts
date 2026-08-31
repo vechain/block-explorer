@@ -1,4 +1,4 @@
-import { defaultShouldDehydrateQuery, isServer, QueryClient } from '@tanstack/react-query'
+import { isServer, QueryClient } from '@tanstack/react-query'
 import { keepPreviousDataWithinNetwork } from './keep-previous-data'
 
 export function makeQueryClient() {
@@ -8,9 +8,6 @@ export function makeQueryClient() {
         staleTime: 60 * 1000,
         retry: isServer ? 0 : 1,
         placeholderData: keepPreviousDataWithinNetwork,
-      },
-      dehydrate: {
-        shouldDehydrateQuery: query => defaultShouldDehydrateQuery(query) || query.state.status === 'pending',
       },
     },
   })
