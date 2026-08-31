@@ -10,7 +10,6 @@ import { ChakraProvider } from '@/components/theme/provider'
 import { Toaster } from '@/components/ui/toaster'
 import type { Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
-import { MixpanelProvider } from '@/lib/analytics/MixpanelProvider'
 import { QueryClientProvider } from '@/lib/query-client/provider'
 import { RuntimeConfigScript } from '@/lib/runtime-config/script'
 
@@ -90,10 +89,8 @@ const Providers = ({ children, locale }: { children: React.ReactNode; locale: st
           <Suspense fallback={null}>
             <NetworkSearchParamSync />
           </Suspense>
-          <MixpanelProvider>
-            {children}
-            <Toaster />
-          </MixpanelProvider>
+          {children}
+          <Toaster />
         </TranslationsProvider>
       </ChakraProvider>
     </QueryClientProvider>

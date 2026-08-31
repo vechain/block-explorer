@@ -42,7 +42,6 @@
     "i18next-resources-to-backend": "^1.2.1",
     "ioredis": "^5.11.1",
     "lru-cache": "^11.5.1",
-    "mixpanel-browser": "^2.73.0",
     "motion": "^12.23.22",
     "next": "15.5.21",
     "next-i18n-router": "^5.5.3",
