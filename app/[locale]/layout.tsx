@@ -8,10 +8,11 @@ import { Header } from '@/components/navigation/Header'
 import { NetworkSearchParamSync } from '@/components/navigation/NetworkSearchParamSync'
 import { ChakraProvider } from '@/components/theme/provider'
 import { Toaster } from '@/components/ui/toaster'
-import type { Locale } from '@/i18n/config'
+import { i18nConfig, type Locale } from '@/i18n/config'
 import { TranslationsProvider } from '@/i18n/provider'
 import { QueryClientProvider } from '@/lib/query-client/provider'
-import { RuntimeConfigScript } from '@/lib/runtime-config/script'
+import { RuntimeConfigProvider } from '@/lib/runtime-config/provider'
+import { RUNTIME_CONFIG_URL } from '@/lib/runtime-config/types'
 
 const rubik = Rubik({
   subsets: ['latin'],
@@ -28,11 +29,8 @@ export const metadata: Metadata = {
   icons: { icon: '/vechain-logo.png' },
 }
 
-// Force per-request rendering so RuntimeConfigScript reads process.env at runtime,
-// not at build time. Without this, a prebuilt standalone server would bake in whatever
-// env vars were set when the image was built.
-// This covers every route beneath, so no page under it can opt back into ISR.
-export const dynamic = 'force-dynamic'
+// Unbounded, `[locale]` would keep every document below it out of the prerender cache.
+export const generateStaticParams = () => i18nConfig.locales.map(locale => ({ locale }))
 
 export default async function RootLayout({
   children,
@@ -46,7 +44,8 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={rubik.variable}>
-        <RuntimeConfigScript />
+        {/* Starts the boot fetch during HTML parse, alongside the bundle rather than after it. */}
+        <link rel="preload" href={RUNTIME_CONFIG_URL} as="fetch" />
         <Providers locale={locale}>
           <VStack
             as="main"
@@ -83,16 +82,18 @@ export default async function RootLayout({
 
 const Providers = ({ children, locale }: { children: React.ReactNode; locale: string }) => {
   return (
-    <QueryClientProvider>
-      <ChakraProvider>
-        <TranslationsProvider locale={locale as Locale}>
-          <Suspense fallback={null}>
-            <NetworkSearchParamSync />
-          </Suspense>
-          {children}
-          <Toaster />
-        </TranslationsProvider>
-      </ChakraProvider>
-    </QueryClientProvider>
+    <RuntimeConfigProvider>
+      <QueryClientProvider>
+        <ChakraProvider>
+          <TranslationsProvider locale={locale as Locale}>
+            <Suspense fallback={null}>
+              <NetworkSearchParamSync />
+            </Suspense>
+            {children}
+            <Toaster />
+          </TranslationsProvider>
+        </ChakraProvider>
+      </QueryClientProvider>
+    </RuntimeConfigProvider>
   )
 }

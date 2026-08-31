@@ -1,16 +1,19 @@
-import type { AddressString } from '@/lib/schemas'
+import z from 'zod'
+import { addressStringSchema } from '@/lib/schemas'
 
-export type RuntimeConfig = {
-  appVersion: string
-  allowDevMode: boolean
-  bypassIndexerProxy: boolean
-  soloContracts: {
-    b3tr?: AddressString
-    vot3?: AddressString
-    stargateNft?: AddressString
-    stargateDelegation?: AddressString
-  }
-}
+export const runtimeConfigSchema = z.object({
+  appVersion: z.string(),
+  allowDevMode: z.boolean(),
+  bypassIndexerProxy: z.boolean(),
+  soloContracts: z.object({
+    b3tr: addressStringSchema.optional(),
+    vot3: addressStringSchema.optional(),
+    stargateNft: addressStringSchema.optional(),
+    stargateDelegation: addressStringSchema.optional(),
+  }),
+})
+
+export type RuntimeConfig = z.infer<typeof runtimeConfigSchema>
 
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   appVersion: 'dev',
@@ -19,4 +22,5 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   soloContracts: {},
 }
 
+export const RUNTIME_CONFIG_URL = '/runtime-config.json'
 export const RUNTIME_CONFIG_WINDOW_KEY = '__BLOCK_EXPLORER_RUNTIME_CONFIG__'

@@ -124,7 +124,7 @@ Env access is split into three layers — never read `process.env` directly outs
 
 - `env.api.ts`: server-only vars (e.g. `B32_URL`)
 - `env.public.ts`: build-time `NEXT_PUBLIC_*` vars baked into the client bundle
-- `lib/runtime-config/`: runtime-injected vars. `getRuntimeConfig()` reads `process.env` on the server, and the inline `<RuntimeConfigScript>` replays the same values to the client via `window.__BLOCK_EXPLORER_RUNTIME_CONFIG__`. This lets the prebuilt Docker image pick up new env values at container start without rebuilding the bundle.
+- `lib/runtime-config/`: runtime-injected vars. `/runtime-config.json` serves `readRuntimeConfigFromEnv()` per request; `<RuntimeConfigProvider>` fetches it at boot, publishes it to `window.__BLOCK_EXPLORER_RUNTIME_CONFIG__` and renders nothing until it lands, so `getRuntimeConfig()` stays synchronous for the stores and services that call it. This lets the prebuilt Docker image pick up new env values at container start without rebuilding the bundle, while leaving page HTML free of anything per-environment and so cacheable.
 
 Required (see `.env`):
 
@@ -143,7 +143,7 @@ Optional server-only (read by `env.api.ts`):
 - `REDIS_CLUSTER_MODE`: `'true'` when `REDIS_URL` points at a serverless cache, which only runs in cluster mode.
 - `CACHE_NAMESPACE`: prefixed onto every cache key, set to the image tag — a content SHA on dev and prod, so a release that rebuilt nothing keeps its warm namespace. Dev and every preview share one Valkey, so this is what stops one build reading a payload shape another wrote.
 
-Runtime-injected (read by `lib/runtime-config/get.ts`):
+Runtime-injected (read by `lib/runtime-config/from-env.ts`, except `INTERNAL_ORIGIN` which `lib/proxy-base-url.ts` reads):
 
 - `APP_VERSION`: version string the footer shows; `dev` when unset. Runtime rather than build-time so one image serves every PR and every release — see the versioning section.
 - `ALLOW_DEV_MODE`: `'true'` to expose the dev-mode toggle (and the solo network) in the UI; auto-enabled when `NODE_ENV=development`
