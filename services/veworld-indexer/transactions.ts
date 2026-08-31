@@ -4,7 +4,7 @@ import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerCachedGet } from './index'
+import { indexerFetch } from './index'
 import { type IndexerGetTransactionsParams, indexerResponseSchema, indexerTransactionSchema } from './schemas'
 import { useContractTransactions } from './transactions-contract'
 
@@ -64,7 +64,7 @@ const getTransactions = async ({
   networkName: NetworkName
   params: IndexerGetTransactionsParams
 }) => {
-  const { data } = await indexerCachedGet({
+  const { data } = await indexerFetch({
     networkName,
     endPoint: '/transactions',
     params: serializeZodParams(params),

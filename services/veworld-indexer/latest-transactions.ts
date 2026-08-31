@@ -4,7 +4,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerCachedGet } from './index'
+import { indexerFetch } from './index'
 import { indexerResponseSchema, indexerTransactionSchema } from './schemas'
 
 const LATEST_TRANSACTIONS_QUERY_KEY = 'getLatestTransactions'
@@ -21,7 +21,7 @@ const getLatestTransactions = async ({
   expanded: boolean
   cursor?: string
 }) => {
-  const { data } = await indexerCachedGet({
+  const { data } = await indexerFetch({
     networkName,
     endPoint: '/transactions/latest',
     params: {

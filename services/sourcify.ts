@@ -4,7 +4,7 @@ import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
 import type { Abi } from 'viem'
 import type { NetworkName } from '@/lib/constants/network'
 import { getKnownContractAbi, getKnownContractName, isBuiltinAddress } from '@/lib/known-contracts'
-import { isProxiedNetwork } from '@/lib/proxied-network'
+import { isPublicNetwork } from '@/lib/public-network'
 import type { AddressString } from '@/lib/schemas'
 import { fetchSourcifyAbi } from '@/lib/sourcify'
 import { useSettingsStore } from '@/lib/stores/settings'
@@ -23,7 +23,7 @@ const fetchResolvedAbi = async (networkName: NetworkName, address: AddressString
   }
 
   // Sourcify has neither the non-CA built-in addresses nor any notion of solo.
-  if (!isProxiedNetwork(networkName) || isBuiltinAddress(normalised)) return null
+  if (!isPublicNetwork(networkName) || isBuiltinAddress(normalised)) return null
 
   const hit = await fetchSourcifyAbi(networkName, normalised)
   if (!hit) return null

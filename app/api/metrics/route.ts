@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { METRICS_ENABLED } from '@/env.api'
-import { metrics } from '@/lib/metrics'
+import { metricsRegistry } from '@/lib/metrics'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export const GET = async () => {
   if (!METRICS_ENABLED) return new NextResponse('Not found', { status: 404 })
 
-  return new NextResponse(await metrics.registry.metrics(), {
-    headers: { 'Content-Type': metrics.registry.contentType, 'Cache-Control': 'no-store' },
+  return new NextResponse(await metricsRegistry.metrics(), {
+    headers: { 'Content-Type': metricsRegistry.contentType, 'Cache-Control': 'no-store' },
   })
 }

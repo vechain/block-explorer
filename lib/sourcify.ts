@@ -1,7 +1,7 @@
 import type { Abi } from 'viem'
 import { z } from 'zod'
 import { NETWORKS, NetworkName } from '@/lib/constants/network'
-import { type ProxiedNetwork } from '@/lib/proxied-network'
+import { type PublicNetwork } from '@/lib/public-network'
 import { getRuntimeConfig } from '@/lib/runtime-config/get'
 import { fetchUpstream, UpstreamError } from '@/lib/upstream-error'
 
@@ -9,7 +9,7 @@ const SOURCIFY_TIMEOUT_MS = 10_000
 const NODE_TIMEOUT_MS = 5_000
 
 // Sourcify chain IDs as registered for VeChain.
-const SOURCIFY_CHAIN_IDS: Record<ProxiedNetwork, number> = {
+const SOURCIFY_CHAIN_IDS: Record<PublicNetwork, number> = {
   [NetworkName.MAINNET]: 100009,
   [NetworkName.TESTNET]: 100010,
 }
@@ -44,7 +44,7 @@ const slotValueToAddress = (value: string) => {
 type SlotRead = { read: true; implementation: string | null } | { read: false }
 
 // Sent without headers: the Thor nodes answer a CORS preflight with 403.
-const readImplementation = async (network: ProxiedNetwork, address: string): Promise<SlotRead> => {
+const readImplementation = async (network: PublicNetwork, address: string): Promise<SlotRead> => {
   try {
     const response = await fetch(`${NETWORKS[network].url}/accounts/${address}/storage/${SLOT_IMPL}`, {
       signal: AbortSignal.timeout(NODE_TIMEOUT_MS),
@@ -75,7 +75,7 @@ const fetchContract = async (chainId: number, address: string): Promise<Sourcify
 }
 
 /** Follows an EIP-1967 proxy to its implementation first. Null is a miss; a throw is an outage. */
-export const fetchSourcifyAbi = async (network: ProxiedNetwork, address: string): Promise<SourcifyHit | null> => {
+export const fetchSourcifyAbi = async (network: PublicNetwork, address: string): Promise<SourcifyHit | null> => {
   const chainId = SOURCIFY_CHAIN_IDS[network]
 
   const slot = await readImplementation(network, address)

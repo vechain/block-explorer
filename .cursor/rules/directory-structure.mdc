@@ -43,9 +43,9 @@ app/
 │       ├── BlockUsage/
 │       ├── PriceCards.tsx
 │       └── TransactionsTable.tsx
-└── api/                            # API routes
-    ├── b32/                        # B32 name resolution
-    └── nft-metadata/               # NFT metadata proxy
+└── api/                            # Route handlers the ECS task serves
+    ├── health/                     # ALB and container health check
+    └── metrics/                    # Prometheus scrape, over the task's loopback only
 ```
 
 ## Components (`components/`)

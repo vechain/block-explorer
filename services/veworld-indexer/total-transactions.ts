@@ -4,7 +4,7 @@ import { BLOCK_TIME_SECONDS, getNetworkGenesisTimestamp, type NetworkName } from
 import { blockUsageResponseSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerCachedGet } from '.'
+import { indexerFetch } from '.'
 
 const TOTAL_TRANSACTIONS_QUERY_KEY = 'getTotalTransactions'
 const BLOCK_USAGE_ENDPOINT = 'explorer/block-usage'
@@ -27,7 +27,7 @@ const cumulativeTotalSince = async ({
   startTimestamp: number
   endTimestamp: number
 }) => {
-  const { data } = await indexerCachedGet({
+  const { data } = await indexerFetch({
     networkName,
     endPoint: BLOCK_USAGE_ENDPOINT,
     params: { startTimestamp: startTimestamp.toString(), endTimestamp: endTimestamp.toString() },

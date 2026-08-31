@@ -7,7 +7,6 @@ const parseAddress = (value: string | undefined) => addressStringSchema.safePars
 export const readRuntimeConfigFromEnv = (): RuntimeConfig => ({
   appVersion: process.env.APP_VERSION?.trim() || 'dev',
   allowDevMode: process.env.ALLOW_DEV_MODE === 'true' || process.env.NODE_ENV === 'development',
-  bypassIndexerProxy: process.env.BYPASS_INDEXER_PROXY !== 'false',
   b32Url: process.env.B32_URL?.trim() || DEFAULT_RUNTIME_CONFIG.b32Url,
   openchainUrl: process.env.OPENCHAIN_URL?.trim() || DEFAULT_RUNTIME_CONFIG.openchainUrl,
   sourcifyUrl: process.env.SOURCIFY_URL?.trim() || DEFAULT_RUNTIME_CONFIG.sourcifyUrl,

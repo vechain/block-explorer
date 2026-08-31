@@ -3,7 +3,7 @@ import type { NetworkName } from '@/lib/constants/network'
 import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerCachedGet } from '.'
+import { indexerFetch } from '.'
 import { indexerContractSchema, indexerResponseSchema } from './schemas'
 
 const DEPLOYED_CONTRACTS_QUERY_KEY = 'getContractsByMaster'
@@ -43,11 +43,10 @@ const getContractsByMaster = async ({
   if (params.page !== undefined) queryParams.page = String(params.page)
   if (params.size !== undefined) queryParams.size = String(params.size)
 
-  const { data } = await indexerCachedGet({
+  const { data } = await indexerFetch({
     networkName,
-    endPoint: 'contracts/by-master',
-    params: { ...queryParams, address: params.address },
-    direct: { endPoint: `/contracts/by-master/${params.address}`, params: queryParams },
+    endPoint: `/contracts/by-master/${params.address}`,
+    params: queryParams,
   })
 
   return zodParse({

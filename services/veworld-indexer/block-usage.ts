@@ -3,7 +3,7 @@ import type { NetworkName } from '@/lib/constants/network'
 import { type BlockUsageResponse, blockUsageResponseSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerGet, resolveUrl } from './index'
+import { indexerFetch } from './index'
 
 const blockUsageQueryOptions = (
   networkName: NetworkName,
@@ -53,9 +53,8 @@ const getBlockUsage = async ({
   startTimestamp: number
   endTimestamp: number
 }) => {
-  const baseUrl = resolveUrl(networkName)
-  const { data } = await indexerGet<BlockUsageResponse>({
-    baseUrl,
+  const { data } = await indexerFetch<BlockUsageResponse>({
+    networkName,
     endPoint: '/explorer/block-usage',
     params: {
       startTimestamp: startTimestamp.toString(),

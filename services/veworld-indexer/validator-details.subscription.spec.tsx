@@ -18,15 +18,15 @@ const VALIDATOR = {
   completedPeriods: 23,
 }
 
-const { indexerCachedGet, indexerCachedGetOrNull } = vi.hoisted(() => ({
-  indexerCachedGet: vi.fn(),
-  indexerCachedGetOrNull: vi.fn(),
+const { indexerFetch, indexerFetchOrNull } = vi.hoisted(() => ({
+  indexerFetch: vi.fn(),
+  indexerFetchOrNull: vi.fn(),
 }))
 
 vi.mock('.', () => ({
   IndexerVersion: { V1: 'v1', V2: 'v2' },
-  indexerCachedGet,
-  indexerCachedGetOrNull,
+  indexerFetch,
+  indexerFetchOrNull,
 }))
 vi.mock('./validator-metadata', () => ({
   validatorMetadataQueryOptions: () => ({ queryKey: ['validatorMetadata'], queryFn: async () => null }),
@@ -75,7 +75,7 @@ describe('best block subscription gate', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     installFetch()
-    indexerCachedGet.mockResolvedValue({ data: [] })
+    indexerFetch.mockResolvedValue({ data: [] })
   })
 
   afterEach(() => {
@@ -86,7 +86,7 @@ describe('best block subscription gate', () => {
   })
 
   it('never asks for the head on an address that is not a validator', async () => {
-    indexerCachedGetOrNull.mockResolvedValue(null)
+    indexerFetchOrNull.mockResolvedValue(null)
 
     renderValidatorDetails()
     await settle()
@@ -95,7 +95,7 @@ describe('best block subscription gate', () => {
   })
 
   it('asks for the head once the address resolves as a validator', async () => {
-    indexerCachedGetOrNull.mockResolvedValue(VALIDATOR)
+    indexerFetchOrNull.mockResolvedValue(VALIDATOR)
 
     renderValidatorDetails()
     await settle()

@@ -7,8 +7,6 @@ export class UpstreamError extends Error {
   }
 }
 
-export class NotFoundError extends Error {}
-
 /** Classifies transport failures (timeout, DNS, refused) as upstream, not app, errors. */
 export const fetchUpstream = async (source: string, url: string | URL, init?: RequestInit): Promise<Response> => {
   try {

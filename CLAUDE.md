@@ -136,19 +136,13 @@ Required (see `.env`):
 
 Optional server-only (read by `env.api.ts`):
 
-- `INDEXER_RATE_LIMIT_BYPASS`: `x-rate-limit-bypass` token, sent only on the server-side indexer calls made by `/api/indexer`. From Secrets Manager via `terraform/frontend/`; blank or unset sends no header.
 - `METRICS_ENABLED`: `'true'` to serve `/api/metrics`; auto-enabled when `NODE_ENV=development`. Set only where a load balancer rule keeps the path off the public internet.
-- `REDIS_URL`: shared cache behind `lib/cached-proxy`. Unset keeps every proxy cache in-process, which is the local and test default; in AWS it holds a `rediss://` URL for the ElastiCache Serverless Valkey in `terraform/data/`.
-- `REDIS_CLUSTER_MODE`: `'true'` when `REDIS_URL` points at a serverless cache, which only runs in cluster mode.
-- `CACHE_NAMESPACE`: prefixed onto every cache key, set to the image tag — a content SHA on dev and prod, so a release that rebuilt nothing keeps its warm namespace. Dev and every preview share one Valkey, so this is what stops one build reading a payload shape another wrote.
 
-Runtime-injected (read by `lib/runtime-config/from-env.ts`, except `INTERNAL_ORIGIN` which `lib/proxy-base-url.ts` reads):
+Runtime-injected (read by `lib/runtime-config/from-env.ts`):
 
 - `APP_VERSION`: version string the footer shows; `dev` when unset. Runtime rather than build-time so one image serves every PR and every release — see the versioning section.
 - `ALLOW_DEV_MODE`: `'true'` to expose the dev-mode toggle (and the solo network) in the UI; auto-enabled when `NODE_ENV=development`
 - `B32_URL`, `OPENCHAIN_URL`, `SOURCIFY_URL`: upstreams the browser calls itself, so they ship as runtime data rather than baked into the bundle. All default to the public host.
-- `BYPASS_INDEXER_PROXY`: on by default — the browser calls the indexer itself. Set it to `'false'` to route the cached endpoints back through `/api/indexer`, which puts the load behind our shared egress IP and `INDEXER_RATE_LIMIT_BYPASS` again.
-- `INTERNAL_ORIGIN`: origin a server render uses to reach our own proxy route handlers, so it shares their cache instead of calling upstream itself — a relative URL is not fetchable off the browser. Defaults to `http://127.0.0.1:$PORT` (3000 when `PORT` is unset), which is correct in Docker and ECS; set it only when the app is not reachable on its own loopback, or when `next dev` runs on another port.
 - `SOLO_B3TR_ADDRESS`, `SOLO_VOT3_ADDRESS`, `SOLO_STARGATE_NFT_ADDRESS`, `SOLO_STARGATE_DELEGATION_ADDRESS`: solo-network contract overrides
 
 ### Internationalization

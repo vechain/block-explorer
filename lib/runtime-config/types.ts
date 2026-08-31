@@ -5,7 +5,6 @@ import { addressStringSchema } from '@/lib/schemas'
 export const runtimeConfigSchema = z.object({
   appVersion: z.string(),
   allowDevMode: z.boolean(),
-  bypassIndexerProxy: z.boolean(),
   b32Url: z.url().default('https://b32.vecha.in'),
   openchainUrl: z.url().default('https://api.openchain.xyz/signature-database/v1/lookup'),
   sourcifyUrl: z.url().default('https://sourcify.dev/server'),
@@ -22,7 +21,6 @@ export type RuntimeConfig = z.infer<typeof runtimeConfigSchema>
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = runtimeConfigSchema.parse({
   appVersion: 'dev',
   allowDevMode: false,
-  bypassIndexerProxy: true,
   soloContracts: {},
 })
 

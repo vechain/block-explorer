@@ -25,7 +25,7 @@ dns_record_enabled: true
 
 log_retention_days: 30
 
-# Dev calls the indexer through /api/indexer, so it needs no runtime overrides.
+# Every upstream URL defaults to its public host, so dev needs no runtime overrides.
 runtime_environment: {}
 
 # Shared Valkey. Ceilings against a runaway bill, not a capacity plan — 1000 ECPU/s

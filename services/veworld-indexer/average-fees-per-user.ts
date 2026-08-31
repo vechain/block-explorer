@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api'
 import type { NetworkName } from '@/lib/constants/network'
 import { type AFPUResponse, afpuResponseSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { resolveUrl } from './index'
+import { indexerFetch } from './index'
 
 const afpuQueryOptions = (
   networkName: NetworkName,
@@ -45,9 +44,8 @@ const getAverageFeesPerUser = async ({
   startTimestamp: number
   endTimestamp: number
 }) => {
-  const baseUrl = resolveUrl(networkName)
-  const { data } = await apiClient.get<AFPUResponse>({
-    baseUrl,
+  const { data } = await indexerFetch<AFPUResponse>({
+    networkName,
     endPoint: '/explorer/average-fees-per-user',
     params: {
       startTimestamp: startTimestamp.toString(),
