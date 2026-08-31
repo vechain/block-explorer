@@ -100,7 +100,7 @@
       "title": "5xx responses per minute",
       "description": "ELB 5xx means the load balancer had nothing healthy to route to, or timed out. Target 5xx came from the explorer itself.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 1 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -139,6 +139,54 @@
           "period": "60",
           "matchExact": true,
           "label": "ELB 5xx"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "4xx responses per minute",
+      "description": "ELB 4xx means the request never reached a target — malformed, or no listener rule matched. Target 4xx came from the explorer itself, mostly 404s for unknown routes.",
+      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/ApplicationELB",
+          "metricName": "HTTPCode_Target_4XX_Count",
+          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": true,
+          "label": "Target 4xx"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/ApplicationELB",
+          "metricName": "HTTPCode_ELB_4XX_Count",
+          "dimensions": { "LoadBalancer": "${alb_suffix}" },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": true,
+          "label": "ELB 4xx"
         }
       ]
     },
