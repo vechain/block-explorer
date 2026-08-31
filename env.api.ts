@@ -1,5 +1,3 @@
-export const SOURCIFY_URL = process.env.SOURCIFY_URL ?? 'https://sourcify.dev/server'
-
 // Blank when unset: Terraform seeds the secret with a placeholder.
 export const INDEXER_RATE_LIMIT_BYPASS = process.env.INDEXER_RATE_LIMIT_BYPASS?.trim()
 

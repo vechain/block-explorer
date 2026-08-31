@@ -6,24 +6,13 @@ import type { NetworkName } from '@/lib/constants/network'
 import { getKnownContractAbi, getKnownContractName, isBuiltinAddress } from '@/lib/known-contracts'
 import { isProxiedNetwork } from '@/lib/proxied-network'
 import type { AddressString } from '@/lib/schemas'
+import { fetchSourcifyAbi } from '@/lib/sourcify'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { UpstreamError } from '@/lib/upstream-error'
 
 interface ResolvedAbi {
   abi: Abi
   // Display name: built-in name > curated name > Sourcify contractName > null.
   contractName: string | null
-}
-
-// The route follows EIP-1967 proxies itself, so this is one request and no chain read.
-const fetchSourcify = async (networkName: NetworkName, address: AddressString) => {
-  const response = await fetch(`/api/sourcify?network=${networkName}&address=${address}`)
-  // Only the 404 is definitive; the rest the route sends no-store, so throwing keeps it uncached.
-  if (response.status === 404) return null
-  if (!response.ok) throw new UpstreamError('sourcify', response.status)
-
-  const body = (await response.json()) as { abi: Abi; contractName?: string }
-  return body?.abi && Array.isArray(body.abi) ? body : null
 }
 
 const fetchResolvedAbi = async (networkName: NetworkName, address: AddressString): Promise<ResolvedAbi | null> => {
@@ -36,7 +25,7 @@ const fetchResolvedAbi = async (networkName: NetworkName, address: AddressString
   // Sourcify has neither the non-CA built-in addresses nor any notion of solo.
   if (!isProxiedNetwork(networkName) || isBuiltinAddress(normalised)) return null
 
-  const hit = await fetchSourcify(networkName, normalised)
+  const hit = await fetchSourcifyAbi(networkName, normalised)
   if (!hit) return null
 
   return {
@@ -47,15 +36,15 @@ const fetchResolvedAbi = async (networkName: NetworkName, address: AddressString
 
 const RESOLVED_ABI_QUERY_KEY = 'getResolvedAbi'
 
-// The route's own max-age: re-asked eventually, so verifying a contract has an effect.
-const CACHE_TIME_MS = 60 * 60 * 1_000
+// Sourcify sends no Cache-Control, so this cache is the only one there is.
+const GC_TIME_MS = 60 * 60 * 1_000
 
 const resolvedAbiQueryOptions = (networkName: NetworkName, address: AddressString | null | undefined) =>
   queryOptions({
     queryKey: [RESOLVED_ABI_QUERY_KEY, networkName, address?.toLowerCase()],
     queryFn: address ? () => fetchResolvedAbi(networkName, address) : skipToken,
-    staleTime: CACHE_TIME_MS,
-    gcTime: CACHE_TIME_MS,
+    staleTime: Infinity,
+    gcTime: GC_TIME_MS,
   })
 
 export const useResolvedAbi = (address: AddressString | null | undefined, networkName?: NetworkName) => {
@@ -63,7 +52,5 @@ export const useResolvedAbi = (address: AddressString | null | undefined, networ
   return useQuery(resolvedAbiQueryOptions(networkName ?? activeNetworkName, address))
 }
 
-// Server-callable variant for use inside other queryFns (e.g. revert
-// decoding in services/thor/transaction.ts). Still runs in the browser
-// when triggered by a hook, but does not depend on React state.
+// Callable inside another queryFn (revert decoding), where hooks are not available.
 export { fetchResolvedAbi as getResolvedAbi }

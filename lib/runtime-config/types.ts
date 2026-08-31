@@ -8,6 +8,7 @@ export const runtimeConfigSchema = z.object({
   bypassIndexerProxy: z.boolean(),
   b32Url: z.url().default('https://b32.vecha.in'),
   openchainUrl: z.url().default('https://api.openchain.xyz/signature-database/v1/lookup'),
+  sourcifyUrl: z.url().default('https://sourcify.dev/server'),
   soloContracts: z.object({
     b3tr: addressStringSchema.optional(),
     vot3: addressStringSchema.optional(),

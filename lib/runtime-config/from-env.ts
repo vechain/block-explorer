@@ -10,6 +10,7 @@ export const readRuntimeConfigFromEnv = (): RuntimeConfig => ({
   bypassIndexerProxy: process.env.BYPASS_INDEXER_PROXY === 'true',
   b32Url: process.env.B32_URL?.trim() || DEFAULT_RUNTIME_CONFIG.b32Url,
   openchainUrl: process.env.OPENCHAIN_URL?.trim() || DEFAULT_RUNTIME_CONFIG.openchainUrl,
+  sourcifyUrl: process.env.SOURCIFY_URL?.trim() || DEFAULT_RUNTIME_CONFIG.sourcifyUrl,
   soloContracts: {
     b3tr: parseAddress(process.env.SOLO_B3TR_ADDRESS),
     vot3: parseAddress(process.env.SOLO_VOT3_ADDRESS),
