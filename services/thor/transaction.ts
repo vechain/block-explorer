@@ -79,7 +79,7 @@ export const getTransaction = async ({
 /**
  * Transaction receipt
  */
-export const transactionReceiptQueryOptions = (networkName: NetworkName, transactionId: TransactionId | undefined) =>
+const transactionReceiptQueryOptions = (networkName: NetworkName, transactionId: TransactionId | undefined) =>
   queryOptions({
     queryKey: [TRANSACTION_RECEIPT_QUERY_KEY, networkName, transactionId],
     queryFn: transactionId ? () => getTransactionReceipt({ networkName, transactionId }) : skipToken,
@@ -431,11 +431,6 @@ const getTransactionFailureInsight = async ({
     revertKind: 'vm-error',
     possibleSelectorMismatch,
   }
-}
-
-export const useTransaction = (transactionId: TransactionId | undefined, networkName?: NetworkName) => {
-  const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)
-  return useQuery(transactionQueryOptions(networkName ?? activeNetworkName, transactionId))
 }
 
 export const useTransactionReceipt = (transactionId: TransactionId | undefined, networkName?: NetworkName) => {

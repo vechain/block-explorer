@@ -124,17 +124,3 @@ export const getManualNetworkSwitchHref = ({
 
   return null
 }
-
-/**
- * Parse and validate network name from search params.
- * Returns the validated network name or defaults to the appropriate network.
- *
- * @param searchParams - Promise of search params containing optional network field
- * @returns Promise of validated NetworkName
- */
-export async function parseNetworkFromParams(
-  searchParams: Promise<{ network?: string | NetworkName }>,
-): Promise<NetworkName> {
-  const { network } = await searchParams
-  return resolveNetworkName(network)
-}
