@@ -30,4 +30,13 @@ describe('readRuntimeConfigFromEnv', () => {
 
     expect(readRuntimeConfigFromEnv()).toMatchObject({ appVersion: 'dev', allowDevMode: false })
   })
+
+  it('serves the public upstream when no override is set', () => {
+    vi.stubEnv('B32_URL', '')
+
+    expect(readRuntimeConfigFromEnv()).toMatchObject({
+      b32Url: 'https://b32.vecha.in',
+      openchainUrl: 'https://api.openchain.xyz/signature-database/v1/lookup',
+    })
+  })
 })
