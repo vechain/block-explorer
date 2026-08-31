@@ -40,7 +40,7 @@ const installFetch = () => {
     'fetch',
     vi.fn((input: string) => {
       const url = new URL(String(input), 'http://localhost')
-      if (url.pathname === '/api/thor/blocks/best') bestBlockRequests++
+      if (url.pathname === '/blocks/best') bestBlockRequests++
 
       return Promise.resolve(
         new Response(JSON.stringify({ number: 25_754_875, timestamp: 1_788_080_160 }), { status: 200 }),

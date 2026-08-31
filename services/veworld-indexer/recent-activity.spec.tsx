@@ -37,8 +37,7 @@ let requested: { best: number; revisions: number[]; headNetworks: string[] }
 let headResolvers: Array<(value: unknown) => void>
 let holdHead: boolean
 
-// Serves the `/api/thor` proxy the block service now calls, so the whole client path is
-// exercised — including which revisions it decides to ask for.
+// Serves the Thor node, so the spec sees which revisions the client actually asks for.
 const installFetch = () => {
   requested = { best: 0, revisions: [], headNetworks: [] }
   headResolvers = []
@@ -49,16 +48,17 @@ const installFetch = () => {
     vi.fn((input: string) => {
       const url = new URL(String(input), 'http://localhost')
       const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200 })
+      const revision = url.pathname.slice('/blocks/'.length)
 
-      if (url.pathname === '/api/thor/blocks/best') {
+      if (revision === 'best') {
         requested.best++
-        requested.headNetworks.push(String(url.searchParams.get('network')))
+        requested.headNetworks.push(url.hostname.split('.')[0])
         if (holdHead) return new Promise(resolve => headResolvers.push(() => resolve(json(block(HEAD)))))
         return Promise.resolve(json(block(HEAD)))
       }
 
-      requested.revisions.push(Number(url.searchParams.get('revision')))
-      return Promise.resolve(json(block(Number(url.searchParams.get('revision')))))
+      requested.revisions.push(Number(revision))
+      return Promise.resolve(json(block(Number(revision))))
     }),
   )
 }
