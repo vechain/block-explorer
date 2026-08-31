@@ -1,3 +1,5 @@
+'use client'
+
 import { VStack } from '@chakra-ui/react'
 import { Suspense } from 'react'
 import { HomeStatsGroup } from '@/components/ui/HomeStatsGroup'
