@@ -22,7 +22,7 @@ export type RuntimeConfig = z.infer<typeof runtimeConfigSchema>
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = runtimeConfigSchema.parse({
   appVersion: 'dev',
   allowDevMode: false,
-  bypassIndexerProxy: false,
+  bypassIndexerProxy: true,
   soloContracts: {},
 })
 
