@@ -31,9 +31,7 @@ type IndexerParams = Record<string, string | string[] | undefined>
 // Registry keys are slashless, and the client joins baseUrl and endPoint bare.
 const joinable = (endPoint: string) => (endPoint.startsWith('/') ? endPoint : `/${endPoint}`)
 
-// Proxied endpoints are cached server-side; anything else (and always solo, whose
-// indexer URL is browser-local) goes direct. `network` is appended last so a caller
-// cannot shadow it.
+// Direct unless the proxy is switched back on. `network` is appended last, unshadowable.
 interface IndexerCachedGetArgs {
   networkName: NetworkName
   /** The proxy's registry key, which is not always the upstream path. */
@@ -44,7 +42,6 @@ interface IndexerCachedGetArgs {
 }
 
 export const indexerCachedGet = <T>({ networkName, endPoint, params, direct }: IndexerCachedGetArgs) => {
-  // Bypassing puts each call back on the viewer's own IP, which the indexer's WAF limits.
   if (!getRuntimeConfig().bypassIndexerProxy && isProxiedNetwork(networkName) && isCachedIndexerEndpoint(endPoint)) {
     return apiClient.get<T>({
       baseUrl: proxyBaseUrl(INDEXER_PROXY_BASE),
