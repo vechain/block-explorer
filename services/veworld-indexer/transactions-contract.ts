@@ -3,7 +3,7 @@ import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerCachedGet } from './index'
+import { indexerFetch } from './index'
 import { type IndexerGetContractTransactionsParams, indexerTransactionSchema, indexerResponseSchema } from './schemas'
 
 const CONTRACT_TRANSACTIONS_QUERY_KEY = 'getContractTransactions'
@@ -38,7 +38,7 @@ const getContractTransactions = async ({
   networkName: NetworkName
   params: IndexerGetContractTransactionsParams
 }) => {
-  const { data } = await indexerCachedGet({
+  const { data } = await indexerFetch({
     networkName,
     endPoint: '/transactions/contract',
     params: serializeZodParams(params),

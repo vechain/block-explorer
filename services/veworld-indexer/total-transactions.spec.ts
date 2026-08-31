@@ -4,7 +4,7 @@ import { NetworkName } from '@/lib/constants/network'
 const indexerGet = vi.fn()
 
 vi.mock('.', () => ({
-  indexerCachedGet: (...args: unknown[]) => indexerGet(...args),
+  indexerFetch: (...args: unknown[]) => indexerGet(...args),
 }))
 
 const { totalTransactionsQueryOptions } = await import('./total-transactions')

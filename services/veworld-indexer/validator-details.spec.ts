@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NetworkName } from '@/lib/constants/network'
-import { VALIDATOR_SLOTS_ANCHOR_SECONDS } from '@/lib/indexer-proxy'
-import { validatorMissedBlocksQueryOptions } from './validator-details'
+import { SLOTS_WINDOW_ANCHOR_SECONDS, validatorMissedBlocksQueryOptions } from './validator-details'
 
 const ADDRESS = '0x0000000000000000000000000000000000000001'
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60
@@ -35,7 +34,7 @@ describe('validator missed-blocks window', () => {
     await fetchMissedBlocks()
 
     const { start, end } = windowOf(0)
-    expect(end % VALIDATOR_SLOTS_ANCHOR_SECONDS).toBe(0)
+    expect(end % SLOTS_WINDOW_ANCHOR_SECONDS).toBe(0)
     expect(start).toBe(end - WEEK_IN_SECONDS)
   })
 
@@ -51,9 +50,9 @@ describe('validator missed-blocks window', () => {
 
   it('moves to the next window once the anchor has passed', async () => {
     await fetchMissedBlocks()
-    vi.advanceTimersByTime(VALIDATOR_SLOTS_ANCHOR_SECONDS * 1000)
+    vi.advanceTimersByTime(SLOTS_WINDOW_ANCHOR_SECONDS * 1000)
     await fetchMissedBlocks()
 
-    expect(windowOf(1).end).toBe(windowOf(0).end + VALIDATOR_SLOTS_ANCHOR_SECONDS)
+    expect(windowOf(1).end).toBe(windowOf(0).end + SLOTS_WINDOW_ANCHOR_SECONDS)
   })
 })

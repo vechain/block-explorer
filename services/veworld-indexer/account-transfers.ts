@@ -3,7 +3,7 @@ import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerCachedGet } from './index'
+import { indexerFetch } from './index'
 import { type IndexerGetTransfersParams, indexerResponseSchema, indexerTransferSchema } from './schemas'
 
 const ACCOUNT_TRANSFERS_QUERY_KEY = 'getAccountTransfers'
@@ -38,7 +38,7 @@ const getAccountTransfers = async ({
   networkName: NetworkName
   params: IndexerGetTransfersParams
 }) => {
-  const { data } = await indexerCachedGet({
+  const { data } = await indexerFetch({
     networkName,
     endPoint: '/transfers',
     params: serializeZodParams(params),

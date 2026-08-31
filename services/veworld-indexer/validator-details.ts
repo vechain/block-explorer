@@ -3,11 +3,10 @@ import { getUnixTime } from 'date-fns'
 import { z } from 'zod'
 import { useMemo } from 'react'
 import { type NetworkName } from '@/lib/constants/network'
-import { VALIDATOR_SLOTS_ANCHOR_SECONDS } from '@/lib/indexer-proxy'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import { bestBlockCompressedQueryOptions } from '@/services/thor/block'
-import { IndexerVersion, indexerCachedGet, indexerCachedGetOrNull } from '.'
+import { IndexerVersion, indexerFetch, indexerFetchOrNull } from '.'
 import { indexerResponseSchema } from './schemas'
 import { validatorMetadataQueryOptions } from './validator-metadata'
 
@@ -175,11 +174,10 @@ const getValidatorDetails = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<ValidatorIndexerData | null> => {
-  const data = await indexerCachedGetOrNull({
+  const data = await indexerFetchOrNull({
     networkName,
-    endPoint: 'validators/details',
-    params: { address: validatorAddress },
-    direct: { endPoint: `/validators/${validatorAddress}`, params: {}, version: IndexerVersion.V2 },
+    endPoint: `/validators/${validatorAddress}`,
+    version: IndexerVersion.V2,
   })
 
   if (data === null) return null
@@ -203,7 +201,7 @@ const getValidatorDelegationsCount = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<ValidatorDelegationsCount | null> => {
-  const result = await indexerCachedGet({
+  const result = await indexerFetch({
     networkName,
     endPoint: 'validators/delegations/count',
     params: { validator: validatorAddress },
@@ -222,6 +220,7 @@ const getValidatorDelegationsCount = async ({
  * Fetch missed blocks percentage for a validator over the last 7 days
  */
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60
+export const SLOTS_WINDOW_ANCHOR_SECONDS = 5 * 60
 
 const getValidatorMissedBlocks = async ({
   networkName,
@@ -230,20 +229,16 @@ const getValidatorMissedBlocks = async ({
   networkName: NetworkName
   validatorAddress: string
 }): Promise<number> => {
-  // Anchored to the proxy's cache window, not a block: a faster-moving key is never reused.
+  // Rounded so the query key holds still: the countdown re-renders every second.
   const now = getUnixTime(new Date())
-  const endTimestamp = now - (now % VALIDATOR_SLOTS_ANCHOR_SECONDS)
+  const endTimestamp = now - (now % SLOTS_WINDOW_ANCHOR_SECONDS)
   const startTimestamp = endTimestamp - WEEK_IN_SECONDS
 
-  const { data } = await indexerCachedGet({
+  const { data } = await indexerFetch({
     networkName,
-    endPoint: 'validators/slots',
-    params: { address: validatorAddress, startTimestamp: String(startTimestamp), endTimestamp: String(endTimestamp) },
-    direct: {
-      endPoint: `/validators/${validatorAddress}/slots`,
-      params: { startTimestamp: String(startTimestamp), endTimestamp: String(endTimestamp) },
-      version: IndexerVersion.V2,
-    },
+    endPoint: `/validators/${validatorAddress}/slots`,
+    params: { startTimestamp: String(startTimestamp), endTimestamp: String(endTimestamp) },
+    version: IndexerVersion.V2,
   })
 
   const parsed = zodParse({
@@ -273,7 +268,7 @@ const getValidatorDelegations = async ({
 
   // Fetch all pages
   while (hasMore) {
-    const { data } = await indexerCachedGet({
+    const { data } = await indexerFetch({
       networkName,
       endPoint: 'validators/delegations',
       params: { validator: validatorAddress, page: String(page), size: String(pageSize) },

@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerCachedGet } from '.'
+import { indexerFetch } from '.'
 
 const nftNameSchema = z.enum([
   'Dawn',
@@ -27,7 +27,7 @@ const totalVetStakedQueryOptions = (networkName: NetworkName) => ({
 })
 
 const getTotalVetStaked = async ({ networkName }: { networkName: NetworkName }) => {
-  const { data } = await indexerCachedGet({
+  const { data } = await indexerFetch({
     networkName,
     endPoint: 'stargate/total-vet-staked',
   })
