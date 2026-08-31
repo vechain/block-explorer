@@ -22,9 +22,10 @@ export const Footer = () => {
     <VStack gap={0} mt={{ base: -10, md: -40 }} width="100%">
       <Image
         src={'/footer-image.webp'}
-        alt="footer-image"
+        alt=""
         width={1920}
         height={400}
+        sizes="100vw"
         style={{ width: '100%', height: 'auto' }}
       />
       <Box bg="#0B0C10" pt={{ base: 20, md: 20 }} pb={{ base: 36, md: 20 }} width="100%">
