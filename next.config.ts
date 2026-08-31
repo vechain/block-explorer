@@ -4,13 +4,9 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['@chakra-ui/react'],
   },
-  images: {
-    remotePatterns: [{ protocol: 'https', hostname: '**' }],
-    // A day rather than longer: a /_next/image URL carries no content hash, and this is
-    // the browser's max-age as well as the server's. The default is 60 seconds.
-    minimumCacheTTL: 60 * 60 * 24,
-  },
-  output: 'standalone', // Required for Docker deployment
+  // No server to resize through, so `next/image` emits the remote URL as-is.
+  images: { unoptimized: true, remotePatterns: [{ protocol: 'https', hostname: '**' }] },
+  output: 'export',
   webpack: config => {
     // Suppress webpack cache warnings
     config.infrastructureLogging = {

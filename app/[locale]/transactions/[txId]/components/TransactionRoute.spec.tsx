@@ -9,24 +9,24 @@ vi.mock('@/components/error/NotFound', () => ({
   NotFound: ({ title }: { title: string }) => <div data-testid="not-found">{title}</div>,
 }))
 
-vi.mock('./components/TransactionPageContent', () => ({
+vi.mock('./TransactionPageContent', () => ({
   TransactionPageContent: ({ transactionId }: { transactionId: string }) => (
     <div data-testid="transaction-content">{transactionId}</div>
   ),
 }))
 
-import TransactionPage from './page'
+import { TransactionRoute } from './TransactionRoute'
 
 const TRANSACTION_ID = `0x${'d'.repeat(64)}`
 
 const renderAt = (pathname: string) => {
   mockUsePathname.mockReturnValue(pathname)
-  render(<TransactionPage />)
+  render(<TransactionRoute />)
 }
 
 afterEach(cleanup)
 
-describe('TransactionPage', () => {
+describe('TransactionRoute', () => {
   it.each([`/transactions/${TRANSACTION_ID}`, `/es/transaction/${TRANSACTION_ID}`])('reads %s', pathname => {
     renderAt(pathname)
 

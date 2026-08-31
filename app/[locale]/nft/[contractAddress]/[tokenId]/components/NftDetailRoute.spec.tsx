@@ -9,24 +9,24 @@ vi.mock('@/components/error/NotFound', () => ({
   NotFound: ({ title }: { title: string }) => <div data-testid="not-found">{title}</div>,
 }))
 
-vi.mock('./components/NftDetailPageContent', () => ({
+vi.mock('./NftDetailPageContent', () => ({
   NftDetailPageContent: ({ contractAddress, tokenId }: { contractAddress: string; tokenId: bigint }) => (
     <div data-testid="nft-content">{`${contractAddress}/${tokenId}`}</div>
   ),
 }))
 
-import NftDetailPage from './page'
+import { NftDetailRoute } from './NftDetailRoute'
 
 const CONTRACT = `0x${'c'.repeat(40)}`
 
 const renderAt = (pathname: string) => {
   mockUsePathname.mockReturnValue(pathname)
-  render(<NftDetailPage />)
+  render(<NftDetailRoute />)
 }
 
 afterEach(cleanup)
 
-describe('NftDetailPage', () => {
+describe('NftDetailRoute', () => {
   it('reads both segments past a locale prefix', () => {
     renderAt(`/es/nft/${CONTRACT}/42`)
 

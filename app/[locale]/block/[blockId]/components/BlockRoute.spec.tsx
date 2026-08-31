@@ -9,20 +9,20 @@ vi.mock('@/components/error/NotFound', () => ({
   NotFound: ({ title }: { title: string }) => <div data-testid="not-found">{title}</div>,
 }))
 
-vi.mock('./components/BlockDetails', () => ({
+vi.mock('./BlockDetails', () => ({
   BlockDetails: ({ blockId }: { blockId: unknown }) => <div data-testid="block-details">{String(blockId)}</div>,
 }))
 
-import BlockPage from './page'
+import { BlockRoute } from './BlockRoute'
 
 const renderAt = (pathname: string) => {
   mockUsePathname.mockReturnValue(pathname)
-  render(<BlockPage />)
+  render(<BlockRoute />)
 }
 
 afterEach(cleanup)
 
-describe('BlockPage', () => {
+describe('BlockRoute', () => {
   it('coerces a block number from the path', () => {
     renderAt('/block/12345678')
 
