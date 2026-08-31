@@ -15,3 +15,10 @@ export const getLocalePrefix = (pathname: string): string => {
 
   return isLocale(first) ? `/${first}` : ''
 }
+
+/** `/es/tokens` → `es`, `/tokens` → the default locale. */
+export const getLocaleFromPath = (pathname: string): Locale => {
+  const [first] = pathname.split('/').filter(Boolean)
+
+  return isLocale(first) ? first : i18nConfig.defaultLocale
+}

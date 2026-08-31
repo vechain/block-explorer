@@ -9,22 +9,22 @@ vi.mock('@/components/error/NotFound', () => ({
   NotFound: ({ title }: { title: string }) => <div data-testid="not-found">{title}</div>,
 }))
 
-vi.mock('./components/AddressPageContent', () => ({
+vi.mock('./AddressPageContent', () => ({
   AddressPageContent: ({ address }: { address: string }) => <div data-testid="address-content">{address}</div>,
 }))
 
-import AddressPage from './page'
+import { AddressRoute } from './AddressRoute'
 
 const ADDRESS = `0x${'b'.repeat(40)}`
 
 const renderAt = (pathname: string) => {
   mockUsePathname.mockReturnValue(pathname)
-  render(<AddressPage />)
+  render(<AddressRoute />)
 }
 
 afterEach(cleanup)
 
-describe('AddressPage', () => {
+describe('AddressRoute', () => {
   it('reads the address past a locale prefix', () => {
     renderAt(`/es/address/${ADDRESS}`)
 

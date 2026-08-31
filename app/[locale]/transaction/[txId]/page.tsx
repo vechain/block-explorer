@@ -1,1 +1,1 @@
-export { default } from '../../transactions/[txId]/page'
+export { default, generateStaticParams } from '../../transactions/[txId]/page'

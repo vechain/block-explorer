@@ -1,11 +1,12 @@
 'use client'
 
 import { Box, Button, Dialog, Flex, Portal, Text, VStack } from '@chakra-ui/react'
-import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { LuCheck, LuGlobe, LuX } from 'react-icons/lu'
 import { i18nConfig, type Locale } from '@/i18n/config'
 import { getLocalePath, languageNames } from '@/i18n/utils'
+import { getLocaleFromPath } from '@/lib/utils/route-path'
 
 interface LanguageModalProps {
   isOpen: boolean
@@ -17,8 +18,8 @@ export const LanguageModal = ({ isOpen, onClose }: LanguageModalProps) => {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const params = useParams()
-  const currentLocale = (params.locale as Locale) || i18nConfig.defaultLocale
+  // From the browser URL, not the route params: the default locale's documents serve unprefixed.
+  const currentLocale = getLocaleFromPath(pathname)
 
   const handleLanguageChange = (locale: Locale) => {
     const newPath = getLocalePath(locale, pathname)
