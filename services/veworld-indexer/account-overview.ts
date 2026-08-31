@@ -26,7 +26,7 @@ const accountOverviewSchema = z.object({
   vthoEarnedTotal: z.string(),
 })
 
-export const accountOverviewQueryOptions = (networkName: NetworkName, address: string) => ({
+const accountOverviewQueryOptions = (networkName: NetworkName, address: string) => ({
   queryKey: [ACCOUNT_OVERVIEW_QUERY_KEY, networkName, address],
   queryFn: () => getAccountOverview({ networkName, address }),
   staleTime: 3 * 1000, // Consider data fresh for 3 seconds

@@ -9,7 +9,7 @@ import { getThorClient } from './client'
 
 const ACCOUNT_QUERY_KEY = 'getAccount'
 
-export const accountQueryOptions = (networkName: NetworkName, address: AddressString | undefined) =>
+const accountQueryOptions = (networkName: NetworkName, address: AddressString | undefined) =>
   queryOptions({
     queryKey: [ACCOUNT_QUERY_KEY, networkName, address],
     queryFn: address ? () => getAccount({ networkName, address }) : skipToken,

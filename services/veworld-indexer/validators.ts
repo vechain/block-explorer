@@ -67,7 +67,7 @@ type ValidatorQueryOptions = {
   status?: ValidatorStatus
 }
 
-export const allValidatorsQueryOptions = (networkName: NetworkName, options?: ValidatorQueryOptions) => ({
+const allValidatorsQueryOptions = (networkName: NetworkName, options?: ValidatorQueryOptions) => ({
   queryKey: [ALL_VALIDATORS_QUERY_KEY, networkName, options?.endorser, options?.status],
   queryFn: () => getAllValidators({ networkName, ...options }),
   refetchInterval: 60 * 1000,
