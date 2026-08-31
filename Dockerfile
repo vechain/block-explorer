@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20.19.0-alpine AS builder
+FROM node:20.20.2-alpine AS builder
 
 WORKDIR /app
 
@@ -32,7 +32,7 @@ ENV NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL}
 RUN pnpm build
 
 # Production stage
-FROM node:20.19.0-alpine AS runner
+FROM node:20.20.2-alpine AS runner
 
 WORKDIR /app
 
