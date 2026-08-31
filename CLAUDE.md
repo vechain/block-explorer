@@ -122,7 +122,7 @@ Networks defined in `lib/constants/network.ts`:
 
 Env access is split into three layers — never read `process.env` directly outside these modules:
 
-- `env.api.ts`: server-only vars (e.g. `SOURCIFY_URL`)
+- `env.api.ts`: server-only vars (e.g. `METRICS_ENABLED`)
 - `env.public.ts`: build-time `NEXT_PUBLIC_*` vars baked into the client bundle
 - `lib/runtime-config/`: runtime-injected vars. `/runtime-config.json` serves `readRuntimeConfigFromEnv()` per request; `<RuntimeConfigProvider>` fetches it at boot, publishes it to `window.__BLOCK_EXPLORER_RUNTIME_CONFIG__` and renders nothing until it lands, so `getRuntimeConfig()` stays synchronous for the stores and services that call it. This lets the prebuilt Docker image pick up new env values at container start without rebuilding the bundle, while leaving page HTML free of anything per-environment and so cacheable.
 
@@ -146,7 +146,7 @@ Runtime-injected (read by `lib/runtime-config/from-env.ts`, except `INTERNAL_ORI
 
 - `APP_VERSION`: version string the footer shows; `dev` when unset. Runtime rather than build-time so one image serves every PR and every release — see the versioning section.
 - `ALLOW_DEV_MODE`: `'true'` to expose the dev-mode toggle (and the solo network) in the UI; auto-enabled when `NODE_ENV=development`
-- `B32_URL`, `OPENCHAIN_URL`: selector-decoder upstreams the browser calls itself, so they ship as runtime data rather than baked into the bundle. Both default to the public host.
+- `B32_URL`, `OPENCHAIN_URL`, `SOURCIFY_URL`: upstreams the browser calls itself, so they ship as runtime data rather than baked into the bundle. All default to the public host.
 - `BYPASS_INDEXER_PROXY`: `'true'` to call the indexer straight from the browser instead of through `/api/indexer`, trading the server-side cache for per-viewer source IPs. Unset everywhere now that `INDEXER_RATE_LIMIT_BYPASS` gets our shared egress IP past the indexer's WAF.
 - `INTERNAL_ORIGIN`: origin a server render uses to reach our own proxy route handlers, so it shares their cache instead of calling upstream itself — a relative URL is not fetchable off the browser. Defaults to `http://127.0.0.1:$PORT` (3000 when `PORT` is unset), which is correct in Docker and ECS; set it only when the app is not reachable on its own loopback, or when `next dev` runs on another port.
 - `SOLO_B3TR_ADDRESS`, `SOLO_VOT3_ADDRESS`, `SOLO_STARGATE_NFT_ADDRESS`, `SOLO_STARGATE_DELEGATION_ADDRESS`: solo-network contract overrides
