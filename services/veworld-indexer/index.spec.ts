@@ -10,7 +10,7 @@ const get = vi.fn().mockResolvedValue({ data: {} })
 vi.mock('@/lib/api', async () => ({ apiClient: { get }, ApiError: (await import('@/lib/api/types')).ApiError }))
 
 // These services only ever run in the browser, where the flag arrives on `window` via
-// <RuntimeConfigScript> rather than from process.env.
+// <RuntimeConfigProvider> rather than from process.env.
 const setBypass = (bypassIndexerProxy: boolean) => {
   Object.assign(window, { [RUNTIME_CONFIG_WINDOW_KEY]: { ...DEFAULT_RUNTIME_CONFIG, bypassIndexerProxy } })
 }
