@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import { LegacyTransfersRedirect } from '../components/LegacyTransfersRedirect'
 
 export default function TokenTransfersRedirectPage() {
-  redirect('/transfers?type=token')
+  return <LegacyTransfersRedirect type="token" />
 }

@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import { LegacyTransfersRedirect } from '../components/LegacyTransfersRedirect'
 
 export default function NftTransfersRedirectPage() {
-  redirect('/transfers?type=nft')
+  return <LegacyTransfersRedirect type="nft" />
 }
