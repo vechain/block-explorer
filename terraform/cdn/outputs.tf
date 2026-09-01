@@ -20,7 +20,7 @@ output "key_value_store_arn" {
 
 output "host_keys" {
   description = "Store keys this environment owns — its public names plus the distribution's own. The deploy's activate step moves all of them to the bundle it published."
-  value       = keys(aws_cloudfrontkeyvaluestore_key.host)
+  value       = [for host in aws_cloudfrontkeyvaluestore_key.host : host.key]
 }
 
 output "runtime_config_base" {
