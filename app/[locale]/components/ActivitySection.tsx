@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { ViewAllLink } from '@/components/ui/Links'
 import { NoBlocks, NoTransactions } from '@/components/NoResults'
-import { useRecentBlocksCompressed } from '@/services/veworld-indexer/recent-activity'
+import { useLatestBlocksLive } from '@/services/veworld-indexer/latest-blocks'
 import { useLatestTransactionsLive } from '@/services/veworld-indexer/latest-transactions'
 import { BlocksTable } from './BlocksTable'
 import { ActivityTransactionsTable } from './ActivityTransactionsTable'
@@ -15,12 +15,13 @@ const ROWS_TO_DISPLAY = 5
 
 export const ActivitySection = () => {
   const { t } = useTranslation()
-  const { data: latestBlocks, isPending: blocksPending } = useRecentBlocksCompressed({ count: ROWS_TO_DISPLAY })
+  const { data: blockData, isPending: blocksPending } = useLatestBlocksLive({ size: ROWS_TO_DISPLAY })
   const { data: txData, isPending: txPending } = useLatestTransactionsLive({ size: ROWS_TO_DISPLAY, expanded: false })
 
+  const latestBlocks = blockData?.data ?? []
   const recentTransactions = txData?.data ?? []
 
-  const hasNoBlocks = !blocksPending && (!latestBlocks || latestBlocks.length === 0)
+  const hasNoBlocks = !blocksPending && latestBlocks.length === 0
   const hasNoTransactions = !txPending && recentTransactions.length === 0
 
   return (
@@ -33,7 +34,7 @@ export const ActivitySection = () => {
           <ViewAllLink href="/activity/blocks">{t('View all')}</ViewAllLink>
         </Flex>
         <Box minHeight="320px">
-          {blocksPending ? <TableSkeleton /> : hasNoBlocks ? <NoBlocks /> : <BlocksTable blocks={latestBlocks ?? []} />}
+          {blocksPending ? <TableSkeleton /> : hasNoBlocks ? <NoBlocks /> : <BlocksTable blocks={latestBlocks} />}
         </Box>
       </Card>
 

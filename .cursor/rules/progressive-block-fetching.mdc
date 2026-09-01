@@ -1,6 +1,6 @@
 ---
-description: Data sources for recent blocks, transactions, and transfers — indexer endpoints for tx/transfer feeds, Thor blocks for the blocks listing
-globs: services/veworld-indexer/recent-activity.ts, services/veworld-indexer/latest-transactions.ts, services/veworld-indexer/latest-transfers.ts, app/**/activity/**, app/**/transfers/**
+description: Data sources for recent blocks, transactions, and transfers — indexer endpoints for all three feeds, Thor only for per-transaction block detail
+globs: services/veworld-indexer/latest-blocks.ts, services/veworld-indexer/latest-transactions.ts, services/veworld-indexer/latest-transfers.ts, app/**/activity/**, app/**/transfers/**
 alwaysApply: false
 ---
 
@@ -8,18 +8,23 @@ alwaysApply: false
 
 ## Why
 
-Two indexer endpoints provide pre-sorted, paginated feeds:
+Three indexer endpoints provide pre-sorted, paginated feeds:
 
+- `GET /api/v1/blocks` → `useLatestBlocks`
 - `GET /api/v1/transactions/latest` → `useLatestTransactions`
 - `GET /api/v1/transfers/latest` → `useLatestTransfers`
 
-Both use cursor-based pagination via TanStack Query's `useInfiniteQuery`. Transfers can be filtered by `eventType[]` (`VET`, `FUNGIBLE_TOKEN`, `NFT`, `SEMI_FUNGIBLE_TOKEN`).
+All three use cursor-based pagination via TanStack Query's `useInfiniteQuery`. Transfers can be filtered by `eventType[]` (`VET`, `FUNGIBLE_TOKEN`, `NFT`, `SEMI_FUNGIBLE_TOKEN`).
 
-There is no indexer endpoint for "latest blocks", so the blocks listing still scans Thor — but only the `/activity/blocks` page (which needs per-tx data for clauses/VTHO paid) uses expanded blocks. The homepage Blocks card uses the lighter compressed form.
+`/api/v1/blocks` serves collapsed headers only, and omits `isTrunk` and `isFinalized` — both are node-local and time-varying, so the index cannot serve them. Read those from Thor's `GET /blocks/{revision}`, which is also the only way to look a block up by id.
 
 ## Architecture
 
 ```
+useLatestBlocks({ size })                   ← /api/v1/blocks
+  ├─ useLatestBlocksLive → Homepage Blocks card   ← size=5, polls each block interval
+  └─ /activity/blocks page                        ← cursor pagination
+
 useLatestTransactions({ size, expanded })   ← /api/v1/transactions/latest
   ├─ Homepage Transactions card             ← size=5, expanded=false
   └─ /activity/transactions page            ← cursor pagination
@@ -27,12 +32,6 @@ useLatestTransactions({ size, expanded })   ← /api/v1/transactions/latest
 useLatestTransfers({ size, eventType })     ← /api/v1/transfers/latest
   ├─ Homepage Token Transfers card          ← size=5, no filter (all event types)
   └─ /transfers page                        ← cursor pagination + filter chips
-
-useRecentBlocksCompressed({ count })        ← Thor compressed blocks
-  └─ Homepage Blocks card                   ← count=5, no per-tx data needed
-
-useRecentBlocksExpanded({ count })          ← Thor expanded blocks
-  └─ /activity/blocks page                  ← needs tx clauses + paid for showDetails
 ```
 
 ## Cursor pagination pattern
@@ -53,10 +52,12 @@ const handlePageChange = async (newPage: number) => {
 }
 ```
 
-Going forward fetches a new cursor; going back is free (already cached). Changing `pageSize` or `eventType` resets the query (different `queryKey`).
+Going forward fetches a new cursor; going back is free (already cached). Changing `pageSize` or `eventType` resets the query (different `queryKey`). For blocks the cursor is a block number, passed back as `from`.
 
-## Block fetching (Thor)
+## Per-transaction block detail (Thor)
 
-`useRecentBlocksCompressed` and `useRecentBlocksExpanded` both fan out to N individual `getBlock(revision)` calls cached individually by `[network, blockNumber]` with `staleTime: Infinity`. Expanded variant has a +10 progressive step in case some blocks failed to load.
-
-Use compressed unless you need per-transaction data (clauses, paid, gasUsed-per-tx).
+`/activity/blocks` shows clauses per block and VTHO paid, which are per-transaction and so not in the
+index. `useBlockDetails(blocks)` fans out to `blockExpandedQueryOptions` for exactly the blocks
+handed to it, cached per `[network, blockNumber]` with `staleTime: Infinity` — so pass it one page,
+not a whole scroll history. It leaves `clauseCount` and `vthoPaid` undefined until each block's
+fetch lands, and `BlocksTable` renders those cells as skeletons, so the indexed header shows first.

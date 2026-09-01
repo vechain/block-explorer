@@ -7,7 +7,6 @@ import { getThorClient } from './client'
 
 const BEST_BLOCK_COMPRESSED_QUERY_KEY = 'getBestBlockCompressed'
 const BLOCK_EXPANDED_QUERY_KEY = 'getBlockExpanded'
-const BLOCK_COMPRESSED_QUERY_KEY = 'getBlockCompressed'
 
 export const bestBlockCompressedQueryOptions = (networkName: NetworkName) =>
   queryOptions({
@@ -75,13 +74,6 @@ export const getBlockCompressed = async ({
     errorMessage: `Failed to parse block compressed ${revision}`,
   })
 }
-
-export const blockCompressedQueryOptions = (networkName: NetworkName, revision: BlockRevision | undefined) =>
-  queryOptions({
-    queryKey: [BLOCK_COMPRESSED_QUERY_KEY, networkName, revision],
-    queryFn: revision ? () => getBlockCompressed({ networkName, revision }) : skipToken,
-    staleTime: Infinity,
-  })
 
 export const useBestBlockCompressed = (networkName?: NetworkName, { enabled = true } = {}) => {
   const activeNetworkName = useSettingsStore(state => state.activeNetwork.name)

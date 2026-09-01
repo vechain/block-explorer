@@ -8,6 +8,7 @@ import {
   clauseSchema,
   dynamicFeeTransactionFieldsSchema,
   hexStringSchema,
+  hexToBigIntSchema,
   legacyTransactionFieldsSchema,
   outputSchema,
   rawEventSchema,
@@ -153,6 +154,30 @@ export const indexerTransferSchema = indexerBaseTransferSchema.extend(indexerTra
   eventType: eventTypeSchema,
 })
 
+/**
+ * `GET /api/v1/blocks` — a Thor collapsed block minus `isTrunk` and `isFinalized`, which are
+ * node-local and time-varying, so the index cannot serve them. Read those from Thor per block.
+ */
+export const indexerBlockSchema = z.object({
+  id: blockIdSchema,
+  number: blockNumberSchema,
+  parentID: blockIdSchema,
+  timestamp: timestampSchema,
+  size: z.number(),
+  transactions: z.array(transactionIdSchema),
+  txsFeatures: z.number().optional(),
+  gasUsed: z.coerce.bigint(),
+  gasLimit: z.coerce.bigint(),
+  baseFeePerGas: hexToBigIntSchema.nullish(),
+  signer: addressStringSchema,
+  beneficiary: addressStringSchema,
+  txsRoot: hexStringSchema,
+  stateRoot: hexStringSchema,
+  receiptsRoot: hexStringSchema,
+  totalScore: z.number(),
+  com: z.boolean(),
+})
+
 export const indexerErc721Schema = z.object({
   id: z.string(),
   version: z.number().optional(),
@@ -193,6 +218,7 @@ export const tokenHistorySchema = z.object({
 })
 
 export type TokenHistoryItem = z.infer<typeof tokenHistorySchema>
+export type IndexerBlock = z.infer<typeof indexerBlockSchema>
 export type IndexerTransfer = z.infer<typeof indexerTransferSchema>
 export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
 export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>
