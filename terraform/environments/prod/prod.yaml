@@ -16,6 +16,12 @@ grafana_editor_okta_groups: [APP_AMG_BLOCK_EXPLORER_Editor]
 # Needs SLACK_WEBHOOK_URL on the prod Environment, or the apply fails.
 alerts_enabled: true
 
+# Provisional until a day of prod data: CloudFront's additional metrics start with this release,
+# and bot probes for extensioned paths make the 4xx baseline nonzero.
+cdn_alarm_thresholds:
+  error_rate_4xx: 50
+  cache_hit_rate: 80
+
 # The rate-based IP rule blocks from day one; the managed groups soak in Count.
 waf_enabled: true
 waf_managed_rules_blocking: false
