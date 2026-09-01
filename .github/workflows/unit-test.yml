@@ -25,5 +25,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The only compile on a PR: the Docker build runs from `workflow_run`, so it
+      # reports against main's SHA and can never gate the PR that broke it.
+      - name: Type-check
+        run: pnpm ts-check
+
+      - name: Lint
+        run: pnpm lint
+
       - name: Run tests
         run: pnpm test
