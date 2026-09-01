@@ -1,67 +1,65 @@
 # GitHub Actions Workflows
 
-Automated CI/CD for Block Explorer. Dev, prod and previews all run on ECS Fargate, from one image.
+Automated CI/CD for Block Explorer. Dev, prod and previews all serve one static bundle from CloudFront.
 
 ## The release path
 
 ```
 PR merged to main
   → codebase-versioning.yml tags v.X.Y.Z (increment:* label picks the bump)
-  → publish-ghcr-image.yml builds the multi-arch image, or aliases one it already has
-  → deploy.yml promotes it to ECR and deploys dev
+  → publish-bundle.yml builds the static bundle, or finds one it already has
+  → deploy.yml copies it into dev's bucket and points dev at it
   → prepare-release.yml leaves exactly one draft release
 
 Draft published
   → deploy.yml deploys prod
 ```
 
-### Content-addressed images
+### Content-addressed bundles
 
-Every merge to `main` gets a version tag, but most releases change nothing the Docker build reads —
-terraform, workflows, tests and docs are all outside it. So the canonical image tag is a **content SHA**
-(`app-<sha12>`) from [`scripts/app-content-sha.sh`](../../scripts/app-content-sha.sh), and the version
-tags are aliases on the same manifest. Run it locally with `pnpm app:sha`.
+Every merge to `main` gets a version tag, but most releases change nothing the build reads —
+terraform, workflows, tests and docs are all outside it. So a bundle's identity is a **content SHA**
+(`app-<sha12>`) from [`scripts/app-content-sha.sh`](../../scripts/app-content-sha.sh), which is both
+the artifact's name and its prefix in the bucket. Run it locally with `pnpm app:sha`.
 
-Two things fall out of that. `publish-ghcr-image.yml` probes GHCR for the content SHA and skips both
-arch builds when it is already published. And because the image tag is what Terraform pins, the task
-definition of such a release is byte-identical, so `deploy.yml` skips the ECS roll too — it compares
-the revision the apply registered against the one the service runs. Terraform still applies every
-release; terraform changes are exactly what these releases carry.
+Two things fall out of that. `publish-bundle.yml` probes for a live artifact of that name and skips
+the build when it finds one. And `deploy.yml`'s `publish` job skips its upload when the prefix is
+already in the bucket, because the same SHA is the same bytes. Terraform still applies every release;
+terraform changes are exactly what these releases carry.
 
 The footer therefore shows the release that last *changed* the app, not the one being cut — that is
-what is running. `APP_VERSION` reaches the container at start rather than being baked in, and the
-deploy pins it to the image, so a no-op release registers no new revision.
+what is running. `APP_VERSION` reaches the browser in `<env>/runtime-config.json` rather than being
+baked in, and `activate` pins it to the bundle, so a no-op release rewrites nothing.
 
-Previews share that one namespace: nothing PR-specific is in the image, so a release can skip a build
-a PR already did. `publish-ghcr-pr-image.yml` still publishes the `pr.{number}.{short_sha}` tag either
-way, because that is the signal `deploy-preview.yml` waits on. Previews need no roll check: Terraform
-owns the task definition there, so an unchanged image tag is already a no-op apply.
-
-`deploy-preview.yml` promotes **from that commit alias**, not from a content tag it derives itself.
-The two workflows hash different refs — the publish uses the default branch at build time, the deploy
-uses the PR's base at event time — so a `labeled` event arriving after `scripts/app-content-sha.sh`
-changed on `main` would otherwise name a content tag that was never published, and the copy would
-fail. The alias resolves to the same manifest, and the ECR destination stays content-addressed.
+Previews share that identity: nothing PR-specific is in a bundle, so a release can skip a build a PR
+already did, and a preview usually finds its bundle already in the bucket. Both `unit-test.yml` and
+`deploy-preview.yml` resolve the SHA with the default branch's copy of the script, so the name one
+publishes is the name the other waits for — and a pull request cannot publish under a release's name
+by editing that script.
 
 ## Workflows
 
 ### Deployment (`deploy.yml`)
 
 One workflow for both environments, with the target derived from the trigger. Dev and prod deploy the
-same image, so parity is structural rather than maintained by hand.
+same bundle, so parity is structural rather than maintained by hand.
 
 | Trigger | Target |
 |---|---|
-| Completion of `publish-ghcr-image.yml` | dev — the image is guaranteed to exist rather than polled for |
+| Completion of `publish-bundle.yml` | dev — the bundle is guaranteed to exist rather than polled for |
 | A GitHub Release being published | prod — the single draft `prepare-release.yml` left |
 | Manual dispatch | either, chosen by the `environment` input (break-glass, e.g. to roll back) |
 
 **Jobs:**
-1. `guard` - Resolves the target, the tag and its content SHA, refuses anything not reachable from `main`, and derives the per-environment names below
-2. `promote` - Copies the GHCR manifest list into that account's ECR, keeping both arches. Each tag is written only if absent
-3. `terraform` - Applies each stack serially in dependency order, planning immediately before each apply
-4. `roll` - Wakes the service if it is parked (dev only), moves it to the new task definition revision unless it already runs it, then checks `/api/health` and that `/api/metrics` is 403, both over the ALB by name
+1. `guard` - Resolves the target, the tag and its content SHA, refuses anything not reachable from `main`, and derives the stack list below
+2. `terraform` - Applies each stack serially in dependency order, planning immediately before each apply
+3. `publish` - Copies the bundle artifact into that environment's bucket, unless the prefix is already there
+4. `activate` - Writes `<env>/runtime-config.json`, points the environment's hosts at the new bundle, invalidates the config, then checks the CDN by its own name
 5. `draft-release` - Calls `prepare-release.yml` (dev only, and not on dispatch)
+
+`publish` runs after `terraform` because the bucket is terraform's to create, and `activate` after
+`publish` because the routing store must never name a prefix that is not there yet. That ordering is
+what makes a deploy seamless: the hosts keep answering from the previous bundle until the last step.
 
 **Domains:** `https://dev.block-explorer.vechain.org`, `https://block-explorer.vechain.org`
 
@@ -72,30 +70,26 @@ same object, so credentials need no conditional. `TF_VAR_prod_deploy_role_arn` a
 are each set on one Environment only and pass unconditionally — the other resolves to `""`, which is
 the off value the stacks already read as "not cross-account". Everything else is derived: the task
 family is `block-explorer-<env>-frontend`, the config is `terraform/environments/<env>/<env>.yaml`,
-and the workspace and backend config follow the same pattern. That leaves three `guard` outputs:
-
-| | dev | prod |
-|---|---|---|
-| `image_tag` | `dev-app-<sha>` — the registry is shared with previews | `app-<sha>` |
-| `alias_tag` | none | `v.X.Y.Z`, aliased onto the same manifest |
-| `stacks` | the 8, plus `dns` and `preview-edge` | the 8 |
+and the workspace and backend config follow the same pattern. That leaves one `guard` output that
+differs: `stacks`, which is the nine both share plus `dns` and `preview-edge` in dev, because the
+previews live in that account and so does the zone role `dns/` hands prod.
 
 The ref a run starts on is part of the security model, because the credentialed jobs apply whatever
-Terraform they check out. **Dev takes `main`'s tree with the tag's image; prod takes the tag's own
+Terraform they check out. **Dev takes `main`'s tree with the tag's bundle; prod takes the tag's own
 tree**, which is why a branch is refused there outright.
 
 The `terraform` job never takes a `ref:` from event data — that would be an untrusted checkout with
-execution, which CodeQL rates critical and `main`'s `code_scanning` rule blocks. Only the image
-travels as a tag, and that is a string.
+execution, which CodeQL rates critical and `main`'s `code_scanning` rule blocks. Only the content SHA
+travels, and that is a string.
 
 Stacks are applied serially, each planned immediately before its own apply. The design doc's parallel
 plan matrix is deliberately not used: on a first deploy the downstream stacks cannot plan at all until
 the upstream state they read exists. The plan file never leaves the job, because a binary plan can
 carry state.
 
-The `roll` job checks the ALB by name rather than by DNS. `services-stable` already means the tasks
-are healthy in the target group, so what is left to prove is the ALB in front of them — and going
-through DNS would let a cached or weighted answer pass the check on the deployed stack's behalf.
+The `activate` job checks the distribution by its own CloudFront name rather than by the public one.
+Going through DNS would let a cached or weighted answer pass the check on the deployed stack's behalf
+— and while an environment is still `hosting: ecs`, the public name is not pointed here at all.
 
 ---
 
@@ -182,16 +176,18 @@ absent. It only annotates findings onto the diff.
 **Jobs:**
 1. `gate` - Requires the `create-preview` label; a `labeled` event for any other label is a no-op
 2. `announce` - Posts the sticky "deploying" comment
-3. `image` - Waits for the multi-arch GHCR PR image, then copies the manifest list into ECR
-4. `deploy` - Applies `terraform/frontend-preview` in workspace `pr-{number}`, waits for the service, checks `/api/health`
-5. `comment` - Updates the sticky comment with the URL or a link to the logs
+3. `deploy` - Waits for the PR's bundle, copies it into dev's bucket if it is not already there, writes `pr-{number}/runtime-config.json`, adds the host's key to the routing store, then checks the URL
+4. `comment` - Updates the sticky comment with the URL or a link to the logs
 
-**Image:** promoted from `ghcr.io/vechain/block-explorer:pr.{number}.{short_sha}`, published by
-`publish-ghcr-pr-image.yml` once the unit tests pass. Previews are not rebuilt — they run the same
-arm64 image dev and prod do. The `image` job waits on the commit-tagged alias, which that workflow
-publishes whether or not it built anything.
+**Bundle:** built by `unit-test.yml` once the tests pass, and named by content, so a preview usually
+finds a bundle dev or another PR already published. That build runs on `pull_request` rather than in a
+privileged workflow, so a pull request's own code never executes anywhere the release path can reach —
+which is also why the build steps are a composite action (`.github/actions/build-bundle`) rather than a
+reusable workflow: a composite inherits its caller's trust context, a reusable workflow is analysed
+under every caller's at once.
 
-**Domain:** `https://pr-{number}.block-explorer-preview.vechain.org`, served by the shared preview ALB.
+**Domain:** `https://pr-{number}.block-explorer-preview.vechain.org`, served by dev's distribution —
+previews own no infrastructure of their own, only a key and a config file.
 
 ---
 
@@ -203,7 +199,10 @@ publishes whether or not it built anything.
 **Security:** Only runs for same-repo PRs (not forks)
 
 **Jobs:**
-1. `destroy` - Destroys the `pr-{number}` workspace, deletes it, updates the sticky comment
+1. `destroy` - Deletes the host's key from the routing store and the `pr-{number}/` prefix, then updates the sticky comment
+
+The bundle stays: it is content-addressed and shared with dev and with any other PR on the same
+content, so deleting it would break them.
 
 Removing the `create-preview` label does not tear a preview down; `preview-reconcile.yml` reaps it
 within six hours.
@@ -217,12 +216,13 @@ within six hours.
 
 Event-driven teardown misses cleanups — a queued destroy can be evicted from the shared concurrency
 group by a newer run, a destroy can fail on a throttle or a lock, and a long-lived labelled PR sits
-forever. This sweep lists the `pr-*` Terraform workspaces (the workspace list is the source of truth,
-not tags or an ECS listing) and destroys the ones whose PR is closed or no longer labelled.
+forever. This sweep lists the `pr-*` keys in the routing store (the store is the source of truth, because a
+key is the only thing that makes a preview host answer) and deletes the ones whose PR is closed or no
+longer labelled.
 
 It is deliberately conservative: it skips on any failed PR query, re-confirms immediately before
-destroying, treats an already-gone workspace as reaped, and isolates each reap so one stuck workspace
-cannot starve the rest.
+deleting, treats an already-gone key as reaped, and isolates each reap so one stuck preview cannot
+starve the rest.
 
 ---
 
@@ -239,31 +239,21 @@ cannot starve the rest.
 
 ---
 
-## Image Tagging Strategy
+## Where a bundle lives
 
-| Environment | Pattern | Example | Purpose |
-|-------------|---------|---------|---------|
-| Dev (ECS) | `dev-app-{sha12}` | `dev-app-ded8af8261c7` | Content SHA — what Terraform pins |
-| Prod (ECS) | `app-{sha12}` | `app-ded8af8261c7` | Content SHA — what Terraform pins |
-| Prod (alias) | `v.X.Y.Z` | `v.1.2.3` | Semantic version, aliased onto the same manifest |
-| Preview | `pr-{number}-app-{sha12}` | `pr-144-app-ded8af8261c7` | PR number + content SHA |
+| Store | Key | Purpose |
+|---|---|---|
+| Workflow artifact | `app-{sha12}` | The built bundle, retained 90 days for a release and 14 for a PR |
+| S3 | `app-{sha12}/…` | What the CDN serves. One prefix per distinct build, shared by dev, prod and every preview |
+| S3 | `{env}/runtime-config.json` | Per environment: the version, the dev-mode flag and the solo overrides |
+| KeyValueStore | host → `{bundle, config}` | Which of the above a host answers from |
 
-**Content SHA tags:**
-- From `scripts/app-content-sha.sh` — a hash of every Docker build input, so a squash merge or rebase
-  that leaves the app unchanged keeps the same tag
-- One image per distinct app build, however many releases ship it
-- What ECS task definitions reference, so identical content produces an identical revision
+`app-{sha12}` comes from `scripts/app-content-sha.sh`, a hash of every input the build reads, so a
+squash merge or rebase that leaves the app unchanged keeps the same name — one bundle per distinct
+build, however many releases ship it.
 
-**Production version tags:**
-- Uses semantic versioning (`v.X.Y.Z`)
-- Must match an existing git tag
-- Immutable - each version written once
-- An alias for readability and for the `v.`-prefixed ECR lifecycle rule, not what ECS resolves
-
-**Preview Tags:**
-- One per distinct app build on a PR, not one per commit
-- Copied from `ghcr.io/vechain/block-explorer:pr.{number}.{short_sha}`, so the ECR tag is a manifest
-  list and an arm64 task can resolve its own platform
+Version tags (`v.X.Y.Z`) never name a bundle. They are what `activate` writes into
+`runtime-config.json`, and a release whose bundle is already serving keeps the version that shipped it.
 
 ---
 
@@ -304,23 +294,23 @@ One bucket per account, one key per stack, workspace-namespaced. Bucket names ar
 ```
 `create-preview` label added, or a push to an already-labelled PR:
   → Post "deploying" comment
-  → Wait for the GHCR PR image, copy it into ECR
-  → terraform apply in workspace pr-{number}
+  → Wait for the PR's bundle, copy it into the bucket if it is not already there
+  → Write pr-{number}/runtime-config.json and the host's routing key
   → Update comment to "ready" (with the URL)
 
 Label removed:
   → Nothing immediately; the reconcile sweep reaps within six hours
 
 PR Closed/Merged:
-  → terraform destroy, delete the workspace
+  → Delete the routing key and the pr-{number}/ prefix
   → Update comment to "torn down"
 ```
 
-### GitHub Environments are shared, Terraform workspaces are per-PR
+### GitHub Environments are shared, routing keys are per-PR
 
 Every preview job runs against the single `preview` GitHub Environment, with `environment.url` set per
 deployment so the PR timeline still links to the right preview. The per-PR name lives only in the
-Terraform workspace (`pr-{number}`), which `destroy-preview.yml` and `preview-reconcile.yml` reap.
+routing store, which `destroy-preview.yml` and `preview-reconcile.yml` reap.
 
 Do not name a GitHub Environment after the PR. Declaring `environment: preview-pr-N` creates that
 environment implicitly and nothing can remove it: `GITHUB_TOKEN` has no `environments` or
@@ -355,31 +345,25 @@ lock. The cost is that a queued teardown can be evicted by a newer run, which is
 ## Cost Optimization
 
 ### Preview Environments
-- **Tasks:** 1, no autoscaling
-- **CPU/Memory:** 512 / 1024, the same as dev, so a preview cannot OOM where dev does not
-- **Cache:** shared with dev, namespaced by image tag
-- **Auto-cleanup:** destroyed when the PR closes, and swept every six hours regardless
+- **Compute:** none. A preview is a prefix in dev's bucket plus one routing key
+- **Bundle:** shared with dev and with any PR on the same content, so most previews upload nothing
+- **Auto-cleanup:** the key and the config go when the PR closes, and are swept every six hours regardless
 
-### Dev
-- **Hibernation:** `hibernate-dev.yml` parks the service at zero tasks on demand; any dev deploy wakes it
-
-### Image Lifecycle (ECR)
-- Keeps last 30 production images (tagged `v.*`)
-- Keeps last 10 preview images (tagged `pr-*`)
-- Removes untagged images after 1 day
+### Bundles
+- Old prefixes are not reaped. They are a few MB each and one of them may still be what an
+  environment serves, so age is not a safe signal for deleting one
 
 ---
 
 ## Troubleshooting
 
 ### Build failures
-- Check Docker build logs in GitHub Actions
+- Check the `Build Static Bundle` job in `publish-bundle.yml`, or `Build Preview Bundle` in `unit-test.yml`
 - Verify `pnpm-lock.yaml` is compatible with pnpm 9.15.4
-- Ensure Dockerfile exists and is valid
 
 ### Deployment failures
 - Check the Terraform plan in the job that failed — each stack is planned immediately before its apply
-- Container logs are in CloudWatch under `/ecs/block-explorer-<env>-frontend`
+- `publish` failing on a missing artifact means it expired; re-run `publish-bundle.yml` for that tag
 - Ensure the environment config file is valid YAML
 
 ### PR comment not updating
@@ -393,7 +377,8 @@ lock. The cost is that a queued teardown can be evicted by a newer run, which is
 - Old builds should be cancelled automatically
 
 ### Custom domain not activating
-- Check the ACM certificate is issued and its Route53 validation records exist
+- Check the ACM certificate is issued and its Route53 validation records exist. CloudFront reads its
+  certificate from us-east-1 only, so `cdn/` holds a second one for the same names
 - Both public zones are in the dev account; prod writes into them through an assumed role
-- The ALB's own DNS name works meanwhile — `curl --connect-to` is how the deploy verifies it
+- The distribution's own name works meanwhile, and is what the deploy verifies against
 

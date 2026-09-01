@@ -1,17 +1,15 @@
 name: Reconcile Preview Environments
 
-# Event-driven teardown genuinely misses cleanups: a queued destroy can be
-# evicted from the shared per-PR concurrency group by a newer run, a destroy can
-# fail on a throttle or a lock, and a long-lived labelled PR sits forever. This
-# sweep is the backstop.
+# Event-driven teardown genuinely misses cleanups: a queued destroy can be evicted from the shared
+# per-PR concurrency group by a newer run, a destroy can fail on a throttle, and a long-lived
+# labelled PR sits forever. This sweep is the backstop.
+
 on:
   schedule:
     - cron: "0 */6 * * *"
   workflow_dispatch:
 
-# One sweep at a time. It cannot join the per-PR groups deploy and destroy share,
-# so what actually protects a live preview is the S3 state lock plus the
-# re-confirmation immediately before each destroy.
+# One sweep at a time. What protects a live preview is the re-confirmation before each delete.
 concurrency:
   group: preview-reconcile
   cancel-in-progress: false
@@ -19,8 +17,8 @@ concurrency:
 env:
   AWS_REGION: eu-west-1
   TERRAFORM_VERSION: 1.16.0
-  TERRAFORM_DIR: terraform/frontend-preview
-  TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
+  CDN_DIR: terraform/cdn
+  CDN_BACKEND_CONFIG: ../environments/dev/backend.config
 
 jobs:
   reconcile:
@@ -47,34 +45,35 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
-      # The workspace list is the source of truth, not tags or an ECS listing:
-      # a workspace is what a leaked preview always leaves behind.
-      - name: Sweep pr-* workspaces
-        working-directory: ${{ env.TERRAFORM_DIR }}
+      - name: Read the CDN outputs
+        id: cdn
+        working-directory: ${{ env.CDN_DIR }}
+        run: |
+          set -euo pipefail
+          terraform init -input=false -backend-config="${CDN_BACKEND_CONFIG}"
+          terraform workspace select dev
+          {
+            echo "bucket=$(terraform output -raw bucket_name)"
+            echo "kvs_arn=$(terraform output -raw key_value_store_arn)"
+          } >> "$GITHUB_OUTPUT"
+
+      # The store is the source of truth: a key is the only thing that makes a preview host answer.
+      - name: Sweep pr-* keys
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
+          BUCKET: ${{ steps.cdn.outputs.bucket }}
+          KVS_ARN: ${{ steps.cdn.outputs.kvs_arn }}
         run: |
-          # No `set -e`: one stuck workspace must not starve the rest.
+          # No `set -e`: one stuck preview must not starve the rest.
           set -uo pipefail
 
-          # Loud, unlike the per-workspace failures below: a backend the sweep
-          # cannot reach reads as an empty workspace list, which looks like a
-          # clean run while cleanup is silently off.
-          if ! terraform init -input=false -backend-config="${TERRAFORM_BACKEND_CONFIG}"; then
-            echo "::error::terraform init failed; the sweep cannot tell an empty backend from an unreachable one."
-            exit 1
-          fi
-
-          # Fails only when the listing itself fails; no matches is success.
-          list_workspaces() {
-            local all
-            all=$(terraform workspace list) || return 1
-            printf '%s\n' "$all" | tr -d '* ' | grep -E '^pr-[0-9]+$' || true
+          list_previews() {
+            aws cloudfront-keyvaluestore list-keys --kvs-arn "$KVS_ARN" --no-cli-pager \
+              --query 'Items[].Key' --output text | tr '\t' '\n' | grep -E '^pr-[0-9]+\.' || true
           }
 
-          # Open and still carrying the label means keep. Anything else — closed,
-          # merged, unlabelled — is an orphan.
+          # Open and still labelled means keep; closed, merged or unlabelled is an orphan.
           is_orphan() {
             local pr="$1" json state labelled
             if ! json=$(gh api "repos/${REPO}/pulls/${pr}" 2>/dev/null); then
@@ -86,46 +85,43 @@ jobs:
             return 0
           }
 
-          if ! workspaces=$(list_workspaces); then
-            echo "::error::Could not list Terraform workspaces."
+          if ! hosts=$(list_previews); then
+            echo "::error::Could not list the routing store."
             exit 1
           fi
-          if [ -z "$workspaces" ]; then
-            echo "No preview workspaces."
+          if [ -z "$hosts" ]; then
+            echo "No preview keys."
             exit 0
           fi
 
           failed=0
-          for ws in $workspaces; do
-            pr="${ws#pr-}"
+          for host in $hosts; do
+            pr="${host%%.*}"
+            pr="${pr#pr-}"
 
             is_orphan "$pr"
             case $? in
-              1) echo "${ws}: PR #${pr} is open and labelled — keeping."; continue ;;
-              2) echo "::warning::Could not query PR #${pr}; leaving ${ws} for the next sweep."; continue ;;
+              1) echo "${host}: PR #${pr} is open and labelled — keeping."; continue ;;
+              2) echo "::warning::Could not query PR #${pr}; leaving ${host} for the next sweep." ; continue ;;
             esac
 
-            # Re-confirm against the list as it is now: a deploy may have created
-            # this workspace, or a teardown removed it, since the sweep started.
-            if ! list_workspaces | grep -qx "$ws"; then
-              echo "${ws}: already gone."
-              continue
-            fi
-            if ! is_orphan "$pr"; then
-              echo "${ws}: PR #${pr} no longer reads as an orphan — leaving it alone."
+            # Re-confirm against the store as it is now: a deploy may have rewritten this key, or a
+            # teardown removed it, since the sweep started.
+            if ! list_previews | grep -qx "$host"; then
+              echo "${host}: already gone."
               continue
             fi
 
-            echo "::group::Reaping ${ws}"
-            if terraform workspace select "$ws" \
-              && terraform destroy -input=false -auto-approve -var="pr_number=${pr}" -var="image_tag=destroy" \
-              && terraform workspace select default \
-              && terraform workspace delete "$ws"; then
-              echo "${ws}: reaped."
+            echo "::group::Reaping ${host}"
+            etag=$(aws cloudfront-keyvaluestore describe-key-value-store --kvs-arn "$KVS_ARN" \
+              --no-cli-pager --query ETag --output text)
+            if aws cloudfront-keyvaluestore delete-key --kvs-arn "$KVS_ARN" --if-match "$etag" \
+                 --key "$host" --no-cli-pager >/dev/null \
+              && aws s3 rm "s3://${BUCKET}/pr-${pr}/" --recursive --only-show-errors; then
+              echo "${host}: reaped."
             else
-              echo "::warning::Failed to reap ${ws}; it will be retried next sweep."
+              echo "::warning::Failed to reap ${host}; it will be retried next sweep."
               failed=1
-              terraform workspace select default || true
             fi
             echo "::endgroup::"
           done

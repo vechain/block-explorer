@@ -1,0 +1,115 @@
+name: Build & Publish Release Bundle
+
+# What deploy.yml waits on. The bundle is kept as an artifact for the deploys to copy into each
+# environment's bucket — GHCR played that part for the image: a neutral store both accounts pull the
+# same bytes from, so dev and prod parity is structural.
+#
+# A release that changes nothing the build reads finds its bundle already published, which is also
+# what lets the deploys skip their own publish.
+
+on:
+  push:
+    tags:
+      - v.*
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v.1.0.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: bundle-block-explorer-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    name: Resolve Content SHA
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      app_sha: ${{ steps.sha.outputs.app_sha }}
+      exists: ${{ steps.probe.outputs.exists }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve content SHA
+        id: sha
+        run: |
+          set -euo pipefail
+          APP_SHA=$(bash scripts/app-content-sha.sh)
+          echo "app_sha=${APP_SHA}" >> "$GITHUB_OUTPUT"
+          echo "Content SHA: ${APP_SHA}"
+
+      - name: Probe for an existing bundle
+        id: probe
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          APP_SHA: ${{ steps.sha.outputs.app_sha }}
+        run: |
+          set -euo pipefail
+
+          live=$(gh api "repos/${REPO}/actions/artifacts?name=${APP_SHA}&per_page=100" \
+            --jq '[.artifacts[] | select(.expired == false)] | length')
+
+          if [ "$live" -gt 0 ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "${APP_SHA} is already published — nothing to build."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "${APP_SHA} is not published — building."
+          fi
+
+  build:
+    name: Build Static Bundle
+    needs: detect
+    if: needs.detect.outputs.exists == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/build-bundle
+
+      # A release is published long after its dev deploy, so this retention is what bounds a prod
+      # deploy of an older tag.
+      - name: Upload the bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ needs.detect.outputs.app_sha }}
+          path: bundle.tgz
+          if-no-files-found: error
+          retention-days: 90
+
+  summary:
+    name: Summary
+    needs: [detect, build]
+    if: always() && needs.detect.result == 'success' && needs.build.result != 'failure'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - env:
+          VERSION_TAG: ${{ inputs.version || github.ref_name }}
+          APP_SHA: ${{ needs.detect.outputs.app_sha }}
+          REUSED: ${{ needs.detect.outputs.exists }}
+        run: |
+          {
+            echo "### ${VERSION_TAG}"
+            echo
+            if [ "${REUSED}" = "true" ]; then
+              echo "Build **skipped** — \`${APP_SHA}\` was already published, so this release ships content that is already here."
+            else
+              echo "Built and published as \`${APP_SHA}\`."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

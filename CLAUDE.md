@@ -17,7 +17,7 @@ VeChain Block Explorer - A Next.js-based blockchain explorer for the VeChain net
 - **Testing**: Vitest with React Testing Library
 - **Linting**: ESLint with TypeScript, React, and i18next plugins
 - **Formatting**: Prettier
-- **Internationalization**: i18next with react-i18next and next-i18n-router
+- **Internationalization**: i18next with react-i18next; locale routing is done by the CDN
 - **Package Manager**: pnpm (v9.15.4)
 - **Node.js**: v20.19.0 (see `.nvmrc`)
 
@@ -59,7 +59,12 @@ The app uses Next.js App Router with internationalized routes:
 
 - Routes are nested under `app/[locale]/` for multi-language support
 - Main routes: `/`, `/block/[blockId]`, `/transaction/[transactionId]`, `/address/[address]`
-- Locale is handled by middleware using next-i18n-router
+- The app builds as a static export (`output: 'export'`), so there are no route handlers and no
+  middleware. Locale selection, the legacy 308s and the rewrite of a dynamic route onto its
+  prerendered `__shell__` document are all done by
+  [terraform/cdn/edge-router.js](terraform/cdn/edge-router.js) at the CDN edge
+- A dynamic route's `page.tsx` is a server shell exporting `generateStaticParams`; its body is a
+  client `<X>Route` component that reads the id back off the URL via `useRouteSegments`
 
 ### Data Flow
 
@@ -120,11 +125,10 @@ Networks defined in `lib/constants/network.ts`:
 
 ### Environment Variables
 
-Env access is split into three layers — never read `process.env` directly outside these modules:
+Env access is split into two layers — never read `process.env` directly outside these modules:
 
-- `env.api.ts`: server-only vars (e.g. `METRICS_ENABLED`)
-- `env.public.ts`: build-time `NEXT_PUBLIC_*` vars baked into the client bundle
-- `lib/runtime-config/`: runtime-injected vars. `/runtime-config.json` serves `readRuntimeConfigFromEnv()` per request; `<RuntimeConfigProvider>` fetches it at boot, publishes it to `window.__BLOCK_EXPLORER_RUNTIME_CONFIG__` and renders nothing until it lands, so `getRuntimeConfig()` stays synchronous for the stores and services that call it. This lets the prebuilt Docker image pick up new env values at container start without rebuilding the bundle, while leaving page HTML free of anything per-environment and so cacheable.
+- `env.public.ts`: build-time `NEXT_PUBLIC_*` vars baked into the client bundle. `.env.production` holds their committed values, so they are part of the bundle's content SHA.
+- `lib/runtime-config/`: per-environment vars. `<RuntimeConfigProvider>` fetches `/runtime-config.json` at boot, publishes it to `window.__BLOCK_EXPLORER_RUNTIME_CONFIG__` and renders nothing until it lands, so `getRuntimeConfig()` stays synchronous for the stores and services that call it. The CDN answers that path from `s3://<bucket>/<env>/runtime-config.json`, which the deploy's `activate` step writes — so one content-addressed bundle serves dev, prod and every preview.
 
 Required (see `.env`):
 
@@ -134,22 +138,21 @@ Required (see `.env`):
 - `NEXT_PUBLIC_VEWORLD_INDEXER_SOLO_URL`: Default solo indexer URL when dev mode is on
 - `NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL`: IPFS gateway for NFT metadata
 
-Optional server-only (read by `env.api.ts`):
+Per environment (fields of `<env>/runtime-config.json`, written by the deploy):
 
-- `METRICS_ENABLED`: `'true'` to serve `/api/metrics`; auto-enabled when `NODE_ENV=development`. Set only where a load balancer rule keeps the path off the public internet.
+- `appVersion`: version string the footer shows; `dev` when unset. Fetched rather than baked so one bundle serves every PR and every release — see the versioning section.
+- `allowDevMode`: exposes the dev-mode toggle (and the solo network) in the UI. `public/runtime-config.json` turns it on for `pnpm dev`, which is the only thing that file serves.
+- `b32Url`, `openchainUrl`, `sourcifyUrl`: upstreams the browser calls itself. All default to the public host.
+- `soloContracts`: solo-network contract overrides
 
-Runtime-injected (read by `lib/runtime-config/from-env.ts`):
-
-- `APP_VERSION`: version string the footer shows; `dev` when unset. Runtime rather than build-time so one image serves every PR and every release — see the versioning section.
-- `ALLOW_DEV_MODE`: `'true'` to expose the dev-mode toggle (and the solo network) in the UI; auto-enabled when `NODE_ENV=development`
-- `B32_URL`, `OPENCHAIN_URL`, `SOURCIFY_URL`: upstreams the browser calls itself, so they ship as runtime data rather than baked into the bundle. All default to the public host.
-- `SOLO_B3TR_ADDRESS`, `SOLO_VOT3_ADDRESS`, `SOLO_STARGATE_NFT_ADDRESS`, `SOLO_STARGATE_DELEGATION_ADDRESS`: solo-network contract overrides
+Set them per environment through `runtime_config` in `terraform/environments/<env>/<env>.yaml`.
 
 ### Internationalization
 
-- Configured via `i18n/config.ts` with next-i18n-router
+- Configured via `i18n/config.ts`
 - Supported locales: EN, ES, FR, IT, JA, PT, RU, TR, DE, ZH, EL (default: EN)
-- Middleware handles locale detection and routing
+- The CDN detects the locale (the `NEXT_LOCALE` cookie, then `Accept-Language`) and redirects; the
+  default locale serves unprefixed, so `/en/tokens` 307s to `/tokens`
 - Translations loaded dynamically from `i18n/languages/*.json` (see `i18n/index.ts` and `i18n/provider.tsx`)
 
 ## Code Style
@@ -204,19 +207,19 @@ Automated semantic versioning via git tags — `package.json` version is `0.0.0-
 - `increment:minor` — new features (1.0.0 → 1.1.0)
 - `increment:major` — breaking changes (1.0.0 → 2.0.0)
 
-Real version comes from the git tag, injected as `APP_VERSION` at container start rather than baked
-into the bundle — so the image carries no PR or release identity and one build serves them all.
+Real version comes from the git tag, served in `runtime-config.json` rather than baked into the
+bundle — so the bundle carries no PR or release identity and one build serves them all.
 
-Images are content-addressed: `scripts/app-content-sha.sh` (also `pnpm app:sha`) hashes every file
-the Docker build reads, and that `app-<sha12>` is the canonical image tag with the version tags
-aliased onto it. A release changing only terraform, workflows or docs therefore skips both the image
-build and the ECS roll — the deploy pins `APP_VERSION` to whatever already serves that image, so a
-new release cannot register a task definition that differs only by a version string.
+Bundles are content-addressed: `scripts/app-content-sha.sh` (also `pnpm app:sha`) hashes every file
+the build reads, and that `app-<sha12>` is both the artifact's name and its prefix in the bucket. A
+release changing only terraform, workflows or docs therefore skips both the build and the upload —
+the deploy pins the version to whatever that bundle already serves, so a new release cannot rewrite
+the config with a version that changes nothing.
 
 ## Deployment
 
-- Docker support with standalone output mode
-- Dev, prod and previews all run as ECS Fargate services behind an ALB, across two AWS accounts, from one image
+- Static export served from CloudFront and S3, with no origin server
+- Dev and previews share one distribution in the dev account; prod has its own. `hosting` in the env YAML is what points a name at CloudFront rather than at the ALB, and prod is still `ecs`
 - Terraform is one stack per directory under `terraform/`, wired only through `terraform_remote_state`
 - Merging to `main` deploys dev and leaves one draft release; publishing it deploys prod
 - Preview envs deploy on the `create-preview` label at `pr-{number}.block-explorer-preview.vechain.org`, destroyed on PR close

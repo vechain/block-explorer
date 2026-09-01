@@ -1,6 +1,6 @@
 # The routing the Node server used to do, moved to the edge. The store is what makes one
-# distribution serve dev and every preview: the deploy pins a host's bundle here, and the function
-# reads it per request rather than the distribution being republished.
+# distribution serve dev and every preview: a host's bundle is read per request rather than the
+# distribution being republished.
 
 resource "aws_cloudfront_key_value_store" "routes" {
   name    = "${local.name}-routes"
@@ -15,11 +15,15 @@ resource "aws_cloudfront_function" "router" {
   publish                      = true
 }
 
-# Previews write their own keys from the preview workflow; these two are the environment's own.
+# Seeded here and moved by the deploy, so `bundle_prefix` in the env YAML is only a first apply.
 resource "aws_cloudfrontkeyvaluestore_key" "host" {
-  for_each = toset(local.record_names)
+  for_each = toset(concat(local.record_names, [aws_cloudfront_distribution.main.domain_name]))
 
   key_value_store_arn = aws_cloudfront_key_value_store.routes.arn
   key                 = each.value
   value               = jsonencode({ bundle = local.bundle_prefix, config = terraform.workspace })
+
+  lifecycle {
+    ignore_changes = [value]
+  }
 }
