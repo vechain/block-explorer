@@ -295,6 +295,9 @@ data "aws_iam_policy_document" "gha_allow" {
       "logs:*Deliver*",
       "logs:PutResourcePolicy",
       "logs:DescribeResourcePolicies",
+      "logs:TagResource",
+      "logs:UntagResource",
+      "logs:ListTagsForResource",
     ]
     resources = ["*"]
   }

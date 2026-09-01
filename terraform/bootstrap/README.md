@@ -101,7 +101,9 @@ region. The name prefix is what bounds them.
 
 A missing permission fails an apply rather than doing something unintended, so treat the first apply
 in a workspace as the test of this file. Add the action to the narrowest statement that fits and
-re-apply.
+re-apply. Watch for resources carrying `tags`: `default_tags` makes the provider call the service's
+`TagResource` and `ListTagsForResource` against the resource'"'"'s own ARN, which a statement scoped to
+a different ARN shape will miss.
 
 Both policies are capped at 6144 characters by AWS, which a `precondition` checks before an apply
 gets that far. dev's allow policy is the larger of the two at roughly 4.6k.
