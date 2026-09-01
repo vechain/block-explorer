@@ -77,6 +77,13 @@ function metrics are published per function per distribution; the dashboard read
 with `matchExact` off, but an alarm has no such option and a wrong dimension set is an alarm that
 watches nothing and says nothing.
 
+**Moving an alarm between regions means a new resource address.** The AWS provider stores `region`
+per resource, so putting `provider = aws.us_east_1` on one that already exists only changes which
+credentials are used — the API call still goes to the region in state, and a us-east-1 topic ARN on
+a eu-west-1 alarm fails with "Invalid region us-east-1 specified". The ALB's WAF alarm was replaced
+by a new `cdn_waf_blocked_requests` rather than re-pointed, which is honest anyway: it watches a
+different Web ACL.
+
 `alerts_enabled` in the env YAML turns alerting on, and dev has it off — no CloudWatch alarms and
 no subscription. Nobody acts on a dev page. The delivery path itself — both topics, the bridge
 Lambda and the webhook secret — costs nothing idle and is built either way, which is what keeps
