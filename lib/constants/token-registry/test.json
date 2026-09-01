@@ -527,7 +527,7 @@
     "address": "0x3ba9ef09ca4e664644a6e32d704c5cd8882998d0",
     "desc": "Bridged WAN from Wanchain at https://bridge-testnet.wanchain.org/AssetBridge.",
     "icon": "d1f646308d536866bc88dc1a885c45aa3fbfca20.png",
-    "totalSupply": "58922396500000000000",
+    "totalSupply": "59922396500000000000",
     "crossChainProvider": {
       "name": "wanchain",
       "url": "https://bridge-testnet.wanchain.org/AssetBridge"
@@ -540,7 +540,7 @@
     "address": "0x82479149a14713733aa60c9bc90f3ecf1315f704",
     "desc": "Bridged SOL from Wanchain at https://bridge-testnet.wanchain.org/AssetBridge.",
     "icon": "4f0d1666d00240aaf50da65217c27ee26cfaafca.png",
-    "totalSupply": "2096400000",
+    "totalSupply": "2098300000",
     "crossChainProvider": {
       "name": "wanchain",
       "url": "https://bridge-testnet.wanchain.org/AssetBridge"
@@ -553,7 +553,7 @@
     "address": "0x94a0f4e2a03d213317779fbabf1df4820143789b",
     "desc": "Bridged USDT from Wanchain at https://bridge-testnet.wanchain.org/AssetBridge.",
     "icon": "f12b8449e61f62f2bcc4847a911dfb6b206a4970.png",
-    "totalSupply": "1230506356",
+    "totalSupply": "1230416356",
     "crossChainProvider": {
       "name": "wanchain",
       "url": "https://bridge-testnet.wanchain.org/AssetBridge"
@@ -566,7 +566,7 @@
     "address": "0xaf9555d393212f82a74d892139a4f5d349a8f3f6",
     "desc": "Bridged USDC from Wanchain at https://bridge-testnet.wanchain.org/AssetBridge.",
     "icon": "0dc5e9031298774f5a0583b3c7bca9f00ab7cdf9.png",
-    "totalSupply": "35357505",
+    "totalSupply": "35457505",
     "crossChainProvider": {
       "name": "wanchain",
       "url": "https://bridge-testnet.wanchain.org/AssetBridge"
@@ -579,7 +579,7 @@
     "address": "0x6e8b4a88d37897fc11f6ba12c805695f1c41f40e",
     "desc": "The testnet VOT3 token used for testing purposes by developers",
     "icon": "dcc6e7f09932a389a536fe74107cd73af445dd65.png",
-    "totalSupply": "15386077441379875722887465",
+    "totalSupply": "55716519899672185704879375",
     "website": "https://docs.vebetterdao.org/developer-guides/test-environmnet"
   },
   {
@@ -589,7 +589,7 @@
     "address": "0x95761346d18244bb91664181bf91193376197088",
     "desc": "The testnet B3TR token used for testing purposes by developers",
     "icon": "38b6a2fdff4c109128935762dc27853c773fef21.png",
-    "totalSupply": "958206164525356207331796276",
+    "totalSupply": "1000153998658331362053132414",
     "website": "https://docs.vebetterdao.org/developer-guides/test-environmnet"
   }
 ]
