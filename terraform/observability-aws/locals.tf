@@ -91,19 +91,6 @@ locals {
               dashboard_url: "${local.dashboard_url}?viewPanel=11"
               ecs_url: "https://${var.aws_region}.console.aws.amazon.com/ecs/v2/clusters/${local.name}-cluster/services/${local.name}-{{ $labels.service }}/tasks/{{ $labels.aws_ecs_task_id }}/configuration"
 
-          # A default metric, so it exists from process start rather than from
-          # first traffic.
-          - alert: AppMetricsAbsent
-            expr: absent(process_cpu_seconds_total{source="app-frontend"})
-            for: ${local.metrics_absent_for}
-            labels:
-              severity: critical
-              env: ${terraform.workspace}
-            annotations:
-              title: "No metrics reaching AMP from the explorer"
-              summary: "The /api/metrics scrape has stopped producing series — the service is down, its sidecar is not scraping, or remote-write is failing. Every cache, upstream and app-error rule is blind until it returns."
-              dashboard_url: "${local.dashboard_url}?viewPanel=20"
-
           # Fleet-wide: one task losing its sidecar is invisible here.
           - alert: EcsSidecarMetricsAbsent
             expr: absent(ecs_task_cpu_utilized_None{source="ecs-sidecar"})

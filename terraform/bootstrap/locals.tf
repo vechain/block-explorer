@@ -16,7 +16,8 @@ locals {
       gha_subjects = ["repo:vechain/block-explorer:environment:prod"]
 
       # Route53 writes go through dns/'s role in the other account.
-      public_zone_names = []
+      public_zone_names   = []
+      readable_zone_names = []
 
       foreign_state_bucket_names = ["explore-terraform-state-prod"]
 
@@ -36,8 +37,11 @@ locals {
         "repo:vechain/block-explorer:ref:refs/heads/main",
       ]
 
-      # Both are here, and dev writes them itself rather than assuming dns/'s role.
+      # The two dev writes itself rather than assuming dns/'s role.
       public_zone_names = ["block-explorer.vechain.org", "block-explorer-preview.vechain.org"]
+
+      # dns/ resolves this one to grant the prod role; no dev record lives in it.
+      readable_zone_names = ["explore.vechain.org"]
 
       foreign_state_bucket_names = [
         "explore-terraform-state-dev",
@@ -64,6 +68,7 @@ locals {
     create_ecr                  = false
     gha_subjects                = ["repo:vechain/block-explorer:environment:none"]
     public_zone_names           = []
+    readable_zone_names         = []
     foreign_state_bucket_names  = []
     pipeline_role_name_patterns = []
   })
@@ -78,7 +83,8 @@ locals {
   ecr_repository_arn = local.account.create_ecr ? one(aws_ecr_repository.app[*].arn) : one(data.aws_ecr_repository.existing[*].arn)
   ecr_repository_url = local.account.create_ecr ? one(aws_ecr_repository.app[*].repository_url) : one(data.aws_ecr_repository.existing[*].repository_url)
 
-  zone_arns = [for z in data.aws_route53_zone.public : z.arn]
+  zone_arns          = [for z in data.aws_route53_zone.public : z.arn]
+  readable_zone_arns = [for z in data.aws_route53_zone.readable : z.arn]
 
   # Every managed policy the stacks attach to a role they create. Adding a
   # statement to an inline policy needs no entry here; attaching one does.
