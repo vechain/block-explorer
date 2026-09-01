@@ -53,7 +53,7 @@ dns_record_enabled: true
 dns_weight: 100
 
 # Static hosting. `cdn` moves both names off the ALB; the ALB and its service stay for a rollback.
-hosting: ecs
+hosting: cdn
 bundle_prefix: app-unpublished # Only seeds a first apply; the deploy owns the live value.
 cdn_price_class: PriceClass_All
 
