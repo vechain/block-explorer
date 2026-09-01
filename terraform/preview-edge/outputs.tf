@@ -4,7 +4,7 @@ output "alb_arn" {
 }
 
 output "alb_dns_name" {
-  description = "Preview ALB DNS name. Every pr-*.<suffix> name aliases to this."
+  description = "Preview ALB DNS name. Nothing points at it since the previews moved to the CDN."
   value       = aws_lb.preview.dns_name
 }
 

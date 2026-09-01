@@ -1,7 +1,7 @@
 # Block Explorer Deployment Guide
 
-Dev, prod and per-PR previews all run as ECS Fargate services behind an ALB, in two AWS accounts, from
-one image. None of the three is deployed by hand; only the account-setup stacks are.
+Dev, prod and per-PR previews all serve one static bundle from CloudFront and S3, in two AWS accounts,
+with no origin server. None of the three is deployed by hand; only the account-setup stacks are.
 
 - **Infrastructure** — [terraform/README.md](terraform/README.md): the stack layout, environment
   config, the shared cache, observability, and how prod's account is stood up.
@@ -22,69 +22,58 @@ Version numbers come from git tags and are **never stored in `package.json`**, w
 Every PR needs one label before it merges — `increment:major`, `increment:minor` or
 `increment:patch`; `validate-version-label.yml` blocks the merge without one. On merge,
 `codebase-versioning.yml` reads the label and pushes the next `v.X.Y.Z` tag. That tag is what builds
-the image and what the UI shows, injected at container start as `APP_VERSION`. Unset, it reads `dev`.
+the bundle and what the UI shows, fetched at boot from `runtime-config.json`. Unset, it reads `dev`.
 
 On dev and prod that is the release which last **changed** the app, not necessarily the newest one.
-Images are content-addressed (see `scripts/app-content-sha.sh`), so a release carrying only terraform,
-workflow or docs changes reuses the existing image, and the deploy carries its version forward rather
-than registering a task definition that differs only by a version string — so what the footer shows is
-the version actually serving traffic. `.github/workflows/README.md` has the full tagging scheme.
+Bundles are content-addressed (see `scripts/app-content-sha.sh`), so a release carrying only terraform,
+workflow or docs changes reuses the bundle already in the bucket, and the deploy carries its version
+forward rather than rewriting the config with a version that changes nothing — so what the footer
+shows is the version actually serving traffic. `.github/workflows/README.md` has the full scheme.
 
 ## Releasing to prod
 
-Each dev deploy leaves exactly one draft release. Publishing it is the prod deploy: the image is
-promoted from GHCR into the prod account's ECR, the Terraform stacks are applied in order, and the ECS
-service is rolled and then checked over its ALB. Dev and prod run the same image, so parity is
+Each dev deploy leaves exactly one draft release. Publishing it is the prod deploy: the Terraform
+stacks are applied in order, the bundle is copied into the prod account's bucket, and the hosts are
+pointed at it and then checked through CloudFront. Dev and prod serve the same bundle, so parity is
 structural rather than maintained by hand.
 
 Rolling back is a `workflow_dispatch` of `deploy.yml` against the previous tag, with `prod` as the
 environment.
 
-## Public Docker image
+### Prod is still on the ALB
 
-The image is published to GitHub Container Registry as a public image, which is what makes it usable
-next to a local VeChain node.
+`hosting` in `terraform/environments/prod/prod.yaml` decides which of the two serving paths the
+public names resolve to, and prod is still `ecs`. Its CloudFront distribution is built, published to
+and verified by every release; only its DNS weight is zero. Moving prod is changing that one line to
+`cdn` and applying — and moving it back is the same edit in the other direction, for as long as the
+ECS service exists.
 
-```bash
-docker pull ghcr.io/vechain/block-explorer:latest
-```
+Nothing builds a container image any more, so the ECS tasks are frozen on the last image built before
+the cutover and the deploy pins them there. Prod therefore serves that build until it moves.
 
-`publish-ghcr-image.yml` pushes it on every `v.*` tag, multi-arch. For an ad-hoc push outside CI:
+## The public Docker image is gone
 
-```bash
-echo $(gh auth token) | docker login ghcr.io -u $(gh api user --jq .login) --password-stdin
-pnpm ghcr:push
-```
+`ghcr.io/vechain/block-explorer` was a Next.js server, and a static export has no server to put in a
+container. Nothing publishes the image as of this release, and the last tag stays pullable but will
+not be updated.
 
-In a `docker-compose.yml`:
-
-```yaml
-services:
-  block-explorer:
-    image: ghcr.io/vechain/block-explorer:latest
-    ports:
-      - '3000:3000'
-    environment:
-      - APP_VERSION=${APP_VERSION}
-      - NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL=${NEXT_PUBLIC_IPFS_GATEWAY_PROXY_URL}
-      - B32_URL=${B32_URL}
-      - NEXT_PUBLIC_COIN_API_URL=${NEXT_PUBLIC_COIN_API_URL}
-      - NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_MAINNET_URL}
-      - NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL=${NEXT_PUBLIC_VEWORLD_INDEXER_TESTNET_URL}
-```
+Running the explorer next to a local node now means building it and serving `out/` with any static
+file server, plus a `runtime-config.json` of your own. Note that the URL routing the CDN does —
+locale selection and the rewrite of `/block/0x…` onto the prerendered shell — is
+[terraform/cdn/edge-router.js](terraform/cdn/edge-router.js), and a plain file server does none of it.
 
 ## When a deploy goes wrong
 
-Start at the workflow run: every deploy plans each stack immediately before applying it, and the roll
-step fails loudly if `/api/health` does not come back 200 or `/api/metrics` is reachable from outside.
+Start at the workflow run: every deploy plans each stack immediately before applying it, and the
+`activate` step fails loudly if the CDN does not serve the version it just wrote.
 
-- **Task starts and dies** — container logs are in CloudWatch under
-  `/ecs/block-explorer-<env>-frontend`, and
-  the ECS service events name the reason. A missing secret is the usual one; secrets are read only at
-  task start, so a value written after a deploy needs another roll.
-- **Targets never go healthy** — the target group's health check is `/api/health` on the container
-  port. Confirm the task is listening on it before looking at the ALB.
+- **The site 403s or 404s everywhere** — the routing store names a prefix that is not in the bucket.
+  Re-run the deploy; `publish` is what fills it, and `activate` is what points at it.
+- **A stale page** — only `runtime-config.json` is ever overwritten in place, and `activate`
+  invalidates it. Everything else carries its bundle in the path, so it cannot be stale.
+- **A 404 on a route that exists** — the edge router has its own table of routes; `terraform/cdn/edge-router.spec.ts`
+  is what keeps it matching `app/[locale]`, and it runs in CI.
 - **Alarms and dashboards** — Grafana, linked from the deploy summary. Alert routing and what is
   alarmed are in [terraform/README.md](terraform/README.md).
-- **A preview is stuck** — `preview-reconcile.yml` sweeps orphaned workspaces every six hours and can
-  be run on demand.
+- **A preview is stuck** — `preview-reconcile.yml` sweeps orphaned routing keys every six hours and
+  can be run on demand.

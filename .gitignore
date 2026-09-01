@@ -33,6 +33,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# except the public build-time values, which are part of the bundle's content SHA
+!.env.production
 
 # vercel
 .vercel

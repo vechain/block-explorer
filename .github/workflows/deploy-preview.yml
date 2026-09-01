@@ -1,5 +1,9 @@
 name: Deploy Preview Environment
 
+# A preview is a bundle in the shared bucket, its own runtime-config.json, and one key in the
+# routing store. There is nothing per-PR in the infrastructure any more, so a teardown is three
+# deletes and can never strand a load balancer rule or a DNS record.
+
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
@@ -12,17 +16,16 @@ concurrency:
 
 env:
   AWS_REGION: eu-west-1
-  ECR_REPOSITORY: block-explorer
-  GHCR_REGISTRY: ghcr.io
   TERRAFORM_VERSION: 1.16.0
-  TERRAFORM_DIR: terraform/frontend-preview
-  TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
+  CDN_DIR: terraform/cdn
+  CDN_BACKEND_CONFIG: ../environments/dev/backend.config
 
 jobs:
   # The `create-preview` label is the approval; one-way, with teardown still on PR close.
   gate:
     name: Preview deploy gate
     runs-on: ubuntu-latest
+    permissions: {}
     # A `labeled` event fires for any label, hence the last clause.
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
@@ -47,118 +50,72 @@ jobs:
 
             Building `${{ github.event.pull_request.head.sha }}`. [Follow along →](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-  # Promoted, not rebuilt: previews run the arm64 image dev and prod run.
-  image:
-    name: Promote PR Image to ECR
+  deploy:
+    name: Deploy Preview Environment
     runs-on: ubuntu-latest
     needs: [gate]
     permissions:
       id-token: write
       contents: read
-      packages: read
+      actions: read
+    # Shared, never per-PR: nothing in a workflow can delete an environment. See workflows/README.md.
     environment:
       name: preview
+      url: https://pr-${{ github.event.pull_request.number }}.block-explorer-preview.vechain.org
     outputs:
-      ecr_tag: ${{ steps.meta.outputs.ecr_tag }}
-      app_version: ${{ steps.meta.outputs.app_version }}
+      url: ${{ steps.meta.outputs.url }}
     steps:
-      # Base, not the PR head: this job assumes a role, so the script it runs
-      # must not be one the PR can edit.
-      - name: Checkout base
+      # The tree the artifact was named from, and not one the PR can edit.
+      - name: Checkout the default branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Resolve tags
+      - name: Resolve the preview's identity
         id: meta
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          git rev-parse --verify "${HEAD_SHA}^{commit}" >/dev/null 2>&1 \
-            || git fetch --quiet origin "$HEAD_SHA"
+          git rev-parse --verify "${HEAD_SHA}^{commit}" >/dev/null 2>&1 || git fetch --quiet origin "$HEAD_SHA"
           APP_SHA=$(bash scripts/app-content-sha.sh "$HEAD_SHA")
           SHORT_SHA="${HEAD_SHA:0:7}"
           {
-            echo "ghcr_tag=pr.${PR_NUMBER}.${SHORT_SHA}"
-            echo "ecr_tag=pr-${PR_NUMBER}-${APP_SHA}"
+            echo "app_sha=${APP_SHA}"
+            echo "config=pr-${PR_NUMBER}"
+            echo "host=pr-${PR_NUMBER}.block-explorer-preview.vechain.org"
+            echo "url=https://pr-${PR_NUMBER}.block-explorer-preview.vechain.org"
             echo "app_version=v.0.0.0-pr.${PR_NUMBER}.${SHORT_SHA}"
           } >> "$GITHUB_OUTPUT"
           echo "PR #${PR_NUMBER} at ${HEAD_SHA} carries app content ${APP_SHA}."
 
-      - name: Login to GHCR
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ${{ env.GHCR_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Long window because a `labeled` event can arrive while the unit tests
-      # and the image build are still running on that commit.
-      - name: Wait for the PR image
+      # Long window because a `labeled` event can arrive while the unit tests and the bundle build
+      # are still running on that commit.
+      - name: Wait for the bundle
+        id: artifact
         env:
-          GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.ghcr_tag }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          APP_SHA: ${{ steps.meta.outputs.app_sha }}
         run: |
           set -euo pipefail
+
           for attempt in $(seq 1 40); do
-            if docker buildx imagetools inspect "$GHCR_IMAGE" >/dev/null 2>&1; then
-              echo "${GHCR_IMAGE} is published."
+            url=$(gh api "repos/${REPO}/actions/artifacts?name=${APP_SHA}&per_page=100" \
+              --jq '[.artifacts[] | select(.expired == false)] | first | .archive_download_url // empty')
+            if [ -n "$url" ]; then
+              echo "url=${url}" >> "$GITHUB_OUTPUT"
+              echo "${APP_SHA} is published."
               exit 0
             fi
             echo "Attempt ${attempt}/40: not published yet, retrying in 30s..."
             sleep 30
           done
-          echo "::error::${GHCR_IMAGE} never appeared. The unit tests for this commit have to pass before a preview can deploy."
+          echo "::error::No bundle named ${APP_SHA} appeared. The unit tests for this commit have to pass before a preview can deploy."
           exit 1
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ACC_ROLE }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
-
-      # Copies the manifest list rather than one platform, so the arm64 task can
-      # resolve its own architecture. Source is the alias just waited for.
-      - name: Copy manifest list from GHCR to ECR
-        env:
-          GHCR_IMAGE: ${{ env.GHCR_REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.ghcr_tag }}
-          ECR_IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.ecr_tag }}
-          ECR_TAG: ${{ steps.meta.outputs.ecr_tag }}
-        run: |
-          set -euo pipefail
-
-          if aws ecr describe-images --repository-name "$ECR_REPOSITORY" \
-               --image-ids "imageTag=${ECR_TAG}" --no-cli-pager >/dev/null 2>&1; then
-            echo "${ECR_TAG} is already in ECR — this push changed nothing the build reads."
-            exit 0
-          fi
-
-          docker buildx imagetools create -t "$ECR_IMAGE" "$GHCR_IMAGE"
-          docker buildx imagetools inspect "$ECR_IMAGE"
-
-  deploy:
-    name: Deploy Preview Environment
-    runs-on: ubuntu-latest
-    needs: [gate, image]
-    permissions:
-      id-token: write
-      contents: read
-    # Shared, never per-PR: nothing in a workflow can delete an environment. See workflows/README.md.
-    environment:
-      name: preview
-      url: https://pr-${{ github.event.pull_request.number }}.block-explorer-preview.vechain.org
-    outputs:
-      url: ${{ steps.outputs.outputs.url }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
@@ -172,68 +129,96 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
-      # Terraform owns the task definition here, so the apply is what rolls the service.
-      - name: Terraform apply
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          IMAGE_TAG: ${{ needs.image.outputs.ecr_tag }}
-          APP_VERSION: ${{ needs.image.outputs.app_version }}
+      # Read-only: previews own no infrastructure, they borrow dev's distribution.
+      - name: Read the CDN outputs
+        id: cdn
+        working-directory: ${{ env.CDN_DIR }}
         run: |
           set -euo pipefail
-          terraform init -input=false -backend-config="${TERRAFORM_BACKEND_CONFIG}"
-          terraform workspace select -or-create "pr-${PR_NUMBER}"
-          terraform plan -input=false -out=tfplan \
-            -var="pr_number=${PR_NUMBER}" -var="image_tag=${IMAGE_TAG}" -var="app_version=${APP_VERSION}"
-          terraform apply -input=false -auto-approve tfplan
-
-      - name: Read outputs
-        id: outputs
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        run: |
-          set -euo pipefail
+          terraform init -input=false -backend-config="${CDN_BACKEND_CONFIG}"
+          terraform workspace select dev
           {
-            echo "url=$(terraform output -raw url)"
-            echo "cluster=$(terraform output -raw cluster_name)"
-            echo "service=$(terraform output -raw service_name)"
+            echo "bucket=$(terraform output -raw bucket_name)"
+            echo "distribution=$(terraform output -raw distribution_id)"
+            echo "kvs_arn=$(terraform output -raw key_value_store_arn)"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Wait for the service
+      # Shared with dev and with every other preview on the same content, so this is usually a skip.
+      - name: Copy the bundle into the bucket
         env:
-          CLUSTER: ${{ steps.outputs.outputs.cluster }}
-          SERVICE: ${{ steps.outputs.outputs.service }}
-        run: aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
+          BUCKET: ${{ steps.cdn.outputs.bucket }}
+          APP_SHA: ${{ steps.meta.outputs.app_sha }}
+          ARTIFACT_URL: ${{ steps.artifact.outputs.url }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if aws s3api head-object --bucket "$BUCKET" --key "${APP_SHA}/en.html" >/dev/null 2>&1; then
+            echo "${APP_SHA} is already in ${BUCKET}."
+            exit 0
+          fi
+
+          curl -sSfL -H "Authorization: Bearer ${GH_TOKEN}" -o artifact.zip "$ARTIFACT_URL"
+          unzip -q artifact.zip
+          mkdir -p bundle && tar -xzf bundle.tgz -C bundle
+
+          aws s3 sync bundle/_next "s3://${BUCKET}/${APP_SHA}/_next" --only-show-errors \
+            --cache-control 'public, max-age=31536000, immutable'
+          aws s3 sync bundle "s3://${BUCKET}/${APP_SHA}" --exclude '_next/*' --only-show-errors \
+            --cache-control 'public, max-age=0, must-revalidate, s-maxage=31536000'
+
+      - name: Activate the preview
+        env:
+          BUCKET: ${{ steps.cdn.outputs.bucket }}
+          KVS_ARN: ${{ steps.cdn.outputs.kvs_arn }}
+          DISTRIBUTION: ${{ steps.cdn.outputs.distribution }}
+          APP_SHA: ${{ steps.meta.outputs.app_sha }}
+          APP_VERSION: ${{ steps.meta.outputs.app_version }}
+          CONFIG: ${{ steps.meta.outputs.config }}
+          HOST: ${{ steps.meta.outputs.host }}
+        run: |
+          set -euo pipefail
+
+          jq -n --arg version "$APP_VERSION" --arg bundle "$APP_SHA" \
+            '{appVersion: $version, allowDevMode: true, soloContracts: {}, bundle: $bundle}' \
+            > runtime-config.json
+
+          aws s3 cp runtime-config.json "s3://${BUCKET}/${CONFIG}/runtime-config.json" \
+            --content-type application/json --cache-control 'no-cache' --only-show-errors
+
+          etag=$(aws cloudfront-keyvaluestore describe-key-value-store --kvs-arn "$KVS_ARN" \
+            --no-cli-pager --query ETag --output text)
+          aws cloudfront-keyvaluestore put-key --kvs-arn "$KVS_ARN" --if-match "$etag" \
+            --key "$HOST" --value "$(jq -nc --arg b "$APP_SHA" --arg c "$CONFIG" '{bundle: $b, config: $c}')" \
+            --no-cli-pager >/dev/null
+
+          id=$(aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION" \
+            --paths "/runtime-config.json" "/${CONFIG}/runtime-config.json" \
+            --no-cli-pager --query 'Invalidation.Id' --output text)
+          aws cloudfront wait invalidation-completed --distribution-id "$DISTRIBUTION" --id "$id"
 
       - name: Confirm the preview is serving
         env:
-          URL: ${{ steps.outputs.outputs.url }}
+          URL: ${{ steps.meta.outputs.url }}
+          APP_VERSION: ${{ steps.meta.outputs.app_version }}
         run: |
           set -euo pipefail
           for attempt in $(seq 1 10); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "${URL}/api/health" || true)
-            if [ "$code" = "200" ]; then
-              echo "${URL}/api/health returned 200."
+            served=$(curl -sf "${URL}/runtime-config.json" | jq -r '.appVersion // empty' || true)
+            if [ "$served" = "$APP_VERSION" ]; then
+              echo "${URL} serves ${served}."
               exit 0
             fi
-            echo "Attempt ${attempt}/10: got '${code}', retrying in 15s..."
+            echo "Attempt ${attempt}/10: saw '${served}', retrying in 15s..."
             sleep 15
           done
-          echo "::error::${URL}/api/health never returned 200."
+          echo "::error::${URL} never served ${APP_VERSION}."
           exit 1
-
-      # Without it every indexer call leaves from dev's one NAT IP and takes its rate limit.
-      - name: Warn if the indexer bypass token is missing
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        run: |
-          set -euo pipefail
-          if [ "$(terraform output -raw indexer_bypass_attached)" != "true" ]; then
-            echo "::warning::No indexer rate-limit bypass token is attached; expect 429s from the indexer."
-          fi
 
   comment:
     name: Update PR Comment
     runs-on: ubuntu-latest
-    needs: [gate, image, deploy]
+    needs: [gate, deploy]
     # `always()` disables the implicit skip, so the gate has to be re-checked here.
     if: always() && needs.gate.result == 'success'
     permissions:

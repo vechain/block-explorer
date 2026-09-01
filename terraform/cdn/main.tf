@@ -235,6 +235,23 @@ resource "aws_route53_record" "app" {
   }
 }
 
+# One record for every PR, as preview-edge/ held it: a preview writes no DNS at all, only its own
+# key in the store, so a teardown cannot strand a name.
+resource "aws_route53_record" "preview_wildcard" {
+  for_each = toset(compact([local.preview_wildcard]))
+  provider = aws.dns
+
+  zone_id = data.aws_route53_zone.public[local.alias_zones[each.value]].zone_id
+  name    = each.value
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.main.domain_name
+    zone_id                = aws_cloudfront_distribution.main.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
 resource "terraform_data" "workspace_guard" {
   lifecycle {
     precondition {
