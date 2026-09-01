@@ -1,12 +1,15 @@
 {
   "uid": "be-overview",
   "title": "Block explorer overview (${env})",
-  "description": "Infrastructure from CloudWatch, application metrics from AMP. The WAF request detail row is CloudWatch Logs Insights, which bills on bytes scanned — it stays collapsed so it runs only while open, and this dashboard refreshes every minute. Terraform owns this dashboard, so edits made here are replaced on the next apply.",
+  "description": "CloudFront and WAF metrics from CloudWatch in us-east-1, which is the only region either publishes to. The WAF request detail row is CloudWatch Logs Insights, which bills on bytes scanned \u2014 it stays collapsed so it runs only while open, and this dashboard refreshes every minute. Terraform owns this dashboard, so edits made here are replaced on the next apply.",
   "tags": ["block-explorer", "${env}"],
   "timezone": "utc",
   "schemaVersion": 41,
   "refresh": "1m",
-  "time": { "from": "now-6h", "to": "now" },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
   "links": [
     {
       "type": "dashboards",
@@ -24,22 +27,41 @@
       "type": "row",
       "title": "Traffic",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "panels": []
     },
     {
       "id": 5,
       "type": "stat",
       "title": "Total requests",
-      "description": "Everything the load balancer routed over the selected range — the area under the line beside it. Pages, assets and API calls together.",
-      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 4, "x": 0, "y": 1 },
+      "description": "Everything CloudFront answered over the selected range, cache hits included. There is no origin server, so this is the whole of the serving path.",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource_uid_cloudwatch}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
       "fieldConfig": {
-        "defaults": { "unit": "short" },
+        "defaults": {
+          "unit": "short"
+        },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": false
+        },
         "colorMode": "none",
         "graphMode": "area",
         "textMode": "auto"
@@ -47,14 +69,20 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
           "region": "${region}",
-          "namespace": "AWS/ApplicationELB",
-          "metricName": "RequestCount",
-          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
+          "namespace": "AWS/CloudFront",
+          "metricName": "Requests",
+          "dimensions": {
+            "DistributionId": "${distribution_id}",
+            "Region": "Global"
+          },
           "statistic": "Sum",
           "period": "",
           "matchExact": true,
@@ -66,27 +94,55 @@
       "id": 1,
       "type": "timeseries",
       "title": "Requests per minute",
-      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 8, "x": 4, "y": 1 },
+      "description": "Viewer requests, whether CloudFront served them from cache or fetched the object from the bucket.",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource_uid_cloudwatch}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 4,
+        "y": 1
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "custom": { "lineWidth": 1, "fillOpacity": 10, "showPoints": "never" }
+          "min": 0,
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
         },
         "overrides": []
       },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
           "region": "${region}",
-          "namespace": "AWS/ApplicationELB",
-          "metricName": "RequestCount",
-          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
+          "namespace": "AWS/CloudFront",
+          "metricName": "Requests",
+          "dimensions": {
+            "DistributionId": "${distribution_id}",
+            "Region": "Global"
+          },
           "statistic": "Sum",
           "period": "60",
           "matchExact": true,
@@ -97,401 +153,235 @@
     {
       "id": 3,
       "type": "timeseries",
-      "title": "5xx responses per minute",
-      "description": "ELB 5xx means the load balancer had nothing healthy to route to, or timed out. Target 5xx came from the explorer itself.",
-      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 1 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
-        },
-        "overrides": []
+      "title": "Error rate",
+      "description": "Percentages of viewer requests, not counts. 404 is expected background: the edge router answers a malformed block id or address with one rather than serving the shell. 403 is the one to read as an outage \u2014 a bundle prefix the bucket does not hold reads as 403, so a step change there is a bad activate.",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource_uid_cloudwatch}"
       },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "AWS/ApplicationELB",
-          "metricName": "HTTPCode_Target_5XX_Count",
-          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
-          "statistic": "Sum",
-          "period": "60",
-          "matchExact": true,
-          "label": "Target 5xx"
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "AWS/ApplicationELB",
-          "metricName": "HTTPCode_ELB_5XX_Count",
-          "dimensions": { "LoadBalancer": "${alb_suffix}" },
-          "statistic": "Sum",
-          "period": "60",
-          "matchExact": true,
-          "label": "ELB 5xx"
-        }
-      ]
-    },
-    {
-      "id": 7,
-      "type": "timeseries",
-      "title": "4xx responses per minute",
-      "description": "ELB 4xx means the request never reached a target — malformed, or no listener rule matched. Target 4xx came from the explorer itself, mostly 404s for unknown routes.",
-      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 1 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
-        },
-        "overrides": []
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 14,
+        "y": 1
       },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "AWS/ApplicationELB",
-          "metricName": "HTTPCode_Target_4XX_Count",
-          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
-          "statistic": "Sum",
-          "period": "60",
-          "matchExact": true,
-          "label": "Target 4xx"
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "AWS/ApplicationELB",
-          "metricName": "HTTPCode_ELB_4XX_Count",
-          "dimensions": { "LoadBalancer": "${alb_suffix}" },
-          "statistic": "Sum",
-          "period": "60",
-          "matchExact": true,
-          "label": "ELB 4xx"
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "type": "timeseries",
-      "title": "Response time",
-      "description": "Every page is server-rendered per request, so this tracks upstream latency rather than cache warmth.",
-      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
       "fieldConfig": {
         "defaults": {
-          "unit": "s",
-          "custom": { "lineWidth": 1, "fillOpacity": 0, "showPoints": "never" }
-        },
-        "overrides": []
-      },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "AWS/ApplicationELB",
-          "metricName": "TargetResponseTime",
-          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
-          "statistic": "Average",
-          "period": "60",
-          "matchExact": true,
-          "label": "Average"
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "AWS/ApplicationELB",
-          "metricName": "TargetResponseTime",
-          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
-          "statistic": "p95",
-          "period": "60",
-          "matchExact": true,
-          "label": "p95"
-        }
-      ]
-    },
-    {
-      "id": 4,
-      "type": "timeseries",
-      "title": "Target health",
-      "description": "Published per availability zone, so this is the maximum across them — the same statistic the no-healthy-targets alarm uses.",
-      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
+          "unit": "percent",
           "min": 0,
-          "custom": { "lineWidth": 2, "fillOpacity": 0, "showPoints": "never" }
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
         },
-        "overrides": []
-      },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "AWS/ApplicationELB",
-          "metricName": "HealthyHostCount",
-          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
-          "statistic": "Maximum",
-          "period": "60",
-          "matchExact": true,
-          "label": "Healthy"
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "AWS/ApplicationELB",
-          "metricName": "UnHealthyHostCount",
-          "dimensions": { "LoadBalancer": "${alb_suffix}", "TargetGroup": "${tg_suffix}" },
-          "statistic": "Maximum",
-          "period": "60",
-          "matchExact": true,
-          "label": "Unhealthy"
-        }
-      ]
-    },
-    {
-      "id": 6,
-      "type": "table",
-      "title": "Requests by endpoint",
-      "description": "Counted at the app, so this covers the proxy API routes only — page and asset requests are not in here, and it will not add up to the total above. A path the allowlist does not carry is counted against its proxy's /* row rather than growing a series of its own.",
-      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 17 },
-      "fieldConfig": {
-        "defaults": { "custom": { "align": "auto", "filterable": true } },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "endpoint" },
-            "properties": [{ "id": "custom.width", "value": 320 }]
+            "matcher": {
+              "id": "byName",
+              "options": "5xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "requests" },
+            "matcher": {
+              "id": "byName",
+              "options": "403"
+            },
             "properties": [
-              { "id": "unit", "value": "short" },
-              { "id": "decimals", "value": 0 },
-              { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "4xx total"
+            },
+            "properties": [
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [8, 4]
+                }
+              }
             ]
           }
         ]
       },
-      "options": { "showHeader": true, "sortBy": [{ "displayName": "requests", "desc": true }] },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["last", "max"]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-          "editorMode": "code",
-          "format": "table",
-          "instant": true,
-          "range": false,
-          "expr": "sum by (route) (increase(block_explorer_http_responses_total{source=\"app-frontend\"}[$__range]))"
-        }
-      ],
-      "transformations": [
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "5xxErrorRate",
+          "dimensions": {
+            "DistributionId": "${distribution_id}",
+            "Region": "Global"
+          },
+          "statistic": "Average",
+          "period": "60",
+          "matchExact": true,
+          "label": "5xx"
+        },
         {
-          "id": "organize",
-          "options": {
-            "excludeByName": { "Time": true },
-            "renameByName": { "route": "endpoint", "Value": "requests", "Value #A": "requests" }
-          }
+          "refId": "B",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "403ErrorRate",
+          "dimensions": {
+            "DistributionId": "${distribution_id}",
+            "Region": "Global"
+          },
+          "statistic": "Average",
+          "period": "60",
+          "matchExact": true,
+          "label": "403"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "404ErrorRate",
+          "dimensions": {
+            "DistributionId": "${distribution_id}",
+            "Region": "Global"
+          },
+          "statistic": "Average",
+          "period": "60",
+          "matchExact": true,
+          "label": "404"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "4xxErrorRate",
+          "dimensions": {
+            "DistributionId": "${distribution_id}",
+            "Region": "Global"
+          },
+          "statistic": "Average",
+          "period": "60",
+          "matchExact": true,
+          "label": "4xx total"
         }
       ]
     },
     {
       "id": 101,
       "type": "row",
-      "title": "Tasks",
+      "title": "Cache and origin",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 },
-      "panels": []
-    },
-    {
-      "id": 12,
-      "type": "timeseries",
-      "title": "Tasks running against desired",
-      "description": "A gap that outlasts a rolling deploy is a stuck deploy or a placement failure.",
-      "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 26 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "custom": { "lineWidth": 2, "fillOpacity": 0, "showPoints": "never" }
-        },
-        "overrides": []
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
       },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "ECS/ContainerInsights",
-          "metricName": "RunningTaskCount",
-          "dimensions": { "ClusterName": "${cluster_name}", "ServiceName": "${frontend_service_name}" },
-          "statistic": "Average",
-          "period": "60",
-          "matchExact": true,
-          "label": "explorer running"
-        },
-        {
-          "refId": "B",
-          "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "queryMode": "Metrics",
-          "metricQueryType": 0,
-          "metricEditorMode": 0,
-          "region": "${region}",
-          "namespace": "ECS/ContainerInsights",
-          "metricName": "DesiredTaskCount",
-          "dimensions": { "ClusterName": "${cluster_name}", "ServiceName": "${frontend_service_name}" },
-          "statistic": "Average",
-          "period": "60",
-          "matchExact": true,
-          "label": "explorer desired"
-        }
-      ]
-    },
-    {
-      "id": 10,
-      "type": "timeseries",
-      "title": "Task CPU against reservation",
-      "description": "One series per task, from that task's own sidecar.",
-      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 26 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "custom": { "lineWidth": 1, "fillOpacity": 10, "showPoints": "never" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 80 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-          "editorMode": "code",
-          "range": true,
-          "expr": "100 * ecs_task_cpu_utilized_None{source=\"ecs-sidecar\"} / ecs_task_cpu_reserved_None{source=\"ecs-sidecar\"}",
-          "legendFormat": "{{service}} {{aws_ecs_task_id}}"
-        }
-      ]
-    },
-    {
-      "id": 11,
-      "type": "timeseries",
-      "title": "Task memory against reservation",
-      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 26 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "custom": { "lineWidth": 1, "fillOpacity": 10, "showPoints": "never" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 80 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-          "editorMode": "code",
-          "range": true,
-          "expr": "100 * ecs_task_memory_utilized_Megabytes{source=\"ecs-sidecar\"} / ecs_task_memory_reserved_Megabytes{source=\"ecs-sidecar\"}",
-          "legendFormat": "{{service}} {{aws_ecs_task_id}}"
-        }
-      ]
-    },
-    {
-      "id": 102,
-      "type": "row",
-      "title": "Cache and upstreams",
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 },
       "panels": []
     },
     {
       "id": 20,
       "type": "stat",
       "title": "Cache hit rate",
-      "description": "Backed by the shared Valkey, so one task serves what another fetched. Keys carry the image tag, so a deploy still starts cold, and the five-second chain-state entries dominate the volume — which holds the ceiling well below 100%.",
-      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 35 },
+      "description": "Share of cacheable requests served from an edge cache. Every key under a bundle prefix is immutable and the prefix is in the cache key, so this belongs above 90% \u2014 the cdn-cache-hit-rate-low alarm fires under 80%.",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource_uid_cloudwatch}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 0,
+        "y": 10
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "min": 0,
-          "max": 100,
+          "decimals": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "orange", "value": 40 },
-              { "color": "green", "value": 70 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "green",
+                "value": 90
+              }
             ]
           }
         },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
         "colorMode": "value",
         "graphMode": "area",
         "textMode": "auto"
@@ -499,132 +389,501 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-          "editorMode": "code",
-          "range": true,
-          "expr": "100 * amp:cache_hits:ratio5m",
-          "legendFormat": "hit rate"
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "CacheHitRate",
+          "dimensions": {
+            "DistributionId": "${distribution_id}",
+            "Region": "Global"
+          },
+          "statistic": "Average",
+          "period": "300",
+          "matchExact": true,
+          "label": "Hit rate"
         }
       ]
     },
     {
       "id": 21,
       "type": "timeseries",
-      "title": "Cache lookups by result",
-      "description": "A stale serve is counted as a hit — the library raises no separate event — so the background-refresh rate reads as upstream fetches minus misses.",
-      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 9, "x": 6, "y": 35 },
+      "title": "Cache hit rate over time",
+      "description": "A dip right after a deploy is the invalidation of runtime-config.json plus a cold prefix, and recovers within minutes. A step down that stays is the routing store pointing hosts somewhere unexpected.",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource_uid_cloudwatch}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 4,
+        "y": 10
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
-          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
+          "unit": "percent",
+          "min": 0,
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
         },
         "overrides": []
       },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-          "editorMode": "code",
-          "range": true,
-          "expr": "sum by (result) (rate(block_explorer_cache_requests_total{source=\"app-frontend\"}[$__rate_interval]))",
-          "legendFormat": "{{result}}"
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "CacheHitRate",
+          "dimensions": {
+            "DistributionId": "${distribution_id}",
+            "Region": "Global"
+          },
+          "statistic": "Average",
+          "period": "300",
+          "matchExact": true,
+          "label": "Hit rate"
         }
       ]
     },
     {
       "id": 22,
       "type": "timeseries",
-      "title": "Upstream fetches by outcome",
-      "description": "not_found is expected traffic. upstream_error means a Thor node or the indexer refused.",
-      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 9, "x": 15, "y": 35 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
-        },
-        "overrides": []
+      "title": "Origin latency",
+      "description": "Time to first byte for the requests that missed cache and went to the bucket. Only misses are measured, so this stays flat while the hit rate moves.",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource_uid_cloudwatch}"
       },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-          "editorMode": "code",
-          "range": true,
-          "expr": "sum by (outcome) (rate(block_explorer_upstream_requests_total{source=\"app-frontend\"}[$__rate_interval]))",
-          "legendFormat": "{{outcome}}"
-        }
-      ]
-    },
-    {
-      "id": 23,
-      "type": "timeseries",
-      "title": "Upstream fetch duration",
-      "description": "The top histogram bucket is the upstream timeout, so p99 flattening there means requests are timing out rather than slowing down.",
-      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 43 },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 14,
+        "y": 10
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "s",
+          "unit": "ms",
           "min": 0,
-          "custom": { "lineWidth": 1, "fillOpacity": 0, "showPoints": "never" }
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never"
+          }
         },
         "overrides": []
       },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["last", "max"]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-          "editorMode": "code",
-          "range": true,
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(block_explorer_upstream_duration_seconds_bucket{source=\"app-frontend\"}[$__rate_interval])))",
-          "legendFormat": "p50"
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "OriginLatency",
+          "dimensions": {
+            "DistributionId": "${distribution_id}",
+            "Region": "Global"
+          },
+          "statistic": "p50",
+          "period": "300",
+          "matchExact": true,
+          "label": "p50"
         },
         {
           "refId": "B",
-          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-          "editorMode": "code",
-          "range": true,
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(block_explorer_upstream_duration_seconds_bucket{source=\"app-frontend\"}[$__rate_interval])))",
-          "legendFormat": "p95"
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "OriginLatency",
+          "dimensions": {
+            "DistributionId": "${distribution_id}",
+            "Region": "Global"
+          },
+          "statistic": "p90",
+          "period": "300",
+          "matchExact": true,
+          "label": "p90"
         },
         {
           "refId": "C",
-          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-          "editorMode": "code",
-          "range": true,
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(block_explorer_upstream_duration_seconds_bucket{source=\"app-frontend\"}[$__rate_interval])))",
-          "legendFormat": "p99"
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "OriginLatency",
+          "dimensions": {
+            "DistributionId": "${distribution_id}",
+            "Region": "Global"
+          },
+          "statistic": "p99",
+          "period": "300",
+          "matchExact": true,
+          "label": "p99"
         }
       ]
     },
     {
-      "id": 24,
+      "id": 102,
+      "type": "row",
+      "title": "Edge router",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "panels": []
+    },
+    {
+      "id": 10,
       "type": "timeseries",
-      "title": "API responses by status",
-      "description": "Counted at the app, labelled by matched route template rather than raw path.",
-      "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 43 },
+      "title": "Router invocations and errors",
+      "description": "The viewer-request function runs on every request and is the only code left on the serving path, so an execution error is a request that never resolved to a bundle key. Errors are on the right axis: at healthy volumes the two share no scale.",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource_uid_cloudwatch}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
-          "custom": { "lineWidth": 1, "fillOpacity": 20, "showPoints": "never", "stacking": { "mode": "normal" } }
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*errors|Throttles"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
       },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["last", "max"]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "prometheus", "uid": "${datasource_uid_amp}" },
-          "editorMode": "code",
-          "range": true,
-          "expr": "sum by (status) (rate(block_explorer_http_responses_total{source=\"app-frontend\"}[$__rate_interval]))",
-          "legendFormat": "{{status}}"
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "FunctionInvocations",
+          "dimensions": {
+            "FunctionName": "${router_function_name}",
+            "Region": "Global"
+          },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": false,
+          "label": "Invocations"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "FunctionExecutionErrors",
+          "dimensions": {
+            "FunctionName": "${router_function_name}",
+            "Region": "Global"
+          },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": false,
+          "label": "Execution errors"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "FunctionValidationErrors",
+          "dimensions": {
+            "FunctionName": "${router_function_name}",
+            "Region": "Global"
+          },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": false,
+          "label": "Validation errors"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "FunctionThrottles",
+          "dimensions": {
+            "FunctionName": "${router_function_name}",
+            "Region": "Global"
+          },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": false,
+          "label": "Throttles"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Router compute utilisation",
+      "description": "Share of the function's maximum allowed execution time. CloudFront throttles a function that keeps reaching 100%, so sustained readings above 80% are the warning that the router needs trimming.",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource_uid_cloudwatch}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 19
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "FunctionComputeUtilization",
+          "dimensions": {
+            "FunctionName": "${router_function_name}",
+            "Region": "Global"
+          },
+          "statistic": "Average",
+          "period": "60",
+          "matchExact": false,
+          "label": "Utilisation"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Routing store reads",
+      "description": "The per-request lookup of host to bundle prefix. A read error means the router fell back rather than resolving the host, which is what serving the wrong bundle would look like from here.",
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource_uid_cloudwatch}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 19
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Read errors"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "KvsReadRequests",
+          "dimensions": {
+            "FunctionName": "${router_function_name}",
+            "Region": "Global"
+          },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": false,
+          "label": "Reads"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource_uid_cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "${region}",
+          "namespace": "AWS/CloudFront",
+          "metricName": "KvsReadErrors",
+          "dimensions": {
+            "FunctionName": "${router_function_name}",
+            "Region": "Global"
+          },
+          "statistic": "Sum",
+          "period": "60",
+          "matchExact": false,
+          "label": "Read errors"
         }
       ]
     },
@@ -633,16 +892,16 @@
       "type": "row",
       "title": "WAF",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 51 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
       "panels": []
     },
     {
       "id": 30,
       "type": "timeseries",
       "title": "Requests allowed and blocked",
-      "description": "Every request is one or the other, so these two sum to the ALB's request count. Blocked is only ever the rate-limit rule while waf_managed_rules_blocking is off. Requests a soaking rule flagged are not a third category — they are allowed requests, and they are in the Allowed line here; the two panels below cover them.",
+      "description": "Every request is one or the other, so these two sum to the Requests panel above. Blocked is only ever the rate-limit rule while waf_managed_rules_blocking is off. Requests a soaking rule flagged are not a third category — they are allowed requests, and they are in the Allowed line here; the two panels below cover them.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 52 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -674,7 +933,7 @@
           "region": "${region}",
           "namespace": "AWS/WAFV2",
           "metricName": "AllowedRequests",
-          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL", "Region": "${region}" },
+          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL" },
           "statistic": "Sum",
           "period": "60",
           "matchExact": true,
@@ -689,7 +948,7 @@
           "region": "${region}",
           "namespace": "AWS/WAFV2",
           "metricName": "BlockedRequests",
-          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL", "Region": "${region}" },
+          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL" },
           "statistic": "Sum",
           "period": "60",
           "matchExact": true,
@@ -703,7 +962,7 @@
       "title": "Blocked by rule",
       "description": "Which rule rejected the request. Only rate-limit-ip and the blocklist rules reject while waf_managed_rules_blocking is off — the rate limiter takes sustained traffic from a single IP to trip, so a steady blocklist line against an empty rate-limit one is the normal reading. A rule that has never blocked publishes no metric, so it stays absent from the legend rather than drawing a zero line.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 52 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -728,7 +987,6 @@
           "metricName": "BlockedRequests",
           "dimensions": {
             "WebACL": "${waf_web_acl_name}",
-            "Region": "${region}",
             "Rule": [
               "${waf_rule_prefix}-rate-limit-ip",
               "${waf_rule_prefix}-blocklist-cidr",
@@ -752,7 +1010,7 @@
       "title": "Count-mode match rate",
       "description": "Matches on a soaking rule as a share of requests served. Nothing here was rejected — this is what would start being rejected if waf_managed_rules_blocking flipped to true, so it is the cost of turning the managed groups on rather than a measure of attack traffic.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 60 },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 36 },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -785,7 +1043,7 @@
           "region": "${region}",
           "namespace": "AWS/WAFV2",
           "metricName": "CountedRequests",
-          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL", "Region": "${region}" },
+          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL" },
           "statistic": "Sum",
           "period": "300",
           "matchExact": true,
@@ -801,7 +1059,7 @@
           "region": "${region}",
           "namespace": "AWS/WAFV2",
           "metricName": "AllowedRequests",
-          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL", "Region": "${region}" },
+          "dimensions": { "WebACL": "${waf_web_acl_name}", "Rule": "ALL" },
           "statistic": "Sum",
           "period": "300",
           "matchExact": true,
@@ -833,7 +1091,7 @@
       "title": "Count-mode matches by rule",
       "description": "A rule in Count mode records the match and hands the request to the next rule, so all of this was served. Read it as a dry run of blocking, and against the Requests panel for scale. The rate-limit rule never appears: it blocks outright. A blocklist rule appears here only where waf_blocklist_blocking is still off, and moves to Blocked by rule once it flips.",
       "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-      "gridPos": { "h": 8, "w": 18, "x": 6, "y": 60 },
+      "gridPos": { "h": 8, "w": 18, "x": 6, "y": 36 },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -858,7 +1116,6 @@
           "metricName": "CountedRequests",
           "dimensions": {
             "WebACL": "${waf_web_acl_name}",
-            "Region": "${region}",
             "Rule": [
               "${waf_rule_prefix}-blocklist-cidr",
               "${waf_rule_prefix}-blocklist-asn",
@@ -880,7 +1137,7 @@
       "type": "row",
       "title": "WAF request detail — Logs Insights, runs only while expanded",
       "collapsed": true,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 68 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 44 },
       "panels": [
         {
           "id": 43,
@@ -888,7 +1145,7 @@
           "title": "Flagged traffic over the range",
           "description": "The denominator for the two tables below. This log group holds only the requests a rule matched, a few percent of what Total requests counts — Count-mode match rate above puts a figure on that share. Where clients and paths run to thousands, the top 20 rows below are the head of a long tail rather than its bulk.",
           "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "gridPos": { "h": 4, "w": 24, "x": 0, "y": 69 },
+          "gridPos": { "h": 4, "w": 24, "x": 0, "y": 45 },
           "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
           "options": {
             "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
@@ -914,7 +1171,7 @@
           "title": "Flagged clients",
           "description": "Who tripped a rule, by source IP. action says what then happened: ALLOW is the count-mode dry run and the request was served, BLOCK is a real rejection. flagged counts that client's matched requests, never its whole traffic. A cloud scraper spreads itself over a range, so one actor arrives here as many small rows — the totals above are its real size.",
           "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "gridPos": { "h": 11, "w": 12, "x": 0, "y": 73 },
+          "gridPos": { "h": 11, "w": 12, "x": 0, "y": 49 },
           "fieldConfig": {
             "defaults": { "custom": { "align": "auto", "filterable": true } },
             "overrides": [
@@ -962,9 +1219,9 @@
           "id": 41,
           "type": "table",
           "title": "Flagged paths",
-          "description": "What those requests asked for. Explorer routes mean real users behind a flagged IP range; probe paths — wp-login, .env, phpmyadmin — mean the rule is earning its place. clients is how many distinct sources asked for that path. flagged is matched requests only, so a path sits far below the line it draws in Requests by endpoint.",
+          "description": "What those requests asked for. Explorer routes mean real users behind a flagged IP range; probe paths — wp-login, .env, phpmyadmin — mean the rule is earning its place. clients is how many distinct sources asked for that path. flagged is matched requests only, so a path sits far below its real share of Requests per minute.",
           "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "gridPos": { "h": 11, "w": 12, "x": 12, "y": 73 },
+          "gridPos": { "h": 11, "w": 12, "x": 12, "y": 49 },
           "fieldConfig": {
             "defaults": { "custom": { "align": "auto", "filterable": true } },
             "overrides": [
@@ -999,7 +1256,7 @@
           "title": "Recent WAF events",
           "description": "The log group holds only requests a rule matched — the delivery filter drops the rest, so this is not a request log. rule is the ACL rule; managedRule is the specific rule inside the AWS managed group, and that is the one to name when deciding what to exclude before turning blocking on. Column headers filter.",
           "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
-          "gridPos": { "h": 14, "w": 24, "x": 0, "y": 84 },
+          "gridPos": { "h": 14, "w": 24, "x": 0, "y": 60 },
           "fieldConfig": {
             "defaults": { "custom": { "align": "auto", "filterable": true } },
             "overrides": [

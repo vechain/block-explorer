@@ -1,5 +1,5 @@
-# Delivery path: AMP Alertmanager (and CloudWatch alarms, see alarms.tf) -> SNS
-# -> bridge Lambda -> Slack.
+# Delivery path: CloudWatch alarms -> SNS -> bridge Lambda -> Slack. Two topics, one per region
+# the alarms live in; one Lambda, subscribed to both.
 
 resource "aws_secretsmanager_secret" "slack_webhook" {
   name                    = "${local.name}-slack-webhook"
@@ -23,30 +23,7 @@ resource "aws_sns_topic" "alerts" {
 # rather than exact ARNs, which would cycle. SourceArn and SourceAccount are
 # confused-deputy hardening.
 data "aws_iam_policy_document" "alerts_topic" {
-  statement {
-    sid    = "AllowAMPPublish"
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["aps.amazonaws.com"]
-    }
-
-    actions   = ["sns:Publish"]
-    resources = [aws_sns_topic.alerts.arn]
-
-    condition {
-      test     = "ArnEquals"
-      variable = "aws:SourceArn"
-      values   = [aws_prometheus_workspace.this.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [data.aws_caller_identity.current.account_id]
-    }
-  }
+  for_each = local.alert_topic_arns
 
   statement {
     sid    = "AllowCloudWatchAlarmPublish"
@@ -58,12 +35,12 @@ data "aws_iam_policy_document" "alerts_topic" {
     }
 
     actions   = ["sns:Publish"]
-    resources = [aws_sns_topic.alerts.arn]
+    resources = [each.value]
 
     condition {
       test     = "ArnLike"
       variable = "aws:SourceArn"
-      values   = ["arn:aws:cloudwatch:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alarm:${local.name}-*"]
+      values   = ["arn:aws:cloudwatch:*:${data.aws_caller_identity.current.account_id}:alarm:${local.name}-*"]
     }
 
     condition {
@@ -76,7 +53,22 @@ data "aws_iam_policy_document" "alerts_topic" {
 
 resource "aws_sns_topic_policy" "alerts" {
   arn    = aws_sns_topic.alerts.arn
-  policy = data.aws_iam_policy_document.alerts_topic.json
+  policy = data.aws_iam_policy_document.alerts_topic["regional"].json
+}
+
+# The CloudFront and WAF alarms cannot reach the topic above: an alarm may only act on a topic in
+# its own region. Same policy, same Lambda on the other end.
+resource "aws_sns_topic" "alerts_us_east_1" {
+  provider = aws.us_east_1
+
+  name = "${local.name}-alerts-edge"
+}
+
+resource "aws_sns_topic_policy" "alerts_us_east_1" {
+  provider = aws.us_east_1
+
+  arn    = aws_sns_topic.alerts_us_east_1.arn
+  policy = data.aws_iam_policy_document.alerts_topic["edge"].json
 }
 
 # --- SNS -> Slack bridge ---
@@ -179,26 +171,23 @@ resource "aws_sns_topic_subscription" "sns_to_slack" {
   depends_on = [aws_lambda_permission.sns_to_slack_invoke]
 }
 
-# --- AMP rules ---
-
-resource "aws_prometheus_rule_group_namespace" "recording" {
-  workspace_id = aws_prometheus_workspace.this.id
-  name         = "${local.name}-recording"
-  data         = local.recording_rules_yaml
+# SNS delivers to a Lambda in another region as long as neither is an opt-in region, which is what
+# keeps this to one bridge rather than a second copy in us-east-1.
+resource "aws_lambda_permission" "sns_to_slack_invoke_edge" {
+  statement_id  = "AllowSNSInvokeEdge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sns_to_slack.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.alerts_us_east_1.arn
 }
 
-# Gated, unlike the recording rules above: the dashboards query those.
-resource "aws_prometheus_rule_group_namespace" "alerts" {
-  count = local.alerts_enabled ? 1 : 0
+resource "aws_sns_topic_subscription" "sns_to_slack_edge" {
+  count    = local.alerts_enabled ? 1 : 0
+  provider = aws.us_east_1
 
-  workspace_id = aws_prometheus_workspace.this.id
-  name         = "${local.name}-alerts"
-  data         = local.alert_rules_yaml
-}
+  topic_arn = aws_sns_topic.alerts_us_east_1.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.sns_to_slack.arn
 
-resource "aws_prometheus_alert_manager_definition" "this" {
-  count = local.alerts_enabled ? 1 : 0
-
-  workspace_id = aws_prometheus_workspace.this.id
-  definition   = local.alertmanager_definition
+  depends_on = [aws_lambda_permission.sns_to_slack_invoke_edge]
 }

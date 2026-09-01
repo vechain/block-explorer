@@ -24,12 +24,12 @@ legacy `explorer-github-actions-prod` coexist in that account.
 `local.accounts` in [locals.tf](locals.tf) is keyed by workspace, rather than taking values from a
 `-var`, so a hand-applied stack cannot be given the wrong account's shape by a forgotten flag.
 
-|                | prod                             | dev                                                     |
-| -------------- | -------------------------------- | ------------------------------------------------------- |
-| OIDC subjects  | `environment:prod`               | `environment:dev`, `environment:preview`, `pull_request`, `ref:refs/heads/main` |
-| Registry       | created here                     | `account-level/`'s, looked up                           |
-| Route53        | through `dns/`'s role            | writes both public zones directly                       |
-| Roles it may manage | `block-explorer-prod-*`     | `block-explorer-dev-*`, `-preview-pr-*`, `-prod-dns-writer` |
+|                     | prod                    | dev                                                                             |
+| ------------------- | ----------------------- | ------------------------------------------------------------------------------- |
+| OIDC subjects       | `environment:prod`      | `environment:dev`, `environment:preview`, `pull_request`, `ref:refs/heads/main` |
+| Registry            | created here            | `account-level/`'s, looked up                                                   |
+| Route53             | through `dns/`'s role   | writes both public zones directly                                               |
+| Roles it may manage | `block-explorer-prod-*` | `block-explorer-dev-*`, `-prod-dns-writer`                                      |
 
 dev needs four subjects because it runs more than a deploy: previews apply under their own
 environment, tear down on a bare `pull_request`, and are swept from `main`. `pull_request` is the
@@ -89,15 +89,21 @@ for the projects that share them, and a second one for the same URL is rejected.
 
 ## Grants
 
-Scoped by ARN wherever the service supports resource-level permissions. Three services cannot be:
-`ec2` (nothing to pin before the VPC exists), `aps` and `grafana` (workspace ids are generated at
-create time). Those are bounded instead by the guardrails policy, which denies any resource tagged
+Scoped by ARN wherever the service supports resource-level permissions. `cloudfront`, `wafv2`,
+`acm`, `aps` and `grafana` cannot be — distribution, ACL and workspace ids are all generated at
+create time. Those are bounded instead by the guardrails policy, which denies any resource tagged
 for another project, the other projects' state buckets and registries by name, and identity, account
 and audit-trail changes outright.
 
+Alarms and SNS topics are wildcarded on **region**, not scoped to `eu-west-1`: CloudFront and its
+Web ACL publish metrics only to us-east-1, and a CloudWatch alarm may act only on a topic in its own
+region. The name prefix is what bounds them.
+
 A missing permission fails an apply rather than doing something unintended, so treat the first apply
 in a workspace as the test of this file. Add the action to the narrowest statement that fits and
-re-apply.
+re-apply. Watch for resources carrying `tags`: `default_tags` makes the provider call the service's
+`TagResource` and `ListTagsForResource` against the resource'"'"'s own ARN, which a statement scoped to
+a different ARN shape will miss.
 
 Both policies are capped at 6144 characters by AWS, which a `precondition` checks before an apply
 gets that far. dev's allow policy is the larger of the two at roughly 4.6k.

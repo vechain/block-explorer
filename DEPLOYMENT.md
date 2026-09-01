@@ -4,7 +4,7 @@ Dev, prod and per-PR previews all serve one static bundle from CloudFront and S3
 with no origin server. None of the three is deployed by hand; only the account-setup stacks are.
 
 - **Infrastructure** — [terraform/README.md](terraform/README.md): the stack layout, environment
-  config, the shared cache, observability, and how prod's account is stood up.
+  config, observability, and how prod's account is stood up.
 - **Pipelines** — [.github/workflows/README.md](.github/workflows/README.md): what runs when, and the
   preview lifecycle.
 
@@ -38,18 +38,8 @@ pointed at it and then checked through CloudFront. Dev and prod serve the same b
 structural rather than maintained by hand.
 
 Rolling back is a `workflow_dispatch` of `deploy.yml` against the previous tag, with `prod` as the
-environment.
-
-### Prod is still on the ALB
-
-`hosting` in `terraform/environments/prod/prod.yaml` decides which of the two serving paths the
-public names resolve to, and prod is still `ecs`. Its CloudFront distribution is built, published to
-and verified by every release; only its DNS weight is zero. Moving prod is changing that one line to
-`cdn` and applying — and moving it back is the same edit in the other direction, for as long as the
-ECS service exists.
-
-Nothing builds a container image any more, so the ECS tasks are frozen on the last image built before
-the cutover and the deploy pins them there. Prod therefore serves that build until it moves.
+environment. There is no second serving path to fall back to: the ALB, its ECS service and the VPC
+they ran in were deleted once both environments had been on CloudFront for a release.
 
 ## The public Docker image is gone
 

@@ -1,35 +1,12 @@
-# Production. Read by the ECS stacks.
+# Production. Read by the CDN and observability stacks.
 environment: prod
 domain: block-explorer.vechain.org
 
-# Network
-vpc_cidr: 10.31.0.0/16
-az_count: 2
-# An AZ outage must not take prod egress with it. Dev: true.
-single_nat_gateway: false
+bundle_prefix: app-unpublished # Only seeds a first apply; the deploy owns the live value.
+cdn_price_class: PriceClass_All
 
-# ECS task. One process per task saturates at 1.2 vCPU, so 2048 stranded roughly 40%.
-image_tag: latest # Overwritten by the deploy with the content SHA it resolved.
-app_version: dev # Overwritten by the deploy with the release that last changed the app.
-task_cpu: 1024
-task_memory: 2048 # Fargate's floor at this cpu size; peak RSS under load was 493 MB.
-# Also the autoscaling floor, so it is what a burst starts from after a quiet spell.
-desired_count: 4
-autoscaling_max: 16 # Same 16 vCPU ceiling as 2048 x 8, in units that fill.
-# Served comfortably at ~2.9k on 2026-08-29; 4k was already shedding.
-autoscaling_request_count_target: 2500
-# A task takes ~2 min to contribute and bursts have peaked inside one; the gap is reaction time.
-autoscaling_cpu_target: 45
-container_port: 3000
-
+# Access logs in S3, the AMP and Lambda log groups, and the WAF log group.
 log_retention_days: 90
-
-# The bypass token covers our egress IP, so prod proxies the indexer like dev.
-runtime_environment: {}
-
-# Shared Valkey. Ceilings against a runaway bill, not a capacity plan.
-cache_data_storage_max_gb: 5
-cache_ecpu_per_second_max: 15000
 
 # An AMG workspace is its own SAML audience, so prod needs its own Okta app.
 grafana_okta_saml_metadata_url: https://vechaineu.okta.com/app/exk1033qa0eZpldKg418/sso/saml/metadata
@@ -38,6 +15,12 @@ grafana_editor_okta_groups: [APP_AMG_BLOCK_EXPLORER_Editor]
 
 # Needs SLACK_WEBHOOK_URL on the prod Environment, or the apply fails.
 alerts_enabled: true
+
+# Provisional until a day of prod data: CloudFront's additional metrics start with this release,
+# and bot probes for extensioned paths make the 4xx baseline nonzero.
+cdn_alarm_thresholds:
+  error_rate_4xx: 50
+  cache_hit_rate: 80
 
 # The rate-based IP rule blocks from day one; the managed groups soak in Count.
 waf_enabled: true
@@ -48,18 +31,6 @@ waf_rate_limit: 2000
 waf_blocklist_blocking: true
 waf_blocked_asns: []
 
-# Sole record on the name now; the weight stays because dropping it replaces it.
-dns_record_enabled: true
-dns_weight: 100
-
-# Static hosting. `cdn` moves both names off the ALB; the ALB and its service stay for a rollback.
-hosting: cdn
-bundle_prefix: app-unpublished # Only seeds a first apply; the deploy owns the live value.
-cdn_price_class: PriceClass_All
-
-# The name users type, and effectively all of prod's traffic; the ramp above
-# moved block-explorer.vechain.org only.
+# The name users type, and effectively all of prod's traffic.
 extra_domain:
   name: explore.vechain.org
-  # Sole record on this name too, and weighted for the same reason.
-  dns_weight: 100

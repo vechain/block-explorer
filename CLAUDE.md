@@ -219,7 +219,7 @@ the config with a version that changes nothing.
 ## Deployment
 
 - Static export served from CloudFront and S3, with no origin server
-- Dev and previews share one distribution in the dev account; prod has its own. `hosting` in the env YAML is what points a name at CloudFront rather than at the ALB, and prod is still `ecs`
+- Dev and previews share one distribution in the dev account; prod has its own. There is no ECS, ALB or VPC left in either — `terraform/` is `dns`, `cdn` and the two observability stacks
 - Terraform is one stack per directory under `terraform/`, wired only through `terraform_remote_state`
 - Merging to `main` deploys dev and leaves one draft release; publishing it deploys prod
 - Preview envs deploy on the `create-preview` label at `pr-{number}.block-explorer-preview.vechain.org`, destroyed on PR close

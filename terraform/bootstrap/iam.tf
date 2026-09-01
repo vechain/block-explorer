@@ -233,32 +233,27 @@ data "aws_iam_policy_document" "gha_allow" {
     resources = local.state_bucket_arns
   }
 
-  # The bucket cdn/ creates for published bundles and each environment's runtime-config.json.
+  # The two buckets cdn/ creates: published bundles, and the distribution's access logs.
   statement {
-    sid     = "BundleBucket"
+    sid     = "CdnBuckets"
     effect  = "Allow"
     actions = ["s3:*"]
     resources = [
       "arn:aws:s3:::${local.name}-app-${local.account_id}",
       "arn:aws:s3:::${local.name}-app-${local.account_id}/*",
+      "arn:aws:s3:::${local.name}-cdn-logs-${local.account_id}",
+      "arn:aws:s3:::${local.name}-cdn-logs-${local.account_id}/*",
     ]
   }
 
-  # ecs:RegisterTaskDefinition, elasticloadbalancing:CreateLoadBalancer and the
-  # Describe* families have no resource-level permissions, and none of the ec2
-  # network creates can be pinned to an ARN that does not exist yet.
+  # No resource-level permissions on these creates; the Project-tag deny is what bounds them.
   statement {
     sid    = "Platform"
     effect = "Allow"
     actions = [
       "acm:*",
-      "application-autoscaling:*",
       "cloudfront:*",
       "cloudfront-keyvaluestore:*",
-      "ec2:*",
-      "ecs:*",
-      "elasticache:*",
-      "elasticloadbalancing:*",
       "wafv2:*",
     ]
     resources = ["*"]
@@ -279,9 +274,7 @@ data "aws_iam_policy_document" "gha_allow" {
     resources = ["*"]
   }
 
-  # Every log group this repo creates carries the project in its name:
-  # /ecs/block-explorer-*, aws-waf-logs-block-explorer-*,
-  # /aws/prometheus/block-explorer-*, /aws/lambda/block-explorer-*.
+  # Every log group this repo creates carries the project in its name.
   statement {
     sid     = "OwnLogGroups"
     effect  = "Allow"
@@ -293,24 +286,28 @@ data "aws_iam_policy_document" "gha_allow" {
     ])
   }
 
-  # WAF's own requirement for a CloudWatch Logs destination, none of it scopable.
+  # WAF's log destination and CloudFront standard logging v2, neither scopable.
   statement {
     sid    = "LogDelivery"
     effect = "Allow"
     actions = [
       "logs:DescribeLogGroups",
-      "logs:CreateLogDelivery",
+      "logs:*Deliver*",
       "logs:PutResourcePolicy",
       "logs:DescribeResourcePolicies",
+      "logs:TagResource",
+      "logs:UntagResource",
+      "logs:ListTagsForResource",
     ]
     resources = ["*"]
   }
 
+  # Region-wildcarded: the CloudFront and WAF alarms have to sit in us-east-1.
   statement {
     sid       = "OwnAlarms"
     effect    = "Allow"
     actions   = ["cloudwatch:*"]
-    resources = ["arn:aws:cloudwatch:${var.aws_region}:${local.account_id}:alarm:${local.name}-*"]
+    resources = ["arn:aws:cloudwatch:*:${local.account_id}:alarm:${local.name}-*"]
   }
 
   statement {
@@ -329,12 +326,13 @@ data "aws_iam_policy_document" "gha_allow" {
     resources = ["*"]
   }
 
+  # The topic too: an alarm may only act on a topic in its own region.
   statement {
     sid     = "OwnTopicsAndFunctions"
     effect  = "Allow"
     actions = ["sns:*", "lambda:*"]
     resources = [
-      "arn:aws:sns:${var.aws_region}:${local.account_id}:${local.name}-*",
+      "arn:aws:sns:*:${local.account_id}:${local.name}-*",
       "arn:aws:lambda:${var.aws_region}:${local.account_id}:function:${local.name}-*",
     ]
   }

@@ -3,11 +3,6 @@ output "amp_workspace_id" {
   value       = aws_prometheus_workspace.this.id
 }
 
-output "amp_workspace_arn" {
-  description = "AMP workspace ARN. The Resource on the sidecar's aps:RemoteWrite statement."
-  value       = aws_prometheus_workspace.this.arn
-}
-
 output "amp_prometheus_endpoint" {
   description = "AMP query and remote-write endpoint, trailing slash included."
   value       = aws_prometheus_workspace.this.prometheus_endpoint
@@ -39,12 +34,12 @@ output "amg_service_account_token_secret_version_id" {
 }
 
 output "alerts_sns_topic_arn" {
-  description = "Topic both AMP Alertmanager and the CloudWatch alarms publish to."
+  description = "Topic the regional CloudWatch alarms publish to. The CloudFront and WAF alarms use the us-east-1 topic beside it, since an alarm can only act in its own region."
   value       = aws_sns_topic.alerts.arn
 }
 
 output "alerts_enabled" {
-  description = "Whether alerting is on at all. False in dev: no CloudWatch alarms, no AMP alert rules, no Alertmanager and no subscription. Recording rules and the delivery path are built either way."
+  description = "Whether alerting is on at all. False in dev: no CloudWatch alarms and no subscription. The topics, the bridge and the secret are built either way."
   value       = local.alerts_enabled
 }
 

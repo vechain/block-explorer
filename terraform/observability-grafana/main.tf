@@ -18,13 +18,13 @@ data "terraform_remote_state" "observability_aws" {
   }
 }
 
-data "terraform_remote_state" "edge" {
+data "terraform_remote_state" "cdn" {
   backend   = "s3"
   workspace = terraform.workspace
 
   config = {
     bucket  = local.state_bucket
-    key     = "edge/terraform.tfstate"
+    key     = "cdn/terraform.tfstate"
     region  = var.aws_region
     encrypt = true
   }
@@ -41,8 +41,7 @@ data "aws_secretsmanager_secret_version" "amg_sa_token" {
 
 # --- Datasources ---
 
-# manageAlerts surfaces the AMP rules under Alerting; alertmanagerUid is what
-# makes the silence UI work. The rules stay Terraform-owned and read-only here.
+# Wired but empty: no writer since the ECS sidecar went, and no rule group to surface.
 resource "grafana_data_source" "amp" {
   count = local.observability_ready ? 1 : 0
 
@@ -51,32 +50,12 @@ resource "grafana_data_source" "amp" {
   uid  = local.datasource_uid_amp
   url  = local.amp_prometheus_endpoint
 
-  json_data_encoded = jsonencode(merge({
+  json_data_encoded = jsonencode({
     httpMethod    = "POST"
     sigV4Auth     = true
     sigV4AuthType = "default"
     sigV4Region   = var.aws_region
-    manageAlerts  = local.alerts_enabled
-    }, local.alerts_enabled ? {
-    alertmanagerUid = local.datasource_uid_amp_alertmanager
-  } : {}))
-}
-
-resource "grafana_data_source" "amp_alertmanager" {
-  count = local.observability_ready && local.alerts_enabled ? 1 : 0
-
-  type = "alertmanager"
-  name = "amp-alertmanager-${terraform.workspace}"
-  uid  = local.datasource_uid_amp_alertmanager
-  # AMP serves Alertmanager under the Prometheus endpoint.
-  url = "${trimsuffix(local.amp_prometheus_endpoint, "/")}/alertmanager"
-
-  json_data_encoded = jsonencode({
-    implementation             = "prometheus"
-    sigV4Auth                  = true
-    sigV4AuthType              = "default"
-    sigV4Region                = var.aws_region
-    handleGrafanaManagedAlerts = false
+    manageAlerts  = false
   })
 }
 
@@ -103,40 +82,20 @@ resource "grafana_folder" "ops" {
   uid   = "block-explorer-${terraform.workspace}"
 }
 
-# The alert rules reference this dashboard's panel IDs in their dashboard_url
-# annotations, so renumbering a panel breaks the deep link from Slack.
 resource "grafana_dashboard" "overview" {
-  count = local.observability_ready && local.alb_panels_ready ? 1 : 0
+  count = local.observability_ready && local.cdn_panels_ready ? 1 : 0
 
   folder = grafana_folder.ops[0].uid
 
   config_json = templatefile("${path.module}/dashboards/overview.json", {
-    datasource_uid_amp        = local.datasource_uid_amp
     datasource_uid_cloudwatch = local.datasource_uid_cloudwatch
     env                       = terraform.workspace
-    region                    = var.aws_region
-    cluster_name              = local.ecs_cluster_name
-    frontend_service_name     = local.frontend_service_name
-    alb_suffix                = local.alb_arn_suffix
-    tg_suffix                 = local.target_group_arn_suffix
+    region                    = local.cloudfront_region
+    distribution_id           = local.distribution_id
+    router_function_name      = local.router_function_name
     waf_web_acl_name          = local.waf_web_acl_name
     waf_rule_prefix           = local.waf_rule_prefix
     waf_log_group             = local.waf_log_group
-  })
-}
-
-# No ALB dependency, so this lands on a first deploy while the overview is still
-# waiting on edge/.
-resource "grafana_dashboard" "logs" {
-  count = local.observability_ready ? 1 : 0
-
-  folder = grafana_folder.ops[0].uid
-
-  config_json = templatefile("${path.module}/dashboards/logs.json", {
-    datasource_uid_cloudwatch = local.datasource_uid_cloudwatch
-    env                       = terraform.workspace
-    region                    = var.aws_region
-    frontend_log_group        = local.frontend_log_group
   })
 }
 

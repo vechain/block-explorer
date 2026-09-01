@@ -68,11 +68,11 @@ what makes a deploy seamless: the hosts keep answering from the previous bundle 
 `vars.AWS_OIDC_ROLE_ARN` resolves per GitHub Environment and prod approval is a protection rule on the
 same object, so credentials need no conditional. `TF_VAR_prod_deploy_role_arn` and `TF_VAR_dns_role_arn`
 are each set on one Environment only and pass unconditionally — the other resolves to `""`, which is
-the off value the stacks already read as "not cross-account". Everything else is derived: the task
-family is `block-explorer-<env>-frontend`, the config is `terraform/environments/<env>/<env>.yaml`,
-and the workspace and backend config follow the same pattern. That leaves one `guard` output that
-differs: `stacks`, which is the nine both share plus `dns` and `preview-edge` in dev, because the
-previews live in that account and so does the zone role `dns/` hands prod.
+the off value the stacks already read as "not cross-account". Everything else is derived: the config
+is `terraform/environments/<env>/<env>.yaml`, and the workspace and backend config follow the same
+pattern. That leaves one `guard` output that
+differs: `stacks`, which is the three both share plus `dns` in dev, because the zone role `dns/`
+hands prod lives in that account.
 
 The ref a run starts on is part of the security model, because the credentialed jobs apply whatever
 Terraform they check out. **Dev takes `main`'s tree with the tag's bundle; prod takes the tag's own
@@ -88,8 +88,8 @@ the upstream state they read exists. The plan file never leaves the job, because
 carry state.
 
 The `activate` job checks the distribution by its own CloudFront name rather than by the public one.
-Going through DNS would let a cached or weighted answer pass the check on the deployed stack's behalf
-— and while an environment is still `hosting: ecs`, the public name is not pointed here at all.
+Going through DNS would let a cached or weighted answer pass the check on the deployed stack's
+behalf.
 
 ---
 
@@ -110,51 +110,14 @@ drafting a release for it would offer prod that rollback as the next cut.
 
 ---
 
-### Hibernate Dev (`hibernate-dev.yml`)
-
-**Triggers:** manual dispatch, `mode` of `hibernate` or `wake`
-
-Parks `block-explorer-dev-frontend` at zero tasks when dev is not needed, and restores it to its
-autoscaling floor on the way back. It shares `deploy.yml`'s `deploy-dev` concurrency group, so it
-cannot interleave with a dev deploy.
-
-Order is load-bearing: target tracking is suspended **before** the count drops, because Application
-Auto Scaling holds a service at its target's `min_capacity` and a live target scales it straight back
-out. Terraform does not manage `suspended_state`, so a suspension survives every apply — which is
-also why hibernating and then deploying without waking would leave a service that cannot scale.
-
-The service and cluster names come from `terraform/frontend`'s outputs rather than being spelled out
-in the workflow: a wrong name scales nothing and still reports success.
-
-Waking is idempotent and lives in two places. This workflow's `wake` mode is the operator's button;
-`deploy.yml`'s `roll` job asserts the same thing on every **dev** deploy, so a dev deploy can never
-land on a parked service. It reads the service rather than a flag, which means it also heals a
-hibernate that half-applied and a service someone scaled down by hand, and it only acts *below* the
-floor — capacity autoscaling put above it is not the deploy's to reset. It sits in `roll` rather than
-in its own job because a job referencing a protected environment adds another approval gate to prod.
-
-Prod is excluded rather than merely never parked. There, a suspended scalable target or a zero
-desired count means someone is holding capacity down on purpose, and a deploy that silently lifted it
-would undo an incident response — so the `/api/health` check is left to fail loudly instead.
-
-**While hibernated:** `https://dev.block-explorer.vechain.org` returns 503. Nothing alarms — dev sets
-`alerts_enabled: false`, which builds no alarms and no AMP alert rules at all, so there is no red
-state to sit in and nothing to silence before parking the service.
-
-Only the ECS task stops. The NAT gateway, both ALBs, the Valkey cache and the WAF bill on, and they
-are most of what dev costs — hibernating buys back roughly the Fargate line, not the environment.
-
----
-
 ### Static Checks (`static-checks.yml`)
 
 Runs the org's reusable `checkov.yaml` and `action-lint.yaml` on every PR and on `main`, behind a
 single `Static checks` aggregator job so branch protection needs one entry rather than a context per
 reusable workflow.
 
-Checkov is `soft_fail: true` for now: it reports 45 findings across the Terraform, most of them
-accepted design decisions (public ALB on :80 redirecting to :443, the wildcard preview cert, no
-DNSSEC, AWS-managed secret encryption). A follow-up records those in a `.checkov.yaml` and flips the
+Checkov is `soft_fail: true` for now: it reports a few dozen findings across the Terraform, most of
+them accepted design decisions (the wildcard preview cert, no DNSSEC, AWS-managed secret encryption). A follow-up records those in a `.checkov.yaml` and flips the
 flag in the same change. actionlint hard-fails.
 
 No `paths:` filter, deliberately. A filtered workflow never reports on a PR that misses the filter,
