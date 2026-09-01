@@ -18,6 +18,7 @@ interface CfRequest {
 interface CfResponse {
   statusCode: number
   headers: Record<string, CfValue>
+  cookies?: Record<string, CfValue & { attributes?: string }>
   body?: string
 }
 
@@ -144,6 +145,18 @@ describe('edge-router', () => {
 
     expect(response.statusCode).toBe(307)
     expect(response.headers.location.value).toBe('/transfers?type=nft')
+  })
+
+  it('records the choice when the default locale prefix is asked for, so a stale cookie cannot win', async () => {
+    const response = await responseFor('/en/tokens', { cookieLocale: 'fr' })
+
+    expect(response.statusCode).toBe(307)
+    expect(response.headers.location.value).toBe('/tokens')
+    expect(response.cookies?.NEXT_LOCALE.value).toBe('en')
+  })
+
+  it('serves the default locale once that redirect’s cookie is in play', async () => {
+    expect(await uriFor('/tokens', { cookieLocale: 'en' })).toBe(`/${BUNDLE}/en/tokens.html`)
   })
 
   it('redirects to the reader’s locale when the path carries none', async () => {

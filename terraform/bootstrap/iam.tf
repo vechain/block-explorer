@@ -118,6 +118,8 @@ data "aws_iam_policy_document" "gha_deny" {
       "acm:*",
       "application-autoscaling:*",
       "aps:*",
+      "cloudfront:*",
+      "cloudfront-keyvaluestore:*",
       "cloudwatch:*",
       "ec2:*",
       "ecs:*",
@@ -211,6 +213,17 @@ data "aws_iam_policy_document" "gha_allow" {
     resources = local.state_bucket_arns
   }
 
+  # The bucket cdn/ creates for published bundles and each environment's runtime-config.json.
+  statement {
+    sid     = "BundleBucket"
+    effect  = "Allow"
+    actions = ["s3:*"]
+    resources = [
+      "arn:aws:s3:::${local.name}-app-${local.account_id}",
+      "arn:aws:s3:::${local.name}-app-${local.account_id}/*",
+    ]
+  }
+
   # ecs:RegisterTaskDefinition, elasticloadbalancing:CreateLoadBalancer and the
   # Describe* families have no resource-level permissions, and none of the ec2
   # network creates can be pinned to an ARN that does not exist yet.
@@ -220,6 +233,8 @@ data "aws_iam_policy_document" "gha_allow" {
     actions = [
       "acm:*",
       "application-autoscaling:*",
+      "cloudfront:*",
+      "cloudfront-keyvaluestore:*",
       "ec2:*",
       "ecs:*",
       "elasticache:*",
@@ -248,10 +263,14 @@ data "aws_iam_policy_document" "gha_allow" {
   # /ecs/block-explorer-*, aws-waf-logs-block-explorer-*,
   # /aws/prometheus/block-explorer-*, /aws/lambda/block-explorer-*.
   statement {
-    sid       = "OwnLogGroups"
-    effect    = "Allow"
-    actions   = ["logs:*"]
-    resources = ["arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:*${var.project}*"]
+    sid     = "OwnLogGroups"
+    effect  = "Allow"
+    actions = ["logs:*"]
+    resources = distinct([
+      "arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:*${var.project}*",
+      # CLOUDFRONT-scope WAF logs are delivered in us-east-1 whatever the stack's region.
+      "arn:aws:logs:us-east-1:${local.account_id}:log-group:*${var.project}*",
+    ])
   }
 
   # WAF's own requirement for a CloudWatch Logs destination, none of it scopable.

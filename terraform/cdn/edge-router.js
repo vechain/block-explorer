@@ -40,6 +40,11 @@ const SHELL_SEGMENT = '__shell__'
 
 const RENAMED = { account: 'address', accounts: 'address', addresses: 'address' }
 
+// Matches what i18n/provider.tsx writes, so the edge and the app keep one cookie between them.
+const DEFAULT_LOCALE_COOKIE = {
+  NEXT_LOCALE: { value: DEFAULT_LOCALE, attributes: 'Path=/; Max-Age=31536000; SameSite=Lax' },
+}
+
 const NOT_FOUND_PAGE =
   '<!doctype html><html lang="en"><meta charset="utf-8">' +
   '<meta name="viewport" content="width=device-width,initial-scale=1"><title>Not found</title>' +
@@ -59,12 +64,14 @@ function notFound(message) {
   }
 }
 
-function redirect(statusCode, location) {
-  return {
+function redirect(statusCode, location, cookies) {
+  const response = {
     statusCode: statusCode,
     statusDescription: statusCode === 308 ? 'Permanent Redirect' : 'Temporary Redirect',
     headers: { location: { value: location || '/' } },
   }
+  if (cookies) response.cookies = cookies
+  return response
 }
 
 function queryString(request) {
@@ -150,8 +157,14 @@ async function handler(event) {
   if (LOCALES.indexOf(segments[0]) !== -1) {
     locale = segments.shift()
     // The default locale's documents serve unprefixed, so its prefix is a redirect, not a route.
+    // Asking for it explicitly is a choice, and recording it is what stops the unprefixed path
+    // this lands on negotiating straight back to an older cookie.
     if (locale === DEFAULT_LOCALE) {
-      return redirect(307, '/' + segments.join('/') + (suffix === '.txt' ? '.txt' : '') + queryString(request))
+      return redirect(
+        307,
+        '/' + segments.join('/') + (suffix === '.txt' ? '.txt' : '') + queryString(request),
+        DEFAULT_LOCALE_COOKIE,
+      )
     }
   } else {
     locale = preferredLocale(request)
