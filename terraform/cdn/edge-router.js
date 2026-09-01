@@ -117,9 +117,11 @@ function preferredLocale(request) {
 async function handler(event) {
   const request = event.request
 
+  // The await is its own statement: the 2.0 runtime rejects one in an argument list.
   let target
   try {
-    target = JSON.parse(await kvs.get(request.headers.host.value))
+    const routed = await kvs.get(request.headers.host.value)
+    target = JSON.parse(routed)
   } catch (error) {
     return notFound('Nothing is deployed on this host.')
   }
