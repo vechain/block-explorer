@@ -114,6 +114,21 @@ describe('useLatestBlocks', () => {
     await waitFor(() => expect(result.current.isPending).toBe(false))
     expect(result.current.hasNextPage).toBe(false)
   })
+
+  // vechain-indexer#1550 adds these two; they reach us before a follow-up teaches us to read them.
+  it('drops the clause and VTHO totals the indexer is adding, leaving Thor authoritative', async () => {
+    const enriched = { ...indexedBlock(100), clauseCount: 12, totalVthoPaid: '0x2f1c59f8e6aefae0' }
+    mockIndexerFetch.mockResolvedValue({
+      data: { data: [enriched], pagination: { hasNext: false } },
+    } as Awaited<ReturnType<typeof indexerFetch>>)
+    const { result } = render(() => useLatestBlocks({ size: 2 }))
+
+    await waitFor(() => expect(result.current.data?.pages[0].data).toHaveLength(1))
+    const [block] = result.current.data!.pages[0].data
+    expect(block.number).toBe(100)
+    expect(block).not.toHaveProperty('clauseCount')
+    expect(block).not.toHaveProperty('totalVthoPaid')
+  })
 })
 
 describe('useBlockDetails', () => {
