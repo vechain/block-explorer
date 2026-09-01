@@ -15,6 +15,15 @@ data "aws_route53_zone" "public" {
   private_zone = false
 }
 
+# Resolved by a stack but never written by it, so a dev apply cannot reach records in
+# a name prod answers on.
+data "aws_route53_zone" "readable" {
+  for_each = toset(local.account.readable_zone_names)
+
+  name         = each.key
+  private_zone = false
+}
+
 # checkov's CKV_AWS_358 cannot resolve a per-workspace list, so the role's precondition covers it.
 data "aws_iam_policy_document" "gha_assume" {
   statement {
@@ -456,6 +465,20 @@ data "aws_iam_policy_document" "gha_allow" {
         "route53:ListTagsForResource",
       ]
       resources = local.zone_arns
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(local.readable_zone_arns) == 0 ? [] : [1]
+
+    content {
+      sid    = "ResolveOtherZones"
+      effect = "Allow"
+      actions = [
+        "route53:GetHostedZone",
+        "route53:ListTagsForResource",
+      ]
+      resources = local.readable_zone_arns
     }
   }
 
