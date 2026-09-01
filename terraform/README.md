@@ -18,6 +18,7 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 | `frontend-preview/`      | One PR's target group, host-header rule and ECS service              |
 | `observability-aws/`     | AMP, Grafana, SNS, the Slack bridge, AMP rules and CloudWatch alarms |
 | `frontend/`              | The explorer's ECS service, task definition and secret               |
+| `cdn/`                   | Bundle bucket, CloudFront, the routing function and its store, WAF   |
 | `observability-grafana/` | Grafana datasources and dashboards                                   |
 | `account-level/`         | Legacy: ECR, the Route53 zones and the certs previews still use      |
 
@@ -133,6 +134,26 @@ To validate without a backend, set the workspace through the environment:
 TF_WORKSPACE=dev terraform validate
 ```
 
+## CDN
+
+`cdn/` serves the static export from S3 with no origin server. One bucket holds every published
+bundle under its own `app-<sha12>/` prefix plus one `runtime-config.json` per environment, and
+`edge-router.js` — a CloudFront Function on viewer-request — turns a URL into a key under those. It
+does what the Node server used to: pick a locale, answer the renamed routes, and rewrite a real id
+onto the `__shell__` document its route prerendered.
+
+Which bundle answers is a lookup, not a redeploy. The function reads a CloudFront KeyValueStore
+keyed by host, so one distribution serves dev and every preview from different bundles. Terraform
+owns the environment's own keys from `bundle_prefix` in the env YAML, exactly as it pins `image_tag`;
+the preview workflow writes its own PR's key.
+
+`hosting` in the env YAML is the switch. `ecs` leaves the name on the ALB, `cdn` moves it here.
+Both stacks write a weighted record of the same name and one of the two carries the weight, so a
+cutover and a rollback are the same one-line change and the name never disappears between applies.
+
+`edge-router.spec.ts` runs the deployed function source against `app/[locale]`, so a route added to
+the app without a matching entry in the router fails CI rather than 404ing in production.
+
 ## WAF blocklist
 
 `edge/` creates the `<env>-waf-blocklist` IP set and wires it to a rule at priority 5, but it does not
@@ -141,8 +162,12 @@ later applies from reverting whoever edited it last. This repo is public, so com
 scraper exactly what to route around — and a blocklist that needs a release to change is one that
 does not get used in the moment it is needed.
 
+`cdn/` creates a second set, `<env>-waf-cdn-blocklist`, because a Web ACL cannot span the regional
+and CloudFront scopes. Both are live until the ALB goes, so an entry has to be added to both.
+
 Edit it in the console: **WAF & Shield → IP sets**, region Europe (Ireland), scope regional, then
-`block-explorer-<env>-waf-blocklist`. Add or delete a CIDR and save. Changes take effect within
+`block-explorer-<env>-waf-blocklist`; the CloudFront set is under region Global (CloudFront). Add or
+delete a CIDR and save. Changes take effect within
 seconds and need no apply. The console sends the set's `LockToken` back on save, so two concurrent
 edits fail loudly rather than one silently clobbering the other.
 

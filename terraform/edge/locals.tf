@@ -7,8 +7,11 @@ locals {
   # Preload is sticky, so dev gets a bare one-year max-age and never asks for it.
   hsts_header_value = terraform.workspace == "prod" ? "max-age=63072000; includeSubDomains; preload" : "max-age=31536000"
 
-  # Null leaves a simple record, which is what dev owns outright.
-  dns_weight = lookup(local.env, "dns_weight", null)
+  # cdn/ writes a weighted record of the same name; `hosting` decides which one carries the weight.
+  on_alb = lookup(local.env, "hosting", "ecs") == "ecs"
+
+  # Null leaves a simple record, which is what dev owned outright before the CDN needed a pair.
+  dns_weight = local.on_alb ? lookup(local.env, "dns_weight", null) : 0
 
   # Only prod answers to a second name, and only until its cutover lands.
   extra_domain = try(local.env.extra_domain.name, null)
@@ -17,5 +20,5 @@ locals {
   extra_weighted = can(local.env.extra_domain.dns_weight) ? toset(compact([local.extra_domain])) : toset([])
 
   # Defaulted, not null: the body is type-checked even when for_each is empty.
-  extra_dns_weight = try(local.env.extra_domain.dns_weight, 0)
+  extra_dns_weight = local.on_alb ? try(local.env.extra_domain.dns_weight, 0) : 0
 }
