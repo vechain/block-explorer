@@ -21,6 +21,15 @@ The ECS stacks — `network`, `ecs`, `acm`, `edge`, `preview-edge`, `data`, `fro
 `frontend-preview` and the two modules under `modules/` — were deleted once both environments had
 served from CloudFront for a release. Their state keys stay in the buckets as a record.
 
+Two things about that teardown, either of which turns a destroy into an outage:
+
+- The prod ALB carried `enable_deletion_protection`, so `edge/` had to be applied once with it off
+  before it would destroy.
+- `acm/` and `cdn/` own the _same_ Route53 validation records. ACM reuses one CNAME per domain per
+  account, which is why `cdn/certificate.tf` sets `allow_overwrite`. Destroying `acm/` therefore
+  deletes the records the live CloudFront certificate renews against, silently and about a year
+  ahead of when it would bite. Re-apply `cdn/` immediately after.
+
 ## Observability
 
 Everything on the serving path is an AWS metric now, so it is all CloudWatch and it is all alarmed
@@ -52,6 +61,21 @@ which double-counts. `CountedRequests` overlaps `AllowedRequests` for the same r
 match does not terminate evaluation — so the two never belong in one stack. Note also that a
 CLOUDFRONT-scope Web ACL publishes **no `Region` dimension**: it is required for every protected
 resource type except CloudFront, so a panel or alarm carrying one matches nothing.
+
+Two of the seven alarms need explaining. **`cdn-4xx`** is the one that catches a broken serving
+path: a bundle prefix the bucket does not hold answers 403, and a routing-store read that
+`edge-router.js` catches answers 404 — in both cases request volume stays normal and the 5xx rate
+never moves, so every other rate alarm here stays flat through a total outage. Its threshold and
+the cache-hit one are **provisional**: CloudFront's additional metrics only begin collecting with
+this release, and the 4xx baseline is not zero, because every bot probe for an extensioned path is
+a 403. Read a day of prod and tune `cdn_alarm_thresholds` in the env YAML.
+
+**`router-errors`** sums execution and validation errors. CloudFront answers a 502 for either, but
+a handler returning a malformed response object counts only as a validation error, and that is the
+likelier failure after an `edge-router.js` edit. Its dimensions include `DistributionId`, because
+function metrics are published per function per distribution; the dashboard reads the same series
+with `matchExact` off, but an alarm has no such option and a wrong dimension set is an alarm that
+watches nothing and says nothing.
 
 `alerts_enabled` in the env YAML turns alerting on, and dev has it off — no CloudWatch alarms and
 no subscription. Nobody acts on a dev page. The delivery path itself — both topics, the bridge
