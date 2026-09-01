@@ -372,7 +372,7 @@ const BlockInnerChart = ({
     },
   }
 
-  const tooltipContent = (props: TooltipContentProps<number, string>) => (
+  const tooltipContent = (props: TooltipContentProps) => (
     <BlockChartTooltip {...props} selectedRange={selectedRange} dataKey={dataKey} />
   )
 
@@ -428,7 +428,7 @@ const BlockChartTooltip = ({
   active,
   payload,
   dataKey,
-}: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey; dataKey: string }) => {
+}: TooltipContentProps & { selectedRange: TimeRangeKey; dataKey: string }) => {
   const isVisible = active && payload && payload.length > 0
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()

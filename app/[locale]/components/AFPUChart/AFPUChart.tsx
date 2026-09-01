@@ -272,9 +272,7 @@ const AFPUInnerChart = ({ data, selectedRange }: { data: AFPUDataPoint[]; select
           />
           <Tooltip
             contentStyle={{ fontSize: '.8rem' }}
-            content={(props: TooltipContentProps<number, string>) => (
-              <AFPUTooltip {...props} selectedRange={selectedRange} />
-            )}
+            content={(props: TooltipContentProps) => <AFPUTooltip {...props} selectedRange={selectedRange} />}
           />
           <Area
             type="monotone"
@@ -290,7 +288,7 @@ const AFPUInnerChart = ({ data, selectedRange }: { data: AFPUDataPoint[]; select
   )
 }
 
-const AFPUTooltip = ({ active, payload }: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey }) => {
+const AFPUTooltip = ({ active, payload }: TooltipContentProps & { selectedRange: TimeRangeKey }) => {
   const isVisible = active && payload && payload.length > 0
   const { t } = useTranslation()
   const formatDate = useFormatDate()
