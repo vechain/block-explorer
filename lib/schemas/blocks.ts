@@ -103,7 +103,6 @@ const afpuDataSchema = z.object({
 
 export const afpuResponseSchema = z.array(afpuDataSchema)
 
-export type CompressedBlock = z.infer<typeof blockCompressedSchema>
 export type ExpandedBlock = z.infer<typeof blockExpandedSchema>
 export type BlockRevision = z.infer<typeof blockRevisionSchema>
 export type BlockUsageData = z.infer<typeof blockUsageDataSchema>

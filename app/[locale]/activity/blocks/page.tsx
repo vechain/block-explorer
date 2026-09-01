@@ -1,13 +1,13 @@
 'use client'
 
 import { Box, Heading, Stack } from '@chakra-ui/react'
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { NoBlocks } from '@/components/NoResults'
-import { useRecentBlocksExpanded } from '@/services/veworld-indexer/recent-activity'
+import { useBlockDetails, useLatestBlocks } from '@/services/veworld-indexer/latest-blocks'
 import { BlocksTable } from '../../components/BlocksTable'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
@@ -17,24 +17,23 @@ export default function AllBlocksPage() {
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState<number>(PAGE_SIZE_OPTIONS[0])
 
-  // Fetch enough blocks to support pagination
-  const totalToFetch = (page + 2) * pageSize
-  const { data: allBlocks, isPending } = useRecentBlocksExpanded({ count: totalToFetch })
+  const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useLatestBlocks({ size: pageSize })
 
-  // Paginate the blocks client-side
-  const paginatedBlocks = useMemo(() => {
-    if (!allBlocks) return []
-    const start = page * pageSize
-    const end = start + pageSize
-    return allBlocks.slice(start, end)
-  }, [allBlocks, page, pageSize])
+  const pages = data?.pages ?? []
+  const currentPageData = pages[page]?.data ?? []
+  const hasNext = page < pages.length - 1 || Boolean(hasNextPage)
 
-  const hasNext = useMemo(() => {
-    if (!allBlocks) return false
-    return allBlocks.length > (page + 1) * pageSize
-  }, [allBlocks, page, pageSize])
+  // Clauses and VTHO paid are per-transaction, so only the page on screen is fanned out to Thor.
+  const blocks = useBlockDetails(currentPageData)
 
-  const hasNoBlocks = !isPending && (!allBlocks || allBlocks.length === 0)
+  const hasNoBlocks = !isPending && pages.length > 0 && pages.every(p => p.data.length === 0)
+
+  const handlePageChange = async (newPage: number) => {
+    if (newPage > pages.length - 1 && hasNextPage && !isFetchingNextPage) {
+      await fetchNextPage()
+    }
+    setPage(newPage)
+  }
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
@@ -48,20 +47,14 @@ export default function AllBlocksPage() {
           {t('Blocks')}
         </Heading>
         <Box minHeight="400px">
-          {isPending ? (
-            <TableSkeleton />
-          ) : hasNoBlocks ? (
-            <NoBlocks />
-          ) : (
-            <BlocksTable blocks={paginatedBlocks} showDetails />
-          )}
+          {isPending ? <TableSkeleton /> : hasNoBlocks ? <NoBlocks /> : <BlocksTable blocks={blocks} showDetails />}
         </Box>
         <PaginationControls
           page={page}
           pageSize={pageSize}
           pageSizeOptions={PAGE_SIZE_OPTIONS}
           hasNext={hasNext}
-          onPageChange={setPage}
+          onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
         />
       </Card>
