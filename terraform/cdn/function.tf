@@ -17,7 +17,11 @@ resource "aws_cloudfront_function" "router" {
 
 # Seeded here and moved by the deploy, so `bundle_prefix` in the env YAML is only a first apply.
 resource "aws_cloudfrontkeyvaluestore_key" "host" {
-  for_each = toset(concat(local.record_names, [aws_cloudfront_distribution.main.domain_name]))
+  # Keys static, values apply-time: the distribution has no domain name on a first apply.
+  for_each = merge(
+    { for name in local.record_names : name => name },
+    { distribution = aws_cloudfront_distribution.main.domain_name },
+  )
 
   key_value_store_arn = aws_cloudfront_key_value_store.routes.arn
   key                 = each.value
