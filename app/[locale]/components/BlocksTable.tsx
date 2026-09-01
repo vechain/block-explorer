@@ -12,8 +12,7 @@ import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { Balance } from '@/components/ui/Balance'
 
 type BlocksTableProps =
-  | { blocks: CompressedBlock[]; showDetails?: false }
-  | { blocks: ExpandedBlock[]; showDetails: true }
+  { blocks: CompressedBlock[]; showDetails?: false } | { blocks: ExpandedBlock[]; showDetails: true }
 
 const isExpandedTransactions = (
   txs: ExpandedBlock['transactions'] | CompressedBlock['transactions'],

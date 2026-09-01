@@ -24,7 +24,7 @@ export const ErrorBoundary = (props: ErrorBoundaryProps) => {
   )
 }
 
-const DefaultFallbackComponent = ({ error }: { error: Error }) => {
+const DefaultFallbackComponent = ({ error }: FallbackProps) => {
   const [showErrorDetails, setShowErrorDetails] = useState(false)
   const { t } = useTranslation()
   return (
@@ -37,12 +37,14 @@ const DefaultFallbackComponent = ({ error }: { error: Error }) => {
         <Button variant="ghost" size="xs" onClick={() => setShowErrorDetails(s => !s)}>
           {showErrorDetails ? t('Hide') : t('Show')} {t('details')}
         </Button>
-        {showErrorDetails && <EmptyState.Description>{error.message}</EmptyState.Description>}
+        {showErrorDetails && (
+          <EmptyState.Description>{error instanceof Error ? error.message : String(error)}</EmptyState.Description>
+        )}
       </EmptyState.Content>
     </EmptyState.Root>
   )
 }
 
-const logError = (error: Error, info: ErrorInfo) => {
+const logError = (error: unknown, info: ErrorInfo) => {
   console.error(error, info)
 }
