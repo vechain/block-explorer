@@ -1,13 +1,11 @@
 'use client'
 
-import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
-import { blockExpandedQueryOptions } from '@/services/thor/block'
 import { indexerFetch } from './index'
-import { type IndexerBlock, indexerBlockSchema, indexerResponseSchema } from './schemas'
+import { indexerBlockSchema, indexerResponseSchema } from './schemas'
 
 const LATEST_BLOCKS_QUERY_KEY = 'getLatestBlocks'
 const LIVE_REFETCH_INTERVAL_MS = BLOCK_TIME_MS
@@ -61,37 +59,5 @@ export const useLatestBlocksLive = ({ size = 5, enabled = true }: { size?: numbe
     staleTime: BLOCK_TIME_MS,
     refetchInterval: LIVE_REFETCH_INTERVAL_MS,
     enabled,
-  })
-}
-
-export type BlockWithDetails = IndexerBlock & { clauseCount?: number; vthoPaid?: bigint }
-
-// Undefined until each block's Thor fetch lands, so a row renders on its indexed header alone.
-export const useBlockDetails = (blocks: IndexerBlock[]): BlockWithDetails[] => {
-  const { activeNetwork } = useSettingsStore()
-  const blockNumbers = blocks.map(block => block.number).join(',')
-
-  const queries = useMemo(
-    () =>
-      (blockNumbers ? blockNumbers.split(',').map(Number) : []).map(number =>
-        blockExpandedQueryOptions(activeNetwork.name, number),
-      ),
-    [activeNetwork.name, blockNumbers],
-  )
-
-  const detailsByNumber = useQueries({
-    queries,
-    combine: results =>
-      new Map(results.flatMap(result => (result.data ? [[result.data.number, result.data] as const] : []))),
-  })
-
-  return blocks.map(block => {
-    const expanded = detailsByNumber.get(block.number)
-    if (!expanded) return block
-    return {
-      ...block,
-      clauseCount: expanded.transactions.reduce((sum, tx) => sum + tx.clauses.length, 0),
-      vthoPaid: expanded.transactions.reduce((sum, tx) => sum + tx.paid, 0n),
-    }
   })
 }

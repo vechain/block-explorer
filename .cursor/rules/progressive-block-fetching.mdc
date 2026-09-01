@@ -54,10 +54,11 @@ const handlePageChange = async (newPage: number) => {
 
 Going forward fetches a new cursor; going back is free (already cached). Changing `pageSize` or `eventType` resets the query (different `queryKey`). For blocks the cursor is a block number, passed back as `from`.
 
-## Per-transaction block detail (Thor)
+## Per-block clause and VTHO totals
 
-`/activity/blocks` shows clauses per block and VTHO paid, which are per-transaction and so not in the
-index. `useBlockDetails(blocks)` fans out to `blockExpandedQueryOptions` for exactly the blocks
-handed to it, cached per `[network, blockNumber]` with `staleTime: Infinity` — so pass it one page,
-not a whole scroll history. It leaves `clauseCount` and `vthoPaid` undefined until each block's
-fetch lands, and `BlocksTable` renders those cells as skeletons, so the indexed header shows first.
+`/activity/blocks` shows clauses per block and VTHO paid, and both come off the block itself —
+`clauseCount` and `totalVthoPaid`, added by vechain-indexer#1550. They are required fields, so a
+network whose indexer has not shipped that change fails `indexerBlockSchema`.
+
+Thor is not involved in either block list. Reach for it only for what the index genuinely cannot
+serve: `isTrunk` / `isFinalized`, and lookup of a single block by id.

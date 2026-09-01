@@ -29,7 +29,7 @@ const getBestBlockCompressed = async ({ networkName }: { networkName: NetworkNam
  * Expanded block
  */
 
-export const blockExpandedQueryOptions = (networkName: NetworkName, revision: BlockRevision | undefined) =>
+const blockExpandedQueryOptions = (networkName: NetworkName, revision: BlockRevision | undefined) =>
   queryOptions({
     queryKey: [BLOCK_EXPANDED_QUERY_KEY, networkName, revision],
     queryFn: revision ? () => getBlockExpanded({ networkName, revision }) : skipToken,

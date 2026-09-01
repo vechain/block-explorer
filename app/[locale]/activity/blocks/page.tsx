@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { TableSkeleton } from '@/components/ui/Table'
 import { PaginationControls } from '@/components/ui/PaginationControls'
 import { NoBlocks } from '@/components/NoResults'
-import { useBlockDetails, useLatestBlocks } from '@/services/veworld-indexer/latest-blocks'
+import { useLatestBlocks } from '@/services/veworld-indexer/latest-blocks'
 import { BlocksTable } from '../../components/BlocksTable'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const
@@ -22,9 +22,6 @@ export default function AllBlocksPage() {
   const pages = data?.pages ?? []
   const currentPageData = pages[page]?.data ?? []
   const hasNext = page < pages.length - 1 || Boolean(hasNextPage)
-
-  // Clauses and VTHO paid are per-transaction, so only the page on screen is fanned out to Thor.
-  const blocks = useBlockDetails(currentPageData)
 
   const hasNoBlocks = !isPending && pages.length > 0 && pages.every(p => p.data.length === 0)
 
@@ -47,7 +44,13 @@ export default function AllBlocksPage() {
           {t('Blocks')}
         </Heading>
         <Box minHeight="400px">
-          {isPending ? <TableSkeleton /> : hasNoBlocks ? <NoBlocks /> : <BlocksTable blocks={blocks} showDetails />}
+          {isPending ? (
+            <TableSkeleton />
+          ) : hasNoBlocks ? (
+            <NoBlocks />
+          ) : (
+            <BlocksTable blocks={currentPageData} showDetails />
+          )}
         </Box>
         <PaginationControls
           page={page}

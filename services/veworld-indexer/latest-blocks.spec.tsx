@@ -1,43 +1,17 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_NETWORK } from '@/lib/constants/network'
 import { makeQueryClient } from '@/lib/query-client/query-client'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { indexerFetch } from '.'
-import { indexerBlockSchema } from './schemas'
+import { useLatestBlocks } from './latest-blocks'
 
 vi.mock('.', async importOriginal => ({
   ...(await importOriginal<typeof import('.')>()),
   indexerFetch: vi.fn(),
 }))
-
-// Stands in for the Thor fan-out, so the join is tested without an expanded-block fixture.
-const expandedRevisions: number[] = []
-let holdExpanded = false
-let expandedResolvers: Array<() => void>
-
-vi.mock('@/services/thor/block', () => ({
-  blockExpandedQueryOptions: (networkName: string, revision: number) => ({
-    queryKey: ['blockExpanded', networkName, revision],
-    queryFn: () => {
-      expandedRevisions.push(revision)
-      const block = {
-        number: revision,
-        transactions: [
-          { clauses: [{}, {}], paid: 1_000n },
-          { clauses: [{}], paid: 500n },
-        ],
-      }
-      if (holdExpanded) return new Promise(resolve => expandedResolvers.push(() => resolve(block)))
-      return Promise.resolve(block)
-    },
-    staleTime: Infinity,
-  }),
-}))
-
-const { useBlockDetails, useLatestBlocks } = await import('./latest-blocks')
 
 const mockIndexerFetch = vi.mocked(indexerFetch)
 
@@ -61,6 +35,8 @@ const indexedBlock = (number: number) => ({
   receiptsRoot: hex(64, '3'),
   totalScore: number,
   com: true,
+  clauseCount: 12,
+  totalVthoPaid: '0x2f1c59f8e6aefae0',
 })
 
 const page = (numbers: number[], cursor?: string) =>
@@ -77,12 +53,6 @@ const render = <T,>(hook: () => T) => {
 }
 
 const paramsOf = (call: number) => mockIndexerFetch.mock.calls[call][0].params
-
-beforeEach(() => {
-  expandedRevisions.length = 0
-  expandedResolvers = []
-  holdExpanded = false
-})
 
 afterEach(() => {
   useSettingsStore.setState({ activeNetwork: DEFAULT_NETWORK })
@@ -115,56 +85,13 @@ describe('useLatestBlocks', () => {
     expect(result.current.hasNextPage).toBe(false)
   })
 
-  // vechain-indexer#1550 adds these two; they reach us before a follow-up teaches us to read them.
-  it('drops the clause and VTHO totals the indexer is adding, leaving Thor authoritative', async () => {
-    const enriched = { ...indexedBlock(100), clauseCount: 12, totalVthoPaid: '0x2f1c59f8e6aefae0' }
-    mockIndexerFetch.mockResolvedValue({
-      data: { data: [enriched], pagination: { hasNext: false } },
-    } as Awaited<ReturnType<typeof indexerFetch>>)
+  it('carries the per-block clause and VTHO totals off the response', async () => {
+    mockIndexerFetch.mockResolvedValue(page([100]))
     const { result } = render(() => useLatestBlocks({ size: 2 }))
 
     await waitFor(() => expect(result.current.data?.pages[0].data).toHaveLength(1))
     const [block] = result.current.data!.pages[0].data
-    expect(block.number).toBe(100)
-    expect(block).not.toHaveProperty('clauseCount')
-    expect(block).not.toHaveProperty('totalVthoPaid')
-  })
-})
-
-describe('useBlockDetails', () => {
-  const blocks = [100, 99].map(number => indexerBlockSchema.parse(indexedBlock(number)))
-
-  it('asks Thor only for the blocks it was given', async () => {
-    render(() => useBlockDetails(blocks))
-
-    await waitFor(() => expect(expandedRevisions).toHaveLength(2))
-    expect([...expandedRevisions].sort((a, b) => a - b)).toEqual([99, 100])
-  })
-
-  it('joins clause counts and VTHO paid onto the indexed headers', async () => {
-    const { result } = render(() => useBlockDetails(blocks))
-
-    await waitFor(() =>
-      expect(result.current.map(block => [block.number, block.clauseCount, block.vthoPaid])).toEqual([
-        [100, 3, 1_500n],
-        [99, 3, 1_500n],
-      ]),
-    )
-  })
-
-  it('renders the indexed header before the Thor detail lands', async () => {
-    holdExpanded = true
-    const { result } = render(() => useBlockDetails(blocks))
-
-    await waitFor(() => expect(expandedResolvers).toHaveLength(2))
-    expect(result.current.map(block => block.number)).toEqual([100, 99])
-    expect(result.current.every(block => block.clauseCount === undefined)).toBe(true)
-
-    holdExpanded = false
-    await act(async () => {
-      expandedResolvers.forEach(resolve => resolve())
-    })
-
-    await waitFor(() => expect(result.current.every(block => block.clauseCount === 3)).toBe(true))
+    expect(block.clauseCount).toBe(12)
+    expect(block.totalVthoPaid).toBe(3_394_687_144_687_500_000n)
   })
 })

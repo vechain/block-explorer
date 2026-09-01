@@ -176,6 +176,8 @@ export const indexerBlockSchema = z.object({
   receiptsRoot: hexStringSchema,
   totalScore: z.number(),
   com: z.boolean(),
+  clauseCount: z.number(),
+  totalVthoPaid: hexToBigIntSchema,
 })
 
 export const indexerErc721Schema = z.object({
