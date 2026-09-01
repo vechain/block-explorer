@@ -1,11 +1,5 @@
-# This repo's GitHub Actions deploy role for this account.
-#
-# The shared explorer-github-actions-<env> role is not reused: it trusts
-# `repo:vechain/<name>:*` for five repos, so a workflow on any branch of any of
-# them can assume it, and it carries AdministratorAccess in an account three
-# other projects share. This one trusts a single subject, the claim a job
-# declaring `environment: prod` presents. It is applied by hand, never by the
-# pipeline, so nothing below grants iam on the role itself.
+# This repo's own deploy role, replacing the shared one. Applied by hand, never by
+# the pipeline, so nothing below grants iam on the role itself. See README.md.
 
 data "aws_caller_identity" "current" {}
 
@@ -13,9 +7,15 @@ data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
 
-# Written literally rather than interpolated: checkov's CKV_AWS_358 — the check
-# for exactly the any-branch-of-any-repo hole this replaces — bails out on a
-# value it cannot resolve and reports the file as passing.
+# Only where the pipeline writes records itself. prod's go through dns/'s role.
+data "aws_route53_zone" "public" {
+  for_each = toset(local.account.public_zone_names)
+
+  name         = each.key
+  private_zone = false
+}
+
+# checkov's CKV_AWS_358 cannot resolve a per-workspace list, so the role's precondition covers it.
 data "aws_iam_policy_document" "gha_assume" {
   statement {
     effect  = "Allow"
@@ -37,7 +37,7 @@ data "aws_iam_policy_document" "gha_assume" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:vechain/block-explorer:environment:prod"]
+      values   = local.account.gha_subjects
     }
   }
 }
@@ -53,6 +53,17 @@ resource "aws_iam_role" "gha" {
 
   lifecycle {
     prevent_destroy = true
+
+    # StringEquals already rejects a wildcard, so this catches the review-time
+    # mistake rather than a runtime one: a subject for another repo, or the
+    # trailing `:*` that made the shared role assumable from any branch.
+    precondition {
+      condition = alltrue([
+        for s in local.account.gha_subjects :
+        startswith(s, "repo:vechain/block-explorer:") && !endswith(s, ":*")
+      ])
+      error_message = "Every OIDC subject must name this repo and be fully qualified. Example: repo:vechain/block-explorer:environment:dev"
+    }
   }
 }
 
@@ -248,7 +259,7 @@ data "aws_iam_policy_document" "gha_allow" {
     sid       = "Registry"
     effect    = "Allow"
     actions   = ["ecr:*"]
-    resources = [aws_ecr_repository.app.arn]
+    resources = [local.ecr_repository_arn]
   }
 
   # Account-wide by design: the token authorises a docker login, not a repository.
@@ -343,8 +354,7 @@ data "aws_iam_policy_document" "gha_allow" {
     resources = ["*"]
   }
 
-  # The task, execution, Grafana workspace and Slack bridge roles. Excludes this
-  # role, which is named block-explorer-github-actions-prod.
+  # Every role the stacks create. Excludes this one, which carries github-actions.
   statement {
     sid    = "OwnServiceRoles"
     effect = "Allow"
@@ -419,15 +429,56 @@ data "aws_iam_policy_document" "gha_allow" {
     }
   }
 
-  # The public zones are in the other account, so every Route53 write this
-  # pipeline makes happens through the dns/ stack's role. Wildcarded on account
-  # rather than naming one, which would put an account id in a public repo — and
-  # the real gate is the other side's trust policy, so this grants nothing on its
-  # own.
-  statement {
-    sid       = "AssumeDnsWriter"
-    effect    = "Allow"
-    actions   = ["sts:AssumeRole"]
-    resources = ["arn:aws:iam::*:role/${local.name}-dns-writer"]
+  # Whichever account holds the zones writes them directly; the other assumes dns/'s role.
+  dynamic "statement" {
+    for_each = length(local.zone_arns) == 0 ? [1] : []
+
+    content {
+      # Wildcarded on account: naming one would put an account id in a public repo.
+      sid       = "AssumeDnsWriter"
+      effect    = "Allow"
+      actions   = ["sts:AssumeRole"]
+      resources = ["arn:aws:iam::*:role/${var.project}-prod-dns-writer"]
+    }
+  }
+
+  # Pinned to our two: this account also holds the legacy explorer's zones.
+  dynamic "statement" {
+    for_each = length(local.zone_arns) == 0 ? [] : [1]
+
+    content {
+      sid    = "OwnZones"
+      effect = "Allow"
+      actions = [
+        "route53:ChangeResourceRecordSets",
+        "route53:GetHostedZone",
+        "route53:ListResourceRecordSets",
+        "route53:ListTagsForResource",
+      ]
+      resources = local.zone_arns
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(local.zone_arns) == 0 ? [] : [1]
+
+    content {
+      sid       = "TrackZoneChange"
+      effect    = "Allow"
+      actions   = ["route53:GetChange"]
+      resources = ["arn:aws:route53:::change/*"]
+    }
+  }
+
+  # How every stack resolves a zone id rather than hard-coding one; not scopable.
+  dynamic "statement" {
+    for_each = length(local.zone_arns) == 0 ? [] : [1]
+
+    content {
+      sid       = "FindZoneByName"
+      effect    = "Allow"
+      actions   = ["route53:ListHostedZones", "route53:ListHostedZonesByName"]
+      resources = ["*"]
+    }
   }
 }
