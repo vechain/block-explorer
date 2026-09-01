@@ -211,8 +211,7 @@ resource "aws_cloudfront_distribution" "main" {
   }
 }
 
-# Weighted against edge/'s record of the same name rather than replacing it: the pair swaps on
-# `hosting`, so a rollback is the same one-line change in the other direction.
+# Route53 offers no path from a weighted record back to a simple one, so the identifier stays.
 resource "aws_route53_record" "app" {
   for_each = toset(local.record_names)
   provider = aws.dns
@@ -224,7 +223,7 @@ resource "aws_route53_record" "app" {
   set_identifier = "cdn-${terraform.workspace}"
 
   weighted_routing_policy {
-    weight = local.serving ? 100 : 0
+    weight = 100
   }
 
   # CloudFront has no health to evaluate.

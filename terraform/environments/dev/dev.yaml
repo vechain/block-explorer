@@ -1,50 +1,18 @@
-# Dev environment — ECS Fargate on the dev ALB.
+# Dev environment — the static bundle on CloudFront, shared with every preview.
 environment: dev
 domain: dev.block-explorer.vechain.org
 
-# Network
-vpc_cidr: 10.30.0.0/16
-az_count: 2
-# An AZ outage takes dev egress with it, which is worth ~$65/month. Prod: false.
-single_nat_gateway: true
-
-# ECS task
-image_tag: latest # Overwritten by the deploy with the content SHA it resolved.
-app_version: dev # Overwritten by the deploy with the release that last changed the app.
-task_cpu: 512
-task_memory: 1024
-desired_count: 1
-# Scaling has nothing to react to here; it is on so prod does not run it first.
-autoscaling_max: 2
-autoscaling_request_count_target: 2500
-autoscaling_cpu_target: 45
-container_port: 3000
-
-# The dev name is ours to create.
-dns_record_enabled: true
-# Weighted rather than simple, so the ALB and CloudFront records can share the name.
-dns_weight: 100
-
-# Static hosting. `cdn` moves this name off the ALB; the ALB and its service stay for a rollback.
-hosting: cdn
 bundle_prefix: app-unpublished # Only seeds a first apply; the deploy owns the live value.
 cdn_price_class: PriceClass_100
 
+# Access logs in S3, the AMP and Lambda log groups, and the WAF log group.
 log_retention_days: 30
-
-# Every upstream URL defaults to its public host, so dev needs no runtime overrides.
-runtime_environment: {}
-
-# Shared Valkey. Ceilings against a runaway bill, not a capacity plan — 1000 ECPU/s
-# is the AWS floor, and the working set is tens of MB of decoded selectors and ABIs.
-cache_data_storage_max_gb: 1
-cache_ecpu_per_second_max: 1000
 
 grafana_okta_saml_metadata_url: https://vechaineu.okta.com/app/exk1020c50lQfO4EF418/sso/saml/metadata
 grafana_admin_okta_groups: [APP_AMG_BLOCK_EXPLORER_Admin]
 grafana_editor_okta_groups: [APP_AMG_BLOCK_EXPLORER_Editor]
 
-# Off entirely: no alarms, no AMP alert rules, no Alertmanager.
+# Off entirely: no CloudWatch alarms and no subscription.
 alerts_enabled: false
 
 # WAF. The rate-based IP rule always blocks; the AWS managed groups stay in

@@ -150,10 +150,10 @@ jobs:
 
           case "$ENVIRONMENT" in
             dev)
-              stacks="dns network ecs acm edge preview-edge data observability-aws frontend cdn observability-grafana"
+              stacks="dns cdn observability-aws observability-grafana"
               ;;
             prod)
-              stacks="network ecs acm edge data observability-aws frontend cdn observability-grafana"
+              stacks="cdn observability-aws observability-grafana"
               ;;
           esac
 
@@ -188,7 +188,6 @@ jobs:
       host_keys: ${{ steps.outputs.outputs.host_keys }}
       runtime_config: ${{ steps.outputs.outputs.runtime_config }}
       verify_url: ${{ steps.outputs.outputs.verify_url }}
-      serving: ${{ steps.outputs.outputs.serving }}
       domain: ${{ steps.outputs.outputs.domain }}
       grafana_url: ${{ steps.outputs.outputs.grafana_url }}
     steps:
@@ -207,32 +206,6 @@ jobs:
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
-
-      # Nothing builds an image any more; Phase 5 removes the service outright.
-      - name: Freeze the ECS task at what it already runs
-        env:
-          ENVIRONMENT: ${{ needs.guard.outputs.environment }}
-        run: |
-          set -euo pipefail
-
-          family="block-explorer-${ENVIRONMENT}-frontend"
-          running=$(aws ecs describe-task-definition --task-definition "$family" --no-cli-pager \
-            --query "taskDefinition.containerDefinitions[?name=='frontend'] | [0]" --output json 2>/dev/null || true)
-
-          if [ -z "${running:-}" ] || [ "$running" = "null" ]; then
-            echo "No task definition for ${family}; leaving the YAML as committed."
-            exit 0
-          fi
-
-          image_tag=$(jq -r '.image | split(":") | last' <<<"$running")
-          app_version=$(jq -r '.environment[]? | select(.name == "APP_VERSION") | .value' <<<"$running")
-
-          cd "terraform/environments/${ENVIRONMENT}"
-          sed -i "s|^image_tag:.*|image_tag: ${image_tag}|" "${ENVIRONMENT}.yaml"
-          if [ -n "$app_version" ]; then
-            sed -i "s|^app_version:.*|app_version: ${app_version}|" "${ENVIRONMENT}.yaml"
-          fi
-          grep -E '^(image_tag|app_version):' "${ENVIRONMENT}.yaml"
 
       # Both role vars pass unconditionally; the inapplicable one resolves to "".
       - name: Plan and apply each stack
@@ -274,7 +247,6 @@ jobs:
             echo "host_keys=$(terraform output -json host_keys | jq -c .)"
             echo "runtime_config=$(terraform output -json runtime_config_base | jq -c .)"
             echo "verify_url=$(terraform output -raw verify_url)"
-            echo "serving=$(terraform output -raw serving)"
             echo "domain=$(terraform output -raw url)"
           } >> "$GITHUB_OUTPUT"
           popd >/dev/null
@@ -477,8 +449,6 @@ jobs:
         env:
           ENVIRONMENT: ${{ needs.guard.outputs.environment }}
           DOMAIN: ${{ needs.terraform.outputs.domain }}
-          VERIFY_URL: ${{ needs.terraform.outputs.verify_url }}
-          SERVING: ${{ needs.terraform.outputs.serving }}
           GRAFANA_URL: ${{ needs.terraform.outputs.grafana_url }}
           APP_SHA: ${{ needs.guard.outputs.app_sha }}
           APP_VERSION: ${{ steps.version.outputs.app_version }}
@@ -488,12 +458,7 @@ jobs:
             echo "### ${ENVIRONMENT} deployed — ${TAG}"
             echo
             echo "- Serving \`${APP_SHA}\` as \`${APP_VERSION}\`"
-            if [ "$SERVING" = "true" ]; then
-              echo "- ${DOMAIN}"
-            else
-              echo "- ${DOMAIN} still answers from the ALB. Set \`hosting: cdn\` to move it."
-              echo "- CDN: ${VERIFY_URL}"
-            fi
+            echo "- ${DOMAIN}"
             if [ -n "$GRAFANA_URL" ]; then
               echo "- Grafana: ${GRAFANA_URL}/d/be-overview"
             fi

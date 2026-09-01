@@ -5,9 +5,6 @@ locals {
   preview      = yamldecode(file("../environments/preview/preview.yaml"))
   name         = "${var.project}-${terraform.workspace}"
 
-  # edge/ reads the same key and drops its own record's weight when this one carries it.
-  serving = lookup(local.env, "hosting", "ecs") == "cdn"
-
   # Which prefix in the bucket answers, pinned per environment exactly as image_tag is.
   bundle_prefix = lookup(local.env, "bundle_prefix", "app-unpublished")
 
@@ -25,7 +22,7 @@ locals {
     local.preview_wildcard == null ? {} : { (local.preview_wildcard) = local.preview.domain_suffix },
   )
 
-  # The preview wildcard is preview-edge's until the previews move.
+  # The preview wildcard is a bare alias: previews are keyed by host in the store, not in DNS.
   record_names = compact([local.env.domain, local.extra_domain])
 
   # Preload is sticky, so dev gets a bare one-year max-age and never asks for it.

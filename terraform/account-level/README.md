@@ -17,17 +17,17 @@ rarely.
 ### Route53 Hosted Zones
 
 Both public zones live here, in the dev account, which is what lets a record for prod and a record for
-dev sit in one zone — and is what made the weighted cutover possible. `acm/` and `edge/` write into
-them from the prod account through the role `dns/` owns.
+dev sit in one zone — and is what made the weighted cutover possible. `cdn/` writes into them from
+the prod account through the role `dns/` owns.
 
 - **Production**: `block-explorer.vechain.org`
 - **Preview**: `block-explorer-preview.vechain.org`
 
 ### ACM Certificates
 
-Only the wildcard is left, and `preview-edge/` terminates every preview on it. The prod certificate
-went with App Runner — the prod ALB carries its own, issued in `explorer-prod` and validated by a
-CNAME written back into the zone here.
+Only the wildcard is left, and nothing reads it: `cdn/` issues its own certificate in us-east-1,
+covering every alias the distribution answers on, previews included. The prod certificate went with
+App Runner.
 
 - **Preview**: `*.block-explorer-preview.vechain.org` (wildcard, DNS validated)
 
