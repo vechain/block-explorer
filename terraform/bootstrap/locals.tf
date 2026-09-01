@@ -28,7 +28,7 @@ locals {
       # account-level/'s, and its lifecycle rules keep the dev- and pr- tags.
       create_ecr = false
 
-      # Four, because dev runs more than a deploy: previews apply under their own
+      # Four, because dev runs more than a deploy: previews publish under their own
       # environment, tear down on a bare pull_request, and are swept from main.
       gha_subjects = [
         "repo:vechain/block-explorer:environment:dev",
@@ -53,11 +53,9 @@ locals {
       ]
 
       # dns/ is applied in this workspace but names its role for the account that
-      # assumes it, and a preview's task roles carry the PR number instead of the
-      # environment. Neither matches the <project>-<workspace>-* shape.
+      # assumes it, so it does not match the <project>-<workspace>-* shape.
       pipeline_role_name_patterns = [
         "${var.project}-dev-*",
-        "${var.project}-preview-pr-*",
         "${var.project}-prod-dns-writer",
       ]
     }
@@ -89,7 +87,6 @@ locals {
   # Every managed policy the stacks attach to a role they create. Adding a
   # statement to an inline policy needs no entry here; attaching one does.
   attachable_managed_policy_arns = [
-    "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
     "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
     "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess",
     "arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess",
@@ -110,10 +107,6 @@ locals {
 
   # Services whose service-linked role may not exist yet in this account.
   service_linked_role_services = [
-    "ecs.amazonaws.com",
-    "elasticache.amazonaws.com",
-    "elasticloadbalancing.amazonaws.com",
-    "ecs.application-autoscaling.amazonaws.com",
     "wafv2.amazonaws.com",
     "grafana.amazonaws.com",
     "aps.amazonaws.com",

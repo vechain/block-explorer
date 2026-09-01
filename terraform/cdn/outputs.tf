@@ -33,11 +33,6 @@ output "verify_url" {
   value       = "https://${aws_cloudfront_distribution.main.domain_name}"
 }
 
-output "serving" {
-  description = "Whether this environment's DNS points here rather than at the ALB. Follows `hosting` in the environment YAML."
-  value       = local.serving
-}
-
 output "waf_web_acl_name" {
   description = "WAF ACL name, which is also its CloudWatch WebACL dimension. Null when waf_enabled is off."
   value       = local.waf_enabled ? aws_wafv2_web_acl.cdn[0].name : null
@@ -51,4 +46,19 @@ output "url" {
 output "terraform_workspace" {
   description = "Current Terraform workspace (dev or prod). Mirrored for cross-stack consistency."
   value       = terraform.workspace
+}
+
+output "router_function_name" {
+  description = "Viewer-request function name, which is also its CloudWatch FunctionName dimension."
+  value       = aws_cloudfront_function.router.name
+}
+
+output "waf_log_group_name" {
+  description = "Log group the CloudFront-scope WAF delivers blocked and counted requests to, in us-east-1."
+  value       = aws_cloudwatch_log_group.waf.name
+}
+
+output "log_bucket_name" {
+  description = "Bucket the distribution's access logs land in, partitioned by distribution and date."
+  value       = aws_s3_bucket.logs.id
 }

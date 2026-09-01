@@ -4,18 +4,13 @@ output "amg_workspace_url" {
 }
 
 output "overview_dashboard_url" {
-  description = "Deep link to the overview dashboard. The alert rules' dashboard_url annotations point at the same place."
+  description = "Deep link to the overview dashboard."
   value       = local.amg_workspace_endpoint != null ? "https://${local.amg_workspace_endpoint}/d/be-overview" : null
 }
 
-output "logs_dashboard_url" {
-  description = "Deep link to the logs dashboard."
-  value       = local.amg_workspace_endpoint != null ? "https://${local.amg_workspace_endpoint}/d/be-logs" : null
-}
-
 output "dashboards_provisioned" {
-  description = "Whether the datasources and dashboard exist yet. False until both observability-aws and the edge ARN-suffix outputs have applied."
-  value       = local.observability_ready && local.alb_panels_ready
+  description = "Whether the datasources and dashboard exist yet. False until both observability-aws and cdn/ have applied."
+  value       = local.observability_ready && local.cdn_panels_ready
 }
 
 output "terraform_workspace" {

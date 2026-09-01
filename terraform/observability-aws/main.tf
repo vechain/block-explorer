@@ -1,10 +1,5 @@
 # AMP and AMG for one environment, plus the service account the
 # observability-grafana stack authenticates with.
-#
-# Apply order on a fresh environment:
-#   network -> ecs -> acm -> edge -> observability-aws -> frontend -> observability-grafana
-#
-# frontend/ reads this stack's AMP outputs through try(), hence its place above.
 
 data "aws_caller_identity" "current" {}
 
@@ -56,33 +51,6 @@ resource "aws_iam_role_policy_attachment" "grafana_cloudwatch" {
 resource "aws_iam_role_policy_attachment" "grafana_prometheus" {
   role       = aws_iam_role.grafana_workspace.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess"
-}
-
-# AmazonPrometheusQueryAccess stops at queries. These actions are what surface
-# the AMP rules and their state under Alerting, and let a silence be created
-# from the UI. The rules themselves stay Terraform-owned.
-resource "aws_iam_role_policy" "grafana_amp_alerts" {
-  name = "${local.name}-grafana-amp-alerts"
-  role = aws_iam_role.grafana_workspace.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid    = "AMPRulesAndAlertmanager"
-      Effect = "Allow"
-      Action = [
-        "aps:ListRules",
-        "aps:ListAlerts",
-        "aps:GetAlertManagerStatus",
-        "aps:GetAlertManagerSilence",
-        "aps:ListAlertManagerSilences",
-        "aps:PutAlertManagerSilences",
-        "aps:DeleteAlertManagerSilence",
-        "aps:GetAlertManagerReceivers",
-      ]
-      Resource = aws_prometheus_workspace.this.arn
-    }]
-  })
 }
 
 # No VPC connection: every datasource here (AMP, CloudWatch) is a public AWS

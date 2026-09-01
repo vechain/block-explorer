@@ -5,115 +5,79 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 
 ## Layout
 
-| Stack                    | Owns                                                                 |
-| ------------------------ | -------------------------------------------------------------------- |
-| `bootstrap/`             | Prod only, by hand: the deploy role, ECR (see below)                 |
-| `dns/`                   | Dev only: the role the prod pipeline assumes to write records        |
-| `network/`               | VPC, three subnet tiers, NAT, S3 gateway endpoint                    |
-| `ecs/`                   | ECS cluster (Container Insights on)                                  |
-| `acm/`                   | Public certificate for the environment's domain, DNS-validated       |
-| `edge/`                  | ALB, listeners, target group, security groups, WAF, DNS record       |
-| `preview-edge/`          | Shared preview ALB, listeners, security groups, wildcard DNS record  |
-| `data/`                  | ElastiCache Serverless Valkey, its RBAC users and the URL secret     |
-| `frontend-preview/`      | One PR's target group, host-header rule and ECS service              |
-| `observability-aws/`     | AMP, Grafana, SNS, the Slack bridge, AMP rules and CloudWatch alarms |
-| `frontend/`              | The explorer's ECS service, task definition and secret               |
-| `cdn/`                   | Bundle bucket, CloudFront, the routing function and its store, WAF   |
-| `observability-grafana/` | Grafana datasources and dashboards                                   |
-| `account-level/`         | Legacy: ECR, the Route53 zones and the certs previews still use      |
-
-`modules/ecs-webservice` is the shared Fargate service shape — dev, prod and previews differ by
-parameters, not structure. It holds two copies of the service resource because `ignore_changes` takes
-only a literal: dev and prod need it on `task_definition` (their deploy workflow moves the pointer out
-of band), previews need it off (the apply itself is what rolls them). `terraform_owns_task_definition`
-picks one. It also owns the target-tracking policies, which are off unless `autoscaling_max` is set in
-the env YAML — previews stay at one task.
-
-`modules/observability-sidecar` renders the ADOT container that scrapes `/api/metrics` over the task's
-loopback; previews do not carry it.
+| Stack                    | Owns                                                                     |
+| ------------------------ | ------------------------------------------------------------------------ |
+| `bootstrap/`             | By hand, per account: the deploy role, ECR (see below)                   |
+| `dns/`                   | Dev only: the role the prod pipeline assumes to write records            |
+| `cdn/`                   | Bundle and log buckets, CloudFront, the routing function, its store, WAF |
+| `observability-aws/`     | AMP, Grafana, SNS, the Slack bridge and the CloudWatch alarms            |
+| `observability-grafana/` | Grafana datasources and the overview dashboard                           |
+| `account-level/`         | Legacy: ECR, the Route53 zones and the preview wildcard certificate      |
 
 `account-level/` is what is left of the App Runner setup: the ECR repository, both public zones and
-the wildcard certificate `preview-edge/` reads. It is applied by hand, not by a pipeline.
+a wildcard certificate. Nothing in the pipeline reads it; it is applied by hand.
+
+The ECS stacks — `network`, `ecs`, `acm`, `edge`, `preview-edge`, `data`, `frontend`,
+`frontend-preview` and the two modules under `modules/` — were deleted once both environments had
+served from CloudFront for a release. Their state keys stay in the buckets as a record.
 
 ## Observability
 
-Metrics land in two stores, split by who publishes them. What the app knows about itself — cache
-hits, upstream outcomes, HTTP status, plus per-task cgroup CPU and memory — goes to AMP, collected
-by `modules/observability-sidecar` riding in each app task. What AWS knows about our resources —
-ALB, ECS, WAF and the shared cache — stays in CloudWatch and is alarmed there.
+Everything on the serving path is an AWS metric now, so it is all CloudWatch and it is all alarmed
+natively. CloudFront and its Web ACL publish only to **us-east-1** whatever region the stack runs
+in, which is why `observability-aws/` carries a second provider and a second SNS topic: a CloudWatch
+alarm can act only on a topic in its own region. One bridge Lambda serves both — SNS delivers
+cross-region to Lambda, so the eu-west-1 function is subscribed to the us-east-1 topic.
 
-A standalone YACE task bridging CloudWatch into AMP was tried and removed: it put every AWS-side
-metric behind one Fargate task that could itself die, to buy a single query language nothing here
-needed. Keep the split when prod is stood up. The SNS → Lambda → Slack bridge renders a CloudWatch
-alarm into the same shape as an Alertmanager notification, so it is invisible to whoever is on call.
+The AMP workspace survives with no writer. Nothing remote-writes to it since the ECS sidecar went,
+and Grafana keeps the datasource wired so a client-side path has somewhere to land; `manageAlerts`
+is off, because there is no rule group to surface. The recording rules, the AMP alert rules and the
+Alertmanager definition went with the sidecar — they queried series that will never arrive again,
+which is coverage that reads as real and is not.
+
+The SNS → Lambda → Slack bridge renders a CloudWatch alarm into the same shape as an Alertmanager
+notification, so it is invisible to whoever is on call. Alarm descriptions must read
+`Title — summary.`: the Lambda splits on the em dash.
 
 Dashboards live in `observability-grafana/` as a separate stack because the Grafana provider cannot
-initialise against a workspace the same apply is creating. The alert rules deep-link to panel IDs in
-`dashboards/overview.json` — renumbering a panel breaks the link from Slack.
+initialise against a workspace the same apply is creating.
 
-`dashboards/logs.json` reads the ECS task log group through CloudWatch Logs Insights, which bills on
-bytes scanned, so it ships with auto-refresh off. All WAF panels now sit on the overview: the metric
-ones answer how much and which rule, and a collapsed Logs Insights row answers who and what. Collapsed
-matters — the overview refreshes every minute, and those queries only run while the row is open.
+`dashboards/overview.json` reads CloudFront, its viewer-request function, its key value store and
+its WAF. A collapsed Logs Insights row at the bottom answers who and what — collapsed matters,
+because the overview refreshes every minute and those queries only run while the row is open.
 
 The WAF metric panels name each rule explicitly: the `Rule` dimension carries the `visibility_config`
 metric name, and a wildcard also matches the `ALL` aggregate and the managed groups' nested sub-rules,
 which double-counts. `CountedRequests` overlaps `AllowedRequests` for the same reason — a count-mode
-match does not terminate evaluation — so the two never belong in one stack.
+match does not terminate evaluation — so the two never belong in one stack. Note also that a
+CLOUDFRONT-scope Web ACL publishes **no `Region` dimension**: it is required for every protected
+resource type except CloudFront, so a panel or alarm carrying one matches nothing.
 
-`alerts_enabled` in the env YAML turns alerting on, and dev has it off — no CloudWatch alarms, no AMP
-alert rule group, no Alertmanager definition, and Grafana's Alerting UI is not wired to any of them.
-Nobody acts on a dev page, and dev is hibernated often enough that alarms there would read as
-permanently red. The recording rules are separate and always built, because the dashboards query them.
+`alerts_enabled` in the env YAML turns alerting on, and dev has it off — no CloudWatch alarms and
+no subscription. Nobody acts on a dev page. The delivery path itself — both topics, the bridge
+Lambda and the webhook secret — costs nothing idle and is built either way, which is what keeps
+re-enabling a one-line flip rather than a wait on that secret's seven-day recovery window.
 
-So is the delivery path — topic, bridge Lambda and webhook secret — which costs nothing idle and is
-what keeps re-enabling a one-line flip rather than a wait on that secret's seven-day recovery window.
 To rehearse end to end: set the `SLACK_WEBHOOK_URL` secret on the `dev` GitHub Environment, flip
-`alerts_enabled` to `true`, deploy, scale the service to zero, and confirm the no-healthy-targets
-alarm arrives and then recovers.
-
-The cost of dev not evaluating the AMP rules is that **prod is now the first apply to parse a new
-one** — `aws_prometheus_rule_group_namespace` is what validates the YAML and its PromQL, server-side.
-Rehearsing in dev before touching `alert_rules_yaml` is the cheap way round it.
+`alerts_enabled` to `true`, deploy, and point a host key at a bundle prefix that does not exist —
+the 403 alarm is the one a bad activate trips.
 
 Grafana sign-in is Okta SAML, configured from `grafana_okta_saml_metadata_url` and the two
 `grafana_*_okta_groups` lists in the env YAML. Blank the URL, or leave the Admin list empty, and the
 workspace stays without a SAML configuration — AMG rejects an empty role-value list, so there is no
-sign-in-but-nobody-mapped state to land in. Both lists need at least one group. Dashboards provision either way, since the Terraform
-provider authenticates with a service-account token rather than through SAML. A user whose `role`
-assertion matches neither list is a Viewer.
+sign-in-but-nobody-mapped state to land in. Both lists need at least one group. Dashboards provision
+either way, since the Terraform provider authenticates with a service-account token rather than
+through SAML. A user whose `role` assertion matches neither list is a Viewer.
 
-## Shared cache
+## Access logs
 
-`data/` holds one ElastiCache Serverless Valkey per account, and in dev it is shared by dev and every
-preview. The app reads it through `REDIS_URL`, injected from a Secrets Manager secret the stack
-writes: with the secret absent every proxy cache stays in-process, per task and cold on each deploy,
-which is how the environment behaves before this stack is applied and how it behaves again if the
-variable is removed. Rollback is dropping one environment variable, not a redeploy of old code.
+`cdn/` turns on CloudFront standard logging v2 to its own bucket, partitioned
+`{DistributionId}/{yyyy}/{MM}/{dd}` and Hive-compatible, so an Athena query over one day scans one
+day. v2 rather than the legacy config: it delivers to a bucket with ACLs disabled, and delivery to
+S3 carries no charge beyond the storage. The one part CloudWatch does bill for is Parquet
+conversion, so the output format is `w3c`.
 
-Keys are prefixed with the image tag, so two builds sharing one cache cannot read each other's
-payloads — that is what lets a preview running unmerged schema changes share dev's instance. It also
-means a deploy starts cold: the entries worth sharing are the day-long ones, decoded selectors and
-Sourcify ABIs, and they are rebuilt per release rather than carried across.
-
-## Autoscaling
-
-`modules/ecs-webservice` holds the service at two target-tracking policies at once, and the pairing
-is the point. CPU leads, because every page is server-rendered per request and load shows up there
-before it shows up as queueing. But the metric is a service _average_, and a task that is booting or
-being replaced contributes near-zero CPU to it — so the average reads low exactly when the service is
-failing. On 2026-08-28 that inverted the controller: it scaled prod in to 5 tasks and then 4 while
-p99 sat at 22s and one host was healthy.
-
-Requests per target moves the other way. When targets drop out the surviving ones each take a larger
-share, so the metric rises through the same failure that pushes average CPU down. Application Auto
-Scaling scales out on whichever policy asks for more and scales in only when both agree, which leaves
-CPU leading in normal conditions and stops it shedding capacity during a brownout.
-
-The request-count policy needs the ALB it is measured against, passed as
-`autoscaling_request_count_resource_label`; without one, CPU is the only signal. That is a separate
-switch from `autoscaling_max`, which is what turns target tracking on at all — previews set neither,
-so they run no autoscaling and stay at one task.
+Objects expire at `log_retention_days`. Nothing else prunes them, and a prod day is several GB.
 
 ## Environment config
 
@@ -121,12 +85,12 @@ Per-environment values live in `environments/<env>/<env>.yaml` and are read with
 stacks carry no `workspace == "prod" ? … : …` ternaries. The state bucket for each environment is in
 `environments/<env>/backend.config`, and the stacks that read another stack's state read that file
 back rather than defaulting to a bucket name — the two environments are in different accounts, so a
-prod apply that fell through to dev's bucket would quietly read dev's network and skip dev's cache.
+prod apply that fell through to dev's bucket would quietly read dev's distribution.
 
 Because the YAML path is derived from `terraform.workspace`, anything outside `dev` / `prod` fails at
 parse time — and every stack additionally carries a `workspace_guard` precondition.
-`environments/preview/preview.yaml` is the exception: previews are not a workspace, so `preview-edge`
-reads it from a fixed path while applying into `dev`.
+`environments/preview/preview.yaml` is the exception: previews are not a workspace, so `cdn/` reads
+it from a fixed path while applying into `dev`. All that is left in it is the wildcard suffix.
 
 To validate without a backend, set the workspace through the environment:
 
@@ -144,30 +108,27 @@ onto the `__shell__` document its route prerendered.
 
 Which bundle answers is a lookup, not a redeploy. The function reads a CloudFront KeyValueStore
 keyed by host, so one distribution serves dev and every preview from different bundles. Terraform
-owns the environment's own keys from `bundle_prefix` in the env YAML, exactly as it pins `image_tag`;
-the preview workflow writes its own PR's key.
+owns the environment's own keys from `bundle_prefix` in the env YAML; the preview workflow writes
+its own PR's key.
 
-`hosting` in the env YAML is the switch. `ecs` leaves the name on the ALB, `cdn` moves it here.
-Both stacks write a weighted record of the same name and one of the two carries the weight, so a
-cutover and a rollback are the same one-line change and the name never disappears between applies.
+The public records are weighted A-aliases with a set identifier and no sibling. They were paired
+against `edge/`'s records of the same name for the cutover, and the weight stays because Route53
+offers no path from a weighted record back to a simple one — dropping `set_identifier` fails the
+apply rather than converting it.
 
 `edge-router.spec.ts` runs the deployed function source against `app/[locale]`, so a route added to
 the app without a matching entry in the router fails CI rather than 404ing in production.
 
 ## WAF blocklist
 
-`edge/` creates the `<env>-waf-blocklist` IP set and wires it to a rule at priority 5, but it does not
-own the entries: `addresses` seeds an empty set on first create and `lifecycle.ignore_changes` keeps
-later applies from reverting whoever edited it last. This repo is public, so committed ranges tell a
-scraper exactly what to route around — and a blocklist that needs a release to change is one that
-does not get used in the moment it is needed.
+`cdn/` creates the `<env>-waf-cdn-blocklist` IP set and wires it to a rule at priority 5, but it does
+not own the entries: `addresses` seeds an empty set on first create and `lifecycle.ignore_changes`
+keeps later applies from reverting whoever edited it last. This repo is public, so committed ranges
+tell a scraper exactly what to route around — and a blocklist that needs a release to change is one
+that does not get used in the moment it is needed.
 
-`cdn/` creates a second set, `<env>-waf-cdn-blocklist`, because a Web ACL cannot span the regional
-and CloudFront scopes. Both are live until the ALB goes, so an entry has to be added to both.
-
-Edit it in the console: **WAF & Shield → IP sets**, region Europe (Ireland), scope regional, then
-`block-explorer-<env>-waf-blocklist`; the CloudFront set is under region Global (CloudFront). Add or
-delete a CIDR and save. Changes take effect within
+Edit it in the console: **WAF & Shield → IP sets**, region Global (CloudFront), then
+`block-explorer-<env>-waf-cdn-blocklist`. Add or delete a CIDR and save. Changes take effect within
 seconds and need no apply. The console sends the set's `LockToken` back on save, so two concurrent
 edits fail loudly rather than one silently clobbering the other.
 
@@ -182,23 +143,17 @@ confirm a new entry is biting.
 
 ## Applying
 
-`deploy.yml` owns everything long-lived in `explorer-dev`, `preview-edge` included. Every merge to
-`main` gets a `v.X.Y.Z` tag, which builds the release image; the deploy chains off that build, pins
-`image_tag`, applies the stacks in order and rolls the ECS service. Nothing here needs applying by
-hand.
-
-The preview ALB sits in that list rather than in `deploy-preview.yml` because it is shared and must
-only change from merged code — a preview deploy runs the PR's own branch, so applying it there would
-let any labelled PR reshape the ingress every other preview is served through.
+`deploy.yml` owns everything long-lived in both accounts. Every merge to `main` gets a `v.X.Y.Z`
+tag; the deploy chains off it, applies the stacks in order, publishes the bundle and moves the
+routing keys onto it. Nothing here needs applying by hand.
 
 Order matters where a stack reads another's state, and the workflow applies them serially in it:
-`dns` → `network` → `ecs` → `acm` → `edge` → `preview-edge` → `data` → `observability-aws` →
-`frontend` → `observability-grafana`. `frontend` sits after the AMP workspace because its sidecar remote-writes to
-it; `observability-aws`'s alarms name the ECS service by convention rather than reading it back, which
-is what keeps that from being a cycle. To run one stack locally against dev:
+`dns` → `cdn` → `observability-aws` → `observability-grafana`. Both observability stacks read
+`cdn`'s outputs — the distribution, the router function and the Web ACL are what they alarm on and
+chart. To run one stack locally against dev:
 
 ```bash
-cd terraform/network
+cd terraform/cdn
 terraform init -backend-config=../environments/dev/backend.config
 terraform workspace select -or-create dev
 terraform plan
@@ -207,33 +162,21 @@ terraform plan
 `.terraform/` is per-directory, so `init` and the workspace selection are needed in each stack.
 `terraform validate` needs a workspace too, but no backend — use `TF_WORKSPACE=dev terraform validate`.
 
-`frontend-preview` is the exception to all of the above: it is applied once per PR into workspace
-`pr-<N>`, by `deploy-preview.yml` on the `create-preview` label. Never apply it by hand — the state
-lives at `env:/pr-<N>/frontend-preview/terraform.tfstate` and the workspace list is what
-`preview-reconcile.yml` sweeps, so a workspace created outside the workflow is a preview nothing owns.
-Concurrent previews cap at 100, the target-group-per-ALB quota AWS does not raise.
+Previews apply no Terraform at all. `deploy-preview.yml` publishes a bundle prefix into dev's bucket
+and writes one key into the routing store; `preview-reconcile.yml` sweeps keys whose PR has closed.
 
 State locking is via S3 conditional writes (`use_lockfile = true`), not DynamoDB — no lock table
 exists for these stacks, and none is needed.
 
-One thing the pipeline deliberately does not do: **set the indexer bypass token.** It is seeded blank,
-because the app treats blank as unset and sends no header — so a wrong token is never sent. Put the
-real value into the secret named in the `indexer_rate_limit_bypass_secret_arn` output, then re-run the
-deploy, since secrets are injected only when a task starts. Skipping this does not break health
-checks; it means every server-side indexer call leaves from the one NAT IP and takes the indexer's
-per-IP rate limit for the whole environment.
-
 ## Prod
 
 Same stacks, a second account, and a separate state bucket — the same `deploy.yml` applies them on
-`release: published`, less `preview-edge` and `dns`, which exist only in the dev account. Prod's
-ElastiCache is built with the account rather than retrofitted, so the image that eventually takes
-prod traffic is one that has been running against Valkey in dev for weeks.
+`release: published`, less `dns`, which exists only in the dev account.
 
 Both public zones stay in the dev account, which is what let the cutover's weighted pair live in one
-zone, and is still where `block-explorer.vechain.org` resolves from. So
-`acm/` and `edge/` write records through a second provider that assumes the role `dns/` owns there,
-and `bootstrap/` grants the deploy role nothing on Route53 in its own account.
+zone, and is still where `block-explorer.vechain.org` resolves from. So `cdn/` writes records
+through a second provider that assumes the role `dns/` owns there, and `bootstrap/` grants the
+deploy role nothing on Route53 in its own account.
 
 Standing up the account, in order:
 
@@ -245,8 +188,6 @@ Standing up the account, in order:
    `dns_writer_role_arn` output as `DNS_WRITER_ROLE_ARN` on the `prod` Environment.
 4. Publish a release. Expect the first apply to surface a missing IAM action or two; that is what the
    scoped role costs.
-5. Put the real indexer token into `block-explorer/prod/indexer-rate-limit-bypass` in the new account.
-   Prod proxies the indexer server-side, so every call leaves from the NAT EIPs and needs it.
 
 Prod Grafana has no SAML until an Okta app exists for its workspace: an AMG workspace is its own SAML
 audience, so dev's app cannot serve both. Alerts still reach Slack, and dashboards still provision,
@@ -255,13 +196,12 @@ since the Terraform provider uses a service-account token.
 ### The records on the prod domains
 
 `block-explorer.vechain.org` and `explore.vechain.org` each carry a weighted A-alias with set
-identifier `ecs-prod`, left over from the cutovers: each shared its name with an `app-runner` record
-until App Runner was deleted. Each is the only record on its name now, and the weight is a formality —
-`edge/` keeps it because dropping `dns_weight` would replace the record for no gain.
+identifier `cdn-prod`, left over from two cutovers: each shared its name first with an `app-runner`
+record and then with `edge/`'s. Each is the only record on its name now, and the weight is a
+formality — `cdn/` keeps it because dropping the set identifier would replace the record for no gain.
 
 Worth remembering the next time prod has to move. Two weighted records on one name, ramped with an
-UPSERT per step, made rollback a weight change rather than a revert, and `evaluate_target_health` took
-a failing origin out of rotation unattended. Four things about the shape itself.
+UPSERT per step, made rollback a weight change rather than a revert. Four things about the shape.
 
 Terraform cannot turn a simple record into a weighted one. Route53 rejects a weighted record created
 beside a simple one of the same name, and the provider offers no path between them, so the apply
@@ -270,15 +210,10 @@ record; `explore.vechain.org` needed a manual `change-resource-record-sets` batc
 record and creating both weighted ones in one transaction.
 
 Run that batch before the **merge**, not before the release. A merge to `main` cuts a release and the
-deploy chains straight off it, so there is no gap in which to do it — skipping it fails the prod
-deploy at `edge/` and skips every stack after it.
+deploy chains straight off it, so there is no gap in which to do it.
 
 A single apply is not atomic across two records either. The provider sends one Route53 change per
 record, so an interrupted apply leaves the weights mismatched. Read both back after every write.
 
 And freeze releases for the length of the ramp. Neither record ignores changes to its weight, so a
-release lands the yaml's numbers over whatever the ramp has reached.
-
-Size the origin before ramping, not after. App Runner served `explore.vechain.org` on four to eight
-instances of 2 vCPU; prod ECS started the ramp at dev's 512/1024 and pinned at 100% CPU the moment the
-name landed on it.
+release lands the committed number over whatever the ramp has reached.

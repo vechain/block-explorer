@@ -1,7 +1,7 @@
-"""SNS to Slack bridge for AMP Alertmanager and CloudWatch alarms.
+"""SNS to Slack bridge for CloudWatch alarms.
 
-Alertmanager bodies are pre-rendered by the alertmanager_config template and
-forwarded verbatim; CloudWatch alarm JSON is rendered here into the same shape.
+Alarm JSON is rendered here from the "Title — summary." shape every alarm
+description carries. Anything else on the topic is forwarded verbatim.
 """
 
 import json
@@ -54,10 +54,10 @@ _STATE_SUFFIX = {"OK": " — resolved", "INSUFFICIENT_DATA": " — insufficient 
 
 
 def _render_cloudwatch_alarm(message: str) -> str | None:
-    """Render a CloudWatch alarm like the Alertmanager template, or None if it isn't one.
+    """Render a CloudWatch alarm into a Slack post, or None if it isn't one.
 
-    Alarm descriptions are written "Title — summary." so the halves land where
-    Alertmanager puts .title and .summary.
+    Alarm descriptions are written "Title — summary." so the halves land as a
+    bold header and a body line.
     """
     try:
         payload = json.loads(message)
