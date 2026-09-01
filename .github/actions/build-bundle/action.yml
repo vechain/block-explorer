@@ -1,0 +1,31 @@
+name: Build Bundle
+description: Builds the static export from the checked-out tree and packs it into bundle.tgz.
+
+# A composite action rather than a reusable workflow: this runs the tree it is called with, so it
+# has to inherit the caller's trust context instead of being reachable from every trigger at once.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version-file: .nvmrc
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        set -euo pipefail
+        corepack enable
+        corepack prepare pnpm@9.15.4 --activate
+        pnpm install --frozen-lockfile
+
+    - name: Build
+      shell: bash
+      run: pnpm build
+
+    # One archive rather than 400 loose files: every upload and download after it is one object,
+    # and the extracted tree is exactly what syncs to the bucket.
+    - name: Pack the bundle
+      shell: bash
+      run: tar -czf bundle.tgz -C out .

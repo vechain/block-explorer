@@ -1,14 +1,15 @@
 name: Destroy Preview Environment
 
+# A preview owns its routing-store key and its runtime-config.json, nothing else. The bundle stays:
+# it is content-addressed and shared with dev and with any other PR on the same content.
+
 on:
   pull_request:
     types: [closed]
     branches:
       - main
 
-# Shared with deploy-preview so a teardown cannot run against the Terraform state an
-# in-flight deploy is holding. GitHub evaluates cancel-in-progress on the incoming run, so
-# `true` would let a deploy cancel a teardown mid-destroy and strand the lock.
+# Shared with deploy-preview, and never cancelling: an incoming deploy must not cancel a teardown.
 concurrency:
   group: preview-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: false
@@ -16,8 +17,8 @@ concurrency:
 env:
   AWS_REGION: eu-west-1
   TERRAFORM_VERSION: 1.16.0
-  TERRAFORM_DIR: terraform/frontend-preview
-  TERRAFORM_BACKEND_CONFIG: ../environments/preview/backend.config
+  CDN_DIR: terraform/cdn
+  CDN_BACKEND_CONFIG: ../environments/dev/backend.config
 
 jobs:
   destroy:
@@ -27,7 +28,7 @@ jobs:
       id-token: write
       contents: read
       pull-requests: write
-    # Forks and unlabelled PRs have no preview; the workspace select below exits.
+    # Forks and unlabelled PRs have no preview; the delete below is a no-op for them.
     if: github.event.pull_request.head.repo.full_name == github.repository
 
     steps:
@@ -46,54 +47,59 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
-      - name: Select the workspace
-        id: workspace
-        working-directory: ${{ env.TERRAFORM_DIR }}
+      - name: Read the CDN outputs
+        id: cdn
+        working-directory: ${{ env.CDN_DIR }}
+        run: |
+          set -euo pipefail
+          terraform init -input=false -backend-config="${CDN_BACKEND_CONFIG}"
+          terraform workspace select dev
+          {
+            echo "bucket=$(terraform output -raw bucket_name)"
+            echo "kvs_arn=$(terraform output -raw key_value_store_arn)"
+          } >> "$GITHUB_OUTPUT"
+
+      # The key first: it is what makes the host answer, so deleting it is the teardown even if the
+      # config delete below fails and the sweep has to finish the job.
+      - name: Delete the preview
+        id: delete
         env:
+          BUCKET: ${{ steps.cdn.outputs.bucket }}
+          KVS_ARN: ${{ steps.cdn.outputs.kvs_arn }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          terraform init -input=false -backend-config="${TERRAFORM_BACKEND_CONFIG}"
-          if terraform workspace select "pr-${PR_NUMBER}"; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No workspace for PR #${PR_NUMBER}; nothing to destroy."
-            echo "exists=false" >> "$GITHUB_OUTPUT"
+
+          host="pr-${PR_NUMBER}.block-explorer-preview.vechain.org"
+
+          if ! aws cloudfront-keyvaluestore get-key --kvs-arn "$KVS_ARN" --key "$host" \
+               --no-cli-pager >/dev/null 2>&1; then
+            echo "No preview for PR #${PR_NUMBER}; nothing to destroy."
+            echo "existed=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
-      # image_tag is required but irrelevant once the task definition is going away.
-      - name: Terraform destroy
-        if: steps.workspace.outputs.exists == 'true'
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-          terraform destroy -input=false -auto-approve \
-            -var="pr_number=${PR_NUMBER}" -var="image_tag=destroy"
+          etag=$(aws cloudfront-keyvaluestore describe-key-value-store --kvs-arn "$KVS_ARN" \
+            --no-cli-pager --query ETag --output text)
+          aws cloudfront-keyvaluestore delete-key --kvs-arn "$KVS_ARN" --if-match "$etag" \
+            --key "$host" --no-cli-pager >/dev/null
 
-      - name: Delete the workspace
-        if: steps.workspace.outputs.exists == 'true'
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-          terraform workspace select default
-          terraform workspace delete "pr-${PR_NUMBER}"
+          aws s3 rm "s3://${BUCKET}/pr-${PR_NUMBER}/" --recursive --only-show-errors
+
+          echo "existed=true" >> "$GITHUB_OUTPUT"
+          echo "${host} is gone."
 
       - name: Report teardown
-        if: steps.workspace.outputs.exists == 'true'
+        if: steps.delete.outputs.existed == 'true'
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           header: preview
           message: |
             ### Preview — torn down
 
-            <sub>Workspace `pr-${{ github.event.pull_request.number }}` destroyed.</sub>
+            <sub>`pr-${{ github.event.pull_request.number }}` removed from the routing store.</sub>
 
-      # Loud on failure: the workspace stays in the list, so preview-reconcile
-      # retries within six hours, but a repeated failure needs a human.
+      # Loud: the sweep retries within six hours, but a repeated failure needs a human.
       - name: Report a failed teardown
         if: failure()
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
@@ -102,4 +108,4 @@ jobs:
           message: |
             ### Preview — teardown FAILED
 
-            Workspace `pr-${{ github.event.pull_request.number }}` still exists. The reconcile sweep will retry within six hours. [View logs →](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `pr-${{ github.event.pull_request.number }}` is still routed. The reconcile sweep will retry within six hours. [View logs →](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})

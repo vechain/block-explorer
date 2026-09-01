@@ -1,6 +1,4 @@
-# Ingress shared by every PR preview: one ALB, its listeners, the security groups
-# preview tasks attach to, and one wildcard DNS record. Per-PR target groups,
-# rules and services are added by frontend-preview/ in a pr-N workspace.
+# Ingress shared by every PR preview. The wildcard record moved to cdn/ when the previews did.
 #
 # A second ALB rather than dev's own, so a preview cannot spend dev's WAF rate
 # limit or show up in dev's ALB metrics. Concurrent previews cap at 100 — the
@@ -18,18 +16,11 @@ data "terraform_remote_state" "network" {
   }
 }
 
-# Both predate this migration and are still owned by account-level/, so they are
-# looked up rather than read from its state: that stack is legacy and phase 7
-# rewrites it.
+# Owned by account-level/ and looked up rather than read from its state: that stack is legacy.
 data "aws_acm_certificate" "wildcard" {
   domain      = "*.${local.env.domain_suffix}"
   statuses    = ["ISSUED"]
   most_recent = true
-}
-
-data "aws_route53_zone" "preview" {
-  name         = local.env.domain_suffix
-  private_zone = false
 }
 
 # ---------------------------------------------------------------------------
@@ -135,9 +126,7 @@ resource "aws_lb_listener" "http_redirect" {
   }
 }
 
-# The default action answers hosts no PR has claimed. The wildcard record points
-# every pr-*.<suffix> name here, so without it a mistyped or torn-down preview
-# returns a bare 503 that reads like an outage.
+# The default action answers hosts no PR has claimed.
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.preview.arn
   port              = 443
@@ -156,22 +145,6 @@ resource "aws_lb_listener" "https" {
       message_body = "No preview is deployed for this host. Add the create-preview label to the pull request."
       status_code  = "404"
     }
-  }
-}
-
-# One record for every PR, so frontend-preview writes no DNS at all and a
-# teardown cannot strand one. Health evaluation is off, unlike edge/: this ALB's
-# health is the union of every open PR's, so one broken preview would otherwise
-# take the name away from all of them.
-resource "aws_route53_record" "wildcard" {
-  zone_id = data.aws_route53_zone.preview.zone_id
-  name    = "*.${local.env.domain_suffix}"
-  type    = "A"
-
-  alias {
-    name                   = aws_lb.preview.dns_name
-    zone_id                = aws_lb.preview.zone_id
-    evaluate_target_health = false
   }
 }
 

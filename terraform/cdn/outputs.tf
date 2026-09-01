@@ -18,9 +18,19 @@ output "key_value_store_arn" {
   value       = aws_cloudfront_key_value_store.routes.arn
 }
 
-output "bundle_prefix" {
-  description = "Prefix currently answering for this environment's hosts."
-  value       = local.bundle_prefix
+output "host_keys" {
+  description = "Store keys this environment owns — its public names plus the distribution's own. The deploy's activate step moves all of them to the bundle it published."
+  value       = keys(aws_cloudfrontkeyvaluestore_key.host)
+}
+
+output "runtime_config_base" {
+  description = "Everything the environment's runtime-config.json carries except the version, from `runtime_config` in the env YAML. The deploy merges the version it activated into this and writes the result to <env>/runtime-config.json."
+  value       = lookup(local.env, "runtime_config", {})
+}
+
+output "verify_url" {
+  description = "URL the deploy checks itself against. CloudFront's own name, so it answers before — and independently of — the public record."
+  value       = "https://${aws_cloudfront_distribution.main.domain_name}"
 }
 
 output "serving" {
