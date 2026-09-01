@@ -10,26 +10,14 @@ variable "project" {
   default     = "block-explorer"
 }
 
-variable "state_bucket" {
-  type        = string
-  description = "Terraform state bucket for this account, created by hand. The deploy role is granted s3 on this bucket and no other."
-  default     = "vechain-block-explorer-terraform-state-prod"
-}
-
 variable "ecr_repository_name" {
   type        = string
-  description = "Repository the prod pipeline promotes release images into. frontend/ reads it by this name."
+  description = "Repository the pipeline promotes images into. Created here in prod, looked up in dev where account-level/ owns it. frontend/ reads it by this name."
   default     = "block-explorer"
 }
 
 variable "foreign_ecr_repository_names" {
   type        = list(string)
-  description = "Repositories in this shared account belonging to other projects. Denied to the deploy role by name, since ECR actions do not evaluate resource tags."
+  description = "Repositories belonging to other projects, present in both shared accounts. Denied to the deploy role by name, since ECR actions do not evaluate resource tags."
   default     = ["vechain/explore", "vechain/mass", "vechain/chain-scanner"]
-}
-
-variable "foreign_state_bucket_names" {
-  type        = list(string)
-  description = "State buckets in this shared account belonging to other projects. Denied by name, since bucket-level actions do not surface bucket tags."
-  default     = ["explore-terraform-state-prod"]
 }

@@ -1,17 +1,54 @@
 # bootstrap
 
-What the prod account needs before its pipeline can run: the state bucket, the ECR repository the
-pipeline promotes release images into, and a GitHub Actions deploy role scoped to this repo.
+What an account needs before its pipeline can run: the state bucket, the registry the pipeline
+promotes images into, and a GitHub Actions deploy role scoped to this repo.
 
-Applied **by hand, with account admin credentials, in the `prod` workspace only**. The pipeline is
-never given `iam` on this role, so it cannot widen its own grants — which also means it cannot apply
-this stack.
+Applied **by hand, with account admin credentials**, one workspace per account — `prod` and `dev`.
+The pipeline is never given `iam` on this role, so it cannot widen its own grants — which also means
+it cannot apply this stack.
 
-## One-time
+## Why dev has a role here at all
+
+dev's pipeline used `explorer-github-actions-dev`, which is shared: it trusts `repo:vechain/<name>:*`
+for five repos, so a workflow on any branch of any of them can assume it, and it carries
+`AdministratorAccess` in an account three other projects have resources in. Under it the pipeline
+could grant itself anything, including admin on a role it also passes to a task.
+
+That role is **left exactly as it is** — `vechain/explorer`, `mass`, `chain-scanner` and
+`insight-app` still assume it, and narrowing it would break them. This stack adds a second,
+dedicated role instead, which is what prod already did: `block-explorer-github-actions-prod` and the
+legacy `explorer-github-actions-prod` coexist in that account.
+
+## Per-account differences
+
+`local.accounts` in [locals.tf](locals.tf) is keyed by workspace, rather than taking values from a
+`-var`, so a hand-applied stack cannot be given the wrong account's shape by a forgotten flag.
+
+|                | prod                             | dev                                                     |
+| -------------- | -------------------------------- | ------------------------------------------------------- |
+| OIDC subjects  | `environment:prod`               | `environment:dev`, `environment:preview`, `pull_request`, `ref:refs/heads/main` |
+| Registry       | created here                     | `account-level/`'s, looked up                           |
+| Route53        | through `dns/`'s role            | writes both public zones directly                       |
+| Roles it may manage | `block-explorer-prod-*`     | `block-explorer-dev-*`, `-preview-pr-*`, `-prod-dns-writer` |
+
+dev needs four subjects because it runs more than a deploy: previews apply under their own
+environment, tear down on a bare `pull_request`, and are swept from `main`. `pull_request` is the
+widest of the four — declaring an environment in `destroy-preview.yml` would remove it.
+
+The three role patterns are not one glob because two stacks break the `<project>-<workspace>-`
+shape: `dns/` is applied in the dev workspace but names its role for the account that assumes it,
+and a preview's task roles carry a PR number. None of the three matches
+`block-explorer-github-actions-dev`, which is what keeps the pipeline out of its own grants.
+
+The Route53 grant is pinned to our two zone ARNs because this account also holds the legacy
+explorer's `explore.vechain.org`, and `ChangeResourceRecordSets` takes no tag condition that could
+bound a wildcard.
+
+## One-time, per account
 
 The state bucket is the one resource in this repo created outside Terraform: it holds the state that
 would manage it. Versioning matters more here than elsewhere — every state file in it is written by
-an automated pipeline, and a truncated write is otherwise unrecoverable.
+an automated pipeline, and a truncated write is otherwise unrecoverable. dev's already exists.
 
 ```bash
 export AWS_PROFILE=explorer-prod-admin AWS_REGION=eu-west-1
@@ -29,20 +66,26 @@ aws s3api put-bucket-encryption --bucket "$BUCKET" \
   '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"},"BucketKeyEnabled":true}]}'
 ```
 
-Then apply the stack and hand the role to GitHub:
+Then apply the stack and hand the role to GitHub. `ENV` is `prod` or `dev`; the workspace is what
+selects the account's configuration, so it must match the backend config.
 
 ```bash
+ENV=dev
 cd terraform/bootstrap
-terraform init -backend-config=../environments/prod/backend.config
-terraform workspace select -or-create prod
+terraform init -reconfigure -backend-config=../environments/$ENV/backend.config
+terraform workspace select -or-create $ENV
 terraform plan
 terraform apply
 
-gh variable set AWS_OIDC_ROLE_ARN --env prod --body "$(terraform output -raw gha_role_arn)"
+gh variable set AWS_OIDC_ROLE_ARN --env $ENV --body "$(terraform output -raw gha_role_arn)"
 ```
 
-The OIDC provider itself is not created here — it already exists in the account, having been added
-for the projects that share it, and a second one for the same URL is rejected.
+In dev the preview workflows read `secrets.AWS_ACC_ROLE` rather than the Environment variable, so
+that secret has to be repointed at the same ARN for previews to move with the deploy. Until both are
+switched, dev keeps using the shared role and nothing changes.
+
+The OIDC provider itself is not created here — it already exists in both accounts, having been added
+for the projects that share them, and a second one for the same URL is rejected.
 
 ## Grants
 
@@ -52,5 +95,9 @@ create time). Those are bounded instead by the guardrails policy, which denies a
 for another project, the other projects' state buckets and registries by name, and identity, account
 and audit-trail changes outright.
 
-A missing permission fails an apply rather than doing something unintended, so treat the first prod
-apply as the test of this file. Add the action to the narrowest statement that fits and re-apply.
+A missing permission fails an apply rather than doing something unintended, so treat the first apply
+in a workspace as the test of this file. Add the action to the narrowest statement that fits and
+re-apply.
+
+Both policies are capped at 6144 characters by AWS, which a `precondition` checks before an apply
+gets that far. dev's allow policy is the larger of the two at roughly 4.6k.

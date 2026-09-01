@@ -4,12 +4,81 @@ locals {
 
   gha_role_name = "${var.project}-github-actions-${terraform.workspace}"
 
-  # Every role the pipeline creates is named <project>-<workspace>-<role>, so
-  # this pattern covers all of them and excludes gha_role_name above: the
+  # From the backend config, so the grant cannot name another bucket. try() is for validate.
+  state_bucket = try(regex("bucket\\s*=\\s*\"([^\"]+)\"", file("../environments/${terraform.workspace}/backend.config"))[0], "")
+
+  # Keyed by workspace rather than taken from a -var: this stack is applied by
+  # hand, and a forgotten flag would apply one account's grants to the other.
+  accounts = {
+    prod = {
+      create_ecr = true
+
+      gha_subjects = ["repo:vechain/block-explorer:environment:prod"]
+
+      # Route53 writes go through dns/'s role in the other account.
+      public_zone_names = []
+
+      foreign_state_bucket_names = ["explore-terraform-state-prod"]
+
+      pipeline_role_name_patterns = ["${var.project}-prod-*"]
+    }
+
+    dev = {
+      # account-level/'s, and its lifecycle rules keep the dev- and pr- tags.
+      create_ecr = false
+
+      # Four, because dev runs more than a deploy: previews apply under their own
+      # environment, tear down on a bare pull_request, and are swept from main.
+      gha_subjects = [
+        "repo:vechain/block-explorer:environment:dev",
+        "repo:vechain/block-explorer:environment:preview",
+        "repo:vechain/block-explorer:pull_request",
+        "repo:vechain/block-explorer:ref:refs/heads/main",
+      ]
+
+      # Both are here, and dev writes them itself rather than assuming dns/'s role.
+      public_zone_names = ["block-explorer.vechain.org", "block-explorer-preview.vechain.org"]
+
+      foreign_state_bucket_names = [
+        "explore-terraform-state-dev",
+        "terragrunt-terraform-fe-state-explorer-dev-eu-west-1",
+        "faucet-app-terraform-state-prod",
+        "indexer-insights-tf-state",
+        # The legacy prod state, in this account and no business of dev's.
+        "block-explorer-terraform-state-prod",
+      ]
+
+      # dns/ is applied in this workspace but names its role for the account that
+      # assumes it, and a preview's task roles carry the PR number instead of the
+      # environment. Neither matches the <project>-<workspace>-* shape.
+      pipeline_role_name_patterns = [
+        "${var.project}-dev-*",
+        "${var.project}-preview-pr-*",
+        "${var.project}-prod-dns-writer",
+      ]
+    }
+  }
+
+  # The fallback only lets `terraform validate` typecheck; the guard rejects the workspace.
+  account = lookup(local.accounts, terraform.workspace, {
+    create_ecr                  = false
+    gha_subjects                = ["repo:vechain/block-explorer:environment:none"]
+    public_zone_names           = []
+    foreign_state_bucket_names  = []
+    pipeline_role_name_patterns = []
+  })
+
+  # Excludes gha_role_name, which is <project>-github-actions-<workspace>: the
   # pipeline must not be able to widen its own grants.
   pipeline_role_arns = [
-    "arn:aws:iam::${local.account_id}:role/${local.name}-*",
+    for pattern in local.account.pipeline_role_name_patterns :
+    "arn:aws:iam::${local.account_id}:role/${pattern}"
   ]
+
+  ecr_repository_arn = local.account.create_ecr ? one(aws_ecr_repository.app[*].arn) : one(data.aws_ecr_repository.existing[*].arn)
+  ecr_repository_url = local.account.create_ecr ? one(aws_ecr_repository.app[*].repository_url) : one(data.aws_ecr_repository.existing[*].repository_url)
+
+  zone_arns = [for z in data.aws_route53_zone.public : z.arn]
 
   # Every managed policy the stacks attach to a role they create. Adding a
   # statement to an inline policy needs no entry here; attaching one does.
@@ -21,12 +90,12 @@ locals {
   ]
 
   state_bucket_arns = [
-    "arn:aws:s3:::${var.state_bucket}",
-    "arn:aws:s3:::${var.state_bucket}/*",
+    "arn:aws:s3:::${local.state_bucket}",
+    "arn:aws:s3:::${local.state_bucket}/*",
   ]
 
   foreign_state_bucket_arns = flatten([
-    for b in var.foreign_state_bucket_names : ["arn:aws:s3:::${b}", "arn:aws:s3:::${b}/*"]
+    for b in local.account.foreign_state_bucket_names : ["arn:aws:s3:::${b}", "arn:aws:s3:::${b}/*"]
   ])
 
   foreign_ecr_arns = [
