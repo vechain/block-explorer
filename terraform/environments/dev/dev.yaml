@@ -22,6 +22,13 @@ container_port: 3000
 
 # The dev name is ours to create.
 dns_record_enabled: true
+# Weighted rather than simple, so the ALB and CloudFront records can share the name.
+dns_weight: 100
+
+# Static hosting. `cdn` moves this name off the ALB; the ALB and its service stay for a rollback.
+hosting: ecs
+bundle_prefix: app-unpublished # Overwritten by the deploy with the content SHA it published.
+cdn_price_class: PriceClass_100
 
 log_retention_days: 30
 

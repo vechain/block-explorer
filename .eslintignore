@@ -8,4 +8,4 @@ coverage
 *.config.ts
 next-env.d.ts
 public
-
+terraform

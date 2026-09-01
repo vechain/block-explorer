@@ -164,12 +164,12 @@ jobs:
             dev)
               image_tag="dev-${APP_SHA}"
               alias_tag=""
-              stacks="dns network ecs acm edge preview-edge data observability-aws frontend observability-grafana"
+              stacks="dns network ecs acm edge preview-edge data observability-aws frontend cdn observability-grafana"
               ;;
             prod)
               image_tag="${APP_SHA}"
               alias_tag="${TAG}"
-              stacks="network ecs acm edge data observability-aws frontend observability-grafana"
+              stacks="network ecs acm edge data observability-aws frontend cdn observability-grafana"
               ;;
           esac
 
