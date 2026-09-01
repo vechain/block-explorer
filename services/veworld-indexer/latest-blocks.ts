@@ -66,11 +66,7 @@ export const useLatestBlocksLive = ({ size = 5, enabled = true }: { size?: numbe
 
 export type BlockWithDetails = IndexerBlock & { clauseCount?: number; vthoPaid?: bigint }
 
-/**
- * Clause counts and VTHO paid are per-transaction, and the index serves block headers only, so
- * these come from Thor. Undefined until a block's fetch lands, so a row renders on the indexed
- * header alone rather than holding the table behind the slowest call in the fan-out.
- */
+// Undefined until each block's Thor fetch lands, so a row renders on its indexed header alone.
 export const useBlockDetails = (blocks: IndexerBlock[]): BlockWithDetails[] => {
   const { activeNetwork } = useSettingsStore()
   const blockNumbers = blocks.map(block => block.number).join(',')
