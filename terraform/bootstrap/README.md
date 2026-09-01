@@ -35,10 +35,9 @@ dev needs four subjects because it runs more than a deploy: previews apply under
 environment, tear down on a bare `pull_request`, and are swept from `main`. `pull_request` is the
 widest of the four — declaring an environment in `destroy-preview.yml` would remove it.
 
-The three role patterns are not one glob because two stacks break the `<project>-<workspace>-`
-shape: `dns/` is applied in the dev workspace but names its role for the account that assumes it,
-and a preview's task roles carry a PR number. None of the three matches
-`block-explorer-github-actions-dev`, which is what keeps the pipeline out of its own grants.
+dev's two role patterns are not one glob because `dns/` breaks the `<project>-<workspace>-` shape:
+it is applied in the dev workspace but names its role for the account that assumes it. Neither
+matches `block-explorer-github-actions-dev`, which is what keeps the pipeline out of its own grants.
 
 The Route53 grant is pinned to our two zone ARNs because this account also holds the legacy
 explorer's `explore.vechain.org`, and `ChangeResourceRecordSets` takes no tag condition that could
