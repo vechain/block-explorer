@@ -240,7 +240,8 @@ resource "aws_cloudwatch_metric_alarm" "router_errors" {
 
 # Reads either way round: a real flood, or a managed rule group false-positiving
 # on legitimate traffic once it is flipped from Count to Block.
-resource "aws_cloudwatch_metric_alarm" "waf_blocked_requests" {
+# A new address, not the ALB alarm re-pointed — see README.md on per-resource `region`.
+resource "aws_cloudwatch_metric_alarm" "cdn_waf_blocked_requests" {
   count    = local.alerts_enabled && local.waf_web_acl_name != null ? 1 : 0
   provider = aws.us_east_1
 
