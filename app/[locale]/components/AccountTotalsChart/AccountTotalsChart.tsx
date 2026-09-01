@@ -360,9 +360,7 @@ const AccountTotalsInnerChart = ({
           />
           <Tooltip
             contentStyle={{ fontSize: '.8rem' }}
-            content={(props: TooltipContentProps<number, string>) => (
-              <AccountTotalsTooltip {...props} selectedRange={selectedRange} />
-            )}
+            content={(props: TooltipContentProps) => <AccountTotalsTooltip {...props} selectedRange={selectedRange} />}
           />
           <Area
             type="monotone"
@@ -424,9 +422,7 @@ const AccountGrowthInnerChart = ({
           <Tooltip
             contentStyle={{ fontSize: '.8rem' }}
             cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
-            content={(props: TooltipContentProps<number, string>) => (
-              <AccountGrowthTooltip {...props} selectedRange={selectedRange} />
-            )}
+            content={(props: TooltipContentProps) => <AccountGrowthTooltip {...props} selectedRange={selectedRange} />}
           />
           <Bar dataKey="accountGrowth" fill="url(#accountGrowthGradient)" radius={[4, 4, 0, 0]} />
         </BarChart>
@@ -439,7 +435,7 @@ const AccountTotalsTooltip = ({
   active,
   payload,
   selectedRange,
-}: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey }) => {
+}: TooltipContentProps & { selectedRange: TimeRangeKey }) => {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
   const formatNumber = useFormatNumber()
@@ -472,7 +468,7 @@ const AccountGrowthTooltip = ({
   active,
   payload,
   selectedRange,
-}: TooltipContentProps<number, string> & { selectedRange: TimeRangeKey }) => {
+}: TooltipContentProps & { selectedRange: TimeRangeKey }) => {
   const { t } = useTranslation()
   const formatDate = useFormatDate()
   const formatNumber = useFormatNumber()
