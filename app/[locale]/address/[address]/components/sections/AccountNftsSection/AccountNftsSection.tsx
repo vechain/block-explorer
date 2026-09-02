@@ -24,8 +24,10 @@ export const AccountNftsSection = ({ address }: { address: AddressString }) => {
     params: { address, page, size: pageSize },
   })
 
+  const accountErc721Data = accountErc721Map?.data
+
   const { data: erc721CollectionsMap, isPending: isPendingErc721List } = useErc721Contracts({
-    contractAddressList: new Set<AddressString>(Array.from(accountErc721Map?.data.keys() ?? [])),
+    contractAddressList: new Set<AddressString>(Array.from(accountErc721Data?.keys() ?? [])),
   })
 
   const handlePageSizeChange = (newSize: number) => {
@@ -34,13 +36,13 @@ export const AccountNftsSection = ({ address }: { address: AddressString }) => {
   }
 
   const isPending = isLoadingErc721 || isPendingErc721List
-  const hasNfts = accountErc721Map && accountErc721Map.data.size > 0 && erc721CollectionsMap.size > 0
+  const hasNfts = Boolean(accountErc721Data && accountErc721Data.size > 0 && erc721CollectionsMap.size > 0)
   const pagination = accountErc721Map?.pagination
 
   const accountErc721 = useMemo(() => {
-    if (!hasNfts) return []
-    return mapTokenIdsToCollections(erc721CollectionsMap, accountErc721Map.data)
-  }, [hasNfts, erc721CollectionsMap, accountErc721Map?.data])
+    if (!accountErc721Data?.size || erc721CollectionsMap.size === 0) return []
+    return mapTokenIdsToCollections(erc721CollectionsMap, accountErc721Data)
+  }, [accountErc721Data, erc721CollectionsMap])
 
   return (
     <Card>

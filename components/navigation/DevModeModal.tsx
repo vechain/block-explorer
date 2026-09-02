@@ -2,7 +2,7 @@
 
 import { Button, Dialog, Flex, Input, Portal, Text, VStack } from '@chakra-ui/react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LuSettings2, LuX } from 'react-icons/lu'
 import { NetworkName } from '@/lib/constants/network'
@@ -36,19 +36,13 @@ const getIndexerUrlError = (value: string) => {
   return null
 }
 
-export const DevModeModal = ({ isOpen, onClose }: DevModeModalProps) => {
+// Keyed on open state by the caller, so every open starts from the stored URLs.
+const SoloEndpointsForm = ({ onClose }: { onClose: () => void }) => {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { activeNetwork, setSoloIndexerUrl, setSoloNodeUrl, soloIndexerUrl, soloNodeUrl } = useSettingsStore()
   const [draftSoloNodeUrl, setDraftSoloNodeUrl] = useState(soloNodeUrl)
   const [draftSoloIndexerUrl, setDraftSoloIndexerUrl] = useState(soloIndexerUrl)
-
-  useEffect(() => {
-    if (!isOpen) return
-
-    setDraftSoloNodeUrl(soloNodeUrl)
-    setDraftSoloIndexerUrl(soloIndexerUrl)
-  }, [isOpen, soloIndexerUrl, soloNodeUrl])
 
   const soloNodeUrlError = useMemo(() => getNodeUrlError(draftSoloNodeUrl), [draftSoloNodeUrl])
   const soloIndexerUrlError = useMemo(() => getIndexerUrlError(draftSoloIndexerUrl), [draftSoloIndexerUrl])
@@ -71,6 +65,53 @@ export const DevModeModal = ({ isOpen, onClose }: DevModeModalProps) => {
     setDraftSoloNodeUrl(DEFAULT_SOLO_NODE_URL)
     setDraftSoloIndexerUrl(DEFAULT_SOLO_INDEXER_URL)
   }
+
+  return (
+    <VStack align="stretch" gap={4}>
+      <VStack align="stretch" gap={2}>
+        <Text textStyle="bodyMSemibold">{t('Solo node URL')}</Text>
+        <Input
+          type="url"
+          value={draftSoloNodeUrl}
+          onChange={event => setDraftSoloNodeUrl(event.target.value)}
+          aria-invalid={Boolean(soloNodeUrlError)}
+        />
+        {soloNodeUrlError && (
+          <Text color="red.300" textStyle="bodyS">
+            {t(soloNodeUrlError)}
+          </Text>
+        )}
+      </VStack>
+
+      <VStack align="stretch" gap={2}>
+        <Text textStyle="bodyMSemibold">{t('Solo indexer URL')}</Text>
+        <Input
+          type="url"
+          value={draftSoloIndexerUrl}
+          onChange={event => setDraftSoloIndexerUrl(event.target.value)}
+          aria-invalid={Boolean(soloIndexerUrlError)}
+        />
+        {soloIndexerUrlError && (
+          <Text color="red.300" textStyle="bodyS">
+            {t(soloIndexerUrlError)}
+          </Text>
+        )}
+      </VStack>
+
+      <Flex justify="space-between" gap={3} pt={2} flexWrap="wrap">
+        <Button variant="outline" onClick={handleReset}>
+          {t('Reset')}
+        </Button>
+        <Button onClick={handleSave} disabled={isSaveDisabled}>
+          {t('Save')}
+        </Button>
+      </Flex>
+    </VStack>
+  )
+}
+
+export const DevModeModal = ({ isOpen, onClose }: DevModeModalProps) => {
+  const { t } = useTranslation()
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={details => !details.open && onClose()}>
@@ -110,46 +151,7 @@ export const DevModeModal = ({ isOpen, onClose }: DevModeModalProps) => {
             </Dialog.Header>
 
             <Dialog.Body p={4}>
-              <VStack align="stretch" gap={4}>
-                <VStack align="stretch" gap={2}>
-                  <Text textStyle="bodyMSemibold">{t('Solo node URL')}</Text>
-                  <Input
-                    type="url"
-                    value={draftSoloNodeUrl}
-                    onChange={event => setDraftSoloNodeUrl(event.target.value)}
-                    aria-invalid={Boolean(soloNodeUrlError)}
-                  />
-                  {soloNodeUrlError && (
-                    <Text color="red.300" textStyle="bodyS">
-                      {t(soloNodeUrlError)}
-                    </Text>
-                  )}
-                </VStack>
-
-                <VStack align="stretch" gap={2}>
-                  <Text textStyle="bodyMSemibold">{t('Solo indexer URL')}</Text>
-                  <Input
-                    type="url"
-                    value={draftSoloIndexerUrl}
-                    onChange={event => setDraftSoloIndexerUrl(event.target.value)}
-                    aria-invalid={Boolean(soloIndexerUrlError)}
-                  />
-                  {soloIndexerUrlError && (
-                    <Text color="red.300" textStyle="bodyS">
-                      {t(soloIndexerUrlError)}
-                    </Text>
-                  )}
-                </VStack>
-
-                <Flex justify="space-between" gap={3} pt={2} flexWrap="wrap">
-                  <Button variant="outline" onClick={handleReset}>
-                    {t('Reset')}
-                  </Button>
-                  <Button onClick={handleSave} disabled={isSaveDisabled}>
-                    {t('Save')}
-                  </Button>
-                </Flex>
-              </VStack>
+              <SoloEndpointsForm key={String(isOpen)} onClose={onClose} />
             </Dialog.Body>
           </Dialog.Content>
         </Dialog.Positioner>

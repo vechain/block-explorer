@@ -8,6 +8,8 @@ import type { Erc721Token } from '@/services/thor/tokens/erc721'
 import { NftCardSkeleton } from './NftCardSkeleton'
 import { motion } from 'motion/react'
 
+const MotionLink = motion(Link)
+
 interface NftCardProps {
   token: Erc721Token
   collectionName: string
@@ -20,8 +22,6 @@ export const NftCard = ({ token, collectionName, contractAddress }: NftCardProps
   const displayName = metadata?.name || `#${token.tokenId}`
   const tokenIdPrefix = `#${token.tokenId.toString().padStart(2, '0')}`
   const href = useNetworkAwareHref(`/nft/${contractAddress}/${token.tokenId.toString()}`)
-
-  const MotionLink = motion(Link)
 
   if (isPending) {
     return <NftCardSkeleton />

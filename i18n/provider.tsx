@@ -10,7 +10,7 @@ import type { Locale } from './config'
 const LOCALE_COOKIE_MAX_AGE = 31536000
 
 export function TranslationsProvider({ children, locale }: { children: React.ReactNode; locale: Locale }) {
-  const [isReady, setIsReady] = useState(false)
+  const [readyLocale, setReadyLocale] = useState<Locale | null>(null)
 
   // The CDN reads this to route an unprefixed path, and cannot set it: a Set-Cookie on a
   // document it caches would hand one visitor's language to the next.
@@ -24,12 +24,11 @@ export function TranslationsProvider({ children, locale }: { children: React.Rea
 
   useEffect(() => {
     let cancelled = false
-    setIsReady(false)
 
     const init = async () => {
       await i18nInit({ locale, i18nInstance: i18n })
       if (!cancelled) {
-        setIsReady(true)
+        setReadyLocale(locale)
       }
     }
 
@@ -40,8 +39,8 @@ export function TranslationsProvider({ children, locale }: { children: React.Rea
     }
   }, [locale, i18n])
 
-  // Don't render children until i18n is initialized
-  if (!isReady) {
+  // Comparing rather than resetting on locale change keeps readiness derived.
+  if (readyLocale !== locale) {
     return null
   }
 
