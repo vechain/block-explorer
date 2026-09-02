@@ -17,7 +17,7 @@ import { MotionText } from '../ui/MotionText'
 const DEFAULT_NETWORKS: NetworkName[] = [NetworkName.MAINNET, NetworkName.TESTNET]
 const DEV_NETWORKS: NetworkName[] = [NetworkName.MAINNET, NetworkName.TESTNET, NetworkName.SOLO]
 
-export const NetworkSelect = () => {
+export const NetworkSelect = ({ onSelect }: { onSelect?: () => void }) => {
   const { activeNetwork, isDevMode, setActiveNetwork } = useSettingsStore()
   const queryClient = useQueryClient()
   const router = useRouter()
@@ -36,6 +36,8 @@ export const NetworkSelect = () => {
         return
       }
     }
+
+    onSelect?.()
 
     const transactionId = getTransactionIdFromPathname(pathname)
 
@@ -82,12 +84,13 @@ export const NetworkSelect = () => {
 
   return (
     <Flex
+      w="100%"
       gap={1}
       alignItems="center"
       border="1px solid"
       borderColor="border-primary"
       bg="bg-primary"
-      p={1.5}
+      p={1}
       rounded="full"
       textStyle="bodyMSemibold"
     >
@@ -126,8 +129,9 @@ const NetworkItem = ({
   return (
     <Box
       as="button"
-      py={{ base: 1, md: 2 }}
-      px={{ base: 2, md: 4 }}
+      flex={1}
+      py={1.5}
+      px={2}
       cursor="pointer"
       position="relative"
       onClick={() => {
@@ -154,7 +158,7 @@ const NetworkItem = ({
         color={isActive ? 'text-alt-primary' : 'text-primary'}
         animate={{ color: isActive ? 'text-alt-primary' : 'text-primary' }}
         textTransform="capitalize"
-        fontSize={{ base: 'body-s', md: 'body-m' }}
+        fontSize="body-s"
       >
         {networkName}
       </MotionText>

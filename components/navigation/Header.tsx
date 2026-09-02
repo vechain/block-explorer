@@ -105,14 +105,7 @@ const NavigationMenu = () => {
   const currencyInfo = CURRENCIES[currency]
   return (
     <>
-      <Flex
-        justifyContent={{ base: 'space-between', md: 'flex-end' }}
-        gap={{ base: 2, md: 4 }}
-        alignItems="center"
-        py={2}
-        position="relative"
-      >
-        <NetworkSelect />
+      <Flex justifyContent="flex-end" gap={{ base: 2, md: 4 }} alignItems="center" py={2} position="relative">
         <Box ref={menuRef}>
           <Box position="relative">
             <Box
@@ -151,8 +144,12 @@ const NavigationMenu = () => {
                 py={2}
                 px={3}
                 zIndex={10}
-                minW="160px"
+                minW="200px"
               >
+                <Box py={2}>
+                  <NetworkSelect onSelect={() => setIsMenuOpen(false)} />
+                </Box>
+                <Separator />
                 <Link href={statsHref} onClick={() => setIsMenuOpen(false)}>
                   <Flex gap={2} alignItems="center" py={2}>
                     <Text fontSize="body-m" whiteSpace="nowrap">
