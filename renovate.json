@@ -4,20 +4,10 @@
   "timezone": "Europe/Rome",
   "schedule": ["before 8am on the first day of the month"],
   "minimumReleaseAge": "7 days",
-  "labels": ["dependencies"],
+  "labels": ["dependencies", "increment:patch", "verbose-ok"],
   "prConcurrentLimit": 5,
   "osvVulnerabilityAlerts": true,
   "packageRules": [
-    {
-      "description": "Tag non-major bumps with increment:patch for the release-versioning gate",
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "addLabels": ["increment:patch"]
-    },
-    {
-      "description": "Tag major bumps with increment:major so the release reflects the breaking dependency change",
-      "matchUpdateTypes": ["major"],
-      "addLabels": ["increment:major"]
-    },
     {
       "description": "Batch minor/patch/digest/pin updates into a single monthly PR",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
@@ -26,7 +16,7 @@
     },
     {
       "description": "Disable major bumps for framework anchors (manual migration)",
-      "matchPackageNames": ["next", "react", "react-dom", "@chakra-ui/react"],
+      "matchPackageNames": ["next", "eslint-config-next", "react", "react-dom", "@chakra-ui/react"],
       "matchUpdateTypes": ["major"],
       "enabled": false
     },
@@ -42,11 +32,11 @@
     "enabled": true,
     "schedule": ["before 8am on the first day of the month"],
     "groupName": "lockfile maintenance",
-    "addLabels": ["lockfile", "increment:patch"]
+    "addLabels": ["lockfile"]
   },
   "vulnerabilityAlerts": {
     "enabled": true,
-    "addLabels": ["security", "increment:patch"],
+    "addLabels": ["security"],
     "schedule": ["at any time"],
     "minimumReleaseAge": "0 days",
     "prCreation": "immediate"

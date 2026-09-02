@@ -28,13 +28,15 @@ function compactTimeAgo(timestamp: number, locale: string): string {
 
 export const AgeText = ({ timestamp, ...props }: { timestamp: number } & TextProps) => {
   const locale = useLocale()
-  const [text, setText] = useState(() => compactTimeAgo(timestamp, locale))
+  const [, tick] = useState(0)
 
+  // The label is derived, so the interval only needs to nudge a re-render.
   useEffect(() => {
-    setText(compactTimeAgo(timestamp, locale))
-    const id = setInterval(() => setText(compactTimeAgo(timestamp, locale)), 1000)
+    const id = setInterval(() => tick(n => n + 1), 1000)
     return () => clearInterval(id)
-  }, [timestamp, locale])
+  }, [])
+
+  const text = compactTimeAgo(timestamp, locale)
 
   return (
     <Text color="accent-secondary" display="flex" alignItems="center" textTransform="capitalize" gap={1} {...props}>

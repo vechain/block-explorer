@@ -63,13 +63,14 @@ export const HomeStatsGroup = () => {
     [stakingValidators],
   )
 
+  const totalVetStaked = totalVetStakedData?.total
   const totalDelegatorStakedVet = useMemo(() => {
     try {
-      return Number(formatEther(totalVetStakedData?.total ?? 0n))
+      return Number(formatEther(totalVetStaked ?? 0n))
     } catch {
       return 0
     }
-  }, [totalVetStakedData?.total])
+  }, [totalVetStaked])
 
   const totalTvl = totalValidatorStake + totalDelegatorStakedVet
 

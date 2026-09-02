@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useRef } from 'react'
+import { useState } from 'react'
 import {
   Box,
   BoxProps,
@@ -104,24 +104,25 @@ export const DataTable = <T extends TableRow = TableRow>({
   getRowHref,
 }: DataTableProps<T>) => {
   const router = useRouter()
-  const prevRowIdsRef = useRef<Set<string>>(new Set())
-  const isInitialRef = useRef(true)
 
-  const newRowIds = useMemo(() => {
-    if (isInitialRef.current) return new Set<string>()
-    const ids = new Set<string>()
-    for (const row of rows) {
-      if (!prevRowIdsRef.current.has(row.id)) {
-        ids.add(row.id)
-      }
+  // Which rows arrived since the last render, tracked in state so the fade-in survives
+  // the re-render that records them. Nothing is new on first paint.
+  const [tracker, setTracker] = useState(() => ({
+    rows,
+    ids: new Set(rows.map(r => r.id)),
+    newIds: new Set<string>(),
+  }))
+
+  if (tracker.rows !== rows) {
+    const ids = new Set(rows.map(r => r.id))
+    const newIds = new Set<string>()
+    for (const id of ids) {
+      if (!tracker.ids.has(id)) newIds.add(id)
     }
-    return ids
-  }, [rows])
+    setTracker({ rows, ids, newIds })
+  }
 
-  useEffect(() => {
-    prevRowIdsRef.current = new Set(rows.map(r => r.id))
-    isInitialRef.current = false
-  }, [rows])
+  const newRowIds = tracker.newIds
 
   const navigateToRow = (href?: string) => {
     if (!href) return

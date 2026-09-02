@@ -74,7 +74,7 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
   const hasSemiFungible = filteredTransfers.some(t => t.eventType === 'SEMI_FUNGIBLE_TOKEN')
 
   const LastColumnCell = useMemo(() => {
-    const CellComponent = (props: CellComponentProps) => {
+    return function LastColumnCell(props: CellComponentProps) {
       const transfer = transferMap.get(props.row.id)
       if (!transfer) return null
 
@@ -160,8 +160,6 @@ export const TransfersTable = ({ transfers, transferType = 'all' }: TransfersTab
         </Flex>
       )
     }
-    CellComponent.displayName = 'LastColumnCell'
-    return CellComponent
   }, [transferMap, erc20Map, erc721Map])
 
   const rows = useMemo(
