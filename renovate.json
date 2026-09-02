@@ -16,7 +16,7 @@
     },
     {
       "description": "Disable major bumps for framework anchors (manual migration)",
-      "matchPackageNames": ["next", "react", "react-dom", "@chakra-ui/react"],
+      "matchPackageNames": ["next", "eslint-config-next", "react", "react-dom", "@chakra-ui/react"],
       "matchUpdateTypes": ["major"],
       "enabled": false
     },
