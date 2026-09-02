@@ -83,7 +83,7 @@ export const NftTransfersSection = ({ contractAddress, tokenId }: NftTransfersSe
   }, [transfers])
 
   const TypeCell = useMemo(() => {
-    const Cell = ({ row }: { row: { id: string } }) => {
+    return function TypeCell({ row }: { row: { id: string } }) {
       const transfer = transferMap.get(row.id)
       if (!transfer) return null
       const type = getTransferType(transfer)
@@ -104,8 +104,6 @@ export const NftTransfersSection = ({ contractAddress, tokenId }: NftTransfersSe
         </Flex>
       )
     }
-    Cell.displayName = 'TypeCell'
-    return Cell
   }, [transferMap, t])
 
   const rows = useMemo(
