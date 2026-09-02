@@ -1,9 +1,10 @@
 import react from '@vitejs/plugin-react'
-import tsconfigPaths from 'vite-tsconfig-paths'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  plugins: [tsconfigPaths(), react()],
+  plugins: [react()],
+  // vite 8 resolves tsconfig `paths` natively, so vite-tsconfig-paths is gone.
+  resolve: { tsconfigPaths: true },
   test: {
     environment: 'jsdom',
     setupFiles: ['./test/setup.ts'],
