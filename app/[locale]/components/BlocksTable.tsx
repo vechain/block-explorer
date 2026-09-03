@@ -1,6 +1,6 @@
 'use client'
 
-import { Skeleton, Stack, Text } from '@chakra-ui/react'
+import { Stack, Text } from '@chakra-ui/react'
 import { formatEther } from 'viem'
 import { useTranslation } from 'react-i18next'
 import { AgeText } from '@/components/ui/AgeText'
@@ -9,9 +9,9 @@ import { type Column, DataTable } from '@/components/ui/Table'
 import { useFormatCurrency, useFormatNumber } from '@/hooks/useFormatting'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
 import { Balance } from '@/components/ui/Balance'
-import type { AnnouncedBlock } from '@/lib/live-head/store'
+import type { IndexerBlock } from '@/services/veworld-indexer/schemas'
 
-type BlocksTableProps = { blocks: AnnouncedBlock[]; showDetails?: boolean }
+type BlocksTableProps = { blocks: IndexerBlock[]; showDetails?: boolean }
 
 export const BlocksTable = ({ blocks, showDetails = false }: BlocksTableProps) => {
   const { t } = useTranslation()
@@ -26,10 +26,9 @@ export const BlocksTable = ({ blocks, showDetails = false }: BlocksTableProps) =
     age: block.timestamp,
     block: formatNumber(block.number),
     signer: block.signer,
-    txsClauses: `${block.transactions.length}/${block.clauseCount ?? '…'}`,
+    txsClauses: `${block.transactions.length}/${block.clauseCount}`,
     gasUsed: formatNumber(Number(block.gasUsed)),
-    vthoPaid: block.totalVthoPaid ?? 0n,
-    hasTotals: block.totalVthoPaid !== undefined,
+    vthoPaid: block.totalVthoPaid,
   }))
 
   const columns: Column<(typeof rows)[number]>[] = [
@@ -51,7 +50,6 @@ export const BlocksTable = ({ blocks, showDetails = false }: BlocksTableProps) =
             key: 'vthoPaid',
             label: t('VTHO Paid'),
             Cell: ({ row }) => {
-              if (!row.hasTotals) return <Skeleton height="16px" width="64px" />
               const fiatValue = vthoPrice ? Number(formatEther(row.vthoPaid)) * vthoPrice : undefined
               return (
                 <Stack gap={0}>

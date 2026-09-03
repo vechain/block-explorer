@@ -1,7 +1,8 @@
+import { QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { ExpandedBlock } from '@/lib/schemas'
+import { makeQueryClient } from '@/lib/query-client/query-client'
 import type { BlockBeat, PendingTx } from '@/services/thor/subscriptions'
 import type { IndexerBlock } from '@/services/veworld-indexer/schemas'
 import { LiveHeadProvider, useLiveHead } from './provider'
@@ -9,8 +10,7 @@ import { LiveHeadProvider, useLiveHead } from './provider'
 let onBlock: (block: BlockBeat) => void
 let onTx: (tx: PendingTx) => void
 let indexed: IndexerBlock[] | undefined
-let expanded: ExpandedBlock | undefined
-const expandedRequests: unknown[] = []
+let seeded: IndexerBlock[] | undefined
 
 vi.mock('@/services/thor/subscriptions', () => ({
   useBlockSubscription: (cb: typeof onBlock) => {
@@ -23,25 +23,20 @@ vi.mock('@/services/thor/subscriptions', () => ({
 }))
 
 vi.mock('@/services/veworld-indexer/latest-blocks', () => ({
+  liveBlocksQueryKey: (network: string) => ['getLatestBlocks', 'live', network],
   useLatestBlocksLive: () => ({ data: indexed ? { data: indexed } : undefined }),
-}))
-
-vi.mock('@/services/thor/block', () => ({
-  useBlockExpanded: (revision: unknown) => {
-    expandedRequests.push(revision)
-    return { data: revision === undefined ? undefined : expanded }
-  },
+  useLatestBlocks: () => ({ data: seeded ? { pages: [{ data: seeded }] } : undefined }),
 }))
 
 const hex = (seed: string, length = 64): `0x${string}` => `0x${seed.repeat(length)}`
 
-const beat = (number: number, txs: number): BlockBeat => ({
+const beat = (number: number, txs: `0x${string}`[]): BlockBeat => ({
   number,
   id: hex(String(number % 10)),
   parentID: hex('b'),
   timestamp: number * 10_000,
   size: 400,
-  transactions: Array.from({ length: txs }, (_, i) => hex(String(i))),
+  transactions: txs,
   gasUsed: 21_000n,
   gasLimit: 40_000_000n,
   signer: hex('c', 40),
@@ -54,45 +49,49 @@ const beat = (number: number, txs: number): BlockBeat => ({
   obsolete: false,
 })
 
-const indexerBlock = (number: number, clauseCount: number): IndexerBlock =>
-  ({ ...beat(number, 2), clauseCount, totalVthoPaid: 1_000n }) as unknown as IndexerBlock
+const indexerBlock = (number: number, txs: `0x${string}`[] = []): IndexerBlock =>
+  ({ ...beat(number, txs), clauseCount: txs.length, totalVthoPaid: 1_000n }) as unknown as IndexerBlock
 
-const wrapper = ({ children }: { children: ReactNode }) => <LiveHeadProvider>{children}</LiveHeadProvider>
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <QueryClientProvider client={makeQueryClient()}>
+    <LiveHeadProvider>{children}</LiveHeadProvider>
+  </QueryClientProvider>
+)
 
 afterEach(() => {
   indexed = undefined
-  expanded = undefined
-  expandedRequests.length = 0
+  seeded = undefined
 })
 
 describe('LiveHeadProvider', () => {
-  it('seals off the socket, then takes the totals from the node before the index has the block', () => {
-    const { result, rerender } = renderHook(() => useLiveHead(), { wrapper })
+  it('holds the beat until the index serves the announced block', () => {
+    const { result, rerender, unmount } = renderHook(() => useLiveHead(), { wrapper })
 
     act(() => {
       onTx({ id: hex('1') })
       onTx({ id: hex('2') })
     })
+    act(() => onBlock(beat(100, [hex('1')])))
+    expect(result.current.head).toBeUndefined()
+    expect(result.current.announced?.number).toBe(100)
     expect(result.current.pending).toBe(2)
-
-    act(() => onBlock(beat(100, 3)))
-    expect(result.current.head).toMatchObject({ number: 100 })
-    expect(result.current.pending).toBe(0)
     expect(result.current.live).toBe(true)
-    expect(expandedRequests.at(-1)).toBe(beat(100, 3).id)
 
-    expanded = { number: 100, transactions: [{ clauses: [{}, {}], paid: 5n }] } as unknown as ExpandedBlock
+    indexed = [indexerBlock(100, [hex('1')])]
     rerender()
-    expect(result.current.head).toMatchObject({ number: 100, clauseCount: 2, totalVthoPaid: 5n })
-    expect(expandedRequests.at(-1)).toBeUndefined()
+    expect(result.current.head).toMatchObject({ number: 100, clauseCount: 1 })
+    expect(result.current.announced).toBeUndefined()
+    expect(result.current.pending).toBe(1)
+    unmount()
   })
 
   it('runs off the index alone when the socket has nothing to say', () => {
-    indexed = [indexerBlock(200, 4), indexerBlock(199, 3)]
+    indexed = [indexerBlock(200), indexerBlock(199)]
+    seeded = [indexerBlock(200), indexerBlock(199), indexerBlock(198)]
     const { result } = renderHook(() => useLiveHead(), { wrapper })
 
-    expect(result.current.head).toMatchObject({ number: 200, clauseCount: 4 })
-    expect(result.current.recent.map(block => block.number)).toEqual([200])
+    expect(result.current.head).toMatchObject({ number: 200 })
+    expect(result.current.history.map(point => point.number)).toEqual([198, 199, 200])
   })
 
   it('refuses to run without the provider', () => {

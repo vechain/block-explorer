@@ -1,6 +1,7 @@
 import { BLOCK_TIME_MS } from '@/lib/constants/network'
+import { HISTORY_BLOCKS, type UsagePoint } from '@/lib/live-head/store'
 
-type ClockFeed = { head: { number: number; seenAt: number } | undefined; pending: number }
+type ClockFeed = { head: { number: number; seenAt: number } | undefined; pending: number; history: UsagePoint[] }
 
 export type ClockPalette = {
   accent: string
@@ -29,9 +30,19 @@ type ClockScene = {
   ghosts: Ghost[]
   sealed: number | undefined
   flash: number
+  skylineHead: number | undefined
+  slide: number
 }
 
-export const createScene = (): ClockScene => ({ sparks: [], ripples: [], ghosts: [], sealed: undefined, flash: 0 })
+export const createScene = (): ClockScene => ({
+  sparks: [],
+  ripples: [],
+  ghosts: [],
+  sealed: undefined,
+  flash: 0,
+  skylineHead: undefined,
+  slide: 0,
+})
 
 const withAlpha = (color: string, alpha: number) => {
   const rgb = color.match(/rgba?\(([^)]+)\)/)
@@ -71,6 +82,42 @@ const newSpark = (angle: number): Spark => {
 
 const mixTone = (palette: ClockPalette, tone: number) => (tone < 0.5 ? palette.accent : palette.accentAlt)
 
+const easeOut = (t: number) => 1 - (1 - t) ** 3
+
+// Gas used per block as a skyline along the floor, newest at the right edge, sliding one bar per beat.
+const drawSkyline = (
+  ctx: CanvasRenderingContext2D,
+  scene: ClockScene,
+  history: UsagePoint[],
+  width: number,
+  height: number,
+  dt: number,
+  palette: ClockPalette,
+  animate: boolean,
+) => {
+  const newest = history.at(-1)
+  if (!newest) return
+  if (scene.skylineHead !== newest.number) {
+    if (scene.skylineHead !== undefined && animate) scene.slide = 1
+    scene.skylineHead = newest.number
+  }
+  scene.slide = Math.max(0, scene.slide - dt * 2)
+
+  const pitch = width / HISTORY_BLOCKS
+  const barWidth = Math.max(1, pitch * 0.55)
+  const maxHeight = height * 0.34
+  const shift = easeOut(scene.slide) * pitch
+  history.forEach((point, i) => {
+    const usage = point.gasLimit > 0 ? Math.min(1, point.gasUsed / point.gasLimit) : 0
+    const x = width - (history.length - i) * pitch + (pitch - barWidth) / 2 + shift
+    const barHeight = Math.max(2, usage * maxHeight)
+    const isNewest = i === history.length - 1
+    const alpha = isNewest ? 0.6 * (1 - scene.slide * 0.6) : 0.1 + usage * 0.3
+    ctx.fillStyle = withAlpha(isNewest ? palette.accentAlt : palette.accent, alpha)
+    ctx.fillRect(x, height - barHeight, barWidth, barHeight)
+  })
+}
+
 export const renderBlockClock = ({
   ctx,
   scene,
@@ -93,6 +140,7 @@ export const renderBlockClock = ({
   animate: boolean
 }) => {
   ctx.clearRect(0, 0, width, height)
+  drawSkyline(ctx, scene, feed.history, width, height, dt, palette, animate)
   const cx = width / 2
   const cy = height / 2
   const R = Math.min(width, height) * 0.38
