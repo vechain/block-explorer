@@ -45,6 +45,7 @@ const config = defineConfig({
         'accent-primary': { value: 'rgba(184, 166, 255, 1)' },
         'accent-secondary': { value: 'rgba(231, 130, 255, 1)' },
         'accent-tertiary': { value: 'white' },
+        'accent-warm': { value: 'rgba(242, 178, 90, 1)' },
 
         // Alternating rows
         'row-even-bg-primary': { value: 'rgba(255, 255, 255, 0.06)' },
