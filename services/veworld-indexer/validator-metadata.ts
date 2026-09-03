@@ -1,5 +1,8 @@
+import { queryOptions, useQuery } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import { z } from 'zod'
 import { type NetworkName, NetworkName as NetworkNameEnum } from '@/lib/constants/network'
+import { useSettingsStore } from '@/lib/stores/settings'
 import { zodParse } from '@/lib/utils/zod'
 import type { ValidatorMetadata } from './validator-details'
 
@@ -89,3 +92,20 @@ export const validatorMetadataQueryOptions = (networkName: NetworkName, address:
   staleTime: 5 * 60 * 1000, // 5 minutes
   refetchInterval: 60000,
 })
+
+const validatorsMetadataQueryOptions = (networkName: NetworkName) =>
+  queryOptions({
+    queryKey: ['validatorsMetadata', networkName],
+    queryFn: () => getValidatorsMetadata({ networkName }),
+    staleTime: 5 * 60 * 1000,
+  })
+
+export const toMetadataLookup = (list: ValidatorMetadata[]) =>
+  new Map(list.map(meta => [meta.address.toLowerCase(), meta] as const))
+
+/** Resolves a block signer to its validator-hub entry; undefined for validators that never registered one. */
+export const useValidatorMetadataLookup = () => {
+  const { activeNetwork } = useSettingsStore()
+  const { data } = useQuery({ ...validatorsMetadataQueryOptions(activeNetwork.name), select: toMetadataLookup })
+  return useCallback((address: string) => data?.get(address.toLowerCase()), [data])
+}

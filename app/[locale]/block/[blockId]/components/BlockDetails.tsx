@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { DataCardGroup, type DataCardGroupItem } from '@/components/ui/DataCardGroup'
 import { IDChip } from '@/components/ui/IDChip'
 import { CopyableString } from '@/components/ui/CopyableString'
-import { CopyableAddressLink } from '@/components/ui/Links'
+import { ValidatorLink } from '@/components/ui/ValidatorLink'
 import { Card } from '@/components/ui/Card'
 import { useFormatDate, useFormatNumber } from '@/hooks/useFormatting'
 import { useRedirectOnNotFound } from '@/hooks/useRedirectOnNotFound'
@@ -54,7 +54,7 @@ export const BlockDetails = ({ blockId }: { blockId: BlockRevision }) => {
               {
                 icon: <Image src="/icons/link.svg" alt="Signer" />,
                 title: t('Block Signer'),
-                children: <CopyableAddressLink address={block.signer} truncate />,
+                children: <ValidatorLink address={block.signer} truncate />,
               },
               {
                 icon: <Image src="/icons/clock.svg" alt="Timestamp" />,
