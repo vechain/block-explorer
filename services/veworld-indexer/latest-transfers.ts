@@ -3,12 +3,15 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { nextBlockRefetchDelay } from '@/lib/utils/block-slot'
 import { zodParse } from '@/lib/utils/zod'
 import { indexerFetch } from './index'
 import { indexerResponseSchema, indexerTransferSchema, type TransferEventType } from './schemas'
 
 const LATEST_TRANSFERS_QUERY_KEY = 'getLatestTransfers'
-const LIVE_REFETCH_INTERVAL_MS = BLOCK_TIME_MS
+
+export const liveTransfersQueryKey = (networkName: NetworkName) =>
+  [LATEST_TRANSFERS_QUERY_KEY, 'live', networkName] as const
 
 const getLatestTransfers = async ({
   networkName,
@@ -82,10 +85,10 @@ export const useLatestTransfersLive = ({
   const { activeNetwork } = useSettingsStore()
   const eventTypeKey = eventType ? [...eventType].sort().join(',') : ''
   return useQuery({
-    queryKey: [LATEST_TRANSFERS_QUERY_KEY, 'live', activeNetwork.name, size, eventTypeKey] as const,
+    queryKey: [...liveTransfersQueryKey(activeNetwork.name), size, eventTypeKey] as const,
     queryFn: () => getLatestTransfers({ networkName: activeNetwork.name, size, eventType }),
     staleTime: BLOCK_TIME_MS,
-    refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+    refetchInterval: query => nextBlockRefetchDelay(query.state.data?.data[0]?.blockTimestamp),
     enabled,
   })
 }

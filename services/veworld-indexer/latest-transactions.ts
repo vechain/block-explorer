@@ -10,6 +10,9 @@ import { indexerResponseSchema, indexerTransactionSchema } from './schemas'
 
 const LATEST_TRANSACTIONS_QUERY_KEY = 'getLatestTransactions'
 
+export const liveTransactionsQueryKey = (networkName: NetworkName) =>
+  [LATEST_TRANSACTIONS_QUERY_KEY, 'live', networkName] as const
+
 const getLatestTransactions = async ({
   networkName,
   size,
@@ -79,7 +82,7 @@ export const useLatestTransactionsLive = ({
 } = {}) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery({
-    queryKey: [LATEST_TRANSACTIONS_QUERY_KEY, 'live', activeNetwork.name, size, expanded] as const,
+    queryKey: [...liveTransactionsQueryKey(activeNetwork.name), size, expanded] as const,
     queryFn: () => getLatestTransactions({ networkName: activeNetwork.name, size, expanded }),
     staleTime: BLOCK_TIME_MS,
     refetchInterval: query => nextBlockRefetchDelay(query.state.data?.data[0]?.blockTimestamp),

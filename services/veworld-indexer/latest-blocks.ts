@@ -10,6 +10,8 @@ import { indexerBlockSchema, indexerResponseSchema } from './schemas'
 
 const LATEST_BLOCKS_QUERY_KEY = 'getLatestBlocks'
 
+export const liveBlocksQueryKey = (networkName: NetworkName) => [LATEST_BLOCKS_QUERY_KEY, 'live', networkName] as const
+
 const getLatestBlocks = async ({
   networkName,
   size,
@@ -54,7 +56,7 @@ export const useLatestBlocks = ({ size = 10, enabled = true }: { size?: number; 
 export const useLatestBlocksLive = ({ size = 5, enabled = true }: { size?: number; enabled?: boolean } = {}) => {
   const { activeNetwork } = useSettingsStore()
   return useQuery({
-    queryKey: [LATEST_BLOCKS_QUERY_KEY, 'live', activeNetwork.name, size] as const,
+    queryKey: [...liveBlocksQueryKey(activeNetwork.name), size] as const,
     queryFn: () => getLatestBlocks({ networkName: activeNetwork.name, size }),
     staleTime: BLOCK_TIME_MS,
     refetchInterval: query => nextBlockRefetchDelay(query.state.data?.data[0]?.timestamp),

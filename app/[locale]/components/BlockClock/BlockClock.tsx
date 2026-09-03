@@ -143,6 +143,13 @@ export const BlockClock = () => {
           </Text>
         </HStack>
 
+        <HStack position="absolute" bottom={3} left={5} gap={2} pointerEvents="none">
+          <Box width="10px" height="6px" bg="accent-primary" opacity={0.5} />
+          <Text textStyle="bodyS" color="text-secondary" letterSpacing="0.08em" textTransform="uppercase">
+            {t('Block Usage')}
+          </Text>
+        </HStack>
+
         <Flex position="absolute" inset={0} alignItems="center" justifyContent="center" pointerEvents="none">
           <VStack gap={1} textAlign="center">
             <Text textStyle="bodyS" color="text-secondary" letterSpacing="0.08em" textTransform="uppercase">
