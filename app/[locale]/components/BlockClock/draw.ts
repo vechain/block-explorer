@@ -1,5 +1,6 @@
 import { BLOCK_TIME_MS } from '@/lib/constants/network'
-import type { BlockClockFeed } from './useBlockClockFeed'
+
+type ClockFeed = { head: { number: number; seenAt: number } | undefined; pending: number }
 
 export type ClockPalette = {
   accent: string
@@ -47,7 +48,7 @@ const withAlpha = (color: string, alpha: number) => {
 }
 
 /** Block intervals elapsed since the head was seen; runs past 1 while the next block is overdue. */
-const slotProgress = (feed: BlockClockFeed, now: number) =>
+const slotProgress = (feed: ClockFeed, now: number) =>
   feed.head ? Math.max(0, (now - feed.head.seenAt) / BLOCK_TIME_MS) : 0
 
 const TAU = Math.PI * 2
@@ -83,7 +84,7 @@ export const renderBlockClock = ({
 }: {
   ctx: CanvasRenderingContext2D
   scene: ClockScene
-  feed: BlockClockFeed
+  feed: ClockFeed
   width: number
   height: number
   now: number

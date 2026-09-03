@@ -8,9 +8,8 @@ import { MotionText } from '@/components/ui/MotionText'
 import { useFormatAmount, useFormatNumber } from '@/hooks/useFormatting'
 import { useNowSeconds } from '@/hooks/useNowSeconds'
 import { BLOCK_TIME_MS } from '@/lib/constants/network'
-import { useSettingsStore } from '@/lib/stores/settings'
+import { type LiveHead, useLiveHead } from '@/lib/live-head/provider'
 import { type ClockPalette, createScene, renderBlockClock } from './draw'
-import { type BlockClockFeed, useBlockClockFeed } from './useBlockClockFeed'
 
 const FALLBACK_PALETTE: ClockPalette = {
   accent: 'rgba(184, 166, 255, 1)',
@@ -31,7 +30,7 @@ const readPalette = (element: Element): ClockPalette => {
   }
 }
 
-const useClockCanvas = (feed: BlockClockFeed) => {
+const useClockCanvas = (feed: LiveHead) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const feedRef = useRef(feed)
 
@@ -105,11 +104,11 @@ const Stat = ({ label, value }: { label: string; value: string | undefined }) =>
   </VStack>
 )
 
-const BlockClockPanel = () => {
+export const BlockClock = () => {
   const { t } = useTranslation()
   const formatNumber = useFormatNumber()
   const formatAmount = useFormatAmount()
-  const feed = useBlockClockFeed()
+  const feed = useLiveHead()
   const canvasRef = useClockCanvas(feed)
   const nowSeconds = useNowSeconds()
   const { head } = feed
@@ -119,7 +118,7 @@ const BlockClockPanel = () => {
   const vtho = head?.totalVthoPaid === undefined ? undefined : formatAmount({ amount: head.totalVthoPaid })[0]
   const lastBlock = (
     <Stack direction={{ base: 'row', md: 'column' }} gap={{ base: 6, md: 3 }} alignItems="flex-start" flexWrap="wrap">
-      <Stat label={t('Transactions')} value={head && formatNumber(head.txCount)} />
+      <Stat label={t('Transactions')} value={head && formatNumber(head.transactions.length)} />
       <Stat label={t('Clauses')} value={head?.clauseCount === undefined ? undefined : formatNumber(head.clauseCount)} />
       <Stat label={t('VTHO Paid')} value={vtho} />
     </Stack>
@@ -152,7 +151,8 @@ const BlockClockPanel = () => {
             {head ? (
               <MotionText
                 key={head.number}
-                textStyle={{ base: 'displayS', md: 'displayM' }}
+                textStyle="displayS"
+                fontSize={{ base: '24px', md: '32px' }}
                 color="text-primary"
                 fontVariantNumeric="tabular-nums"
                 initial={{ opacity: 0.2, y: 6 }}
@@ -200,10 +200,4 @@ const BlockClockPanel = () => {
       </Box>
     </Card>
   )
-}
-
-export const BlockClock = () => {
-  const networkName = useSettingsStore(state => state.activeNetwork.name)
-  // Remount on a network switch so the dial and pending count start clean.
-  return <BlockClockPanel key={networkName} />
 }
