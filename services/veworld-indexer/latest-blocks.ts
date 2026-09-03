@@ -3,12 +3,12 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { nextBlockRefetchDelay } from '@/lib/utils/block-slot'
 import { zodParse } from '@/lib/utils/zod'
 import { indexerFetch } from './index'
 import { indexerBlockSchema, indexerResponseSchema } from './schemas'
 
 const LATEST_BLOCKS_QUERY_KEY = 'getLatestBlocks'
-const LIVE_REFETCH_INTERVAL_MS = BLOCK_TIME_MS
 
 const getLatestBlocks = async ({
   networkName,
@@ -49,7 +49,7 @@ export const useLatestBlocks = ({ size = 10, enabled = true }: { size?: number; 
 
 /**
  * Live tail of the latest blocks for non-paginated views (e.g. homepage card).
- * Polls the first page on the same cadence as the best-block query.
+ * Each poll is timed to land just after the next block should be indexed.
  */
 export const useLatestBlocksLive = ({ size = 5, enabled = true }: { size?: number; enabled?: boolean } = {}) => {
   const { activeNetwork } = useSettingsStore()
@@ -57,7 +57,7 @@ export const useLatestBlocksLive = ({ size = 5, enabled = true }: { size?: numbe
     queryKey: [LATEST_BLOCKS_QUERY_KEY, 'live', activeNetwork.name, size] as const,
     queryFn: () => getLatestBlocks({ networkName: activeNetwork.name, size }),
     staleTime: BLOCK_TIME_MS,
-    refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+    refetchInterval: query => nextBlockRefetchDelay(query.state.data?.data[0]?.timestamp),
     enabled,
   })
 }

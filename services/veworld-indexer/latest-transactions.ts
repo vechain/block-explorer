@@ -3,12 +3,12 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { nextBlockRefetchDelay } from '@/lib/utils/block-slot'
 import { zodParse } from '@/lib/utils/zod'
 import { indexerFetch } from './index'
 import { indexerResponseSchema, indexerTransactionSchema } from './schemas'
 
 const LATEST_TRANSACTIONS_QUERY_KEY = 'getLatestTransactions'
-const LIVE_REFETCH_INTERVAL_MS = BLOCK_TIME_MS
 
 const getLatestTransactions = async ({
   networkName,
@@ -66,7 +66,7 @@ export const useLatestTransactions = ({
 
 /**
  * Live tail of the latest transactions for non-paginated views (e.g. homepage card).
- * Polls the first page on the same cadence as the best-block query.
+ * Each poll is timed to land just after the next block should be indexed.
  */
 export const useLatestTransactionsLive = ({
   size = 5,
@@ -82,7 +82,7 @@ export const useLatestTransactionsLive = ({
     queryKey: [LATEST_TRANSACTIONS_QUERY_KEY, 'live', activeNetwork.name, size, expanded] as const,
     queryFn: () => getLatestTransactions({ networkName: activeNetwork.name, size, expanded }),
     staleTime: BLOCK_TIME_MS,
-    refetchInterval: LIVE_REFETCH_INTERVAL_MS,
+    refetchInterval: query => nextBlockRefetchDelay(query.state.data?.data[0]?.blockTimestamp),
     enabled,
   })
 }

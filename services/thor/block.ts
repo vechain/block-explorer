@@ -1,7 +1,8 @@
 import { queryOptions, skipToken, useQuery } from '@tanstack/react-query'
-import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
+import type { NetworkName } from '@/lib/constants/network'
 import { type BlockRevision, blockCompressedSchema, blockExpandedSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { nextBlockRefetchDelay } from '@/lib/utils/block-slot'
 import { zodParse } from '@/lib/utils/zod'
 import { getThorClient } from './client'
 
@@ -12,7 +13,8 @@ export const bestBlockCompressedQueryOptions = (networkName: NetworkName) =>
   queryOptions({
     queryKey: [BEST_BLOCK_COMPRESSED_QUERY_KEY, networkName],
     queryFn: () => getBestBlockCompressed({ networkName }),
-    refetchInterval: BLOCK_TIME_MS,
+    // The node serves a block a few seconds before its slot timestamp, so no settle margin.
+    refetchInterval: query => nextBlockRefetchDelay(query.state.data?.timestamp, 0),
   })
 
 const getBestBlockCompressed = async ({ networkName }: { networkName: NetworkName }) => {
