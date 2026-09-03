@@ -1,6 +1,6 @@
 'use client'
 
-import { Link as ChakraLink, type LinkProps as ChakraLinkProps, Flex, Skeleton, Text } from '@chakra-ui/react'
+import { Link as ChakraLink, type LinkProps as ChakraLinkProps, Flex, Image, Skeleton, Text } from '@chakra-ui/react'
 import Link, { type LinkProps as NextLinkProps } from 'next/link'
 import { LuArrowRight } from 'react-icons/lu'
 import type { AddressString, HexString } from '@/lib/schemas'
@@ -81,18 +81,22 @@ export const CopyableLink = ({ href, value, children, ...props }: CopyableLinkPr
 interface CopyableAddressLinkProps extends Omit<BaseLinkProps, 'href'> {
   address: AddressString
   truncate?: boolean
+  /** Shown in place of the VNS name or address when the caller already knows who this is. */
+  label?: string
+  logo?: string
 }
 
-export const CopyableAddressLink = ({ address, truncate = true, ...props }: CopyableAddressLinkProps) => {
+export const CopyableAddressLink = ({ address, truncate = true, label, logo, ...props }: CopyableAddressLinkProps) => {
   const { data: vnsName, isPending } = useVnsName(address)
 
   const displayAddress = useMemo(() => {
     if (!address) return '-'
+    if (label) return truncate ? truncateString(label, 24, 0) : label
     if (vnsName) return truncate ? truncateString(vnsName, 20, 6) : vnsName
     return truncate ? truncateAddress(address) : address
-  }, [vnsName, truncate, address])
+  }, [label, vnsName, truncate, address])
 
-  if (isPending) {
+  if (isPending && !label) {
     return <Skeleton height="16px" width="100px" />
   }
 
@@ -102,6 +106,9 @@ export const CopyableAddressLink = ({ address, truncate = true, ...props }: Copy
 
   return (
     <CopyableLink href={`/address/${address}`} value={address} {...props}>
+      {logo && (
+        <Image src={logo} alt="" boxSize="4" borderRadius="full" display="inline-block" verticalAlign="-3px" mr={1.5} />
+      )}
       {displayAddress}
     </CopyableLink>
   )

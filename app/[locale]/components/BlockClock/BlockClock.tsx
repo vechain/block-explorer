@@ -1,10 +1,11 @@
 'use client'
 
 import { Box, Flex, HStack, Skeleton, Stack, Text, VStack } from '@chakra-ui/react'
-import { useEffect, useRef } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { MotionText } from '@/components/ui/MotionText'
+import { ValidatorLink } from '@/components/ui/ValidatorLink'
 import { useFormatAmount, useFormatNumber } from '@/hooks/useFormatting'
 import { useNowSeconds } from '@/hooks/useNowSeconds'
 import { BLOCK_TIME_MS } from '@/lib/constants/network'
@@ -89,17 +90,19 @@ const useClockCanvas = (feed: LiveHead) => {
   return canvasRef
 }
 
-const Stat = ({ label, value }: { label: string; value: string | undefined }) => (
+const Stat = ({ label, value }: { label: string; value: ReactNode | undefined }) => (
   <VStack gap={0} alignItems="flex-start">
     <Text textStyle="bodyS" color="text-secondary">
       {label}
     </Text>
     {value === undefined ? (
       <Skeleton height="20px" width="64px" />
-    ) : (
+    ) : typeof value === 'string' ? (
       <Text textStyle="bodyMSemibold" color="text-primary" fontVariantNumeric="tabular-nums">
         {value}
       </Text>
+    ) : (
+      value
     )}
   </VStack>
 )
@@ -118,6 +121,7 @@ export const BlockClock = () => {
   const vtho = head?.totalVthoPaid === undefined ? undefined : formatAmount({ amount: head.totalVthoPaid })[0]
   const lastBlock = (
     <Stack direction={{ base: 'row', md: 'column' }} gap={{ base: 6, md: 3 }} alignItems="flex-start" flexWrap="wrap">
+      <Stat label={t('Validator')} value={head && <ValidatorLink address={head.signer} truncate />} />
       <Stat label={t('Transactions')} value={head && formatNumber(head.transactions.length)} />
       <Stat label={t('Clauses')} value={head?.clauseCount === undefined ? undefined : formatNumber(head.clauseCount)} />
       <Stat label={t('VTHO Paid')} value={vtho} />
@@ -190,7 +194,6 @@ export const BlockClock = () => {
           top="50%"
           transform="translateY(-50%)"
           display={{ base: 'none', md: 'block' }}
-          pointerEvents="none"
         >
           <Text textStyle="bodyS" color="text-secondary" letterSpacing="0.08em" textTransform="uppercase" mb={3}>
             {t('Last block')}

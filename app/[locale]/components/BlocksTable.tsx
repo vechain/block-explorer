@@ -4,7 +4,8 @@ import { Stack, Text } from '@chakra-ui/react'
 import { formatEther } from 'viem'
 import { useTranslation } from 'react-i18next'
 import { AgeText } from '@/components/ui/AgeText'
-import { CopyableAddressLink, CopyableLink } from '@/components/ui/Links'
+import { CopyableLink } from '@/components/ui/Links'
+import { ValidatorLink } from '@/components/ui/ValidatorLink'
 import { type Column, DataTable } from '@/components/ui/Table'
 import { useFormatCurrency, useFormatNumber } from '@/hooks/useFormatting'
 import { useTokenDailyPrices } from '@/hooks/useTokenDailyPrices'
@@ -67,8 +68,8 @@ export const BlocksTable = ({ blocks, showDetails = false }: BlocksTableProps) =
       : []),
     {
       key: 'signer',
-      label: t('Signer'),
-      Cell: ({ row }) => <CopyableAddressLink truncate address={row.signer} />,
+      label: t('Validator'),
+      Cell: ({ row }) => <ValidatorLink truncate address={row.signer} />,
     },
   ]
 
