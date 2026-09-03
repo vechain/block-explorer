@@ -2,25 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import {
-  addressStringSchema,
-  blockIdSchema,
-  blockNumberSchema,
-  timestampSchema,
-  transactionIdSchema,
-} from '@/lib/schemas'
+import { blockCompressedSchema, transactionIdSchema } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
 
 /** `/subscriptions/block` frame: the compressed header plus whether it has already been orphaned. */
-export const blockBeatSchema = z.object({
-  number: blockNumberSchema,
-  id: blockIdSchema,
-  parentID: blockIdSchema,
-  timestamp: timestampSchema,
-  signer: addressStringSchema,
-  transactions: z.array(transactionIdSchema),
-  obsolete: z.boolean(),
-})
+export const blockBeatSchema = blockCompressedSchema
+  .omit({ isTrunk: true, isFinalized: true })
+  .extend({ obsolete: z.boolean() })
 export type BlockBeat = z.infer<typeof blockBeatSchema>
 
 export const pendingTxSchema = z.object({ id: transactionIdSchema })
