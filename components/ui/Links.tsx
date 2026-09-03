@@ -91,10 +91,9 @@ export const CopyableAddressLink = ({ address, truncate = true, label, logo, ...
 
   const displayAddress = useMemo(() => {
     if (!address) return '-'
-    if (label) return truncate ? truncateString(label, 24, 0) : label
     if (vnsName) return truncate ? truncateString(vnsName, 20, 6) : vnsName
     return truncate ? truncateAddress(address) : address
-  }, [label, vnsName, truncate, address])
+  }, [vnsName, truncate, address])
 
   if (isPending && !label) {
     return <Skeleton height="16px" width="100px" />
@@ -104,11 +103,29 @@ export const CopyableAddressLink = ({ address, truncate = true, label, logo, ...
     return <Text color="text-secondary">-</Text>
   }
 
+  if (label) {
+    // A registered name can be any length, so it clips to a fixed width and leaves the copy button in place.
+    return (
+      <CopyableLink
+        href={`/address/${address}`}
+        value={address}
+        display="inline-flex"
+        alignItems="center"
+        gap={1.5}
+        maxW={truncate ? '10rem' : 'none'}
+        title={label}
+        {...props}
+      >
+        {logo && <Image src={logo} alt="" boxSize="4" borderRadius="full" flexShrink={0} />}
+        <Text as="span" truncate>
+          {label}
+        </Text>
+      </CopyableLink>
+    )
+  }
+
   return (
     <CopyableLink href={`/address/${address}`} value={address} {...props}>
-      {logo && (
-        <Image src={logo} alt="" boxSize="4" borderRadius="full" display="inline-block" verticalAlign="-3px" mr={1.5} />
-      )}
       {displayAddress}
     </CopyableLink>
   )
