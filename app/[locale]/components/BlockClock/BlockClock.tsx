@@ -118,13 +118,13 @@ export const BlockClock = () => {
   const seconds = head === undefined ? undefined : Math.max(0, nowSeconds - Math.floor(head.seenAt / 1000))
 
   const overdue = seconds !== undefined && seconds * 1000 > BLOCK_TIME_MS
-  const vtho = head?.totalVthoPaid === undefined ? undefined : formatAmount({ amount: head.totalVthoPaid })[0]
+  const fees = head?.totalVthoPaid === undefined ? undefined : `${formatAmount({ amount: head.totalVthoPaid })[0]} VTHO`
   const lastBlock = (
     <Stack direction={{ base: 'row', md: 'column' }} gap={{ base: 6, md: 3 }} alignItems="flex-start" flexWrap="wrap">
       <Stat label={t('Validator')} value={head && <ValidatorLink address={head.signer} truncate />} />
       <Stat label={t('Transactions')} value={head && formatNumber(head.transactions.length)} />
       <Stat label={t('Clauses')} value={head?.clauseCount === undefined ? undefined : formatNumber(head.clauseCount)} />
-      <Stat label={t('VTHO Paid')} value={vtho} />
+      <Stat label={t('Transaction fees')} value={fees} />
     </Stack>
   )
 

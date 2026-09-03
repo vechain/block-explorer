@@ -48,7 +48,7 @@ export const BlockInsight = ({ block }: { block: ExpandedBlock }) => {
 
   const feeAndGasItems: DataCardGroupItem[] = [
     {
-      title: t('VTHO Paid'),
+      title: t('Transaction fees'),
       children: <VTHOBalanceWithFiat balance={vthoMetrics.totalPaid} />,
     },
     {

@@ -49,7 +49,7 @@ export const BlocksTable = ({ blocks, showDetails = false }: BlocksTableProps) =
           { key: 'gasUsed', label: t('Gas Used') },
           {
             key: 'vthoPaid',
-            label: t('VTHO Paid'),
+            label: t('Transaction fees'),
             Cell: ({ row }) => {
               const fiatValue = vthoPrice ? Number(formatEther(row.vthoPaid)) * vthoPrice : undefined
               return (
