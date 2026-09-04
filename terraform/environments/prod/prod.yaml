@@ -21,6 +21,8 @@ alerts_enabled: true
 cdn_alarm_thresholds:
   error_rate_4xx: 50
   cache_hit_rate: 80
+  # One IP clamped by the per-IP rate rule already blocks past the old 300-a-minute threshold.
+  waf_blocked_requests: 2000
 
 # The rate-based IP rule blocks from day one; the managed groups soak in Count.
 waf_enabled: true

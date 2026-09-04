@@ -42,6 +42,9 @@ locals {
   threshold_4xx   = lookup(local.cdn_thresholds, "error_rate_4xx", 50)
   threshold_cache = lookup(local.cdn_thresholds, "cache_hit_rate", 80)
 
+  # A single IP clamped by the 2000-per-5-minute rate rule already blocks above 6.6 req/s.
+  threshold_waf_blocked = lookup(local.cdn_thresholds, "waf_blocked_requests", 2000)
+
   alerts_topic_arns      = [aws_sns_topic.alerts.arn]
   edge_alerts_topic_arns = [aws_sns_topic.alerts_us_east_1.arn]
 
@@ -241,12 +244,13 @@ resource "aws_cloudwatch_metric_alarm" "router_errors" {
 # Reads either way round: a real flood, or a managed rule group false-positiving
 # on legitimate traffic once it is flipped from Count to Block.
 # A new address, not the ALB alarm re-pointed — see README.md on per-resource `region`.
+# Threshold sits above what a handful of rate-clamped crawler IPs produce; tune it in the env YAML.
 resource "aws_cloudwatch_metric_alarm" "cdn_waf_blocked_requests" {
   count    = local.alerts_enabled && local.waf_web_acl_name != null ? 1 : 0
   provider = aws.us_east_1
 
   alarm_name        = "${local.name}-waf-blocking-heavily"
-  alarm_description = "WAF is blocking heavily — More than 5 requests per second have been blocked for over 10 minutes. Check the WAF log group for whether the source is hostile or a false positive."
+  alarm_description = "WAF is blocking heavily — More than ${local.threshold_waf_blocked} requests a minute have been blocked for over 10 minutes. That is several times what the per-IP rate rule clamps one source to, so it is more than routine crawler blocking. Check the WAF log group for whether the source is hostile or a false positive."
 
   namespace   = "AWS/WAFV2"
   metric_name = "BlockedRequests"
@@ -262,7 +266,7 @@ resource "aws_cloudwatch_metric_alarm" "cdn_waf_blocked_requests" {
   evaluation_periods  = 10
   datapoints_to_alarm = 10
   comparison_operator = "GreaterThanThreshold"
-  threshold           = 300
+  threshold           = local.threshold_waf_blocked
   treat_missing_data  = "notBreaching"
 
   alarm_actions = local.edge_alerts_topic_arns
