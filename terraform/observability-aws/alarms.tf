@@ -167,19 +167,20 @@ resource "aws_cloudwatch_metric_alarm" "cdn_4xx" {
 # Bundle keys are immutable, so a sustained miss means requests are landing on the wrong prefix.
 # `missing` rather than `notBreaching`: this metric needs the monitoring subscription, and losing
 # it should page as INSUFFICIENT_DATA rather than sit green over a series nobody publishes.
+# Six of eight: thirty breaching minutes still fires, but clearing now takes three good datapoints.
 resource "aws_cloudwatch_metric_alarm" "cdn_cache_hit_rate_low" {
   count    = local.cdn_alarms_enabled ? 1 : 0
   provider = aws.us_east_1
 
   alarm_name        = "${local.name}-cdn-cache-hit-rate-low"
-  alarm_description = "CDN cache hit rate is low — Under ${local.threshold_cache}% for thirty minutes, or the additional-metrics subscription has gone. Bundle keys are immutable, so a sustained miss rate means requests are not landing on the prefix they should."
+  alarm_description = "CDN cache hit rate is low — Under ${local.threshold_cache}% for thirty minutes. Bundle keys are immutable, so a sustained miss rate means requests are not landing on the prefix they should."
 
   namespace           = "AWS/CloudFront"
   metric_name         = "CacheHitRate"
   dimensions          = local.cloudfront_dimensions
   statistic           = "Average"
   period              = 300
-  evaluation_periods  = 6
+  evaluation_periods  = 8
   datapoints_to_alarm = 6
   comparison_operator = "LessThanThreshold"
   threshold           = local.threshold_cache
