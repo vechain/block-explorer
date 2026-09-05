@@ -173,7 +173,7 @@ resource "aws_cloudwatch_metric_alarm" "cdn_cache_hit_rate_low" {
   provider = aws.us_east_1
 
   alarm_name        = "${local.name}-cdn-cache-hit-rate-low"
-  alarm_description = "CDN cache hit rate is low — Under ${local.threshold_cache}% for thirty minutes. Bundle keys are immutable, so a sustained miss rate means requests are not landing on the prefix they should."
+  alarm_description = "CDN cache hit rate is low — Under ${local.threshold_cache}% for thirty of the last forty minutes. Bundle keys are immutable, so a sustained miss rate means requests are not landing on the prefix they should."
 
   namespace           = "AWS/CloudFront"
   metric_name         = "CacheHitRate"
