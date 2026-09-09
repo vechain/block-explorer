@@ -1,9 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { BlockBeat } from '@/services/thor/subscriptions'
+import type { PoolStatus } from '@/services/thor/transaction'
 import type { IndexerBlock } from '@/services/veworld-indexer/schemas'
-import { HISTORY_BLOCKS, createLiveHeadStore } from './store'
+import { HISTORY_BLOCKS, type LiveHeadStoreOptions, createLiveHeadStore } from './store'
 
 const hex = (seed: string, length = 64): `0x${string}` => `0x${seed.repeat(length)}`
+
+const makeStore = (options: Partial<LiveHeadStoreOptions> = {}) =>
+  createLiveHeadStore({ probe: async () => 'pending', ...options })
+
+const settled = () => new Promise(resolve => setTimeout(resolve, 0))
 
 const header = (number: number, txs: `0x${string}`[]) => ({
   number,
@@ -36,7 +42,7 @@ const indexed = (number: number, txs: `0x${string}`[] = []): IndexerBlock => ({
 
 describe('createLiveHeadStore', () => {
   it('records an announced block without moving the head', () => {
-    const store = createLiveHeadStore()
+    const store = makeStore()
     store.onBlock(beat(100, [hex('1')]))
 
     expect(store.getSnapshot().head).toBeUndefined()
@@ -44,7 +50,7 @@ describe('createLiveHeadStore', () => {
   })
 
   it('ignores orphaned announcements and anything not ahead of what it knows', () => {
-    const store = createLiveHeadStore()
+    const store = makeStore()
     store.onIndexed([indexed(100)])
     store.onBlock(beat(101, [], true))
     store.onBlock(beat(100, []))
@@ -56,7 +62,7 @@ describe('createLiveHeadStore', () => {
   })
 
   it('beats when the index serves the block, dropping only the pooled transactions it included', () => {
-    const store = createLiveHeadStore(() => 42)
+    const store = makeStore({ now: () => 42 })
     store.onPendingTx({ id: hex('1') })
     store.onPendingTx({ id: hex('1') })
     store.onPendingTx({ id: hex('2') })
@@ -73,17 +79,76 @@ describe('createLiveHeadStore', () => {
     expect(pending).toBe(1)
   })
 
-  it('presumes a pooled transaction dropped after two beats without it', () => {
-    const store = createLiveHeadStore()
+  it('removes the pooled transactions of every block the index serves at once', () => {
+    const store = makeStore()
+    store.onIndexed([indexed(100)])
+    store.onPendingTx({ id: hex('1') })
+    store.onPendingTx({ id: hex('2') })
+    store.onPendingTx({ id: hex('3') })
+
+    store.onIndexed([indexed(102, [hex('2')]), indexed(101, [hex('1')]), indexed(100)])
+    expect(store.getSnapshot().head?.number).toBe(102)
+    expect(store.getSnapshot().pending).toBe(1)
+  })
+
+  it('asks the node about a transaction two beats fail to include and keeps it while the node holds it', async () => {
+    const probe = vi.fn<(id: `0x${string}`) => Promise<PoolStatus>>(async () => 'pending')
+    const store = makeStore({ probe })
     store.onPendingTx({ id: hex('9') })
     store.onIndexed([indexed(1)])
-    expect(store.getSnapshot().pending).toBe(1)
+    expect(probe).not.toHaveBeenCalled()
+
     store.onIndexed([indexed(2)])
+    await settled()
+    expect(probe).toHaveBeenCalledWith(hex('9'))
+    expect(store.getSnapshot().pending).toBe(1)
+
+    store.onIndexed([indexed(3)])
+    await settled()
+    expect(probe).toHaveBeenCalledTimes(2)
+  })
+
+  it.each<PoolStatus>(['gone', 'mined'])('drops a lingering transaction the node reports %s', async status => {
+    const store = makeStore({ probe: async () => status })
+    let notified = 0
+    store.subscribe(() => notified++)
+    store.onPendingTx({ id: hex('9') })
+    store.onIndexed([indexed(1)])
+    store.onIndexed([indexed(2)])
+    expect(store.getSnapshot().pending).toBe(1)
+
+    await settled()
     expect(store.getSnapshot().pending).toBe(0)
+    expect(notified).toBe(4)
+  })
+
+  it('keeps counting when the node cannot be asked', async () => {
+    const store = makeStore({ probe: async () => Promise.reject(new Error('offline')) })
+    store.onPendingTx({ id: hex('9') })
+    store.onIndexed([indexed(1)])
+    store.onIndexed([indexed(2)])
+    await settled()
+    expect(store.getSnapshot().pending).toBe(1)
+  })
+
+  it('does not re-announce a transaction a block included while the node was being asked', async () => {
+    let answer: (status: PoolStatus) => void = () => undefined
+    const store = makeStore({ probe: () => new Promise(resolve => (answer = resolve)) })
+    let notified = 0
+    store.onPendingTx({ id: hex('9') })
+    store.onIndexed([indexed(1)])
+    store.onIndexed([indexed(2)])
+    store.onIndexed([indexed(3, [hex('9')])])
+    expect(store.getSnapshot().pending).toBe(0)
+
+    store.subscribe(() => notified++)
+    answer('gone')
+    await settled()
+    expect(notified).toBe(0)
   })
 
   it('keeps an announcement the index has not reached yet', () => {
-    const store = createLiveHeadStore()
+    const store = makeStore()
     store.onBlock(beat(101, []))
     store.onIndexed([indexed(100)])
     expect(store.getSnapshot().head?.number).toBe(100)
@@ -91,14 +156,14 @@ describe('createLiveHeadStore', () => {
   })
 
   it('does not rewind the head to an older served block', () => {
-    const store = createLiveHeadStore()
+    const store = makeStore()
     store.onIndexed([indexed(100)])
     store.onIndexed([indexed(99)])
     expect(store.getSnapshot().head?.number).toBe(100)
   })
 
   it('accumulates gas usage per block, oldest first, without duplicates or rewinding the head', () => {
-    const store = createLiveHeadStore()
+    const store = makeStore()
     store.onIndexed([indexed(102), indexed(101), indexed(100)])
     store.onIndexed([indexed(103), indexed(102)])
     store.onIndexed([indexed(99)])
@@ -108,7 +173,7 @@ describe('createLiveHeadStore', () => {
   })
 
   it('keeps the history to the newest blocks', () => {
-    const store = createLiveHeadStore()
+    const store = makeStore()
     for (let n = 1; n <= HISTORY_BLOCKS + 10; n++) store.onIndexed([indexed(n)])
     const { history } = store.getSnapshot()
     expect(history).toHaveLength(HISTORY_BLOCKS)
@@ -116,7 +181,7 @@ describe('createLiveHeadStore', () => {
   })
 
   it('notifies subscribers on every change and stops after unsubscribe', () => {
-    const store = createLiveHeadStore()
+    const store = makeStore()
     let calls = 0
     const unsubscribe = store.subscribe(() => calls++)
     store.onBlock(beat(1, []))

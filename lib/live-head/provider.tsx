@@ -5,6 +5,7 @@ import { type ReactNode, createContext, useContext, useEffect, useMemo, useState
 import type { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
 import { useBlockSubscription, useTxPoolSubscription } from '@/services/thor/subscriptions'
+import { getPoolStatus } from '@/services/thor/transaction'
 import { liveBlocksQueryKey, useLatestBlocks, useLatestBlocksLive } from '@/services/veworld-indexer/latest-blocks'
 import { liveTransactionsQueryKey } from '@/services/veworld-indexer/latest-transactions'
 import { liveTransfersQueryKey } from '@/services/veworld-indexer/latest-transfers'
@@ -23,7 +24,7 @@ const CATCH_UP_STEP_MS = 500
 const CATCH_UP_WINDOW_MS = 8_000
 
 const LiveHeadFeed = ({ networkName, children }: { networkName: NetworkName; children: ReactNode }) => {
-  const [store] = useState(() => createLiveHeadStore())
+  const [store] = useState(() => createLiveHeadStore({ probe: id => getPoolStatus(networkName, id) }))
   const queryClient = useQueryClient()
 
   const live = useBlockSubscription(store.onBlock)

@@ -76,6 +76,15 @@ export const getTransaction = async ({
   })
 }
 
+export type PoolStatus = 'pending' | 'mined' | 'gone'
+
+export const getPoolStatus = async (networkName: NetworkName, transactionId: TransactionId): Promise<PoolStatus> => {
+  const tx = await getThorClient(networkName).transactions.getTransaction(transactionId, { pending: true })
+  if (!tx) return 'gone'
+  // The SDK types `meta` as always present; the node sends null while the transaction is pooled.
+  return (tx.meta as typeof tx.meta | null) ? 'mined' : 'pending'
+}
+
 /**
  * Transaction receipt
  */

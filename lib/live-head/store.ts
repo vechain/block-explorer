@@ -1,4 +1,5 @@
 import type { BlockBeat, PendingTx } from '@/services/thor/subscriptions'
+import type { PoolStatus } from '@/services/thor/transaction'
 import type { IndexerBlock } from '@/services/veworld-indexer/schemas'
 
 export type LiveBlock = IndexerBlock & {
@@ -20,8 +21,18 @@ export type LiveHeadSnapshot = {
   pending: number
 }
 
-// A pooled transaction that two beats fail to include is presumed dropped.
-const PENDING_BEATS = 2
+type TxId = PendingTx['id']
+
+export type LiveHeadStoreOptions = {
+  /** Asks the node whether it still holds a pooled transaction. */
+  probe: (id: TxId) => Promise<PoolStatus>
+  now?: () => number
+}
+
+// The pool socket only announces admissions, so a transaction that outlives this many beats is
+// asked after on the node every beat until a block includes it or the node lets it go.
+const PROBE_AFTER_BEATS = 2
+const PROBES_PER_BEAT = 32
 export const HISTORY_BLOCKS = 90
 
 const mergeHistory = (history: UsagePoint[], blocks: IndexerBlock[]): UsagePoint[] => {
@@ -36,14 +47,27 @@ const mergeHistory = (history: UsagePoint[], blocks: IndexerBlock[]): UsagePoint
   return [...byNumber.values()].sort((a, b) => a.number - b.number).slice(-HISTORY_BLOCKS)
 }
 
-export const createLiveHeadStore = (now: () => number = Date.now) => {
+export const createLiveHeadStore = ({ probe, now = Date.now }: LiveHeadStoreOptions) => {
   let snapshot: LiveHeadSnapshot = { head: undefined, announced: undefined, history: [], pending: 0 }
-  const pendingBeats = new Map<string, number>()
+  const pendingBeats = new Map<TxId, number>()
   const listeners = new Set<() => void>()
 
   const emit = (next: LiveHeadSnapshot) => {
     snapshot = next
     listeners.forEach(listener => listener())
+  }
+
+  const probeLingering = () => {
+    const lingering = [...pendingBeats].filter(([, beats]) => beats >= PROBE_AFTER_BEATS).slice(0, PROBES_PER_BEAT)
+    for (const [id] of lingering) {
+      void probe(id).then(
+        status => {
+          if (status === 'pending' || !pendingBeats.delete(id)) return
+          emit({ ...snapshot, pending: pendingBeats.size })
+        },
+        () => undefined,
+      )
+    }
   }
 
   return {
@@ -77,12 +101,12 @@ export const createLiveHeadStore = (now: () => number = Date.now) => {
         return
       }
 
-      const sealed = announced?.number === newest.number ? announced.transactions : newest.transactions
-      for (const id of sealed) pendingBeats.delete(id)
-      for (const [id, beats] of pendingBeats) {
-        if (beats + 1 >= PENDING_BEATS) pendingBeats.delete(id)
-        else pendingBeats.set(id, beats + 1)
+      const served = head ? blocks.filter(block => block.number > head.number) : [newest]
+      for (const block of served) {
+        const sealed = announced?.number === block.number ? announced.transactions : block.transactions
+        for (const id of sealed) pendingBeats.delete(id)
       }
+      for (const [id, beats] of pendingBeats) pendingBeats.set(id, beats + served.length)
 
       emit({
         head: { ...newest, seenAt: now() },
@@ -90,6 +114,7 @@ export const createLiveHeadStore = (now: () => number = Date.now) => {
         history,
         pending: pendingBeats.size,
       })
+      probeLingering()
     },
   }
 }
