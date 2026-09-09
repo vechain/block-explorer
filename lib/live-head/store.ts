@@ -22,10 +22,13 @@ export type LiveHeadSnapshot = {
 }
 
 type TxId = PendingTx['id']
+type Pooled = { beats: number; probedAt: number }
 
 export type LiveHeadStoreOptions = {
   /** Asks the node whether it still holds a pooled transaction. */
   probe: (id: TxId) => Promise<PoolStatus>
+  /** Fetches the transaction ids of blocks the served page skipped over. */
+  sealedIn: (blockNumbers: number[]) => Promise<TxId[][]>
   now?: () => number
 }
 
@@ -33,6 +36,8 @@ export type LiveHeadStoreOptions = {
 // asked after on the node every beat until a block includes it or the node lets it go.
 const PROBE_AFTER_BEATS = 2
 const PROBES_PER_BEAT = 32
+// A page that skips more blocks than this came back from a long outage; the pool starts over.
+const GAP_FILL_LIMIT = 30
 export const HISTORY_BLOCKS = 90
 
 const mergeHistory = (history: UsagePoint[], blocks: IndexerBlock[]): UsagePoint[] => {
@@ -47,9 +52,10 @@ const mergeHistory = (history: UsagePoint[], blocks: IndexerBlock[]): UsagePoint
   return [...byNumber.values()].sort((a, b) => a.number - b.number).slice(-HISTORY_BLOCKS)
 }
 
-export const createLiveHeadStore = ({ probe, now = Date.now }: LiveHeadStoreOptions) => {
+export const createLiveHeadStore = ({ probe, sealedIn, now = Date.now }: LiveHeadStoreOptions) => {
   let snapshot: LiveHeadSnapshot = { head: undefined, announced: undefined, history: [], pending: 0 }
-  const pendingBeats = new Map<TxId, number>()
+  let beat = 0
+  const pool = new Map<TxId, Pooled>()
   const listeners = new Set<() => void>()
 
   const emit = (next: LiveHeadSnapshot) => {
@@ -57,18 +63,36 @@ export const createLiveHeadStore = ({ probe, now = Date.now }: LiveHeadStoreOpti
     listeners.forEach(listener => listener())
   }
 
+  const emitPending = () => {
+    if (snapshot.pending !== pool.size) emit({ ...snapshot, pending: pool.size })
+  }
+
   const probeLingering = () => {
-    const lingering = [...pendingBeats].filter(([, beats]) => beats >= PROBE_AFTER_BEATS).slice(0, PROBES_PER_BEAT)
-    for (const [id] of lingering) {
+    const lingering = [...pool]
+      .filter(([, pooled]) => pooled.beats >= PROBE_AFTER_BEATS)
+      .sort(([, a], [, b]) => a.probedAt - b.probedAt)
+      .slice(0, PROBES_PER_BEAT)
+    for (const [id, pooled] of lingering) {
+      pooled.probedAt = beat
       void probe(id).then(
         status => {
-          if (status === 'pending' || !pendingBeats.delete(id)) return
-          emit({ ...snapshot, pending: pendingBeats.size })
+          if (status === 'pending' || !pool.delete(id)) return
+          emitPending()
         },
         () => undefined,
       )
     }
   }
+
+  const fillGap = (blockNumbers: number[]) =>
+    sealedIn(blockNumbers).then(
+      lists => {
+        for (const ids of lists) for (const id of ids) pool.delete(id)
+        emitPending()
+        probeLingering()
+      },
+      () => probeLingering(),
+    )
 
   return {
     subscribe: (listener: () => void) => {
@@ -86,9 +110,9 @@ export const createLiveHeadStore = ({ probe, now = Date.now }: LiveHeadStoreOpti
     },
 
     onPendingTx: (tx: PendingTx) => {
-      if (pendingBeats.has(tx.id)) return
-      pendingBeats.set(tx.id, 0)
-      emit({ ...snapshot, pending: pendingBeats.size })
+      if (pool.has(tx.id)) return
+      pool.set(tx.id, { beats: 0, probedAt: -1 })
+      emitPending()
     },
 
     onIndexed: (blocks: IndexerBlock[] | undefined) => {
@@ -102,19 +126,30 @@ export const createLiveHeadStore = ({ probe, now = Date.now }: LiveHeadStoreOpti
       }
 
       const served = head ? blocks.filter(block => block.number > head.number) : [newest]
+      const covered = new Set<number>()
       for (const block of served) {
+        covered.add(block.number)
         const sealed = announced?.number === block.number ? announced.transactions : block.transactions
-        for (const id of sealed) pendingBeats.delete(id)
+        for (const id of sealed) pool.delete(id)
       }
-      for (const [id, beats] of pendingBeats) pendingBeats.set(id, beats + served.length)
+      const missing: number[] = []
+      for (let number = (head?.number ?? newest.number) + 1; number < newest.number; number++) {
+        if (!covered.has(number)) missing.push(number)
+      }
+
+      beat += 1
+      if (missing.length > GAP_FILL_LIMIT) pool.clear()
+      const passed = head ? newest.number - head.number : 1
+      for (const pooled of pool.values()) pooled.beats += passed
 
       emit({
         head: { ...newest, seenAt: now() },
         announced: announced && announced.number > newest.number ? announced : undefined,
         history,
-        pending: pendingBeats.size,
+        pending: pool.size,
       })
-      probeLingering()
+      if (missing.length > 0 && missing.length <= GAP_FILL_LIMIT) void fillGap(missing)
+      else probeLingering()
     },
   }
 }

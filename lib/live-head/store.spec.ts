@@ -7,7 +7,9 @@ import { HISTORY_BLOCKS, type LiveHeadStoreOptions, createLiveHeadStore } from '
 const hex = (seed: string, length = 64): `0x${string}` => `0x${seed.repeat(length)}`
 
 const makeStore = (options: Partial<LiveHeadStoreOptions> = {}) =>
-  createLiveHeadStore({ probe: async () => 'pending', ...options })
+  createLiveHeadStore({ probe: async () => 'pending', sealedIn: async () => [], ...options })
+
+const txId = (n: number): `0x${string}` => `0x${n.toString(16).padStart(64, '0')}`
 
 const settled = () => new Promise(resolve => setTimeout(resolve, 0))
 
@@ -89,6 +91,60 @@ describe('createLiveHeadStore', () => {
     store.onIndexed([indexed(102, [hex('2')]), indexed(101, [hex('1')]), indexed(100)])
     expect(store.getSnapshot().head?.number).toBe(102)
     expect(store.getSnapshot().pending).toBe(1)
+  })
+
+  it('fetches the transactions of the blocks a page skipped over instead of probing them', async () => {
+    const sealedIn = vi.fn(async (numbers: number[]) =>
+      numbers.map(n => (n === 101 ? [hex('1')] : n === 103 ? [hex('2')] : [])),
+    )
+    const probe = vi.fn<(id: `0x${string}`) => Promise<PoolStatus>>(async () => 'mined')
+    const store = makeStore({ sealedIn, probe })
+    store.onIndexed([indexed(100)])
+    store.onPendingTx({ id: hex('1') })
+    store.onPendingTx({ id: hex('2') })
+    store.onPendingTx({ id: hex('3') })
+
+    store.onIndexed([indexed(108, [hex('3')]), indexed(107), indexed(106), indexed(105), indexed(104)])
+    expect(sealedIn).toHaveBeenCalledWith([101, 102, 103])
+    expect(store.getSnapshot().pending).toBe(2)
+
+    await settled()
+    expect(store.getSnapshot().pending).toBe(0)
+    expect(probe).not.toHaveBeenCalled()
+  })
+
+  it('probes the skipped blocks’ transactions when they cannot be fetched', async () => {
+    const store = makeStore({ sealedIn: async () => Promise.reject(new Error('offline')), probe: async () => 'mined' })
+    store.onIndexed([indexed(100)])
+    store.onPendingTx({ id: hex('1') })
+    store.onIndexed([indexed(110)])
+    await settled()
+    expect(store.getSnapshot().pending).toBe(0)
+  })
+
+  it('starts the pool over when a page skips more blocks than it can fill', () => {
+    const sealedIn = vi.fn(async () => [])
+    const store = makeStore({ sealedIn })
+    store.onIndexed([indexed(100)])
+    store.onPendingTx({ id: hex('1') })
+    store.onIndexed([indexed(140)])
+    expect(store.getSnapshot().pending).toBe(0)
+    expect(sealedIn).not.toHaveBeenCalled()
+  })
+
+  it('rotates probes so transactions the node keeps holding do not starve the rest', async () => {
+    const probe = vi.fn<(id: `0x${string}`) => Promise<PoolStatus>>(async () => 'pending')
+    const store = makeStore({ probe })
+    for (let n = 1; n <= 40; n++) store.onPendingTx({ id: txId(n) })
+    store.onIndexed([indexed(1)])
+    store.onIndexed([indexed(2)])
+    await settled()
+    expect(probe).toHaveBeenCalledTimes(32)
+
+    store.onIndexed([indexed(3)])
+    await settled()
+    const secondBeat = probe.mock.calls.slice(32).map(([id]) => id)
+    expect(secondBeat.slice(0, 8)).toEqual([33, 34, 35, 36, 37, 38, 39, 40].map(txId))
   })
 
   it('asks the node about a transaction two beats fail to include and keeps it while the node holds it', async () => {
