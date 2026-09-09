@@ -6,6 +6,12 @@ on:
       - main
     types: [closed]
 
+# One run at a time: a stack merge closes every PR in it within a second, and
+# each run computes its tag from the newest one it can see.
+concurrency:
+  group: codebase-versioning
+  cancel-in-progress: false
+
 jobs:
   semantic-versioning:
     uses: vechain/github-actions-public/.github/workflows/semantic-versioning.yaml@c8645e5723b09ce657b865f78924b87a357df036 # v.2.3.1
