@@ -56,6 +56,7 @@ jobs:
       app_sha: ${{ steps.derive.outputs.app_sha }}
       stacks: ${{ steps.derive.outputs.stacks }}
       domain: ${{ steps.derive.outputs.domain }}
+      stale: ${{ steps.freshness.outputs.stale }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -170,11 +171,35 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "${TAG} carries app content ${APP_SHA}, deploying to ${domain}."
 
+      # Two merges landing together queue two dev deploys here, and the older
+      # tag can be the one that runs last. Skip it rather than roll dev back.
+      - name: Skip a dev tag older than the one dev serves
+        id: freshness
+        if: github.event_name == 'workflow_run'
+        env:
+          TAG: ${{ steps.resolve.outputs.tag }}
+          DOMAIN: ${{ steps.derive.outputs.domain }}
+        run: |
+          set -euo pipefail
+
+          live=$(curl -fsS --max-time 15 "https://${DOMAIN}/runtime-config.json" | jq -r '.appVersion // empty' || true)
+          stale=false
+          if [[ "$live" =~ ^v\. ]] && [ "$live" != "$TAG" ]; then
+            newest=$(printf '%s\n%s\n' "$TAG" "$live" | sort -V | tail -n1)
+            if [ "$newest" = "$live" ]; then
+              stale=true
+              echo "::notice::${DOMAIN} already serves ${live}, newer than ${TAG}. Nothing to deploy."
+            fi
+          fi
+          echo "stale=${stale}" >> "$GITHUB_OUTPUT"
+
   # Serial, each stack planned immediately before its own apply — see workflows/README.md.
   terraform:
     name: Apply Terraform
     runs-on: ubuntu-latest
     needs: guard
+    # A stale dev tag stops here; every job below needs this one.
+    if: needs.guard.outputs.stale != 'true'
     permissions:
       id-token: write
       contents: read

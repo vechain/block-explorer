@@ -6,7 +6,7 @@ Automated CI/CD for Block Explorer. Dev, prod and previews all serve one static 
 
 ```
 PR merged to main
-  → codebase-versioning.yml tags v.X.Y.Z (increment:* label picks the bump)
+  → codebase-versioning.yml tags v.X.Y.Z (increment:* label picks the bump; one run at a time)
   → publish-bundle.yml builds the static bundle, or finds one it already has
   → deploy.yml copies it into dev's bucket and points dev at it
   → prepare-release.yml leaves exactly one draft release
@@ -51,7 +51,7 @@ same bundle, so parity is structural rather than maintained by hand.
 | Manual dispatch | either, chosen by the `environment` input (break-glass, e.g. to roll back) |
 
 **Jobs:**
-1. `guard` - Resolves the target, the tag and its content SHA, refuses anything not reachable from `main`, and derives the stack list below
+1. `guard` - Resolves the target, the tag and its content SHA, refuses anything not reachable from `main`, and derives the stack list below, and skips an automatic dev deploy of a tag older than the one dev already serves
 2. `terraform` - Applies each stack serially in dependency order, planning immediately before each apply
 3. `publish` - Copies the bundle artifact into that environment's bucket, unless the prefix is already there
 4. `activate` - Writes `<env>/runtime-config.json`, points the environment's hosts at the new bundle, invalidates the config, then checks the CDN by its own name
