@@ -77,8 +77,8 @@ const newSpark = (id: TxId, angle: number): Spark => {
   return {
     id,
     angle: angle + (Math.random() - 0.5) * 0.08,
-    radius: 1,
-    rest: 0.2 + tone * 0.18,
+    radius: 1.04,
+    rest: 0.7 + tone * 0.18,
     speed: 0.08 + Math.random() * 0.12,
     size: 1.5 + Math.random() * 2,
     tone,
@@ -251,7 +251,7 @@ export const renderBlockClock = ({
   ctx.fill()
   ctx.shadowBlur = 0
 
-  // sparks: pending transactions falling from the rim toward the core
+  // sparks: pending transactions settling into a band just inside the rim, clear of the height figure
   scene.sparks = scene.sparks.filter(spark => spark.life > 0)
   for (const spark of scene.sparks) {
     if (spark.fate === 'mined') {
@@ -262,7 +262,7 @@ export const renderBlockClock = ({
       spark.radius += dt * 0.9
       spark.life -= dt * 1.6
     } else {
-      spark.radius = Math.max(spark.rest, spark.radius - spark.speed * dt * 6)
+      spark.radius = Math.max(spark.rest, spark.radius - spark.speed * dt * 2.5)
     }
     spark.angle += dt * 0.12 * (0.4 + spark.tone)
     const x = cx + Math.cos(spark.angle) * R * spark.radius
