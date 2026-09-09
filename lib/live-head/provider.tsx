@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type { NetworkName } from '@/lib/constants/network'
 import { useSettingsStore } from '@/lib/stores/settings'
+import { getBlockCompressed } from '@/services/thor/block'
 import { useBlockSubscription, useTxPoolSubscription } from '@/services/thor/subscriptions'
 import { getPoolStatus } from '@/services/thor/transaction'
 import { liveBlocksQueryKey, useLatestBlocks, useLatestBlocksLive } from '@/services/veworld-indexer/latest-blocks'
@@ -24,7 +25,15 @@ const CATCH_UP_STEP_MS = 500
 const CATCH_UP_WINDOW_MS = 8_000
 
 const LiveHeadFeed = ({ networkName, children }: { networkName: NetworkName; children: ReactNode }) => {
-  const [store] = useState(() => createLiveHeadStore({ probe: id => getPoolStatus(networkName, id) }))
+  const [store] = useState(() =>
+    createLiveHeadStore({
+      probe: id => getPoolStatus(networkName, id),
+      sealedIn: numbers =>
+        Promise.all(
+          numbers.map(revision => getBlockCompressed({ networkName, revision }).then(block => block.transactions)),
+        ),
+    }),
+  )
   const queryClient = useQueryClient()
 
   const live = useBlockSubscription(store.onBlock)

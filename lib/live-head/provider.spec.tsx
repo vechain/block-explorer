@@ -26,6 +26,10 @@ vi.mock('@/services/thor/transaction', () => ({
   getPoolStatus: async () => 'pending',
 }))
 
+vi.mock('@/services/thor/block', () => ({
+  getBlockCompressed: async () => ({ transactions: [] }),
+}))
+
 vi.mock('@/services/veworld-indexer/latest-blocks', () => ({
   liveBlocksQueryKey: (network: string) => ['getLatestBlocks', 'live', network],
   useLatestBlocksLive: () => ({ data: indexed ? { data: indexed } : undefined }),
