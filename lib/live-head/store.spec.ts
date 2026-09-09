@@ -75,10 +75,15 @@ describe('createLiveHeadStore', () => {
     expect(store.getSnapshot().pending).toBe(3)
 
     store.onIndexed([indexed(100, [hex('1'), hex('2')])])
-    const { head, announced, pending } = store.getSnapshot()
+    const { head, announced, pending, pool, fates } = store.getSnapshot()
     expect(head).toMatchObject({ number: 100, seenAt: 42, clauseCount: 2 })
     expect(announced).toBeUndefined()
     expect(pending).toBe(1)
+    expect(pool).toEqual([hex('3')])
+    expect([...fates]).toEqual([
+      [hex('1'), 'mined'],
+      [hex('2'), 'mined'],
+    ])
   })
 
   it('removes the pooled transactions of every block the index serves at once', () => {
@@ -175,7 +180,24 @@ describe('createLiveHeadStore', () => {
 
     await settled()
     expect(store.getSnapshot().pending).toBe(0)
+    expect(store.getSnapshot().fates.get(hex('9'))).toBe(status === 'gone' ? 'dropped' : 'mined')
     expect(notified).toBe(4)
+  })
+
+  it('forgets the oldest fates once it holds more than it keeps', () => {
+    const store = makeStore()
+    store.onIndexed([indexed(1)])
+    for (let n = 1; n <= 300; n++) store.onPendingTx({ id: txId(n) })
+    store.onIndexed([
+      indexed(
+        2,
+        Array.from({ length: 300 }, (_, i) => txId(i + 1)),
+      ),
+    ])
+    const { fates } = store.getSnapshot()
+    expect(fates.size).toBe(256)
+    expect(fates.has(txId(44))).toBe(false)
+    expect(fates.has(txId(45))).toBe(true)
   })
 
   it('keeps counting when the node cannot be asked', async () => {

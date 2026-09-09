@@ -13,15 +13,22 @@ export type AnnouncedBlock = Pick<BlockBeat, 'number' | 'timestamp' | 'transacti
 /** Gas used against the limit for one block, oldest first in `history`. */
 export type UsagePoint = { number: number; gasUsed: number; gasLimit: number }
 
+export type TxId = PendingTx['id']
+/** How a pooled transaction left the count: a block included it, or the node let it go. */
+export type TxFate = 'mined' | 'dropped'
+
 export type LiveHeadSnapshot = {
   head: LiveBlock | undefined
   announced: AnnouncedBlock | undefined
   history: UsagePoint[]
   /** Transactions the node has admitted to its pool that no served block has included yet. */
   pending: number
+  /** The same transactions by id, in arrival order. */
+  pool: readonly TxId[]
+  /** Recently removed transactions and what became of each, oldest first. */
+  fates: ReadonlyMap<TxId, TxFate>
 }
 
-type TxId = PendingTx['id']
 type Pooled = { beats: number; probedAt: number }
 
 export type LiveHeadStoreOptions = {
@@ -38,6 +45,7 @@ const PROBE_AFTER_BEATS = 2
 const PROBES_PER_BEAT = 32
 // A page that skips more blocks than this came back from a long outage; the pool starts over.
 const GAP_FILL_LIMIT = 30
+const FATES_KEPT = 256
 export const HISTORY_BLOCKS = 90
 
 const mergeHistory = (history: UsagePoint[], blocks: IndexerBlock[]): UsagePoint[] => {
@@ -53,18 +61,33 @@ const mergeHistory = (history: UsagePoint[], blocks: IndexerBlock[]): UsagePoint
 }
 
 export const createLiveHeadStore = ({ probe, sealedIn, now = Date.now }: LiveHeadStoreOptions) => {
-  let snapshot: LiveHeadSnapshot = { head: undefined, announced: undefined, history: [], pending: 0 }
+  let snapshot: LiveHeadSnapshot = {
+    head: undefined,
+    announced: undefined,
+    history: [],
+    pending: 0,
+    pool: [],
+    fates: new Map(),
+  }
   let beat = 0
   const pool = new Map<TxId, Pooled>()
+  const fates = new Map<TxId, TxFate>()
   const listeners = new Set<() => void>()
 
-  const emit = (next: LiveHeadSnapshot) => {
-    snapshot = next
+  const emit = (next: Omit<LiveHeadSnapshot, 'pending' | 'pool' | 'fates'>) => {
+    snapshot = { ...next, pending: pool.size, pool: [...pool.keys()], fates: new Map(fates) }
     listeners.forEach(listener => listener())
   }
 
   const emitPending = () => {
-    if (snapshot.pending !== pool.size) emit({ ...snapshot, pending: pool.size })
+    if (snapshot.pending !== pool.size) emit(snapshot)
+  }
+
+  const settle = (id: TxId, fate: TxFate) => {
+    if (!pool.delete(id)) return false
+    fates.set(id, fate)
+    if (fates.size > FATES_KEPT) fates.delete(fates.keys().next().value as TxId)
+    return true
   }
 
   const probeLingering = () => {
@@ -76,7 +99,7 @@ export const createLiveHeadStore = ({ probe, sealedIn, now = Date.now }: LiveHea
       pooled.probedAt = beat
       void probe(id).then(
         status => {
-          if (status === 'pending' || !pool.delete(id)) return
+          if (status === 'pending' || !settle(id, status === 'gone' ? 'dropped' : 'mined')) return
           emitPending()
         },
         () => undefined,
@@ -87,7 +110,7 @@ export const createLiveHeadStore = ({ probe, sealedIn, now = Date.now }: LiveHea
   const fillGap = (blockNumbers: number[]) =>
     sealedIn(blockNumbers).then(
       lists => {
-        for (const ids of lists) for (const id of ids) pool.delete(id)
+        for (const ids of lists) for (const id of ids) settle(id, 'mined')
         emitPending()
         probeLingering()
       },
@@ -130,7 +153,7 @@ export const createLiveHeadStore = ({ probe, sealedIn, now = Date.now }: LiveHea
       for (const block of served) {
         covered.add(block.number)
         const sealed = announced?.number === block.number ? announced.transactions : block.transactions
-        for (const id of sealed) pool.delete(id)
+        for (const id of sealed) settle(id, 'mined')
       }
       const missing: number[] = []
       for (let number = (head?.number ?? newest.number) + 1; number < newest.number; number++) {
@@ -146,7 +169,6 @@ export const createLiveHeadStore = ({ probe, sealedIn, now = Date.now }: LiveHea
         head: { ...newest, seenAt: now() },
         announced: announced && announced.number > newest.number ? announced : undefined,
         history,
-        pending: pool.size,
       })
       if (missing.length > 0 && missing.length <= GAP_FILL_LIMIT) void fillGap(missing)
       else probeLingering()

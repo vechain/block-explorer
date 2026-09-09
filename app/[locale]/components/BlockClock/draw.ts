@@ -1,7 +1,12 @@
 import { BLOCK_TIME_MS } from '@/lib/constants/network'
-import { HISTORY_BLOCKS, type UsagePoint } from '@/lib/live-head/store'
+import { HISTORY_BLOCKS, type TxFate, type TxId, type UsagePoint } from '@/lib/live-head/store'
 
-type ClockFeed = { head: { number: number; seenAt: number } | undefined; pending: number; history: UsagePoint[] }
+type ClockFeed = {
+  head: { number: number; seenAt: number } | undefined
+  pool: readonly TxId[]
+  fates: ReadonlyMap<TxId, TxFate>
+  history: UsagePoint[]
+}
 
 export type ClockPalette = {
   accent: string
@@ -10,14 +15,16 @@ export type ClockPalette = {
   ink: string
 }
 
-type Spark = {
+export type Spark = {
+  id: TxId
   angle: number
   radius: number
   rest: number
   speed: number
   size: number
   tone: number
-  collapsing: boolean
+  /** Pending sparks orbit; mined ones collapse into the core, dropped ones are cast past the rim. */
+  fate: 'pending' | TxFate
   life: number
   trail: Array<[number, number]>
 }
@@ -65,18 +72,29 @@ const slotProgress = (feed: ClockFeed, now: number) =>
 const TAU = Math.PI * 2
 const TICKS = 10
 
-const newSpark = (angle: number): Spark => {
+const newSpark = (id: TxId, angle: number): Spark => {
   const tone = Math.random()
   return {
+    id,
     angle: angle + (Math.random() - 0.5) * 0.08,
     radius: 1,
     rest: 0.2 + tone * 0.18,
     speed: 0.08 + Math.random() * 0.12,
     size: 1.5 + Math.random() * 2,
     tone,
-    collapsing: false,
+    fate: 'pending',
     life: 1,
     trail: [],
+  }
+}
+
+/** Spawns a spark at the hand for each newly pooled transaction and hands departed ones their fate. */
+export const syncSparks = (sparks: Spark[], feed: Pick<ClockFeed, 'pool' | 'fates'>, angle: number) => {
+  const known = new Set(sparks.map(spark => spark.id))
+  for (const id of feed.pool) if (!known.has(id)) sparks.push(newSpark(id, angle))
+  const live = new Set(feed.pool)
+  for (const spark of sparks) {
+    if (spark.fate === 'pending' && !live.has(spark.id)) spark.fate = feed.fates.get(spark.id) ?? 'mined'
   }
 }
 
@@ -155,27 +173,13 @@ export const renderBlockClock = ({
     if (scene.sealed !== undefined && animate) {
       scene.ripples.push({ radius: 0, life: 1, late })
       scene.ghosts.push({ scale: 1, life: 1 })
-      for (const spark of scene.sparks) spark.collapsing = true
       scene.flash = 1
     }
     scene.sealed = headNumber
   }
   scene.flash = Math.max(0, scene.flash - dt * 1.6)
 
-  if (animate) {
-    let active = scene.sparks.filter(spark => !spark.collapsing).length
-    while (active < feed.pending) {
-      scene.sparks.push(newSpark(angle))
-      active++
-    }
-    for (const spark of scene.sparks) {
-      if (active <= feed.pending) break
-      if (!spark.collapsing) {
-        spark.collapsing = true
-        active--
-      }
-    }
-  }
+  if (animate) syncSparks(scene.sparks, feed, angle)
 
   // ghost rings of sealed blocks drifting outward
   ctx.lineWidth = 1
@@ -250,10 +254,13 @@ export const renderBlockClock = ({
   // sparks: pending transactions falling from the rim toward the core
   scene.sparks = scene.sparks.filter(spark => spark.life > 0)
   for (const spark of scene.sparks) {
-    if (spark.collapsing) {
+    if (spark.fate === 'mined') {
       spark.radius -= dt * 2.2
       spark.life -= dt * 1.4
       if (spark.radius < 0.02) spark.life = 0
+    } else if (spark.fate === 'dropped') {
+      spark.radius += dt * 0.9
+      spark.life -= dt * 1.6
     } else {
       spark.radius = Math.max(spark.rest, spark.radius - spark.speed * dt * 6)
     }
@@ -262,7 +269,7 @@ export const renderBlockClock = ({
     const y = cy + Math.sin(spark.angle) * R * spark.radius
     spark.trail.push([x, y])
     if (spark.trail.length > 12) spark.trail.shift()
-    const color = mixTone(palette, spark.tone)
+    const color = spark.fate === 'dropped' ? palette.warm : mixTone(palette, spark.tone)
     ctx.strokeStyle = withAlpha(color, 0.25 * spark.life)
     ctx.lineWidth = 1
     ctx.beginPath()
