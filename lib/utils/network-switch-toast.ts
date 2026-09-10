@@ -2,18 +2,8 @@
 
 import type { TFunction } from 'i18next'
 import { toaster } from '@/components/ui/toaster'
-import { NetworkName } from '@/lib/constants/network'
-
-const getNetworkLabel = (t: TFunction, networkName: NetworkName) => {
-  switch (networkName) {
-    case NetworkName.MAINNET:
-      return t('Mainnet')
-    case NetworkName.TESTNET:
-      return t('Testnet')
-    default:
-      return networkName
-  }
-}
+import type { NetworkName } from '@/lib/constants/network'
+import { getNetworkLabel } from '@/lib/utils/network-label'
 
 export const showAutomaticNetworkSwitchToast = ({
   t,
