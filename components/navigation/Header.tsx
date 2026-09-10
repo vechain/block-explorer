@@ -18,6 +18,7 @@ import { MotionBox } from '../ui/MotionBox'
 import { CurrencyModal } from './CurrencyModal'
 import { DevModeModal } from './DevModeModal'
 import { LanguageModal } from './LanguageModal'
+import { NetworkBadge } from './NetworkBadge'
 import { NetworkSelect } from './NetworkSelect'
 import { SearchBar } from './SearchBar'
 import { Logo } from '../Logo'
@@ -28,7 +29,10 @@ export const Header = () => {
   return (
     <VStack alignItems="stretch">
       <Flex as="header" justify="space-between" align="center" py={{ base: 0, md: 4 }} gap={6}>
-        <Logo />
+        <Flex gap={3} alignItems="center">
+          <Logo />
+          <NetworkBadge />
+        </Flex>
 
         <SearchBar hideBelow="md" flex={1} />
 
