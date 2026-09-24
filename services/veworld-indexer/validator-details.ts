@@ -101,7 +101,15 @@ const validatorSlotStatsSchema = z.object({
   proposedBlocks: z.number(),
   missedSlots: z.number(),
   missedSlotRatio: z.number(),
+  uptimeRatio: z.number().optional(),
 })
+
+// Thor stops scheduling a validator after one missed slot, so only uptime shows an outage's length.
+export const reliabilityPercentage = (uptimeRatio: number | undefined, missedPercentage: number): number => {
+  const percentage = uptimeRatio !== undefined ? uptimeRatio * 100 : 100 - missedPercentage
+  // Floored to one decimal so a partial outage never displays as 100%.
+  return Math.floor(percentage * 10 + 1e-9) / 10
+}
 
 // Delegation schema for fetching individual delegations
 const delegationSchema = z.object({
@@ -222,7 +230,7 @@ const getValidatorDelegationsCount = async ({
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60
 export const SLOTS_WINDOW_ANCHOR_SECONDS = 5 * 60
 
-const getValidatorMissedBlocks = async ({
+const getValidatorReliability = async ({
   networkName,
   validatorAddress,
 }: {
@@ -247,7 +255,10 @@ const getValidatorMissedBlocks = async ({
     errorMessage: 'Invalid validator slots response from VeWorld Indexer',
   })
 
-  return Number.isFinite(parsed.missedSlotRatio) ? parsed.missedSlotRatio * 100 : 0
+  return reliabilityPercentage(
+    parsed.uptimeRatio,
+    Number.isFinite(parsed.missedSlotRatio) ? parsed.missedSlotRatio * 100 : 0,
+  )
 }
 
 /**
@@ -315,10 +326,10 @@ const validatorDelegationsCountQueryOptions = (networkName: NetworkName, address
   refetchInterval: 60000,
 })
 
-// Query options for missed blocks
-export const validatorMissedBlocksQueryOptions = (networkName: NetworkName, address: string | undefined) => ({
-  queryKey: ['validatorMissedBlocks', networkName, address],
-  queryFn: () => getValidatorMissedBlocks({ networkName, validatorAddress: address! }),
+// Query options for reliability over the last week
+export const validatorReliabilityQueryOptions = (networkName: NetworkName, address: string | undefined) => ({
+  queryKey: ['validatorReliability', networkName, address],
+  queryFn: () => getValidatorReliability({ networkName, validatorAddress: address! }),
   enabled: !!address,
   refetchInterval: 60000,
 })
@@ -338,13 +349,13 @@ export const useValidatorDetails = (address: string | undefined) => {
     queries: [
       validatorDetailsQueryOptions(activeNetwork.name, address),
       validatorDelegationsCountQueryOptions(activeNetwork.name, address),
-      validatorMissedBlocksQueryOptions(activeNetwork.name, address),
+      validatorReliabilityQueryOptions(activeNetwork.name, address),
       validatorMetadataQueryOptions(activeNetwork.name, address),
       validatorDelegationsQueryOptions(activeNetwork.name, address),
     ],
   })
 
-  const [validatorQuery, delegationsCountQuery, missedBlocksQuery, metadataQuery, delegationsQuery] = results
+  const [validatorQuery, delegationsCountQuery, reliabilityQuery, metadataQuery, delegationsQuery] = results
 
   // Only the cycle countdown reads this, so it stays off the address pages that turn out
   // not to be validators, which is nearly all of them.
@@ -366,7 +377,9 @@ export const useValidatorDetails = (address: string | undefined) => {
     if (!validatorData) return null
 
     const delegationsCount = delegationsCountQuery.data as ValidatorDelegationsCount | null | undefined
-    const missedPercentage = (missedBlocksQuery.data as number | undefined) ?? validatorData.missedSlotsPercentage ?? 0
+    const reliability =
+      (reliabilityQuery.data as number | undefined) ??
+      reliabilityPercentage(undefined, validatorData.missedSlotsPercentage ?? 0)
     const metadata = metadataQuery.data
     const delegationsData = delegationsQuery.data as { uniqueWallets: number; totalNfts: number } | undefined
 
@@ -399,8 +412,8 @@ export const useValidatorDetails = (address: string | undefined) => {
       nextCycleValidatorApy: validatorData.nextCycleValidatorYield ?? 0,
       nftYieldsNextCycle: { ...validatorData.nftYields, ...validatorData.nftYieldsIfDelegatedNextCycle },
 
-      reliability: 100 - missedPercentage,
-      percentageOffline: missedPercentage,
+      reliability,
+      percentageOffline: 100 - reliability,
 
       cyclePeriodLength: validatorData.cyclePeriodLength ?? 0,
       cycleEndBlock: validatorData.cycleEndBlock ?? 0,
@@ -413,7 +426,7 @@ export const useValidatorDetails = (address: string | undefined) => {
   }, [
     validatorQuery.data,
     delegationsCountQuery.data,
-    missedBlocksQuery.data,
+    reliabilityQuery.data,
     metadataQuery.data,
     delegationsQuery.data,
     chainHead,
@@ -421,7 +434,7 @@ export const useValidatorDetails = (address: string | undefined) => {
 
   const isPending = validatorQuery.isPending || delegationsCountQuery.isPending || metadataQuery.isPending
   const isFetched = validatorQuery.isFetched || delegationsCountQuery.isFetched || metadataQuery.isFetched
-  const isError = validatorQuery.isError || delegationsCountQuery.isError || missedBlocksQuery.isError
+  const isError = validatorQuery.isError || delegationsCountQuery.isError || reliabilityQuery.isError
 
   return {
     data: validator,
