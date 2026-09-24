@@ -186,7 +186,7 @@ export const ValidatorSummary = ({ address, validator }: { address: AddressStrin
         title: t('Reliability'),
         children: (
           <Text textStyle="bodyM" color="text-primary">
-            {isActive ? `${validator.reliability.toFixed(0)}%` : '-'}
+            {isActive ? `${validator.reliability.toFixed(1)}%` : '-'}
           </Text>
         ),
       },
