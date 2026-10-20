@@ -24,7 +24,7 @@ jobs:
   # The `create-preview` label is the approval; one-way, with teardown still on PR close.
   gate:
     name: Preview deploy gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions: {}
     # A `labeled` event fires for any label, hence the last clause.
     if: >-
@@ -37,7 +37,7 @@ jobs:
 
   announce:
     name: Post Initial PR Comment
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [gate]
     permissions:
       pull-requests: write
@@ -52,7 +52,7 @@ jobs:
 
   deploy:
     name: Deploy Preview Environment
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [gate]
     permissions:
       id-token: write
@@ -217,7 +217,7 @@ jobs:
 
   comment:
     name: Update PR Comment
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [gate, deploy]
     # `always()` disables the implicit skip, so the gate has to be re-checked here.
     if: always() && needs.gate.result == 'success'

@@ -44,7 +44,7 @@ jobs:
   # A v.* tag can be pushed to any branch, hence the ancestor check.
   guard:
     name: Resolve Target and Verify Tag
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     if: >-
@@ -196,7 +196,7 @@ jobs:
   # Serial, each stack planned immediately before its own apply — see workflows/README.md.
   terraform:
     name: Apply Terraform
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: guard
     # A stale dev tag stops here; every job below needs this one.
     if: needs.guard.outputs.stale != 'true'
@@ -285,7 +285,7 @@ jobs:
   # no-op. Runs after terraform because the bucket is terraform's to create.
   publish:
     name: Publish Bundle
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [guard, terraform]
     permissions:
       id-token: write
@@ -340,7 +340,7 @@ jobs:
   # answer from it.
   activate:
     name: Activate Bundle
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [guard, terraform, publish]
     permissions:
       id-token: write

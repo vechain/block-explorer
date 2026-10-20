@@ -25,7 +25,7 @@ concurrency:
 jobs:
   detect:
     name: Resolve Content SHA
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       actions: read
@@ -71,7 +71,7 @@ jobs:
     name: Build Static Bundle
     needs: detect
     if: needs.detect.outputs.exists == 'false'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -96,7 +96,7 @@ jobs:
     name: Summary
     needs: [detect, build]
     if: always() && needs.detect.result == 'success' && needs.build.result != 'failure'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions: {}
     steps:
       - env:
