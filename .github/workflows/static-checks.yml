@@ -33,7 +33,7 @@ jobs:
     name: Static checks
     if: always()
     needs: [checkov, actionlint]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 1
     steps:
       - name: Aggregate results
