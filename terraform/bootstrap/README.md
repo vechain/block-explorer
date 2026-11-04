@@ -1,7 +1,7 @@
 # bootstrap
 
-What an account needs before its pipeline can run: the state bucket, the registry the pipeline
-promotes images into, and a GitHub Actions deploy role scoped to this repo.
+What an account needs before its pipeline can run: the state bucket, in prod the registry the
+pipeline promotes images into, and a GitHub Actions deploy role scoped to this repo.
 
 Applied **by hand, with account admin credentials**, one workspace per account — `prod` and `dev`.
 The pipeline is never given `iam` on this role, so it cannot widen its own grants — which also means
