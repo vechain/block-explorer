@@ -12,7 +12,7 @@ variable "project" {
 
 variable "ecr_repository_name" {
   type        = string
-  description = "Repository the pipeline promotes images into. Created here in prod, looked up in dev where account-level/ owns it. frontend/ reads it by this name."
+  description = "Repository the pipeline promotes images into. Created here in prod. dev has none."
   default     = "block-explorer"
 }
 
