@@ -25,7 +25,7 @@ locals {
     }
 
     dev = {
-      # account-level/'s, and its lifecycle rules keep the dev- and pr- tags.
+      # No registry: dev publishes bundles, not images.
       create_ecr = false
 
       # Four, because dev runs more than a deploy: previews publish under their own
@@ -78,8 +78,9 @@ locals {
     "arn:aws:iam::${local.account_id}:role/${pattern}"
   ]
 
-  ecr_repository_arn = local.account.create_ecr ? one(aws_ecr_repository.app[*].arn) : one(data.aws_ecr_repository.existing[*].arn)
-  ecr_repository_url = local.account.create_ecr ? one(aws_ecr_repository.app[*].repository_url) : one(data.aws_ecr_repository.existing[*].repository_url)
+  # Null in dev, which has no registry.
+  ecr_repository_arn = one(aws_ecr_repository.app[*].arn)
+  ecr_repository_url = one(aws_ecr_repository.app[*].repository_url)
 
   zone_arns          = [for z in data.aws_route53_zone.public : z.arn]
   readable_zone_arns = [for z in data.aws_route53_zone.readable : z.arn]
