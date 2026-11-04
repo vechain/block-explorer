@@ -1,8 +1,7 @@
 # This account's own registry. The prod pipeline copies the GHCR manifest list
 # in here before applying, so a release image is never pulled across accounts.
 #
-# dev's predates this stack and is account-level/'s, so there it is looked up
-# instead — the deploy role needs its ARN either way.
+# dev has none: its pipeline publishes bundles to S3, not images.
 
 moved {
   from = aws_ecr_repository.app
@@ -12,12 +11,6 @@ moved {
 moved {
   from = aws_ecr_lifecycle_policy.app
   to   = aws_ecr_lifecycle_policy.app[0]
-}
-
-data "aws_ecr_repository" "existing" {
-  count = local.account.create_ecr ? 0 : 1
-
-  name = var.ecr_repository_name
 }
 
 resource "aws_ecr_repository" "app" {

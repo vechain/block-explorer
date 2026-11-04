@@ -259,19 +259,28 @@ data "aws_iam_policy_document" "gha_allow" {
     resources = ["*"]
   }
 
-  statement {
-    sid       = "Registry"
-    effect    = "Allow"
-    actions   = ["ecr:*"]
-    resources = [local.ecr_repository_arn]
+  # Only where the account has a registry. dev has none.
+  dynamic "statement" {
+    for_each = local.account.create_ecr ? [1] : []
+
+    content {
+      sid       = "Registry"
+      effect    = "Allow"
+      actions   = ["ecr:*"]
+      resources = [local.ecr_repository_arn]
+    }
   }
 
   # Account-wide by design: the token authorises a docker login, not a repository.
-  statement {
-    sid       = "RegistryAuth"
-    effect    = "Allow"
-    actions   = ["ecr:GetAuthorizationToken", "ecr:DescribeRegistry"]
-    resources = ["*"]
+  dynamic "statement" {
+    for_each = local.account.create_ecr ? [1] : []
+
+    content {
+      sid       = "RegistryAuth"
+      effect    = "Allow"
+      actions   = ["ecr:GetAuthorizationToken", "ecr:DescribeRegistry"]
+      resources = ["*"]
+    }
   }
 
   # Every log group this repo creates carries the project in its name.

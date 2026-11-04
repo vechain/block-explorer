@@ -27,7 +27,7 @@ legacy `explorer-github-actions-prod` coexist in that account.
 |                     | prod                    | dev                                                                             |
 | ------------------- | ----------------------- | ------------------------------------------------------------------------------- |
 | OIDC subjects       | `environment:prod`      | `environment:dev`, `environment:preview`, `pull_request`, `ref:refs/heads/main` |
-| Registry            | created here            | `account-level/`'s, looked up                                                   |
+| Registry            | created here            | none: dev publishes bundles, not images                                         |
 | Route53             | through `dns/`'s role   | writes both public zones directly                                               |
 | Roles it may manage | `block-explorer-prod-*` | `block-explorer-dev-*`, `-prod-dns-writer`                                      |
 

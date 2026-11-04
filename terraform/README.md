@@ -7,15 +7,15 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 
 | Stack                    | Owns                                                                     |
 | ------------------------ | ------------------------------------------------------------------------ |
-| `bootstrap/`             | By hand, per account: the deploy role, ECR (see below)                   |
+| `bootstrap/`             | By hand, per account: the deploy role, and ECR in prod (see below)       |
 | `dns/`                   | Dev only: the role the prod pipeline assumes to write records            |
 | `cdn/`                   | Bundle and log buckets, CloudFront, the routing function, its store, WAF |
 | `observability-aws/`     | AMP, Grafana, SNS, the Slack bridge and the CloudWatch alarms            |
 | `observability-grafana/` | Grafana datasources and the overview dashboard                           |
-| `account-level/`         | Legacy: ECR, the Route53 zones and the preview wildcard certificate      |
+| `account-level/`         | Legacy: the Route53 zones and the preview wildcard certificate           |
 
-`account-level/` is what is left of the App Runner setup: the ECR repository, both public zones and
-a wildcard certificate. Nothing in the pipeline reads it; it is applied by hand.
+`account-level/` is what is left of the App Runner setup: both public zones and a wildcard
+certificate. Nothing in the pipeline reads it; it is applied by hand.
 
 The ECS stacks — `network`, `ecs`, `acm`, `edge`, `preview-edge`, `data`, `frontend`,
 `frontend-preview` and the two modules under `modules/` — were deleted once both environments had
