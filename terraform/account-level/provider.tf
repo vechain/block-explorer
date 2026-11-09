@@ -25,16 +25,3 @@ provider "aws" {
     }
   }
 }
-
-# Provider for us-east-1 (required for ACM certificates for CloudFront/global services)
-provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
-
-  default_tags {
-    tags = {
-      Project   = "block-explorer"
-      ManagedBy = "terraform"
-    }
-  }
-}
