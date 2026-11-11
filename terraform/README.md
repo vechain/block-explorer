@@ -7,7 +7,7 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 
 | Stack                    | Owns                                                                     |
 | ------------------------ | ------------------------------------------------------------------------ |
-| `bootstrap/`             | By hand, per account: the deploy role, and ECR in prod (see below)       |
+| `bootstrap/`             | By hand, per account: the GitHub Actions deploy role and its grants      |
 | `dns/`                   | Dev only: the role the prod pipeline assumes to write records            |
 | `cdn/`                   | Bundle and log buckets, CloudFront, the routing function, its store, WAF |
 | `observability-aws/`     | AMP, Grafana, SNS, the Slack bridge and the CloudWatch alarms            |

@@ -10,12 +10,6 @@ variable "project" {
   default     = "block-explorer"
 }
 
-variable "ecr_repository_name" {
-  type        = string
-  description = "Repository the pipeline promotes images into. Created here in prod. dev has none."
-  default     = "block-explorer"
-}
-
 variable "foreign_ecr_repository_names" {
   type        = list(string)
   description = "Repositories belonging to other projects, present in both shared accounts. Denied to the deploy role by name, since ECR actions do not evaluate resource tags."
