@@ -1,7 +1,7 @@
 # bootstrap
 
-What an account needs before its pipeline can run: the state bucket, in prod the registry the
-pipeline promotes images into, and a GitHub Actions deploy role scoped to this repo.
+What an account needs before its pipeline can run: the state bucket, and a GitHub Actions deploy
+role scoped to this repo.
 
 Applied **by hand, with account admin credentials**, one workspace per account — `prod` and `dev`.
 The pipeline is never given `iam` on this role, so it cannot widen its own grants — which also means
@@ -27,7 +27,6 @@ legacy `explorer-github-actions-prod` coexist in that account.
 |                     | prod                    | dev                                                                             |
 | ------------------- | ----------------------- | ------------------------------------------------------------------------------- |
 | OIDC subjects       | `environment:prod`      | `environment:dev`, `environment:preview`, `pull_request`, `ref:refs/heads/main` |
-| Registry            | created here            | none: dev publishes bundles, not images                                         |
 | Route53             | through `dns/`'s role   | writes both public zones directly                                               |
 | Roles it may manage | `block-explorer-prod-*` | `block-explorer-dev-*`, `-prod-dns-writer`                                      |
 

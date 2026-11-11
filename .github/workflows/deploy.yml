@@ -84,7 +84,7 @@ jobs:
 
           # The credentialed jobs run whatever Terraform is in the tree they check
           # out, so the ref they start on is part of the security model. Dev takes
-          # main's tree with the tag's image; prod takes the tag's own tree, which
+          # main's tree with the tag's version; prod takes the tag's own tree, which
           # is why a branch is refused there outright.
           case "$environment" in
             dev)

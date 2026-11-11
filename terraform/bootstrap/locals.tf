@@ -11,8 +11,6 @@ locals {
   # hand, and a forgotten flag would apply one account's grants to the other.
   accounts = {
     prod = {
-      create_ecr = true
-
       gha_subjects = ["repo:vechain/block-explorer:environment:prod"]
 
       # Route53 writes go through dns/'s role in the other account.
@@ -25,9 +23,6 @@ locals {
     }
 
     dev = {
-      # No registry: dev publishes bundles, not images.
-      create_ecr = false
-
       # Four, because dev runs more than a deploy: previews publish under their own
       # environment, tear down on a bare pull_request, and are swept from main.
       gha_subjects = [
@@ -63,7 +58,6 @@ locals {
 
   # The fallback only lets `terraform validate` typecheck; the guard rejects the workspace.
   account = lookup(local.accounts, terraform.workspace, {
-    create_ecr                  = false
     gha_subjects                = ["repo:vechain/block-explorer:environment:none"]
     public_zone_names           = []
     readable_zone_names         = []
@@ -77,10 +71,6 @@ locals {
     for pattern in local.account.pipeline_role_name_patterns :
     "arn:aws:iam::${local.account_id}:role/${pattern}"
   ]
-
-  # Null in dev, which has no registry.
-  ecr_repository_arn = one(aws_ecr_repository.app[*].arn)
-  ecr_repository_url = one(aws_ecr_repository.app[*].repository_url)
 
   zone_arns          = [for z in data.aws_route53_zone.public : z.arn]
   readable_zone_arns = [for z in data.aws_route53_zone.readable : z.arn]
