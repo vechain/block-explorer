@@ -205,9 +205,8 @@ resource "aws_wafv2_web_acl_logging_configuration" "cdn" {
   # WAF rejects a CloudWatch log group ARN carrying the ":*" suffix.
   log_destination_configs = [trimsuffix(aws_cloudwatch_log_group.waf.arn, ":*")]
 
-  # default_action is allow, so without a filter every allowed request would ship at ingest price.
-  # COUNT is out for the same reason: the managed groups run in count mode, so one crawler matching
-  # HostingProviderIPList wrote 30 GB a day in November 2026 while nothing was blocked.
+  # default_action is allow, so without a filter every allowed request would ship at ingest price
+  # and bury the events worth reading.
   logging_filter {
     default_behavior = "DROP"
 
