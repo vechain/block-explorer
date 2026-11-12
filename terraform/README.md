@@ -46,8 +46,9 @@ Dashboards live in `observability-grafana/` as a separate stack because the Graf
 initialise against a workspace the same apply is creating.
 
 `dashboards/overview.json` reads CloudFront, its viewer-request function, its key value store and
-its WAF. A collapsed Logs Insights row at the bottom answers who and what — collapsed matters,
-because the overview refreshes every minute and those queries only run while the row is open.
+its WAF. A collapsed Logs Insights row at the bottom answers who and what, for blocked requests
+only — collapsed matters, because the overview refreshes every minute and those queries only run
+while the row is open.
 
 The WAF metric panels name each rule explicitly: the `Rule` dimension carries the `visibility_config`
 metric name, and a wildcard also matches the `ALL` aggregate and the managed groups' nested sub-rules,
