@@ -219,12 +219,6 @@ resource "aws_wafv2_web_acl_logging_configuration" "cdn" {
           action = "BLOCK"
         }
       }
-
-      condition {
-        action_condition {
-          action = "COUNT"
-        }
-      }
     }
   }
 }

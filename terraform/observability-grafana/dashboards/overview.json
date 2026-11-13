@@ -1142,7 +1142,7 @@
         {
           "id": 43,
           "type": "stat",
-          "title": "Flagged traffic over the range",
+          "title": "Blocked traffic over the range",
           "description": "The denominator for the two tables below. This log group holds only the requests a rule matched, a few percent of what Total requests counts — Count-mode match rate above puts a figure on that share. Where clients and paths run to thousands, the top 20 rows below are the head of a long tail rather than its bulk.",
           "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
           "gridPos": { "h": 4, "w": 24, "x": 0, "y": 45 },
@@ -1161,22 +1161,22 @@
               "queryMode": "Logs",
               "region": "${region}",
               "logGroupNames": ["${waf_log_group}"],
-              "expression": "stats count(*) as flagged, count_distinct(httpRequest.clientIp) as clients, count_distinct(httpRequest.uri) as paths"
+              "expression": "stats count(*) as blocked, count_distinct(httpRequest.clientIp) as clients, count_distinct(httpRequest.uri) as paths"
             }
           ]
         },
         {
           "id": 40,
           "type": "table",
-          "title": "Flagged clients",
-          "description": "Who tripped a rule, by source IP. action says what then happened: ALLOW is the count-mode dry run and the request was served, BLOCK is a real rejection. flagged counts that client's matched requests, never its whole traffic. A cloud scraper spreads itself over a range, so one actor arrives here as many small rows — the totals above are its real size.",
+          "title": "Blocked clients",
+          "description": "Who was blocked, by source IP. The delivery filter keeps blocked requests only, so a count-mode match never reaches this table — the panels above are where a soaking rule shows up. blocked counts that client's blocked requests, never its whole traffic. A cloud scraper spreads itself over a range, so one actor arrives here as many small rows — the totals above are its real size.",
           "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
           "gridPos": { "h": 11, "w": 12, "x": 0, "y": 49 },
           "fieldConfig": {
             "defaults": { "custom": { "align": "auto", "filterable": true } },
             "overrides": [
               {
-                "matcher": { "id": "byName", "options": "flagged" },
+                "matcher": { "id": "byName", "options": "blocked" },
                 "properties": [
                   { "id": "unit", "value": "short" },
                   { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }
@@ -1203,7 +1203,7 @@
               }
             ]
           },
-          "options": { "showHeader": true, "sortBy": [{ "displayName": "flagged", "desc": true }] },
+          "options": { "showHeader": true, "sortBy": [{ "displayName": "blocked", "desc": true }] },
           "targets": [
             {
               "refId": "A",
@@ -1211,22 +1211,22 @@
               "queryMode": "Logs",
               "region": "${region}",
               "logGroupNames": ["${waf_log_group}"],
-              "expression": "fields httpRequest.clientIp as clientIp, httpRequest.country as country, httpRequest.uri as path, coalesce(nonTerminatingMatchingRules.0.ruleId, labels.0.name, terminatingRuleId) as rule\n| stats count(*) as flagged, count_distinct(path) as paths, count_distinct(rule) as rules by clientIp, country, action\n| sort flagged desc\n| limit 20"
+              "expression": "fields httpRequest.clientIp as clientIp, httpRequest.country as country, httpRequest.uri as path, coalesce(nonTerminatingMatchingRules.0.ruleId, labels.0.name, terminatingRuleId) as rule\n| stats count(*) as blocked, count_distinct(path) as paths, count_distinct(rule) as rules by clientIp, country, action\n| sort blocked desc\n| limit 20"
             }
           ]
         },
         {
           "id": 41,
           "type": "table",
-          "title": "Flagged paths",
-          "description": "What those requests asked for. Explorer routes mean real users behind a flagged IP range; probe paths — wp-login, .env, phpmyadmin — mean the rule is earning its place. clients is how many distinct sources asked for that path. flagged is matched requests only, so a path sits far below its real share of Requests per minute.",
+          "title": "Blocked paths",
+          "description": "What those requests asked for. Explorer routes mean real users behind a blocked IP range; probe paths — wp-login, .env, phpmyadmin — mean the rule is earning its place. clients is how many distinct sources asked for that path. blocked is blocked requests only, so a path sits far below its real share of Requests per minute.",
           "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
           "gridPos": { "h": 11, "w": 12, "x": 12, "y": 49 },
           "fieldConfig": {
             "defaults": { "custom": { "align": "auto", "filterable": true } },
             "overrides": [
               {
-                "matcher": { "id": "byName", "options": "flagged" },
+                "matcher": { "id": "byName", "options": "blocked" },
                 "properties": [
                   { "id": "unit", "value": "short" },
                   { "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }
@@ -1238,7 +1238,7 @@
               }
             ]
           },
-          "options": { "showHeader": true, "sortBy": [{ "displayName": "flagged", "desc": true }] },
+          "options": { "showHeader": true, "sortBy": [{ "displayName": "blocked", "desc": true }] },
           "targets": [
             {
               "refId": "A",
@@ -1246,7 +1246,7 @@
               "queryMode": "Logs",
               "region": "${region}",
               "logGroupNames": ["${waf_log_group}"],
-              "expression": "fields httpRequest.uri as path, httpRequest.httpMethod as method, httpRequest.clientIp as clientIp, coalesce(nonTerminatingMatchingRules.0.ruleId, labels.0.name, terminatingRuleId) as rule\n| stats count(*) as flagged, count_distinct(clientIp) as clients by path, method, rule\n| sort flagged desc\n| limit 20"
+              "expression": "fields httpRequest.uri as path, httpRequest.httpMethod as method, httpRequest.clientIp as clientIp, coalesce(nonTerminatingMatchingRules.0.ruleId, labels.0.name, terminatingRuleId) as rule\n| stats count(*) as blocked, count_distinct(clientIp) as clients by path, method, rule\n| sort blocked desc\n| limit 20"
             }
           ]
         },
@@ -1254,7 +1254,7 @@
           "id": 42,
           "type": "table",
           "title": "Recent WAF events",
-          "description": "The log group holds only requests a rule matched — the delivery filter drops the rest, so this is not a request log. rule is the ACL rule; managedRule is the specific rule inside the AWS managed group, and that is the one to name when deciding what to exclude before turning blocking on. Column headers filter.",
+          "description": "The log group holds only requests a rule blocked — the delivery filter drops the rest, so this is not a request log. rule is the ACL rule; managedRule is the specific rule inside the AWS managed group. Column headers filter.",
           "datasource": { "type": "cloudwatch", "uid": "${datasource_uid_cloudwatch}" },
           "gridPos": { "h": 14, "w": 24, "x": 0, "y": 60 },
           "fieldConfig": {
