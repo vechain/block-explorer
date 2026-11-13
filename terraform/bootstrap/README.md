@@ -89,7 +89,7 @@ for the projects that share them, and a second one for the same URL is rejected.
 ## Grants
 
 Scoped by ARN wherever the service supports resource-level permissions. `cloudfront`, `wafv2`,
-`acm`, `aps` and `grafana` cannot be — distribution, ACL and workspace ids are all generated at
+`acm` and `grafana` cannot be — distribution, ACL and workspace ids are all generated at
 create time. Those are bounded instead by the guardrails policy, which denies any resource tagged
 for another project, the other projects' state buckets and registries by name, and identity, account
 and audit-trail changes outright.
