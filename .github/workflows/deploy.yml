@@ -276,7 +276,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           popd >/dev/null
 
-          # Null until the AMP workspace exists, and `-raw` refuses a null.
+          # Null until the AMG workspace exists, and `-raw` refuses a null.
           pushd terraform/observability-grafana >/dev/null
           echo "grafana_url=$(terraform output -raw amg_workspace_url 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
           popd >/dev/null
