@@ -1,6 +1,3 @@
-# Alerting for one environment: CloudWatch alarms, SNS and the Slack bridge.
-# The alarms are in alarms.tf, the delivery path in alerts.tf.
-
 data "aws_caller_identity" "current" {}
 
 resource "terraform_data" "workspace_guard" {
