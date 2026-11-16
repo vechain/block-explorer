@@ -10,7 +10,7 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 | `bootstrap/`             | By hand, per account: the GitHub Actions deploy role and its grants      |
 | `dns/`                   | Dev only: the role the prod pipeline assumes to write records            |
 | `cdn/`                   | Bundle and log buckets, CloudFront, the routing function, its store, WAF |
-| `observability-aws/`     | AMP, Grafana, SNS, the Slack bridge and the CloudWatch alarms            |
+| `observability-aws/`     | Grafana, SNS, the Slack bridge and the CloudWatch alarms                 |
 | `observability-grafana/` | Grafana datasources and the overview dashboard                           |
 | `account-level/`         | Legacy: the two Route53 public zones                                     |
 
@@ -37,12 +37,6 @@ natively. CloudFront and its Web ACL publish only to **us-east-1** whatever regi
 in, which is why `observability-aws/` carries a second provider and a second SNS topic: a CloudWatch
 alarm can act only on a topic in its own region. One bridge Lambda serves both — SNS delivers
 cross-region to Lambda, so the eu-west-1 function is subscribed to the us-east-1 topic.
-
-The AMP workspace survives with no writer. Nothing remote-writes to it since the ECS sidecar went,
-and Grafana keeps the datasource wired so a client-side path has somewhere to land; `manageAlerts`
-is off, because there is no rule group to surface. The recording rules, the AMP alert rules and the
-Alertmanager definition went with the sidecar — they queried series that will never arrive again,
-which is coverage that reads as real and is not.
 
 The SNS → Lambda → Slack bridge renders a CloudWatch alarm into the same shape as an Alertmanager
 notification, so it is invisible to whoever is on call. Alarm descriptions must read

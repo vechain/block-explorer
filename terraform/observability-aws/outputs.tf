@@ -1,13 +1,3 @@
-output "amp_workspace_id" {
-  description = "AMP workspace ID. What the SigV4 Grafana datasource is built from."
-  value       = aws_prometheus_workspace.this.id
-}
-
-output "amp_prometheus_endpoint" {
-  description = "AMP query and remote-write endpoint, trailing slash included."
-  value       = aws_prometheus_workspace.this.prometheus_endpoint
-}
-
 output "amg_workspace_id" {
   description = "AMG workspace ID."
   value       = aws_grafana_workspace.this.id

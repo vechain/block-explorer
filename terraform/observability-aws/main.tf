@@ -1,22 +1,7 @@
-# AMP and AMG for one environment, plus the service account the
+# AMG for one environment, plus the service account the
 # observability-grafana stack authenticates with.
 
 data "aws_caller_identity" "current" {}
-
-# --- Amazon Managed Prometheus ---
-
-resource "aws_cloudwatch_log_group" "amp" {
-  name              = "/aws/prometheus/${local.name}"
-  retention_in_days = local.env.log_retention_days
-}
-
-resource "aws_prometheus_workspace" "this" {
-  alias = local.name
-
-  logging_configuration {
-    log_group_arn = "${aws_cloudwatch_log_group.amp.arn}:*"
-  }
-}
 
 # --- Amazon Managed Grafana ---
 
@@ -48,12 +33,7 @@ resource "aws_iam_role_policy_attachment" "grafana_cloudwatch" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess"
 }
 
-resource "aws_iam_role_policy_attachment" "grafana_prometheus" {
-  role       = aws_iam_role.grafana_workspace.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess"
-}
-
-# No VPC connection: every datasource here (AMP, CloudWatch) is a public AWS
+# No VPC connection: CloudWatch, the only datasource, is a public AWS
 # endpoint, and the shared cache will publish to CloudWatch too.
 resource "aws_grafana_workspace" "this" {
   name                     = local.name

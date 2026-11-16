@@ -137,7 +137,6 @@ data "aws_iam_policy_document" "gha_deny" {
     actions = [
       "acm:*",
       "application-autoscaling:*",
-      "aps:*",
       "cloudfront:*",
       "cloudfront-keyvaluestore:*",
       "cloudwatch:*",
@@ -302,12 +301,12 @@ data "aws_iam_policy_document" "gha_allow" {
     resources = ["*"]
   }
 
-  # AMP and Grafana workspace ids are generated at create time, so there is no
+  # Grafana workspace ids are generated at create time, so there is no
   # ARN to pin before the first apply.
   statement {
     sid       = "Observability"
     effect    = "Allow"
-    actions   = ["aps:*", "grafana:*"]
+    actions   = ["grafana:*"]
     resources = ["*"]
   }
 
@@ -368,7 +367,7 @@ data "aws_iam_policy_document" "gha_allow" {
     resources = local.pipeline_role_arns
   }
 
-  # Only the four AWS managed policies the stacks actually attach. Unconditional,
+  # Only the AWS managed policies the stacks actually attach. Unconditional,
   # this is an escalation path: attach AdministratorAccess to a role the pipeline
   # may also pass, and a task or Lambda it creates is account admin.
   statement {

@@ -41,25 +41,6 @@ data "aws_secretsmanager_secret_version" "amg_sa_token" {
 
 # --- Datasources ---
 
-# Wired but empty: no writer since the ECS sidecar went, and no rule group to surface.
-resource "grafana_data_source" "amp" {
-  count = local.observability_ready ? 1 : 0
-
-  type = "prometheus"
-  name = "amp-${terraform.workspace}"
-  uid  = local.datasource_uid_amp
-  url  = local.amp_prometheus_endpoint
-
-  json_data_encoded = jsonencode({
-    httpMethod    = "POST"
-    sigV4Auth     = true
-    sigV4AuthType = "default"
-    sigV4Region   = var.aws_region
-    manageAlerts  = false
-  })
-}
-
-# AWS resource metrics stay in CloudWatch; AMP carries only the sidecar's.
 resource "grafana_data_source" "cloudwatch" {
   count = local.observability_ready ? 1 : 0
 

@@ -1,4 +1,4 @@
-# The whole alerting surface: nothing publishes to AMP any more. CloudFront and its
+# The whole alerting surface, all CloudWatch. CloudFront and its
 # CLOUDFRONT-scope WAF publish only to us-east-1, so those alarms use the topic there.
 #
 # Descriptions must read "Title — summary." The bridge Lambda splits on the em dash.

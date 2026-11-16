@@ -80,7 +80,6 @@ locals {
   attachable_managed_policy_arns = [
     "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
     "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess",
-    "arn:aws:iam::aws:policy/AmazonPrometheusQueryAccess",
   ]
 
   state_bucket_arns = [
@@ -100,6 +99,5 @@ locals {
   service_linked_role_services = [
     "wafv2.amazonaws.com",
     "grafana.amazonaws.com",
-    "aps.amazonaws.com",
   ]
 }
