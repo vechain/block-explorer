@@ -8,11 +8,6 @@ cdn_price_class: PriceClass_All
 # Access logs in S3, the Lambda log group, and the WAF log group.
 log_retention_days: 90
 
-# An AMG workspace is its own SAML audience, so prod needs its own Okta app.
-grafana_okta_saml_metadata_url: https://vechaineu.okta.com/app/exk1033qa0eZpldKg418/sso/saml/metadata
-grafana_admin_okta_groups: [APP_AMG_BLOCK_EXPLORER_Admin]
-grafana_editor_okta_groups: [APP_AMG_BLOCK_EXPLORER_Editor]
-
 # Needs SLACK_WEBHOOK_URL on the prod Environment, or the apply fails.
 alerts_enabled: true
 

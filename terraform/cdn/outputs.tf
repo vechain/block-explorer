@@ -54,7 +54,7 @@ output "router_function_name" {
 }
 
 output "waf_log_group_name" {
-  description = "Log group the CloudFront-scope WAF delivers blocked and counted requests to, in us-east-1."
+  description = "Log group the CloudFront-scope WAF delivers blocked requests to, in us-east-1."
   value       = aws_cloudwatch_log_group.waf.name
 }
 

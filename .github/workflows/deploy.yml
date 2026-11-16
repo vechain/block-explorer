@@ -151,10 +151,10 @@ jobs:
 
           case "$ENVIRONMENT" in
             dev)
-              stacks="dns cdn observability-aws observability-grafana"
+              stacks="dns cdn observability-aws"
               ;;
             prod)
-              stacks="cdn observability-aws observability-grafana"
+              stacks="cdn observability-aws"
               ;;
           esac
 
@@ -214,7 +214,6 @@ jobs:
       runtime_config: ${{ steps.outputs.outputs.runtime_config }}
       verify_url: ${{ steps.outputs.outputs.verify_url }}
       domain: ${{ steps.outputs.outputs.domain }}
-      grafana_url: ${{ steps.outputs.outputs.grafana_url }}
     steps:
       # No `ref:` from event data: this job holds AWS credentials and Terraform runs the tree.
       - name: Checkout code
@@ -274,11 +273,6 @@ jobs:
             echo "verify_url=$(terraform output -raw verify_url)"
             echo "domain=$(terraform output -raw url)"
           } >> "$GITHUB_OUTPUT"
-          popd >/dev/null
-
-          # Null until the AMG workspace exists, and `-raw` refuses a null.
-          pushd terraform/observability-grafana >/dev/null
-          echo "grafana_url=$(terraform output -raw amg_workspace_url 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
           popd >/dev/null
 
   # Content-addressed, so a prefix already in the bucket is the same bytes and the whole job is a
@@ -474,7 +468,6 @@ jobs:
         env:
           ENVIRONMENT: ${{ needs.guard.outputs.environment }}
           DOMAIN: ${{ needs.terraform.outputs.domain }}
-          GRAFANA_URL: ${{ needs.terraform.outputs.grafana_url }}
           APP_SHA: ${{ needs.guard.outputs.app_sha }}
           APP_VERSION: ${{ steps.version.outputs.app_version }}
           TAG: ${{ needs.guard.outputs.tag }}
@@ -484,9 +477,6 @@ jobs:
             echo
             echo "- Serving \`${APP_SHA}\` as \`${APP_VERSION}\`"
             echo "- ${DOMAIN}"
-            if [ -n "$GRAFANA_URL" ]; then
-              echo "- Grafana: ${GRAFANA_URL}/d/be-overview"
-            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
   # Only the dev path drafts a release, and only when it was not hand-started: a
