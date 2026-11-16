@@ -68,8 +68,8 @@ resource "terraform_data" "cdn_state_guard" {
 }
 
 # The one alarm about the alerting path itself. Delivery is circular — it
-# publishes to the topic whose consumer is broken — so read this in CloudWatch or
-# Grafana rather than expecting it in Slack.
+# publishes to the topic whose consumer is broken — so read this in CloudWatch
+# rather than expecting it in Slack.
 resource "aws_cloudwatch_metric_alarm" "alert_delivery_failing" {
   count = local.alerts_enabled ? 1 : 0
 

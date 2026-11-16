@@ -63,7 +63,7 @@ Start at the workflow run: every deploy plans each stack immediately before appl
   invalidates it. Everything else carries its bundle in the path, so it cannot be stale.
 - **A 404 on a route that exists** — the edge router has its own table of routes; `terraform/cdn/edge-router.spec.ts`
   is what keeps it matching `app/[locale]`, and it runs in CI.
-- **Alarms and dashboards** — Grafana, linked from the deploy summary. Alert routing and what is
-  alarmed are in [terraform/README.md](terraform/README.md).
+- **Alarms** — CloudWatch, delivered to Slack. Alert routing and what is alarmed are in
+  [terraform/README.md](terraform/README.md).
 - **A preview is stuck** — `preview-reconcile.yml` sweeps orphaned routing keys every six hours and
   can be run on demand.

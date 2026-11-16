@@ -10,8 +10,7 @@ own S3 state key; `terraform.workspace` selects the environment (`dev` / `prod`)
 | `bootstrap/`             | By hand, per account: the GitHub Actions deploy role and its grants      |
 | `dns/`                   | Dev only: the role the prod pipeline assumes to write records            |
 | `cdn/`                   | Bundle and log buckets, CloudFront, the routing function, its store, WAF |
-| `observability-aws/`     | Grafana, SNS, the Slack bridge and the CloudWatch alarms                 |
-| `observability-grafana/` | Grafana datasources and the overview dashboard                           |
+| `observability-aws/`     | SNS, the Slack bridge and the CloudWatch alarms                          |
 | `account-level/`         | Legacy: the two Route53 public zones                                     |
 
 `account-level/` is what is left of the App Runner setup: both public zones. Nothing in the pipeline
@@ -42,15 +41,9 @@ The SNS → Lambda → Slack bridge renders a CloudWatch alarm into the same sha
 notification, so it is invisible to whoever is on call. Alarm descriptions must read
 `Title — summary.`: the Lambda splits on the em dash.
 
-Dashboards live in `observability-grafana/` as a separate stack because the Grafana provider cannot
-initialise against a workspace the same apply is creating.
-
-`dashboards/overview.json` reads CloudFront, its viewer-request function, its key value store and
-its WAF. A collapsed Logs Insights row at the bottom answers who and what, for blocked requests
-only — collapsed matters, because the overview refreshes every minute and those queries only run
-while the row is open.
-
-The WAF metric panels name each rule explicitly: the `Rule` dimension carries the `visibility_config`
+There is no dashboard: read the metrics in the CloudWatch console, in us-east-1 for CloudFront and
+its WAF. The WAF log group holds blocked requests only; query it there with Logs Insights. Name
+each WAF rule explicitly when reading its metrics: the `Rule` dimension carries the `visibility_config`
 metric name, and a wildcard also matches the `ALL` aggregate and the managed groups' nested sub-rules,
 which double-counts. `CountedRequests` overlaps `AllowedRequests` for the same reason — a count-mode
 match does not terminate evaluation — so the two never belong in one stack. Note also that a
@@ -68,9 +61,8 @@ a 403. Read a day of prod and tune `cdn_alarm_thresholds` in the env YAML.
 **`router-errors`** sums execution and validation errors. CloudFront answers a 502 for either, but
 a handler returning a malformed response object counts only as a validation error, and that is the
 likelier failure after an `edge-router.js` edit. Its dimensions include `DistributionId`, because
-function metrics are published per function per distribution; the dashboard reads the same series
-with `matchExact` off, but an alarm has no such option and a wrong dimension set is an alarm that
-watches nothing and says nothing.
+function metrics are published per function per distribution, and a wrong dimension set is an alarm
+that watches nothing and says nothing.
 
 **Moving an alarm between regions means a new resource address.** The AWS provider stores `region`
 per resource, so putting `provider = aws.us_east_1` on one that already exists only changes which
@@ -87,13 +79,6 @@ re-enabling a one-line flip rather than a wait on that secret's seven-day recove
 To rehearse end to end: set the `SLACK_WEBHOOK_URL` secret on the `dev` GitHub Environment, flip
 `alerts_enabled` to `true`, deploy, and point a host key at a bundle prefix that does not exist —
 the 403 alarm is the one a bad activate trips.
-
-Grafana sign-in is Okta SAML, configured from `grafana_okta_saml_metadata_url` and the two
-`grafana_*_okta_groups` lists in the env YAML. Blank the URL, or leave the Admin list empty, and the
-workspace stays without a SAML configuration — AMG rejects an empty role-value list, so there is no
-sign-in-but-nobody-mapped state to land in. Both lists need at least one group. Dashboards provision
-either way, since the Terraform provider authenticates with a service-account token rather than
-through SAML. A user whose `role` assertion matches neither list is a Viewer.
 
 ## Access logs
 
@@ -164,8 +149,8 @@ metrics flowing. `waf_blocked_asns` stays in the YAML too: an ASN names a hostin
 than a target, and the rule is inline in the ACL where `ignore_changes` cannot reach it.
 
 Because the entries are invisible to Terraform, `plan` will never report drift on them. The IP set
-itself is the only record of what is blocked, and the Grafana "Blocked by rule" panel is how you
-confirm a new entry is biting.
+itself is the only record of what is blocked, and the rule's `BlockedRequests` metric in CloudWatch
+is how you confirm a new entry is biting.
 
 ## Applying
 
@@ -174,9 +159,8 @@ tag; the deploy chains off it, applies the stacks in order, publishes the bundle
 routing keys onto it. Nothing here needs applying by hand.
 
 Order matters where a stack reads another's state, and the workflow applies them serially in it:
-`dns` → `cdn` → `observability-aws` → `observability-grafana`. Both observability stacks read
-`cdn`'s outputs — the distribution, the router function and the Web ACL are what they alarm on and
-chart. To run one stack locally against dev:
+`dns` → `cdn` → `observability-aws`. `observability-aws` reads `cdn`'s outputs — the distribution,
+the router function and the Web ACL are what it alarms on. To run one stack locally against dev:
 
 ```bash
 cd terraform/cdn
@@ -214,10 +198,6 @@ Standing up the account, in order:
    `dns_writer_role_arn` output as `DNS_WRITER_ROLE_ARN` on the `prod` Environment.
 4. Publish a release. Expect the first apply to surface a missing IAM action or two; that is what the
    scoped role costs.
-
-Prod Grafana has no SAML until an Okta app exists for its workspace: an AMG workspace is its own SAML
-audience, so dev's app cannot serve both. Alerts still reach Slack, and dashboards still provision,
-since the Terraform provider uses a service-account token.
 
 ### The records on the prod domains
 

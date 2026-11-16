@@ -144,7 +144,6 @@ data "aws_iam_policy_document" "gha_deny" {
       "ecs:*",
       "elasticache:*",
       "elasticloadbalancing:*",
-      "grafana:*",
       "lambda:*",
       "logs:*",
       "secretsmanager:*",
@@ -298,15 +297,6 @@ data "aws_iam_policy_document" "gha_allow" {
     sid       = "MetricRead"
     effect    = "Allow"
     actions   = ["cloudwatch:DescribeAlarms", "cloudwatch:GetMetricData", "cloudwatch:ListMetrics"]
-    resources = ["*"]
-  }
-
-  # Grafana workspace ids are generated at create time, so there is no
-  # ARN to pin before the first apply.
-  statement {
-    sid       = "Observability"
-    effect    = "Allow"
-    actions   = ["grafana:*"]
     resources = ["*"]
   }
 

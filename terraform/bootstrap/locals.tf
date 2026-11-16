@@ -79,7 +79,6 @@ locals {
   # statement to an inline policy needs no entry here; attaching one does.
   attachable_managed_policy_arns = [
     "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-    "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess",
   ]
 
   state_bucket_arns = [
@@ -98,6 +97,5 @@ locals {
   # Services whose service-linked role may not exist yet in this account.
   service_linked_role_services = [
     "wafv2.amazonaws.com",
-    "grafana.amazonaws.com",
   ]
 }

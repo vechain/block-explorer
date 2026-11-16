@@ -8,10 +8,6 @@ cdn_price_class: PriceClass_100
 # Access logs in S3, the Lambda log group, and the WAF log group.
 log_retention_days: 30
 
-grafana_okta_saml_metadata_url: https://vechaineu.okta.com/app/exk1020c50lQfO4EF418/sso/saml/metadata
-grafana_admin_okta_groups: [APP_AMG_BLOCK_EXPLORER_Admin]
-grafana_editor_okta_groups: [APP_AMG_BLOCK_EXPLORER_Editor]
-
 # Off entirely: no CloudWatch alarms and no subscription.
 alerts_enabled: false
 
