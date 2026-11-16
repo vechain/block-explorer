@@ -6,9 +6,7 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.0"
     }
-    # No resource uses it any more, but the prod state still holds the old Grafana token's
-    # time_rotating, and init runs before the workspace is selected, so it would not be installed.
-    # Drop it once no state lists hashicorp/time.
+    # Unused, but init runs before workspace select and prod state may still hold a time_rotating.
     time = {
       source  = "hashicorp/time"
       version = "~> 0.14"

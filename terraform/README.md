@@ -42,8 +42,8 @@ notification, so it is invisible to whoever is on call. Alarm descriptions must 
 `Title — summary.`: the Lambda splits on the em dash.
 
 There is no dashboard: read the metrics in the CloudWatch console, in us-east-1 for CloudFront and
-its WAF. The WAF log group holds blocked requests only; query it there with Logs Insights. Name
-each WAF rule explicitly when reading its metrics: the `Rule` dimension carries the `visibility_config`
+its WAF. The WAF log group holds blocked requests only; query it with Logs Insights. Name each WAF
+rule explicitly: the `Rule` dimension carries the `visibility_config`
 metric name, and a wildcard also matches the `ALL` aggregate and the managed groups' nested sub-rules,
 which double-counts. `CountedRequests` overlaps `AllowedRequests` for the same reason — a count-mode
 match does not terminate evaluation — so the two never belong in one stack. Note also that a
