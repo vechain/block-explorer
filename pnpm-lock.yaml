@@ -25,10 +25,10 @@ importers:
         version: 2.1.1
       '@vechain/sdk-core':
         specifier: ^2.1.0
-        version: 2.1.0(typescript@5.9.3)(zod@4.4.3)
+        version: 2.1.0(typescript@5.9.3)(zod@4.6.6)
       '@vechain/sdk-network':
         specifier: ^2.1.0
-        version: 2.1.0(typescript@5.9.3)(zod@4.4.3)
+        version: 2.1.0(typescript@5.9.3)(zod@4.6.6)
       dataloader:
         specifier: ^2.2.3
         version: 2.2.3
@@ -70,10 +70,10 @@ importers:
         version: 3.10.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-is@17.0.2)(react@19.2.8)(redux@5.0.1)
       viem:
         specifier: ^2.36.0
-        version: 2.55.19(typescript@5.9.3)(zod@4.4.3)
+        version: 2.55.19(typescript@5.9.3)(zod@4.6.6)
       zod:
         specifier: ^4.1.5
-        version: 4.4.3
+        version: 4.6.6
       zustand:
         specifier: ^5.0.8
         version: 5.0.15(@types/react@19.2.18)(immer@11.1.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
@@ -3374,8 +3374,8 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
-  zod@4.4.3:
-    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+  zod@4.6.6:
+    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
   zustand@5.0.15:
     resolution: {integrity: sha512-MpSEjRiBkA9crSYeOUH32rJC7SVqAbm0Fqcqge/bUi2PPoLcBWKOsG+C8mevmpr8TwXHBVkChbbJiyvkE+i/3A==}
@@ -4417,7 +4417,7 @@ snapshots:
     dependencies:
       mersenne-twister: 1.1.0
 
-  '@vechain/sdk-core@2.1.0(typescript@5.9.3)(zod@4.4.3)':
+  '@vechain/sdk-core@2.1.0(typescript@5.9.3)(zod@4.6.6)':
     dependencies:
       '@ethereumjs/rlp': 5.0.2
       '@noble/ciphers': 1.3.0
@@ -4428,10 +4428,10 @@ snapshots:
       '@scure/bip39': 1.6.0
       '@vechain/sdk-errors': 2.1.0
       '@vechain/sdk-logging': 2.1.0
-      abitype: 1.3.0(typescript@5.9.3)(zod@4.4.3)
+      abitype: 1.3.0(typescript@5.9.3)(zod@4.6.6)
       ethers: 6.17.0
       fast-json-stable-stringify: 2.1.0
-      viem: 2.55.19(typescript@5.9.3)(zod@4.4.3)
+      viem: 2.55.19(typescript@5.9.3)(zod@4.6.6)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -4444,15 +4444,15 @@ snapshots:
     dependencies:
       '@vechain/sdk-errors': 2.1.0
 
-  '@vechain/sdk-network@2.1.0(typescript@5.9.3)(zod@4.4.3)':
+  '@vechain/sdk-network@2.1.0(typescript@5.9.3)(zod@4.6.6)':
     dependencies:
       '@noble/curves': 1.9.7
-      '@vechain/sdk-core': 2.1.0(typescript@5.9.3)(zod@4.4.3)
+      '@vechain/sdk-core': 2.1.0(typescript@5.9.3)(zod@4.6.6)
       '@vechain/sdk-errors': 2.1.0
       '@vechain/sdk-logging': 2.1.0
-      abitype: 1.0.8(typescript@5.9.3)(zod@4.4.3)
+      abitype: 1.0.8(typescript@5.9.3)(zod@4.6.6)
       ethers: 6.17.0
-      viem: 2.55.19(typescript@5.9.3)(zod@4.4.3)
+      viem: 2.55.19(typescript@5.9.3)(zod@4.6.6)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -5072,20 +5072,20 @@ snapshots:
 
   '@zag-js/utils@1.41.2': {}
 
-  abitype@1.0.8(typescript@5.9.3)(zod@4.4.3):
+  abitype@1.0.8(typescript@5.9.3)(zod@4.6.6):
     optionalDependencies:
       typescript: 5.9.3
-      zod: 4.4.3
+      zod: 4.6.6
 
-  abitype@1.2.3(typescript@5.9.3)(zod@4.4.3):
+  abitype@1.2.3(typescript@5.9.3)(zod@4.6.6):
     optionalDependencies:
       typescript: 5.9.3
-      zod: 4.4.3
+      zod: 4.6.6
 
-  abitype@1.3.0(typescript@5.9.3)(zod@4.4.3):
+  abitype@1.3.0(typescript@5.9.3)(zod@4.6.6):
     optionalDependencies:
       typescript: 5.9.3
-      zod: 4.4.3
+      zod: 4.6.6
 
   acorn-jsx@5.3.2(acorn@8.18.0):
     dependencies:
@@ -5649,8 +5649,8 @@ snapshots:
       '@babel/parser': 7.29.8
       eslint: 10.9.1(jiti@2.7.0)
       hermes-parser: 0.25.1
-      zod: 4.4.3
-      zod-validation-error: 4.0.2(zod@4.4.3)
+      zod: 4.6.6
+      zod-validation-error: 4.0.2(zod@4.6.6)
     transitivePeerDependencies:
       - supports-color
 
@@ -6203,7 +6203,7 @@ snapshots:
       typescript: 5.9.3
       unbash: 2.2.0
       yaml: 2.9.0
-      zod: 4.4.3
+      zod: 4.6.6
 
   language-subtag-registry@0.3.23: {}
 
@@ -6435,7 +6435,7 @@ snapshots:
       object-keys: 1.1.1
       safe-push-apply: 1.0.0
 
-  ox@0.14.34(typescript@5.9.3)(zod@4.4.3):
+  ox@0.14.34(typescript@5.9.3)(zod@4.6.6):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
       '@noble/ciphers': 1.3.0
@@ -6443,7 +6443,7 @@ snapshots:
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@4.4.3)
+      abitype: 1.2.3(typescript@5.9.3)(zod@4.6.6)
       eventemitter3: 5.0.1
     optionalDependencies:
       typescript: 5.9.3
@@ -7064,15 +7064,15 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  viem@2.55.19(typescript@5.9.3)(zod@4.4.3):
+  viem@2.55.19(typescript@5.9.3)(zod@4.6.6):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
-      abitype: 1.2.3(typescript@5.9.3)(zod@4.4.3)
+      abitype: 1.2.3(typescript@5.9.3)(zod@4.6.6)
       isows: 1.0.7(ws@8.21.0)
-      ox: 0.14.34(typescript@5.9.3)(zod@4.4.3)
+      ox: 0.14.34(typescript@5.9.3)(zod@4.6.6)
       ws: 8.21.0
     optionalDependencies:
       typescript: 5.9.3
@@ -7212,11 +7212,11 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-validation-error@4.0.2(zod@4.4.3):
+  zod-validation-error@4.0.2(zod@4.6.6):
     dependencies:
-      zod: 4.4.3
+      zod: 4.6.6
 
-  zod@4.4.3: {}
+  zod@4.6.6: {}
 
   zustand@5.0.15(@types/react@19.2.18)(immer@11.1.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8)):
     optionalDependencies:
