@@ -45,7 +45,9 @@ export const useAddressTransactions = ({
   size?: number
 }) => {
   const contractTxs = useContractTransactions({
-    params: { contractAddress: address, page, size },
+    contractAddress: address,
+    page,
+    size,
     enabled: hasCode === true,
   })
 
@@ -54,7 +56,7 @@ export const useAddressTransactions = ({
     enabled: hasCode === false,
   })
 
-  return hasCode ? contractTxs : accountTxs
+  return hasCode ? contractTxs : { data: accountTxs.data, isLoading: accountTxs.isLoading }
 }
 
 const getTransactions = async ({

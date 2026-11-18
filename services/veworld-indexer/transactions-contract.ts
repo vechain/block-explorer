@@ -1,47 +1,30 @@
-import { queryOptions, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { BLOCK_TIME_MS, type NetworkName } from '@/lib/constants/network'
+import type { AddressString } from '@/lib/schemas'
 import { useSettingsStore } from '@/lib/stores/settings'
-import { serializeZodParams } from '@/lib/utils/serialization'
 import { zodParse } from '@/lib/utils/zod'
-import { indexerFetch } from './index'
-import { type IndexerGetContractTransactionsParams, indexerTransactionSchema, indexerResponseSchema } from './schemas'
+import { IndexerVersion, indexerFetch } from './index'
+import { indexerTransactionSchema, indexerResponseSchema } from './schemas'
 
 const CONTRACT_TRANSACTIONS_QUERY_KEY = 'getContractTransactions'
 
-const contractTransactionsQueryOptions = (
-  networkName: NetworkName,
-  params: IndexerGetContractTransactionsParams,
-  options?: { enabled?: boolean },
-) =>
-  queryOptions({
-    queryKey: [CONTRACT_TRANSACTIONS_QUERY_KEY, networkName, params] as const,
-    queryFn: () => getContractTransactions({ networkName, params }),
-    staleTime: BLOCK_TIME_MS,
-    enabled: options?.enabled ?? true,
-  })
-
-export const useContractTransactions = ({
-  params,
-  enabled = true,
-}: {
-  params: IndexerGetContractTransactionsParams
-  enabled?: boolean
-}) => {
-  const { activeNetwork } = useSettingsStore()
-  return useQuery(contractTransactionsQueryOptions(activeNetwork.name, params, { enabled }))
-}
-
 const getContractTransactions = async ({
   networkName,
-  params,
+  contractAddress,
+  size,
+  cursor,
 }: {
   networkName: NetworkName
-  params: IndexerGetContractTransactionsParams
+  contractAddress: AddressString
+  size: number
+  cursor?: string
 }) => {
   const { data } = await indexerFetch({
     networkName,
     endPoint: '/transactions/contract',
-    params: serializeZodParams(params),
+    params: { contractAddress, size: String(size), ...(cursor ? { cursor } : {}) },
+    version: IndexerVersion.V2,
   })
 
   return zodParse({
@@ -49,4 +32,36 @@ const getContractTransactions = async ({
     schema: indexerResponseSchema(indexerTransactionSchema),
     errorMessage: 'Invalid contract transactions response from VeWorld Indexer',
   })
+}
+
+/** Serves 0-indexed `page` from a cursor-paged feed; the controls only step one page at a time. */
+export const useContractTransactions = ({
+  contractAddress,
+  page,
+  size,
+  enabled = true,
+}: {
+  contractAddress: AddressString
+  page: number
+  size: number
+  enabled?: boolean
+}) => {
+  const { activeNetwork } = useSettingsStore()
+  const query = useInfiniteQuery({
+    queryKey: [CONTRACT_TRANSACTIONS_QUERY_KEY, activeNetwork.name, contractAddress, size] as const,
+    queryFn: ({ pageParam }) =>
+      getContractTransactions({ networkName: activeNetwork.name, contractAddress, size, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: lastPage => (lastPage.pagination.hasNext ? lastPage.pagination.cursor : undefined),
+    staleTime: BLOCK_TIME_MS,
+    enabled,
+  })
+
+  const { data, hasNextPage, isFetchingNextPage, fetchNextPage } = query
+  const loadedPages = data?.pages.length ?? 0
+  useEffect(() => {
+    if (enabled && page >= loadedPages && loadedPages > 0 && hasNextPage && !isFetchingNextPage) fetchNextPage()
+  }, [enabled, page, loadedPages, hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  return { data: data?.pages[page], isLoading: query.isLoading || (enabled && page >= loadedPages && hasNextPage) }
 }
