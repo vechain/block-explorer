@@ -63,5 +63,6 @@ export const useContractTransactions = ({
     if (enabled && page >= loadedPages && loadedPages > 0 && hasNextPage && !isFetchingNextPage) fetchNextPage()
   }, [enabled, page, loadedPages, hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  return { data: data?.pages[page], isLoading: query.isLoading || (enabled && page >= loadedPages && hasNextPage) }
+  // Hold the last loaded page while the next one fetches, like the app-wide keepPreviousData.
+  return { data: data?.pages[Math.min(page, loadedPages - 1)], isLoading: query.isLoading }
 }
