@@ -47,7 +47,7 @@ describe('useContractTransactions', () => {
     })
 
     rerender({ p: 1 })
-    expect(result.current.isLoading).toBe(true)
+    expect(result.current).toMatchObject({ isLoading: false, data: { data: [{ id: 't1' }, { id: 't2' }] } })
     await waitFor(() => expect(result.current.data?.data).toEqual([{ id: 't3' }]))
     expect(mockIndexerFetch.mock.calls[1][0].params).toEqual({ contractAddress, size: '2', cursor: '9|0xb' })
 
