@@ -58,13 +58,6 @@ const indexerGetTransactionsParamsSchema = z
   })
   .extend(paginationParamsSchema.shape)
 
-const indexerGetContractTransactionsParamsSchema = z
-  .object({
-    contractAddress: addressStringSchema,
-    expanded: z.boolean().nullable().optional(),
-  })
-  .extend(paginationParamsSchema.shape)
-
 const transferEventTypeSchema = z.enum(['FUNGIBLE_TOKEN', 'NFT', 'VET', 'SEMI_FUNGIBLE_TOKEN'])
 export type TransferEventType = z.infer<typeof transferEventTypeSchema>
 
@@ -226,7 +219,6 @@ export type IndexerTransaction = z.infer<typeof indexerTransactionSchema>
 export type IndexerGetTransactionsParams = z.infer<typeof indexerGetTransactionsParamsSchema>
 export type IndexerGetTransfersParams = z.infer<typeof indexerGetTransfersParamsSchema>
 export type IndexerGetErc20ContractsParams = z.infer<typeof indexerGetErc20ContractsParamsSchema>
-export type IndexerGetContractTransactionsParams = z.infer<typeof indexerGetContractTransactionsParamsSchema>
 export type IndexerGetErc721Params = z.infer<typeof indexerGetErc721ParamsSchema>
 type IndexerGetContractsByMasterParams = z.infer<typeof indexerGetContractsByMasterParamsSchema>
 export type IndexerResponse<T extends z.ZodSchema> = z.infer<ReturnType<typeof indexerResponseSchema<T>>>
